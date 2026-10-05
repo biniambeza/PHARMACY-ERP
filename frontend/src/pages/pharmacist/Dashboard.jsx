@@ -42,11 +42,17 @@ const PharmacistDashboard = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
               <span className="block text-xs font-semibold text-slate-200">{user?.name}</span>
               <span className="block text-[11px] text-slate-500">{user?.email}</span>
             </div>
+            <Link
+              to="/pharmacy/reports"
+              className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>📊</span> Reports
+            </Link>
             <button
               onClick={logout}
               className="px-3.5 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-semibold transition cursor-pointer"
@@ -121,7 +127,7 @@ const PharmacistDashboard = () => {
         </div>
 
         {/* Operations & Procurement Hub */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Link
             to="/pharmacy/procurement"
             className="bg-slate-800/80 hover:bg-slate-750 border border-slate-700/80 hover:border-blue-500/50 rounded-xl p-4 transition cursor-pointer group block"
@@ -131,7 +137,7 @@ const PharmacistDashboard = () => {
               <span className="text-xs text-blue-400 group-hover:translate-x-0.5 transition">→</span>
             </div>
             <h4 className="text-sm font-bold text-white">Purchase Orders</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Issue orders & receive batch deliveries into stock</p>
+            <p className="text-[11px] text-slate-400 mt-1">Issue orders & receive batch deliveries</p>
           </Link>
 
           <Link
@@ -143,7 +149,7 @@ const PharmacistDashboard = () => {
               <span className="text-xs text-amber-400 group-hover:translate-x-0.5 transition">→</span>
             </div>
             <h4 className="text-sm font-bold text-white">Suppliers Directory</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Manage pharmaceutical distributor accounts</p>
+            <p className="text-[11px] text-slate-400 mt-1">Manage pharmaceutical distributors</p>
           </Link>
 
           <Link
@@ -151,11 +157,23 @@ const PharmacistDashboard = () => {
             className="bg-slate-800/80 hover:bg-slate-750 border border-slate-700/80 hover:border-emerald-500/50 rounded-xl p-4 transition cursor-pointer group block"
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Billing History</span>
+              <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Billing</span>
               <span className="text-xs text-emerald-400 group-hover:translate-x-0.5 transition">→</span>
             </div>
             <h4 className="text-sm font-bold text-white">Sales & Invoices</h4>
-            <p className="text-[11px] text-slate-400 mt-1">Review revenue stats & reprint patient receipts</p>
+            <p className="text-[11px] text-slate-400 mt-1">Review revenue & reprint receipts</p>
+          </Link>
+
+          <Link
+            to="/pharmacy/reports"
+            className="bg-slate-800/80 hover:bg-slate-750 border border-slate-700/80 hover:border-purple-500/50 rounded-xl p-4 transition cursor-pointer group block"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-purple-400 uppercase tracking-wider">Analytics</span>
+              <span className="text-xs text-purple-400 group-hover:translate-x-0.5 transition">→</span>
+            </div>
+            <h4 className="text-sm font-bold text-white">Financial Reports</h4>
+            <p className="text-[11px] text-slate-400 mt-1">Gross margins & 30-day expiry risk</p>
           </Link>
         </div>
 

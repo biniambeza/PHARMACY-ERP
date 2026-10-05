@@ -11,6 +11,7 @@ const stockRoutes = require('./routes/stockRoutes');
 const salesRoutes = require('./routes/salesRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const procurementRoutes = require('./routes/procurementRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/stock', stockRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/procurement', procurementRoutes);
+app.use('/api/reports', reportRoutes);
 
 // 404 Route Handler
 app.use((req, res) => {
