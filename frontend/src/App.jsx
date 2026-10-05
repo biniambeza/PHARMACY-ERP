@@ -1,17 +1,38 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './routes/ProtectedRoute';
+import RoleRoute from './routes/RoleRoute';
+import Login from './pages/auth/Login';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import PharmacistDashboard from './pages/pharmacist/Dashboard';
+
 function App() {
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-xl p-6 text-center shadow-lg">
-        <h1 className="text-2xl font-bold text-white mb-2">Pharmacy ERP</h1>
-        <p className="text-slate-400 text-sm mb-4">
-          Admin & Pharmacist Management System
-        </p>
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-          Frontend Ready
-        </div>
-      </div>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Auth Route */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            {/* Admin Portal */}
+            <Route element={<RoleRoute allowedRoles={['admin']} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+
+            {/* Pharmacist Portal */}
+            <Route element={<RoleRoute allowedRoles={['pharmacist']} />}>
+              <Route path="/pharmacy" element={<PharmacistDashboard />} />
+            </Route>
+          </Route>
+
+          {/* Fallback Redirect */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
