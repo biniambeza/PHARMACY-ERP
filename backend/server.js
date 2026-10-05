@@ -52,16 +52,23 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/pharmacy', pharmacyRoutes);
-app.use('/api/medicines', medicineRoutes);
-app.use('/api/stock', stockRoutes);
-app.use('/api/sales', salesRoutes);
-app.use('/api/suppliers', supplierRoutes);
-app.use('/api/procurement', procurementRoutes);
-app.use('/api/reports', reportRoutes);
+// Routes (supports both /api/* and root /* for resilient deployment)
+const apiRoutes = [
+  ['/auth', authRoutes],
+  ['/admin', adminRoutes],
+  ['/pharmacy', pharmacyRoutes],
+  ['/medicines', medicineRoutes],
+  ['/stock', stockRoutes],
+  ['/sales', salesRoutes],
+  ['/suppliers', supplierRoutes],
+  ['/procurement', procurementRoutes],
+  ['/reports', reportRoutes]
+];
+
+apiRoutes.forEach(([path, router]) => {
+  app.use(`/api${path}`, router);
+  app.use(path, router);
+});
 
 // 404 Route Handler
 app.use((req, res) => {
