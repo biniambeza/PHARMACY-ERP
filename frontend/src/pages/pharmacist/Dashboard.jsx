@@ -1,24 +1,49 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axios';
 
 const PharmacistDashboard = () => {
   const { user, logout } = useAuth();
+  const [pharmacy, setPharmacy] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPharmacy = async () => {
+      try {
+        const res = await api.get('/pharmacy/my-pharmacy');
+        setPharmacy(res.data.pharmacy);
+      } catch (error) {
+        console.error('Failed to load pharmacy profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPharmacy();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-6">
+    <div className="min-h-screen bg-slate-900 text-slate-100 p-6 selection:bg-emerald-500 selection:text-white">
       <div className="max-w-4xl mx-auto">
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-6 border-b border-slate-800 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4 mb-8">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
-              Pharmacist • Cashier & Inventory
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-1.5">
+              Pharmacist Portal • Cashier & Inventory
             </div>
-            <h1 className="text-2xl font-bold text-white">Pharmacy Dashboard</h1>
-            <p className="text-xs text-slate-400">Point of Sale, Stock Management, and Inventory</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              {pharmacy ? pharmacy.name : 'Pharmacy Dashboard'}
+            </h1>
+            <p className="text-xs text-slate-400">
+              {pharmacy
+                ? `${pharmacy.address} • Phone: ${pharmacy.phone}`
+                : 'Manage medicines, point of sale, and stock inventory'}
+            </p>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <span className="block text-xs font-medium text-slate-300">{user?.name}</span>
+              <span className="block text-xs font-semibold text-slate-200">{user?.name}</span>
               <span className="block text-[11px] text-slate-500">{user?.email}</span>
             </div>
             <button
@@ -30,30 +55,52 @@ const PharmacistDashboard = () => {
           </div>
         </div>
 
-        {/* Quick Modules Overview */}
+        {/* Pharmacy License Card */}
+        {loading ? (
+          <div className="p-6 text-center text-xs text-slate-400">Loading pharmacy profile...</div>
+        ) : pharmacy ? (
+          <div className="bg-slate-800/90 border border-slate-700/80 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">
+                Rx
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">{pharmacy.name}</h3>
+                <p className="text-xs text-slate-400 font-mono">License: {pharmacy.licenseNo}</p>
+              </div>
+            </div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              Active Pharmacy Tenant
+            </div>
+          </div>
+        ) : null}
+
+        {/* Integrated Modules Preview */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
-            <span className="text-xs font-medium text-slate-400">Cashier (POS)</span>
-            <p className="text-xl font-bold text-white mt-1">Ready for Phase 8</p>
-            <span className="text-[11px] text-emerald-400 mt-1 block">Sales & Billing integrated</span>
+            <span className="text-xs font-medium text-slate-400">Phase 6: Medicines</span>
+            <p className="text-xl font-bold text-white mt-1">Catalog</p>
+            <span className="text-[11px] text-purple-400 mt-1 block">Categories, pricing & units</span>
           </div>
           <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
-            <span className="text-xs font-medium text-slate-400">Inventory & Stock</span>
-            <p className="text-xl font-bold text-white mt-1">Ready for Phase 7</p>
-            <span className="text-[11px] text-blue-400 mt-1 block">Batches & Expiry tracking</span>
+            <span className="text-xs font-medium text-slate-400">Phase 7: Inventory</span>
+            <p className="text-xl font-bold text-white mt-1">Stock & Batches</p>
+            <span className="text-[11px] text-blue-400 mt-1 block">Expiry dates & stock alerts</span>
           </div>
           <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
-            <span className="text-xs font-medium text-slate-400">Medicines Catalog</span>
-            <p className="text-xl font-bold text-white mt-1">Ready for Phase 6</p>
-            <span className="text-[11px] text-purple-400 mt-1 block">Isolated per Pharmacy</span>
+            <span className="text-xs font-medium text-slate-400">Phase 8: Cashier POS</span>
+            <p className="text-xl font-bold text-white mt-1">Sales & Billing</p>
+            <span className="text-[11px] text-emerald-400 mt-1 block">FEFO inventory deduction</span>
           </div>
         </div>
 
-        {/* Information Card */}
+        {/* Isolation Confirmation */}
         <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-white mb-1">Pharmacist Portal Active</h3>
+          <h3 className="text-sm font-semibold text-white mb-1">Data Isolation Confirmed (Phase 5)</h3>
           <p className="text-xs text-slate-400">
-            You are logged in with the combined Pharmacist role (Cashier + Inventory). Data will be isolated by your specific Pharmacy ID.
+            Your account is bound to Pharmacy ID:{' '}
+            <code className="text-emerald-400 font-mono">{pharmacy?._id || 'Loading...'}</code>. Every query in the upcoming modules will automatically filter by this ID.
           </p>
         </div>
       </div>

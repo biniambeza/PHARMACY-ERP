@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const pharmacyRoutes = require('./routes/pharmacyRoutes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.get('/api/test', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/pharmacy', pharmacyRoutes);
 
 // 404 Route Handler
 app.use((req, res) => {
