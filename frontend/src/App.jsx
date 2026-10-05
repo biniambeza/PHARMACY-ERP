@@ -9,6 +9,8 @@ import Medicines from './pages/pharmacist/Medicines';
 import Stock from './pages/pharmacist/Stock';
 import POS from './pages/pharmacist/POS';
 import SalesHistory from './pages/pharmacist/SalesHistory';
+import Suppliers from './pages/pharmacist/Suppliers';
+import PurchaseOrders from './pages/pharmacist/PurchaseOrders';
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
               <Route path="/pharmacy/stock" element={<Stock />} />
               <Route path="/pharmacy/pos" element={<POS />} />
               <Route path="/pharmacy/sales" element={<SalesHistory />} />
+              <Route path="/pharmacy/suppliers" element={<Suppliers />} />
+              <Route path="/pharmacy/procurement" element={<PurchaseOrders />} />
             </Route>
           </Route>
 

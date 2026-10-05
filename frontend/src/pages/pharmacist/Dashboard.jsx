@@ -120,17 +120,42 @@ const PharmacistDashboard = () => {
           </Link>
         </div>
 
-        {/* Quick Links Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 mb-8">
-          <div>
-            <h4 className="text-xs font-semibold text-white">Sales & Invoice History</h4>
-            <p className="text-[11px] text-slate-400">Review past receipts, revenue statistics, and patient transactions</p>
-          </div>
+        {/* Operations & Procurement Hub */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <Link
+            to="/pharmacy/procurement"
+            className="bg-slate-800/80 hover:bg-slate-750 border border-slate-700/80 hover:border-blue-500/50 rounded-xl p-4 transition cursor-pointer group block"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider">Procurement</span>
+              <span className="text-xs text-blue-400 group-hover:translate-x-0.5 transition">→</span>
+            </div>
+            <h4 className="text-sm font-bold text-white">Purchase Orders</h4>
+            <p className="text-[11px] text-slate-400 mt-1">Issue orders & receive batch deliveries into stock</p>
+          </Link>
+
+          <Link
+            to="/pharmacy/suppliers"
+            className="bg-slate-800/80 hover:bg-slate-750 border border-slate-700/80 hover:border-amber-500/50 rounded-xl p-4 transition cursor-pointer group block"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">Vendors</span>
+              <span className="text-xs text-amber-400 group-hover:translate-x-0.5 transition">→</span>
+            </div>
+            <h4 className="text-sm font-bold text-white">Suppliers Directory</h4>
+            <p className="text-[11px] text-slate-400 mt-1">Manage pharmaceutical distributor accounts</p>
+          </Link>
+
           <Link
             to="/pharmacy/sales"
-            className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition cursor-pointer"
+            className="bg-slate-800/80 hover:bg-slate-750 border border-slate-700/80 hover:border-emerald-500/50 rounded-xl p-4 transition cursor-pointer group block"
           >
-            View History →
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Billing History</span>
+              <span className="text-xs text-emerald-400 group-hover:translate-x-0.5 transition">→</span>
+            </div>
+            <h4 className="text-sm font-bold text-white">Sales & Invoices</h4>
+            <p className="text-[11px] text-slate-400 mt-1">Review revenue stats & reprint patient receipts</p>
           </Link>
         </div>
 
