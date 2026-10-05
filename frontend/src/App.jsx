@@ -6,6 +6,7 @@ import Login from './pages/auth/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import PharmacistDashboard from './pages/pharmacist/Dashboard';
 import Medicines from './pages/pharmacist/Medicines';
+import Stock from './pages/pharmacist/Stock';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route element={<RoleRoute allowedRoles={['pharmacist']} />}>
               <Route path="/pharmacy" element={<PharmacistDashboard />} />
               <Route path="/pharmacy/medicines" element={<Medicines />} />
+              <Route path="/pharmacy/stock" element={<Stock />} />
             </Route>
           </Route>
 

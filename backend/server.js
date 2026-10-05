@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const pharmacyRoutes = require('./routes/pharmacyRoutes');
 const medicineRoutes = require('./routes/medicineRoutes');
+const stockRoutes = require('./routes/stockRoutes');
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/medicines', medicineRoutes);
+app.use('/api/stock', stockRoutes);
 
 // 404 Route Handler
 app.use((req, res) => {

@@ -92,11 +92,19 @@ const PharmacistDashboard = () => {
             <p className="text-xl font-bold text-white">Manage Products</p>
             <span className="text-[11px] text-purple-400 mt-1 block">Categories, pricing & units</span>
           </Link>
-          <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
-            <span className="text-xs font-medium text-slate-400">Phase 7: Inventory</span>
-            <p className="text-xl font-bold text-white mt-1">Stock & Batches</p>
-            <span className="text-[11px] text-blue-400 mt-1 block">Expiry dates & stock alerts</span>
-          </div>
+          <Link
+            to="/pharmacy/stock"
+            className="bg-slate-800 hover:bg-slate-700/60 border border-slate-700/80 hover:border-blue-500/50 rounded-xl p-5 transition cursor-pointer group block"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-slate-400">Inventory Management</span>
+              <span className="text-[11px] text-blue-400 font-semibold group-hover:translate-x-0.5 transition">
+                Open →
+              </span>
+            </div>
+            <p className="text-xl font-bold text-white">Stock & Batches</p>
+            <span className="text-[11px] text-blue-400 mt-1 block">FEFO expiry & stock alerts</span>
+          </Link>
           <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
             <span className="text-xs font-medium text-slate-400">Phase 8: Cashier POS</span>
             <p className="text-xl font-bold text-white mt-1">Sales & Billing</p>
