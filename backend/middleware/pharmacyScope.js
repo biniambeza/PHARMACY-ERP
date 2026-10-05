@@ -52,4 +52,5 @@ const pharmacyScope = async (req, res, next) => {
   }
 };
 
-module.exports = { pharmacyScope };
+pharmacyScope.pharmacyScope = pharmacyScope;
+module.exports = pharmacyScope;
