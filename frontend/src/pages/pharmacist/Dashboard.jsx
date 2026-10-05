@@ -105,11 +105,33 @@ const PharmacistDashboard = () => {
             <p className="text-xl font-bold text-white">Stock & Batches</p>
             <span className="text-[11px] text-blue-400 mt-1 block">FEFO expiry & stock alerts</span>
           </Link>
-          <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
-            <span className="text-xs font-medium text-slate-400">Phase 8: Cashier POS</span>
-            <p className="text-xl font-bold text-white mt-1">Sales & Billing</p>
-            <span className="text-[11px] text-emerald-400 mt-1 block">FEFO inventory deduction</span>
+          <Link
+            to="/pharmacy/pos"
+            className="bg-slate-800 hover:bg-slate-700/60 border border-slate-700/80 hover:border-emerald-500/50 rounded-xl p-5 transition cursor-pointer group block"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-slate-400">Point of Sale</span>
+              <span className="text-[11px] text-emerald-400 font-semibold group-hover:translate-x-0.5 transition">
+                Open →
+              </span>
+            </div>
+            <p className="text-xl font-bold text-white">Cashier & POS</p>
+            <span className="text-[11px] text-emerald-400 mt-1 block">Checkout & receipt generation</span>
+          </Link>
+        </div>
+
+        {/* Quick Links Row */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 mb-8">
+          <div>
+            <h4 className="text-xs font-semibold text-white">Sales & Invoice History</h4>
+            <p className="text-[11px] text-slate-400">Review past receipts, revenue statistics, and patient transactions</p>
           </div>
+          <Link
+            to="/pharmacy/sales"
+            className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-medium transition cursor-pointer"
+          >
+            View History →
+          </Link>
         </div>
 
         {/* Isolation Confirmation */}

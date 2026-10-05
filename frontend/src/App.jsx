@@ -7,6 +7,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import PharmacistDashboard from './pages/pharmacist/Dashboard';
 import Medicines from './pages/pharmacist/Medicines';
 import Stock from './pages/pharmacist/Stock';
+import POS from './pages/pharmacist/POS';
+import SalesHistory from './pages/pharmacist/SalesHistory';
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
               <Route path="/pharmacy" element={<PharmacistDashboard />} />
               <Route path="/pharmacy/medicines" element={<Medicines />} />
               <Route path="/pharmacy/stock" element={<Stock />} />
+              <Route path="/pharmacy/pos" element={<POS />} />
+              <Route path="/pharmacy/sales" element={<SalesHistory />} />
             </Route>
           </Route>
 
