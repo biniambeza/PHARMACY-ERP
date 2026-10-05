@@ -5,6 +5,7 @@ import RoleRoute from './routes/RoleRoute';
 import Login from './pages/auth/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import PharmacistDashboard from './pages/pharmacist/Dashboard';
+import Medicines from './pages/pharmacist/Medicines';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             {/* Pharmacist Portal */}
             <Route element={<RoleRoute allowedRoles={['pharmacist']} />}>
               <Route path="/pharmacy" element={<PharmacistDashboard />} />
+              <Route path="/pharmacy/medicines" element={<Medicines />} />
             </Route>
           </Route>
 

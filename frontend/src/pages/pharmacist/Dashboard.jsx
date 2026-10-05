@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 
@@ -78,11 +79,19 @@ const PharmacistDashboard = () => {
 
         {/* Integrated Modules Preview */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
-            <span className="text-xs font-medium text-slate-400">Phase 6: Medicines</span>
-            <p className="text-xl font-bold text-white mt-1">Catalog</p>
+          <Link
+            to="/pharmacy/medicines"
+            className="bg-slate-800 hover:bg-slate-700/60 border border-slate-700/80 hover:border-purple-500/50 rounded-xl p-5 transition cursor-pointer group block"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-slate-400">Medicine Catalog</span>
+              <span className="text-[11px] text-purple-400 font-semibold group-hover:translate-x-0.5 transition">
+                Open →
+              </span>
+            </div>
+            <p className="text-xl font-bold text-white">Manage Products</p>
             <span className="text-[11px] text-purple-400 mt-1 block">Categories, pricing & units</span>
-          </div>
+          </Link>
           <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-5">
             <span className="text-xs font-medium text-slate-400">Phase 7: Inventory</span>
             <p className="text-xl font-bold text-white mt-1">Stock & Batches</p>
