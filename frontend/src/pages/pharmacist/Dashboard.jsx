@@ -53,6 +53,12 @@ const PharmacistDashboard = () => {
             >
               <span>📊</span> Reports
             </Link>
+            <Link
+              to="/pharmacy/settings"
+              className="px-3 py-2 bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>⚙️</span> Settings
+            </Link>
             <button
               onClick={logout}
               className="px-3.5 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-semibold transition cursor-pointer"

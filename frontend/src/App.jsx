@@ -12,6 +12,7 @@ import SalesHistory from './pages/pharmacist/SalesHistory';
 import Suppliers from './pages/pharmacist/Suppliers';
 import PurchaseOrders from './pages/pharmacist/PurchaseOrders';
 import Reports from './pages/pharmacist/Reports';
+import Settings from './pages/pharmacist/Settings';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
               <Route path="/pharmacy/suppliers" element={<Suppliers />} />
               <Route path="/pharmacy/procurement" element={<PurchaseOrders />} />
               <Route path="/pharmacy/reports" element={<Reports />} />
+              <Route path="/pharmacy/settings" element={<Settings />} />
             </Route>
           </Route>
 
