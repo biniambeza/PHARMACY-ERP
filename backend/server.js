@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 
@@ -26,6 +27,9 @@ app.get('/api/test', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Routes
+app.use('/api/auth', authRoutes);
 
 // 404 Route Handler
 app.use((req, res) => {
