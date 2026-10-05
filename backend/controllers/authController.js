@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Pharmacy = require('../models/Pharmacy');
 const generateToken = require('../utils/generateToken');
 
 // @desc    Login user & get token
@@ -18,6 +19,17 @@ const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
+      // If user is a pharmacist, check if their pharmacy is suspended
+      if (user.role === 'pharmacist') {
+        const pharmacy = await Pharmacy.findOne({ owner: user._id });
+        if (pharmacy && pharmacy.status === 'suspended') {
+          return res.status(403).json({
+            success: false,
+            message: 'This pharmacy account has been suspended. Please contact the administrator.',
+          });
+        }
+      }
+
       return res.status(200).json({
         success: true,
         token: generateToken(user._id, user.role),
