@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getFinancialAnalytics } = require('../controllers/reportController');
+const { getFinancialAnalytics, getDashboardOverview } = require('../controllers/reportController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 const pharmacyScope = require('../middleware/pharmacyScope');
@@ -9,5 +9,6 @@ const pharmacyScope = require('../middleware/pharmacyScope');
 router.use(protect, authorize('pharmacist'), pharmacyScope);
 
 router.get('/analytics', getFinancialAnalytics);
+router.get('/overview', getDashboardOverview);
 
 module.exports = router;
