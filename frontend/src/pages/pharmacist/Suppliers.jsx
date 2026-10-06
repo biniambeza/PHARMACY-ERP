@@ -1,15 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Building2,
+  Plus,
+  Search,
+  Phone,
+  Mail,
+  MapPin,
+  User,
+  Edit3,
+  Trash2,
+  CheckCircle,
+  AlertCircle,
+  FileText,
+} from 'lucide-react';
 import { getSuppliers, deleteSupplier } from '../../api/supplierApi';
 import SupplierModal from './SupplierModal';
+import MetricCard from '../../components/common/MetricCard';
+import StatusBadge from '../../components/common/StatusBadge';
+import { CardSkeleton } from '../../components/common/SkeletonLoader';
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
-  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Modal State
+  // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -17,8 +34,8 @@ const Suppliers = () => {
   const loadSuppliers = useCallback(async () => {
     try {
       const params = {};
-      if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
+      if (search) params.search = search;
 
       const data = await getSuppliers(params);
       setSuppliers(data.suppliers || []);
@@ -27,12 +44,12 @@ const Suppliers = () => {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter]);
+  }, [statusFilter, search]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       loadSuppliers();
-    }, 300);
+    }, 250);
     return () => clearTimeout(timer);
   }, [loadSuppliers]);
 
@@ -62,163 +79,267 @@ const Suppliers = () => {
     setIsModalOpen(true);
   };
 
+  // Metrics
+  const totalSuppliers = suppliers.length;
+  const activeSuppliers = suppliers.filter((s) => s.status === 'active').length;
+  const inactiveSuppliers = totalSuppliers - activeSuppliers;
+
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-6 selection:bg-emerald-500 selection:text-white">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Link
-                to="/pharmacy"
-                className="text-xs text-slate-400 hover:text-emerald-400 transition"
-              >
-                ← Dashboard
-              </Link>
-              <span className="text-slate-600">•</span>
-              <Link
-                to="/pharmacy/procurement"
-                className="text-xs text-slate-400 hover:text-emerald-400 transition"
-              >
-                Purchase Orders
-              </Link>
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Suppliers Directory</h1>
-            <p className="text-xs text-slate-400">
-              Manage medicine distributors, pharmaceutical manufacturers, and procurement contacts
-            </p>
+    <div className="space-y-6 sm:space-y-8 animate-fade-in max-w-7xl mx-auto">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/60 uppercase tracking-wider">
+              Vendor Directory
+            </span>
           </div>
-
-          <button
-            onClick={handleOpenCreate}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-md transition cursor-pointer self-start sm:self-auto"
-          >
-            <span className="text-base leading-none font-bold">+</span> Add Supplier
-          </button>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
+            Pharmaceutical Suppliers Directory
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Manage medicine distributors, verified manufacturers, and supply contract contacts
+          </p>
         </div>
 
-        {/* Filter & Search Bar */}
-        <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="w-full sm:w-80">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by company, contact person, or phone..."
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
+        <button
+          onClick={handleOpenCreate}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Supplier</span>
+        </button>
+      </div>
 
-          <div className="w-full sm:w-auto flex items-center gap-3">
-            <label className="text-xs text-slate-400 hidden sm:inline">Status:</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full sm:w-36 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <MetricCard
+          title="Total Registered Vendors"
+          value={totalSuppliers.toString()}
+          subValue="Active & historical suppliers"
+          badgeText="Directory"
+          badgeVariant="teal"
+          icon={<Building2 className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+          sparklineData={[4, 6, 8, 9, 12, 11, totalSuppliers]}
+          sparklineColor="#0d9488"
+          sparklineId="total-sup-spark"
+        />
+
+        <MetricCard
+          title="Active Contract Vendors"
+          value={activeSuppliers.toString()}
+          subValue="Available for procurement"
+          badgeText="Active"
+          badgeVariant="emerald"
+          icon={<CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+          sparklineData={[3, 5, 7, 8, 10, activeSuppliers]}
+          sparklineColor="#10b981"
+          sparklineId="active-sup-spark"
+        />
+
+        <MetricCard
+          title="Inactive / Suspended"
+          value={inactiveSuppliers.toString()}
+          subValue="Suspended trade accounts"
+          badgeText={inactiveSuppliers > 0 ? 'Under Review' : 'Zero Suspensions'}
+          badgeVariant={inactiveSuppliers > 0 ? 'amber' : 'teal'}
+          icon={<AlertCircle className="w-4 h-4 text-amber-500" />}
+          sparklineData={[1, 0, 2, 1, 0, inactiveSuppliers]}
+          sparklineColor="#f59e0b"
+          sparklineId="inact-sup-spark"
+        />
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white dark:bg-[#161c26] border border-slate-100/90 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by vendor name, contact person, phone, or email..."
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs font-medium">
+            <button
+              onClick={() => setStatusFilter('')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
+                statusFilter === ''
+                  ? 'bg-white dark:bg-[#161c26] text-teal-600 dark:text-teal-400 font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
             >
-              <option value="">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive</option>
-            </select>
-
-            {(search || statusFilter) && (
-              <button
-                onClick={() => {
-                  setSearch('');
-                  setStatusFilter('');
-                }}
-                className="text-xs text-slate-400 hover:text-white px-2 py-1 transition cursor-pointer"
-              >
-                Clear
-              </button>
-            )}
+              All Vendors
+            </button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
+                statusFilter === 'active'
+                  ? 'bg-white dark:bg-[#161c26] text-teal-600 dark:text-teal-400 font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Active Only
+            </button>
+            <button
+              onClick={() => setStatusFilter('inactive')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
+                statusFilter === 'inactive'
+                  ? 'bg-white dark:bg-[#161c26] text-amber-600 dark:text-amber-400 font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Inactive
+            </button>
           </div>
-        </div>
 
-        {/* Suppliers Table */}
-        <div className="bg-slate-800/90 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="p-12 text-center text-xs text-slate-400">Loading suppliers directory...</div>
-            ) : suppliers.length === 0 ? (
-              <div className="p-12 text-center">
-                <p className="text-sm font-semibold text-slate-300 mb-1">
-                  {search || statusFilter ? 'No matching suppliers found' : 'No suppliers registered yet'}
-                </p>
-                <p className="text-xs text-slate-500 mb-4">
-                  {search || statusFilter
-                    ? 'Try adjusting your search criteria.'
-                    : 'Register your pharmaceutical distributors to issue purchase orders.'}
-                </p>
-                <button
-                  onClick={handleOpenCreate}
-                  className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-semibold rounded-lg transition cursor-pointer"
-                >
-                  + Add First Supplier
-                </button>
+          {(search || statusFilter) && (
+            <button
+              onClick={() => {
+                setSearch('');
+                setStatusFilter('');
+              }}
+              className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-medium cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Suppliers Table Container */}
+      <div className="bg-white dark:bg-[#161c26] border border-slate-100/90 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="p-8">
+              <CardSkeleton height="h-64" />
+            </div>
+          ) : suppliers.length === 0 ? (
+            <div className="py-16 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto mb-3 border border-teal-100 dark:border-teal-900/50">
+                <Building2 className="w-6 h-6" />
               </div>
-            ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-700/60">
-                  <tr>
-                    <th className="py-3 px-4">Company Name</th>
-                    <th className="py-3 px-4">Contact Person</th>
-                    <th className="py-3 px-4">Phone & Email</th>
-                    <th className="py-3 px-4">Address</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                {search || statusFilter ? 'No matching vendors found' : 'No suppliers registered'}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+                {search || statusFilter
+                  ? 'Try modifying your search query or filter tags'
+                  : 'Add authorized pharmaceutical distributors to begin issuing purchase orders'}
+              </p>
+              <button
+                onClick={handleOpenCreate}
+                className="mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Add First Supplier
+              </button>
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
+                <tr>
+                  <th className="py-3.5 px-5">Vendor Company</th>
+                  <th className="py-3.5 px-4">Account Representative</th>
+                  <th className="py-3.5 px-4">Telephone</th>
+                  <th className="py-3.5 px-4">Email Address</th>
+                  <th className="py-3.5 px-4">Warehouse Address</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60 font-medium">
+                {suppliers.map((item) => (
+                  <tr key={item._id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition group">
+                    <td className="py-3.5 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 border border-teal-100 dark:border-teal-900/50">
+                          <Building2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-900 dark:text-white block group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                            {item.name}
+                          </span>
+                          {item.notes && (
+                            <span className="text-[10px] text-slate-400 truncate max-w-xs block">
+                              {item.notes}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="py-3.5 px-4">
+                      {item.contactPerson ? (
+                        <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                          <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{item.contactPerson}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">Not specified</span>
+                      )}
+                    </td>
+
+                    <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-mono">
+                      {item.phone || 'N/A'}
+                    </td>
+
+                    <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">
+                      {item.email ? (
+                        <span className="hover:underline">{item.email}</span>
+                      ) : (
+                        <span className="text-slate-400 italic">N/A</span>
+                      )}
+                    </td>
+
+                    <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 max-w-xs truncate">
+                      {item.address || 'N/A'}
+                    </td>
+
+                    <td className="py-3.5 px-4">
+                      <StatusBadge status={item.status} label={item.status === 'active' ? 'Active' : 'Inactive'} />
+                    </td>
+
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          title="Edit supplier"
+                          className="p-1.5 text-slate-600 hover:text-teal-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-teal-400 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item._id, item.name)}
+                          disabled={deletingId === item._id}
+                          title="Delete supplier"
+                          className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 rounded-lg transition disabled:opacity-40 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700/60">
-                  {suppliers.map((s) => (
-                    <tr key={s._id} className="hover:bg-slate-700/30 transition">
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-white block">{s.name}</span>
-                        {s.notes && <span className="text-[11px] text-slate-400 italic">{s.notes}</span>}
-                      </td>
-                      <td className="py-3 px-4 text-slate-300">
-                        {s.contactPerson || <span className="text-slate-500 italic">Not specified</span>}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-mono text-emerald-400 block">{s.phone}</span>
-                        {s.email && <span className="text-[11px] text-slate-400">{s.email}</span>}
-                      </td>
-                      <td className="py-3 px-4 text-slate-300 max-w-xs truncate">
-                        {s.address || <span className="text-slate-500 italic">—</span>}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                            s.status === 'active'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-slate-700 text-slate-400'
-                          }`}
-                        >
-                          {s.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right space-x-2">
-                        <button
-                          onClick={() => handleEdit(s)}
-                          className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-[11px] font-medium transition cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(s._id, s.name)}
-                          disabled={deletingId === s._id}
-                          className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded text-[11px] font-medium transition cursor-pointer"
-                        >
-                          {deletingId === s._id ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
+
+        {/* Footer Summary */}
+        {suppliers.length > 0 && (
+          <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
+            <span>
+              Showing <strong>{suppliers.length}</strong> registered distributors
+            </span>
+            <span className="font-mono text-[11px]">
+              Directory ID: SUP-DIR-{suppliers.length}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Supplier Modal */}

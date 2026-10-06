@@ -160,23 +160,23 @@ const PharmacyLayout = () => {
         />
       )}
 
-      {/* Left Sidebar (Dark Executive Theme: bg-[#1c222f]) */}
+      {/* Left Sidebar (Pure White in Light Mode, Dark Executive Theme in Dark Mode) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-[#1c222f] border-r border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white dark:bg-[#1c222f] border-r border-slate-200 dark:border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Brand / Logo Header */}
-        <div className="h-20 px-6 flex items-center justify-between border-b border-[#262e3f] shrink-0 bg-[#171c26]">
+        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#171c26]">
           <Link to="/pharmacy" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-teal-500/25">
               Rx
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm font-bold text-white tracking-tight truncate max-w-[130px]">
+              <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px]">
                 {pharmacy ? pharmacy.name : 'Pharmacy ERP'}
               </h1>
-              <p className="text-[11px] text-teal-400 font-medium truncate">
+              <p className="text-[11px] text-teal-600 dark:text-teal-400 font-semibold truncate">
                 Dispensary Portal
               </p>
             </div>
@@ -185,7 +185,7 @@ const PharmacyLayout = () => {
           {/* Mobile Close Button */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white"
           >
             ✕
           </button>
@@ -195,7 +195,7 @@ const PharmacyLayout = () => {
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 custom-scrollbar">
           {navGroups.map((group) => (
             <div key={group.header} className="space-y-1">
-              <div className="px-3 pb-1 text-[11px] font-bold text-slate-500 tracking-wider">
+              <div className="px-3 pb-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
                 {group.header}
               </div>
 
@@ -208,8 +208,8 @@ const PharmacyLayout = () => {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 ${
                       isActive
-                        ? 'bg-teal-500/15 text-teal-300 font-semibold border-l-2 border-teal-400 shadow-2xs'
-                        : 'text-slate-400 hover:text-white hover:bg-[#252c3c]'
+                        ? 'bg-teal-50 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300 font-semibold border-l-2 border-teal-500 dark:border-teal-400 shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#252c3c]'
                     }`
                   }
                 >
@@ -217,14 +217,16 @@ const PharmacyLayout = () => {
                     <>
                       <span
                         className={`transition-colors shrink-0 ${
-                          isActive ? 'text-teal-400' : 'text-slate-400'
+                          isActive
+                            ? 'text-teal-600 dark:text-teal-400'
+                            : 'text-slate-500 dark:text-slate-400'
                         }`}
                       >
                         {item.icon}
                       </span>
                       <span className="flex-1 truncate">{item.name}</span>
                       {item.badge && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/30">
                           {item.badge}
                         </span>
                       )}
@@ -236,25 +238,25 @@ const PharmacyLayout = () => {
           ))}
 
           {/* Quick Actions Shortcuts */}
-          <div className="pt-2 pb-1 border-t border-[#262e3f]">
-            <div className="px-3 pb-2 text-[11px] font-bold text-slate-500 tracking-wider">
+          <div className="pt-2 pb-1 border-t border-slate-200 dark:border-[#262e3f]">
+            <div className="px-3 pb-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
               QUICK LAUNCH
             </div>
             <div className="space-y-1.5">
               <button
                 onClick={() => navigate('/pharmacy/pos')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-300 bg-[#252c3c]/60 hover:bg-[#2b3446] hover:text-white border border-[#2b3446] rounded-xl transition cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/80 dark:text-slate-300 dark:bg-[#252c3c]/60 dark:hover:bg-[#2b3446] dark:hover:text-white dark:border-[#2b3446] rounded-xl transition cursor-pointer text-left shadow-2xs"
               >
-                <svg className="w-3.5 h-3.5 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <svg className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 <span className="truncate">New Sale (POS)</span>
               </button>
               <button
                 onClick={() => navigate('/pharmacy/stock')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-300 bg-[#252c3c]/60 hover:bg-[#2b3446] hover:text-white border border-[#2b3446] rounded-xl transition cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/80 dark:text-slate-300 dark:bg-[#252c3c]/60 dark:hover:bg-[#2b3446] dark:hover:text-white dark:border-[#2b3446] rounded-xl transition cursor-pointer text-left shadow-2xs"
               >
-                <svg className="w-3.5 h-3.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <svg className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
                 <span className="truncate">Receive Lot (Stock)</span>
@@ -264,14 +266,14 @@ const PharmacyLayout = () => {
         </div>
 
         {/* Sidebar Footer with Theme Switch & User Bar */}
-        <div className="p-3 border-t border-[#262e3f] bg-[#171c26] shrink-0 space-y-2">
+        <div className="p-3 border-t border-slate-200 dark:border-[#262e3f] bg-white dark:bg-[#171c26] shrink-0 space-y-2">
           {/* Light / Dark Mode Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-[#252c3c] border border-[#2e3749] text-slate-200 hover:border-teal-400/60 transition cursor-pointer"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-[#252c3c] dark:border-[#2e3749] dark:text-slate-200 hover:border-teal-400/60 transition cursor-pointer shadow-2xs"
           >
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <svg className="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 {isDark ? (
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
                 ) : (
@@ -280,7 +282,7 @@ const PharmacyLayout = () => {
               </svg>
               <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1c222f] text-slate-400 font-mono">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1c222f] text-slate-500 dark:text-slate-400 font-mono">
               Toggle
             </span>
           </button>
@@ -288,14 +290,14 @@ const PharmacyLayout = () => {
           {/* User Profile Info Chip */}
           <div className="flex items-center justify-between px-2 py-1.5">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'P'}
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-bold text-white truncate">
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {user?.name || 'Pharmacist'}
                 </p>
-                <p className="text-[10px] text-teal-400 capitalize truncate">
+                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold capitalize truncate">
                   {user?.role || 'Pharmacist'}
                 </p>
               </div>
@@ -303,7 +305,7 @@ const PharmacyLayout = () => {
             <button
               onClick={logout}
               title="Sign Out"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

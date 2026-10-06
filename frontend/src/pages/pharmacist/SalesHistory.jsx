@@ -1,7 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Receipt,
+  ShoppingCart,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  Search,
+  Eye,
+  CreditCard,
+  Building2,
+  FileText,
+  User,
+  Phone,
+  ArrowUpRight,
+} from 'lucide-react';
 import { getSales, getSalesSummary } from '../../api/salesApi';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
+import MetricCard from '../../components/common/MetricCard';
+import StatusBadge from '../../components/common/StatusBadge';
+import { CardSkeleton, MetricCardSkeleton } from '../../components/common/SkeletonLoader';
 
 const SalesHistory = () => {
   const [sales, setSales] = useState([]);
@@ -45,189 +63,196 @@ const SalesHistory = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-6 selection:bg-emerald-500 selection:text-white">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-800 gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Link
-                to="/pharmacy"
-                className="text-xs text-slate-400 hover:text-emerald-400 transition"
-              >
-                ← Dashboard
-              </Link>
-              <span className="text-slate-600">•</span>
+    <div className="space-y-6 sm:space-y-8 animate-fade-in max-w-7xl mx-auto">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/60 uppercase tracking-wider">
+              Dispensary Ledger
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
+            Sales & Invoice Ledger
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Audit recorded transactions, review daily dispensary revenue, and reprint patient sales receipts
+          </p>
+        </div>
+
+        <Link
+          to="/pharmacy/pos"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          <span>Open POS Terminal</span>
+        </Link>
+      </div>
+
+      {/* KPI Metric Cards */}
+      {summary ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <MetricCard
+            title="Today's Revenue"
+            value={`$${summary.todayRevenue.toFixed(2)}`}
+            subtitle="Dispensary sales today"
+            icon={DollarSign}
+            tone="teal"
+          />
+          <MetricCard
+            title="Today's Orders"
+            value={summary.todaySalesCount}
+            subtitle="Checkout transactions today"
+            icon={ShoppingCart}
+            tone="cyan"
+          />
+          <MetricCard
+            title="Total Revenue"
+            value={`$${summary.totalRevenue.toFixed(2)}`}
+            subtitle="Cumulative gross billing"
+            icon={TrendingUp}
+            tone="indigo"
+          />
+          <MetricCard
+            title="Total Invoices"
+            value={summary.totalSalesCount}
+            subtitle="All recorded receipts"
+            icon={Receipt}
+            tone="blue"
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+        </div>
+      )}
+
+      {/* Toolbar & Search Bar */}
+      <div className="p-4 bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-96">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by invoice #, customer name or phone..."
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+          />
+        </div>
+
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white px-2 py-1 transition cursor-pointer self-start sm:self-auto"
+          >
+            Clear Search
+          </button>
+        )}
+      </div>
+
+      {/* Invoices Table Card */}
+      <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          {loading ? (
+            <div className="p-12 text-center text-xs text-slate-400">Loading sales records...</div>
+          ) : sales.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                <Receipt className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
+                {search ? 'No matching invoices found' : 'No sales recorded yet'}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
+                {search
+                  ? 'Try adjusting your search keywords to find the desired invoice record.'
+                  : 'Process transactions using the Cashier POS to record your first sale.'}
+              </p>
               <Link
                 to="/pharmacy/pos"
-                className="text-xs text-slate-400 hover:text-emerald-400 transition"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition"
               >
-                Cashier POS Terminal
+                <ShoppingCart className="w-3.5 h-3.5" />
+                <span>Go to POS Terminal</span>
               </Link>
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Sales & Invoice History</h1>
-            <p className="text-xs text-slate-400">
-              Audit recorded transactions, review daily revenue, and reprint patient sales receipts
-            </p>
-          </div>
-
-          <Link
-            to="/pharmacy/pos"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-md transition cursor-pointer self-start sm:self-auto"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-            </svg>
-            Open POS Terminal
-          </Link>
-        </div>
-
-        {/* Sales Performance Summary Cards */}
-        {summary && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-                Today's Revenue
-              </span>
-              <p className="text-2xl font-bold text-emerald-400 font-mono">
-                ${summary.todayRevenue.toFixed(2)}
-              </p>
-            </div>
-
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-                Today's Orders
-              </span>
-              <p className="text-2xl font-bold text-white font-mono">{summary.todaySalesCount}</p>
-            </div>
-
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-                Total Revenue
-              </span>
-              <p className="text-2xl font-bold text-emerald-400 font-mono">
-                ${summary.totalRevenue.toFixed(2)}
-              </p>
-            </div>
-
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4">
-              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block mb-1">
-                Total Invoices
-              </span>
-              <p className="text-2xl font-bold text-white font-mono">{summary.totalSalesCount}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Search Bar */}
-        <div className="bg-slate-800 border border-slate-700/80 rounded-xl p-4 flex items-center justify-between gap-3">
-          <div className="w-full sm:w-80">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by invoice #, customer name or phone..."
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="text-xs text-slate-400 hover:text-white px-2 py-1 transition cursor-pointer"
-            >
-              Clear Search
-            </button>
-          )}
-        </div>
-
-        {/* Invoices Table */}
-        <div className="bg-slate-800/90 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="p-12 text-center text-xs text-slate-400">Loading sales records...</div>
-            ) : sales.length === 0 ? (
-              <div className="p-12 text-center">
-                <p className="text-sm font-semibold text-slate-300 mb-1">
-                  {search ? 'No matching invoices found' : 'No sales recorded yet'}
-                </p>
-                <p className="text-xs text-slate-500 mb-4">
-                  {search
-                    ? 'Try different search keywords.'
-                    : 'Process transactions using the Cashier POS to record your first sale.'}
-                </p>
-                <Link
-                  to="/pharmacy/pos"
-                  className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-semibold rounded-lg transition inline-block"
-                >
-                  Go to POS Terminal
-                </Link>
-              </div>
-            ) : (
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-700/60">
-                  <tr>
-                    <th className="py-3 px-4">Invoice No</th>
-                    <th className="py-3 px-4">Date & Time</th>
-                    <th className="py-3 px-4">Customer</th>
-                    <th className="py-3 px-4">Items Sold</th>
-                    <th className="py-3 px-4">Payment</th>
-                    <th className="py-3 px-4 text-right">Grand Total</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+          ) : (
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
+                <tr>
+                  <th className="py-3 px-4">Invoice No</th>
+                  <th className="py-3 px-4">Date & Time</th>
+                  <th className="py-3 px-4">Customer</th>
+                  <th className="py-3 px-4">Items Sold</th>
+                  <th className="py-3 px-4">Payment</th>
+                  <th className="py-3 px-4 text-right">Grand Total</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
+                {sales.map((sale) => (
+                  <tr key={sale._id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition group">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                          <Receipt className="w-3.5 h-3.5" />
+                        </div>
+                        <span className="font-mono font-bold text-teal-700 dark:text-teal-400">
+                          {sale.invoiceNumber}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">
+                      {new Date(sale.createdAt).toLocaleDateString()}
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                        {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="font-semibold text-slate-900 dark:text-white block">
+                        {sale.customer?.name || 'Walk-in Customer'}
+                      </span>
+                      {sale.customer?.phone && (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                          {sale.customer.phone}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">
+                        {sale.items?.length || 0} item{sale.items?.length > 1 ? 's' : ''}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate max-w-xs">
+                        {sale.items?.map((it) => `${it.name} (x${it.quantity})`).join(', ')}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 font-mono">
+                        {sale.paymentMethod?.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
+                        ${sale.grandTotal.toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => handleOpenReceipt(sale)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-teal-50 hover:text-teal-700 dark:bg-slate-800 dark:hover:bg-teal-900/40 dark:hover:text-teal-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Receipt</span>
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700/60">
-                  {sales.map((sale) => (
-                    <tr key={sale._id} className="hover:bg-slate-700/30 transition">
-                      <td className="py-3 px-4">
-                        <span className="font-mono font-bold text-emerald-400">{sale.invoiceNumber}</span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-300 font-mono">
-                        {new Date(sale.createdAt).toLocaleDateString()}
-                        <span className="text-[10px] text-slate-500 block">
-                          {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-medium text-white block">
-                          {sale.customer?.name || 'Walk-in Customer'}
-                        </span>
-                        {sale.customer?.phone && (
-                          <span className="text-[11px] text-slate-400 font-mono">{sale.customer.phone}</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-slate-300">
-                          {sale.items?.length || 0} item{sale.items?.length > 1 ? 's' : ''}
-                        </span>
-                        <span className="text-[10px] text-slate-500 block truncate max-w-xs">
-                          {sale.items?.map((it) => `${it.name} (x${it.quantity})`).join(', ')}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-900 text-slate-300 border border-slate-700 font-mono">
-                          {sale.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <span className="font-bold text-emerald-400 font-mono text-sm">
-                          ${sale.grandTotal.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => handleOpenReceipt(sale)}
-                          className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-[11px] font-medium transition cursor-pointer"
-                        >
-                          View Receipt
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 

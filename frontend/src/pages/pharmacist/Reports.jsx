@@ -41,13 +41,13 @@ const PAYMENT_COLORS = {
 const CustomChartTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900 text-white text-xs p-3 rounded-xl shadow-xl border border-slate-800">
-        <p className="font-semibold text-slate-300 mb-1">{label}</p>
-        <p className="font-mono text-teal-400 font-bold text-sm">
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800">
+        <p className="font-semibold text-slate-600 dark:text-slate-300 mb-1">{label}</p>
+        <p className="font-mono text-teal-600 dark:text-teal-400 font-bold text-sm">
           ${Number(payload[0].value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </p>
         {payload[0].payload?.orderCount !== undefined && (
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             {payload[0].payload.orderCount} orders processed
           </p>
         )}
