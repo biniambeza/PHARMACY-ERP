@@ -5,6 +5,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import RoleRoute from './routes/RoleRoute';
 import Login from './pages/auth/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminLayout from './pages/admin/AdminLayout';
 import PharmacistDashboard from './pages/pharmacist/Dashboard';
 import PharmacyLayout from './pages/pharmacist/PharmacyLayout';
 import Medicines from './pages/pharmacist/Medicines';
@@ -29,7 +30,9 @@ function App() {
           <Route element={<ProtectedRoute />}>
             {/* Admin Portal */}
             <Route element={<RoleRoute allowedRoles={['admin']} />}>
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Route>
             </Route>
 
             {/* Pharmacist Portal */}

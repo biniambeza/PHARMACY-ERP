@@ -316,7 +316,8 @@ PHARMACY-ERP/
     │   │   └── ThemeContext.jsx         # Dark/Light mode theme state & persistence
     │   ├── pages/
     │   │   ├── admin/
-    │   │   │   ├── AdminDashboard.jsx   # Admin portal
+    │   │   │   ├── AdminDashboard.jsx   # Admin management portal
+    │   │   │   ├── AdminLayout.jsx      # Enterprise admin sidebar layout & theme toggle
     │   │   │   └── CreatePharmacyModal.jsx
     │   │   ├── auth/
     │   │   │   └── Login.jsx            # Authentication page
