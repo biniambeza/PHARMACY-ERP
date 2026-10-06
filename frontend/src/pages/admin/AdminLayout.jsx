@@ -129,7 +129,9 @@ const AdminLayout = () => {
                 onClick={handleOpenCreateModal}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-300 bg-[#252c3c]/60 hover:bg-[#2b3446] hover:text-white border border-[#2b3446] rounded-xl transition cursor-pointer text-left"
               >
-                <span className="text-teal-400">➕</span>
+                <svg className="w-3.5 h-3.5 text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
                 <span className="truncate">Provision New Pharmacy</span>
               </button>
               <button
@@ -139,7 +141,9 @@ const AdminLayout = () => {
                 }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-300 bg-[#252c3c]/60 hover:bg-[#2b3446] hover:text-white border border-[#2b3446] rounded-xl transition cursor-pointer text-left"
               >
-                <span className="text-cyan-400">🔄</span>
+                <svg className="w-3.5 h-3.5 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
                 <span className="truncate">Sync Platform Stats</span>
               </button>
             </div>
@@ -165,7 +169,13 @@ const AdminLayout = () => {
             className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-[#252c3c] border border-[#2e3749] text-slate-200 hover:border-teal-400/60 transition cursor-pointer"
           >
             <div className="flex items-center gap-2">
-              <span>{isDark ? '🌙' : '☀️'}</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                {isDark ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                )}
+              </svg>
               <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1c222f] text-slate-400 font-mono">
@@ -240,7 +250,9 @@ const AdminLayout = () => {
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             {/* Date Pill */}
             <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
-              <span>📅</span>
+              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
               <span>{new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
 
@@ -261,7 +273,13 @@ const AdminLayout = () => {
               title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               className="p-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
             >
-              {isDark ? '🌙' : '☀️'}
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                {isDark ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                )}
+              </svg>
             </button>
 
             {/* User Profile Dropdown Pill */}

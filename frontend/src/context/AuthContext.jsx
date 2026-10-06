@@ -10,9 +10,11 @@ export const AuthProvider = ({ children }) => {
   });
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const login = async (email, password) => {
     setLoading(true);
+    setError('');
     try {
       const res = await api.post('/auth/login', { email, password });
       const { user: userData, token: userToken } = res.data;
@@ -24,9 +26,10 @@ export const AuthProvider = ({ children }) => {
       setToken(userToken);
       setLoading(false);
       return { success: true, user: userData };
-    } catch (error) {
+    } catch (err) {
       setLoading(false);
-      const message = error.response?.data?.message || 'Login failed';
+      const message = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      setError(message);
       return { success: false, message };
     }
   };
@@ -36,7 +39,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setUser(null);
     setToken(null);
+    setError('');
   };
+
+  const clearError = () => setError('');
 
   return (
     <AuthContext.Provider
@@ -44,8 +50,10 @@ export const AuthProvider = ({ children }) => {
         user,
         token,
         loading,
+        error,
         login,
         logout,
+        clearError,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isPharmacist: user?.role === 'pharmacist',

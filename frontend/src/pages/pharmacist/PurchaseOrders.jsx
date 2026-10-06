@@ -85,7 +85,7 @@ const PurchaseOrders = () => {
                 to="/pharmacy/suppliers"
                 className="text-xs text-slate-400 hover:text-emerald-400 transition"
               >
-                Suppliers Directory 🏢
+                Suppliers Directory
               </Link>
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">Procurement & Purchase Orders</h1>

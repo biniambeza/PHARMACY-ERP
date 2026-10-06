@@ -80,7 +80,7 @@ const Suppliers = () => {
                 to="/pharmacy/procurement"
                 className="text-xs text-slate-400 hover:text-emerald-400 transition"
               >
-                Purchase Orders 📦
+                Purchase Orders
               </Link>
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">Suppliers Directory</h1>

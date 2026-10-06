@@ -117,8 +117,10 @@ const AdminDashboard = () => {
   if (error) {
     return (
       <div className="p-8 bg-white dark:bg-[#161c26] rounded-2xl border border-rose-200 dark:border-rose-900/50 text-center space-y-3 shadow-xs">
-        <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl">
-          ⚠️
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
         </div>
         <h3 className="text-sm font-bold text-slate-900 dark:text-white">
           Platform Data Error
@@ -263,7 +265,11 @@ const AdminDashboard = () => {
           subValue="in SaaS network"
           badgeText="Licensed"
           badgeVariant="teal"
-          icon={<span className="text-teal-600 dark:text-teal-400 font-bold">🏥</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          }
           sparklineData={[
             (stats.totalPharmacies || 1) * 0.4,
             (stats.totalPharmacies || 1) * 0.65,
@@ -283,7 +289,11 @@ const AdminDashboard = () => {
           subValue="authorized operators"
           badgeText="Verified"
           badgeVariant="indigo"
-          icon={<span className="text-indigo-600 dark:text-indigo-400 font-bold">👤</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4a4 4 0 100 8 4 4 0 000-8zM6 20a6 6 0 0112 0H6z" />
+            </svg>
+          }
           sparklineData={[
             (stats.totalPharmacists || 1) * 0.5,
             (stats.totalPharmacists || 1) * 0.7,
@@ -306,7 +316,11 @@ const AdminDashboard = () => {
           subValue="multi-tenant throughput"
           badgeText="Throughput"
           badgeVariant="emerald"
-          icon={<span className="text-emerald-600 dark:text-emerald-400 font-bold">💳</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+            </svg>
+          }
           sparklineData={[
             (stats.totalGrossVolume || 100) * 0.25,
             (stats.totalGrossVolume || 100) * 0.55,
@@ -326,7 +340,11 @@ const AdminDashboard = () => {
           subValue="compliance review queue"
           badgeText={stats.suspendedPharmacies > 0 ? 'Flagged' : 'Healthy'}
           badgeVariant={stats.suspendedPharmacies > 0 ? 'rose' : 'teal'}
-          icon={<span className="text-rose-600 dark:text-rose-400 font-bold">🔒</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          }
           sparklineData={
             stats.suspendedPharmacies > 0 ? [1, 2, stats.suspendedPharmacies] : [1, 0.5, 0]
           }
@@ -369,7 +387,6 @@ const AdminDashboard = () => {
             <span>Provision Pharmacy</span>
           </button>
         }
-        emptyIcon="🏥"
         emptyMessage="No pharmacies found"
         emptySubtext="Provision a new branch or adjust your search filter to display tenant organizations."
       />
@@ -382,8 +399,10 @@ const AdminDashboard = () => {
           <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center text-lg font-bold">
-                  🏥
+                <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">

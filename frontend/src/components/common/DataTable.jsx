@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { Search, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 
 /**
- * DataTable - Reusable enterprise table with search, filter tabs, pagination, and empty states
+ * DataTable - Reusable enterprise ERP table with search, filter tabs, pagination, and empty states
  */
 const DataTable = ({
   title,
@@ -17,7 +18,7 @@ const DataTable = ({
   pageSize = 6,
   renderRow,
   headerAction,
-  emptyIcon = '📋',
+  emptyIcon = null,
   emptyMessage = 'No records found',
   emptySubtext = 'Try adjusting your search or filter parameters',
 }) => {
@@ -60,7 +61,7 @@ const DataTable = ({
   }, [filteredData, currentPage, pageSize]);
 
   return (
-    <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6">
+    <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6 transition-colors">
       {/* Table Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800/80">
         <div>
@@ -90,14 +91,7 @@ const DataTable = ({
                 placeholder={searchPlaceholder}
                 className="w-full pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
               />
-              <svg
-                className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
             </div>
           )}
 
@@ -132,9 +126,15 @@ const DataTable = ({
       <div className="overflow-x-auto">
         {paginatedData.length === 0 ? (
           <div className="py-12 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto text-xl mb-3 shadow-2xs">
-              {emptyIcon}
-            </div>
+            {emptyIcon ? (
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto text-xl mb-3 shadow-2xs">
+                {emptyIcon}
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/80 text-slate-400 flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-slate-800">
+                <Inbox className="w-6 h-6 text-slate-400" />
+              </div>
+            )}
             <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
               {emptyMessage}
             </p>
@@ -198,9 +198,9 @@ const DataTable = ({
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1"
             >
-              Prev
+              <ChevronLeft className="w-3.5 h-3.5" /> Prev
             </button>
             <span className="font-semibold text-slate-700 dark:text-slate-300">
               {currentPage} / {totalPages}
@@ -208,9 +208,9 @@ const DataTable = ({
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1"
             >
-              Next
+              Next <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

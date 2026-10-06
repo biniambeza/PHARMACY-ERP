@@ -78,8 +78,10 @@ const PharmacistDashboard = () => {
   if (error || !overview) {
     return (
       <div className="p-8 bg-white dark:bg-[#161c26] rounded-2xl border border-rose-200 dark:border-rose-900/50 text-center space-y-3 shadow-xs">
-        <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl">
-          ⚠️
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
         </div>
         <h3 className="text-sm font-bold text-slate-900 dark:text-white">
           Data Connection Notice
@@ -145,7 +147,11 @@ const PharmacistDashboard = () => {
           subValue="vs last 30 days"
           badgeText="Inflows"
           badgeVariant="teal"
-          icon={<span className="text-teal-600 dark:text-teal-400 font-bold">$</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
           sparklineData={revTrendData}
           sparklineColor="#0d9488"
           sparklineId="rev-spark"
@@ -163,7 +169,11 @@ const PharmacistDashboard = () => {
           subValue="COGS & Procurement"
           badgeText="Outflows"
           badgeVariant="amber"
-          icon={<span className="text-amber-600 dark:text-amber-400 font-bold">📉</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 17h6l-6-6-6 6h6v-6h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          }
           sparklineData={expTrendData}
           sparklineColor="#f59e0b"
           sparklineId="exp-spark"
@@ -181,7 +191,11 @@ const PharmacistDashboard = () => {
           subValue="Net Operating Profit"
           badgeText="Profitable"
           badgeVariant="emerald"
-          icon={<span className="text-emerald-600 dark:text-emerald-400 font-bold">✨</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          }
           sparklineData={profitTrendData}
           sparklineColor="#10b981"
           sparklineId="profit-spark"
@@ -194,7 +208,11 @@ const PharmacistDashboard = () => {
           subValue={`${kpis.totalStockUnits || 0} units in inventory`}
           badgeText={`${kpis.activeMedicines || 0} SKUs`}
           badgeVariant="indigo"
-          icon={<span className="text-indigo-600 dark:text-indigo-400 font-bold">📦</span>}
+          icon={
+            <svg className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          }
           sparklineData={[
             kpis.activeBatches * 0.7,
             kpis.activeBatches * 0.85,
@@ -231,9 +249,13 @@ const PharmacistDashboard = () => {
             </div>
 
             {recentSales.length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-400">
-                <span className="text-xl block mb-1">🛒</span>
-                No sales recorded today yet.
+              <div className="py-10 text-center">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-slate-400">No sales recorded today yet.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -557,8 +579,13 @@ const PharmacistDashboard = () => {
 
             <div className="space-y-3">
               {topSuppliers.length === 0 ? (
-                <div className="py-6 text-center text-xs text-slate-400">
-                  No suppliers registered yet.
+                <div className="py-6 text-center">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                    <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-slate-400">No suppliers registered yet.</p>
                 </div>
               ) : (
                 topSuppliers.slice(0, 4).map((sup) => (
@@ -581,8 +608,9 @@ const PharmacistDashboard = () => {
                           maximumFractionDigits: 2,
                         })}
                       </span>
-                      <span className="text-[10px] text-amber-500 font-semibold block">
-                        ★ 4.8 Rating
+                      <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                        4.8 Rating
                       </span>
                     </div>
                   </div>
@@ -615,8 +643,13 @@ const PharmacistDashboard = () => {
 
             <div className="space-y-2.5">
               {operationalTasks.length === 0 ? (
-                <div className="py-6 text-center text-xs text-slate-400">
-                  ✓ All operational items clear!
+                <div className="py-6 text-center">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 flex items-center justify-center mx-auto mb-2 text-emerald-600 dark:text-emerald-400">
+                    <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">All operational items clear</p>
                 </div>
               ) : (
                 operationalTasks.map((task) => {
