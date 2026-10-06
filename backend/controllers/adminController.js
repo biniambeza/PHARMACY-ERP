@@ -1,5 +1,7 @@
 const Pharmacy = require('../models/Pharmacy');
 const User = require('../models/User');
+const Sale = require('../models/Sale');
+const StockBatch = require('../models/StockBatch');
 
 // @desc    Create a new pharmacy and its pharmacist user account
 // @route   POST /api/admin/pharmacies
@@ -94,10 +96,27 @@ const getPharmacies = async (req, res) => {
       .populate('owner', 'name email role')
       .sort({ createdAt: -1 });
 
+    const pharmaciesWithMetrics = await Promise.all(
+      pharmacies.map(async (p) => {
+        const pObj = p.toObject();
+        const activeBatches = await StockBatch.countDocuments({
+          pharmacyId: p._id,
+          status: 'active',
+          quantity: { $gt: 0 },
+        });
+        const totalSales = await Sale.countDocuments({ pharmacyId: p._id });
+        return {
+          ...pObj,
+          activeBatches,
+          totalSales,
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
-      count: pharmacies.length,
-      pharmacies,
+      count: pharmaciesWithMetrics.length,
+      pharmacies: pharmaciesWithMetrics,
     });
   } catch (error) {
     return res.status(500).json({
@@ -177,6 +196,13 @@ const getSystemStats = async (req, res) => {
     const suspendedPharmacies = await Pharmacy.countDocuments({ status: 'suspended' });
     const totalPharmacists = await User.countDocuments({ role: 'pharmacist' });
 
+    // Multi-tenant aggregated throughput
+    const salesAgg = await Sale.aggregate([
+      { $group: { _id: null, totalGrossVolume: { $sum: '$grandTotal' }, totalTransactions: { $sum: 1 } } },
+    ]);
+    const totalGrossVolume = Number((salesAgg[0]?.totalGrossVolume || 0).toFixed(2));
+    const totalTransactions = salesAgg[0]?.totalTransactions || 0;
+
     return res.status(200).json({
       success: true,
       stats: {
@@ -184,6 +210,8 @@ const getSystemStats = async (req, res) => {
         activePharmacies,
         suspendedPharmacies,
         totalPharmacists,
+        totalGrossVolume,
+        totalTransactions,
       },
     });
   } catch (error) {

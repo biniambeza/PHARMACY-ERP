@@ -311,6 +311,12 @@ PHARMACY-ERP/
     │   │   ├── salesApi.js
     │   │   ├── stockApi.js
     │   │   └── supplierApi.js
+    │   ├── components/                  # Enterprise shared UI primitives
+    │   │   └── common/
+    │   │       ├── DataTable.jsx        # Searchable, filterable, paginated table
+    │   │       ├── MetricCard.jsx       # KPI card with SVG sparklines
+    │   │       ├── SkeletonLoader.jsx   # Card & table shimmer placeholders
+    │   │       └── StatusBadge.jsx      # Reusable status pill indicators
     │   ├── context/
     │   │   ├── AuthContext.jsx          # Global auth state & user session
     │   │   └── ThemeContext.jsx         # Dark/Light mode theme state & persistence

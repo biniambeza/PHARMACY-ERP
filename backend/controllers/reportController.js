@@ -366,6 +366,7 @@ const getDashboardOverview = async (req, res) => {
         operationalTasks: operationalTasks.slice(0, 5),
         recentActivities,
         topSuppliers,
+        recentSales: sales.slice(0, 5),
       },
     });
   } catch (error) {

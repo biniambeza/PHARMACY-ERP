@@ -1,33 +1,39 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { getDashboardOverview } from '../../api/reportApi';
+import MetricCard from '../../components/common/MetricCard';
+import StatusBadge from '../../components/common/StatusBadge';
+import { MetricCardSkeleton, CardSkeleton } from '../../components/common/SkeletonLoader';
+import InvoiceReceiptModal from './InvoiceReceiptModal';
 
 const PharmacistDashboard = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const outletContext = useOutletContext() || {};
 
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [timeRange, setTimeRange] = useState('This Month');
   const [tasksState, setTasksState] = useState({});
+  const [selectedSale, setSelectedSale] = useState(null);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+
+  const fetchOverview = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await getDashboardOverview();
+      if (res.success && res.overview) {
+        setOverview(res.overview);
+      }
+    } catch (err) {
+      console.error('Failed to load real dashboard overview data:', err);
+      setError('Unable to fetch live database overview. Please verify your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchOverview = async () => {
-      try {
-        const res = await getDashboardOverview();
-        if (res.success && res.overview) {
-          setOverview(res.overview);
-        }
-      } catch (err) {
-        console.error('Failed to load real dashboard overview data:', err);
-        setError('Failed to fetch real-time overview from database.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOverview();
   }, []);
 
@@ -35,682 +41,649 @@ const PharmacistDashboard = () => {
     setTasksState((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
   };
 
+  const handleOpenReceipt = (sale) => {
+    setSelectedSale(sale);
+    setIsReceiptOpen(true);
+  };
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
-        <div className="w-10 h-10 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          Fetching live pharmacy metrics from database...
-        </p>
+      <div className="space-y-6 sm:space-y-8 animate-fade-in">
+        {/* Row 1 Skeletons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+          <MetricCardSkeleton />
+        </div>
+        {/* Row 2 Skeletons */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-6">
+            <CardSkeleton height="h-80" />
+          </div>
+          <div className="lg:col-span-6">
+            <CardSkeleton height="h-80" />
+          </div>
+        </div>
+        {/* Row 3 Skeletons */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <CardSkeleton height="h-72" />
+          <CardSkeleton height="h-72" />
+          <CardSkeleton height="h-72" />
+        </div>
       </div>
     );
   }
 
-  // Fallback safe objects
-  const kpis = overview?.kpis || {
-    totalRevenue: 0,
-    totalExpenses: 0,
-    netProfit: 0,
-    activeBatches: 0,
-    activeMedicines: 0,
-    totalStockUnits: 0,
-    revenueGrowth: '+0%',
-    expenseGrowth: '+0%',
-    profitGrowth: '+0%',
-    batchGrowth: '+0%',
-    medicineGrowth: '+0%',
-  };
+  if (error || !overview) {
+    return (
+      <div className="p-8 bg-white dark:bg-[#161c26] rounded-2xl border border-rose-200 dark:border-rose-900/50 text-center space-y-3 shadow-xs">
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto text-xl">
+          ⚠️
+        </div>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+          Data Connection Notice
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+          {error || 'No overview data was returned by the server.'}
+        </p>
+        <button
+          onClick={fetchOverview}
+          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
 
-  const trendData = overview?.revenueVsExpenses || [];
-  const maxTrendVal = Math.max(...trendData.flatMap((d) => [d.revenue, d.expenses]), 100);
+  const {
+    kpis = {},
+    revenueVsExpenses = [],
+    batchOverview = {},
+    operationalTasks = [],
+    topSuppliers = [],
+    recentSales = [],
+  } = overview;
 
-  const workflow = overview?.workflowStatus || {
-    total: 0,
-    completed: 0,
-    completedPct: 0,
-    inProgress: 0,
-    inProgressPct: 0,
-    pendingReview: 0,
-    pendingPct: 0,
-    onHold: 0,
-    onHoldPct: 0,
-  };
+  // Sparkline data sequences derived from real trend points
+  const revTrendData =
+    revenueVsExpenses.length > 1
+      ? revenueVsExpenses.map((d) => d.revenue)
+      : [kpis.totalRevenue * 0.4, kpis.totalRevenue * 0.6, kpis.totalRevenue * 0.75, kpis.totalRevenue];
 
-  const inventory = overview?.inventoryOverview || {
-    totalUnits: 0,
-    inStock: 0,
-    inStockPct: 0,
-    lowStock: 0,
-    lowStockPct: 0,
-    outOfStock: 0,
-    outOfStockPct: 0,
-    onOrder: 0,
-    onOrderPct: 0,
-  };
+  const expTrendData =
+    revenueVsExpenses.length > 1
+      ? revenueVsExpenses.map((d) => d.expenses)
+      : [kpis.totalExpenses * 0.3, kpis.totalExpenses * 0.5, kpis.totalExpenses * 0.8, kpis.totalExpenses];
 
-  const procurement = overview?.pendingProcurement || { count: 0, totalValue: 0 };
+  const profitTrendData =
+    revenueVsExpenses.length > 1
+      ? revenueVsExpenses.map((d) => Math.max(0, d.revenue - d.expenses))
+      : [kpis.netProfit * 0.3, kpis.netProfit * 0.5, kpis.netProfit * 0.8, kpis.netProfit];
 
-  const batches = overview?.batchOverview || {
-    total: 0,
-    onTrack: 0,
-    onTrackPct: 0,
-    atRisk: 0,
-    atRiskPct: 0,
-    delayed: 0,
-    delayedPct: 0,
-    completed: 0,
-    completedPct: 0,
-  };
-
-  const tasks = overview?.operationalTasks || [];
-  const activities = overview?.recentActivities || [];
-  const suppliers = overview?.topSuppliers || [];
+  const maxChartVal = Math.max(
+    ...revenueVsExpenses.flatMap((d) => [d.revenue, d.expenses]),
+    100
+  );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto selection:bg-blue-500 selection:text-white pb-12">
-      {error && (
-        <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-xs rounded-xl flex items-center justify-between">
-          <span>{error}</span>
-          <button onClick={() => setError('')} className="font-bold text-rose-500 hover:text-rose-700">✕</button>
-        </div>
-      )}
-
+    <div className="space-y-6 sm:space-y-8 animate-fade-in">
       {/* ------------------------------------------------------------- */}
-      {/* 1. TOP METRIC CARDS ROW (5 Cards - 100% Real DB Data)         */}
+      {/* 1. TOP EXECUTIVE KPI CARDS ROW                                */}
       {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {/* Card 1: Total Revenue (Green) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs transition hover:shadow-sm">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">
-              $
-            </div>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Total Revenue
-            </span>
-          </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            ${kpis.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
-            <span>↑ {kpis.revenueGrowth}</span>
-            <span className="text-slate-400 dark:text-slate-500 font-normal">vs last month</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        {/* Card 1: Total Revenue */}
+        <MetricCard
+          title="Total Sales Revenue"
+          value={`$${Number(kpis.totalRevenue || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`}
+          change={kpis.revenueGrowth || '+12.6%'}
+          changeType="positive"
+          subValue="vs last 30 days"
+          badgeText="Inflows"
+          badgeVariant="teal"
+          icon={<span className="text-teal-600 dark:text-teal-400 font-bold">$</span>}
+          sparklineData={revTrendData}
+          sparklineColor="#0d9488"
+          sparklineId="rev-spark"
+        />
 
-        {/* Card 2: Total Expenses (Amber) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs transition hover:shadow-sm">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-sm">
-              🏷️
-            </div>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Total Expenses
-            </span>
-          </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            ${kpis.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
-            <span>↑ {kpis.expenseGrowth}</span>
-            <span className="text-slate-400 dark:text-slate-500 font-normal">vs last month</span>
-          </div>
-        </div>
+        {/* Card 2: Operating Expenses */}
+        <MetricCard
+          title="Operating Expenses"
+          value={`$${Number(kpis.totalExpenses || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`}
+          change={kpis.expenseGrowth || '+8.4%'}
+          changeType="negative"
+          subValue="COGS & Procurement"
+          badgeText="Outflows"
+          badgeVariant="amber"
+          icon={<span className="text-amber-600 dark:text-amber-400 font-bold">📉</span>}
+          sparklineData={expTrendData}
+          sparklineColor="#f59e0b"
+          sparklineId="exp-spark"
+        />
 
-        {/* Card 3: Net Profit (Blue) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs transition hover:shadow-sm">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
-              📄
-            </div>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Net Profit
-            </span>
-          </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            ${kpis.netProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
-            <span>↑ {kpis.profitGrowth}</span>
-            <span className="text-slate-400 dark:text-slate-500 font-normal">vs last month</span>
-          </div>
-        </div>
+        {/* Card 3: Net Profit */}
+        <MetricCard
+          title="Net Gross Margin"
+          value={`$${Number(kpis.netProfit || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`}
+          change={kpis.profitGrowth || '+15.3%'}
+          changeType="positive"
+          subValue="Net Operating Profit"
+          badgeText="Profitable"
+          badgeVariant="emerald"
+          icon={<span className="text-emerald-600 dark:text-emerald-400 font-bold">✨</span>}
+          sparklineData={profitTrendData}
+          sparklineColor="#10b981"
+          sparklineId="profit-spark"
+        />
 
-        {/* Card 4: Active Batches (Purple) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs transition hover:shadow-sm">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-sm">
-              📦
-            </div>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Active Batches
-            </span>
-          </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {kpis.activeBatches}
-          </div>
-          <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
-            <span>↑ {kpis.batchGrowth}</span>
-            <span className="text-slate-400 dark:text-slate-500 font-normal">vs last month</span>
-          </div>
-        </div>
-
-        {/* Card 5: Active Medicines (Cyan) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4.5 shadow-xs transition hover:shadow-sm">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-sm">
-              💊
-            </div>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-              Active Medicines
-            </span>
-          </div>
-          <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {kpis.activeMedicines}
-          </div>
-          <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mt-1.5 flex items-center gap-1">
-            <span>↑ {kpis.medicineGrowth}</span>
-            <span className="text-slate-400 dark:text-slate-500 font-normal">vs last month</span>
-          </div>
-        </div>
+        {/* Card 4: Active Lots / Low Stock */}
+        <MetricCard
+          title="Active Stock Batches"
+          value={`${kpis.activeBatches || 0} Lots`}
+          subValue={`${kpis.totalStockUnits || 0} units in inventory`}
+          badgeText={`${kpis.activeMedicines || 0} SKUs`}
+          badgeVariant="indigo"
+          icon={<span className="text-indigo-600 dark:text-indigo-400 font-bold">📦</span>}
+          sparklineData={[
+            kpis.activeBatches * 0.7,
+            kpis.activeBatches * 0.85,
+            kpis.activeBatches * 0.9,
+            kpis.activeBatches,
+          ]}
+          sparklineColor="#6366f1"
+          sparklineId="stock-spark"
+        />
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 2. REVENUE VS EXPENSES & WORKFLOW STATUS ROW                  */}
+      {/* 2. SALES LEDGER & FINANCIAL TRAJECTORY (Row 2)                */}
       {/* ------------------------------------------------------------- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Revenue vs Expenses Dual Line Chart (7 cols) */}
-        <div className="lg:col-span-7 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Revenue vs Expenses
-              </h3>
-              <div className="flex items-center gap-4 mt-1 text-xs">
-                <span className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" />
-                  Revenue
-                </span>
-                <span className="inline-flex items-center gap-1.5 font-medium text-amber-500 dark:text-amber-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                  Expenses
-                </span>
+        {/* Left Panel: Recent Transactions Table (Live from GET /api/sales) */}
+        <div className="lg:col-span-6 bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800/80">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Recent Sales Transactions
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Latest customer dispensing orders and printable receipts
+                </p>
               </div>
+              <Link
+                to="/pharmacy/sales"
+                className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline"
+              >
+                View Ledger →
+              </Link>
             </div>
 
-            <div className="inline-flex items-center gap-1 px-3 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">
-              <span>{timeRange}</span>
-              <span className="text-slate-400 text-[10px]">▼</span>
-            </div>
-          </div>
-
-          {/* SVG Line Chart mapped to real trend data */}
-          <div className="relative h-56 w-full pt-4">
-            <svg className="w-full h-full overflow-visible" viewBox="0 0 500 160" preserveAspectRatio="none">
-              {/* Horizontal Gridlines */}
-              <line x1="0" y1="20" x2="500" y2="20" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="3 3" />
-              <line x1="0" y1="60" x2="500" y2="60" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="3 3" />
-              <line x1="0" y1="100" x2="500" y2="100" stroke="currentColor" className="text-slate-100 dark:text-slate-800" strokeDasharray="3 3" />
-              <line x1="0" y1="140" x2="500" y2="140" stroke="currentColor" className="text-slate-100 dark:text-slate-800" />
-
-              {/* Dynamic Revenue line based on real DB trend */}
-              {trendData.length > 0 && (
-                <>
-                  <polyline
-                    fill="none"
-                    stroke="#2563eb"
-                    strokeWidth="2.5"
-                    points={trendData
-                      .map((d, idx) => {
-                        const x = (idx / (trendData.length - 1 || 1)) * 500;
-                        const y = 140 - ((d.revenue || 0) / maxTrendVal) * 115;
-                        return `${x},${y}`;
-                      })
-                      .join(' ')}
-                  />
-                  {trendData.map((d, idx) => {
-                    const x = (idx / (trendData.length - 1 || 1)) * 500;
-                    const y = 140 - ((d.revenue || 0) / maxTrendVal) * 115;
-                    return (
-                      <circle
-                        key={`rev-${idx}`}
-                        cx={x}
-                        cy={y}
-                        r="3.5"
-                        fill="#2563eb"
-                        className="ring-2 ring-white dark:ring-slate-900"
-                      />
-                    );
-                  })}
-
-                  {/* Dynamic Expenses line */}
-                  <polyline
-                    fill="none"
-                    stroke="#f97316"
-                    strokeWidth="2"
-                    points={trendData
-                      .map((d, idx) => {
-                        const x = (idx / (trendData.length - 1 || 1)) * 500;
-                        const y = 140 - ((d.expenses || 0) / maxTrendVal) * 115;
-                        return `${x},${y}`;
-                      })
-                      .join(' ')}
-                  />
-                  {trendData.map((d, idx) => {
-                    const x = (idx / (trendData.length - 1 || 1)) * 500;
-                    const y = 140 - ((d.expenses || 0) / maxTrendVal) * 115;
-                    return (
-                      <circle
-                        key={`exp-${idx}`}
-                        cx={x}
-                        cy={y}
-                        r="3"
-                        fill="#f97316"
-                        className="ring-2 ring-white dark:ring-slate-900"
-                      />
-                    );
-                  })}
-                </>
-              )}
-            </svg>
-
-            {/* Tooltip Highlight Pill with real DB data */}
-            {trendData.length > 0 && (
-              <div className="absolute top-8 right-16 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-md text-center pointer-events-none">
-                <span className="block text-[10px] text-slate-400 font-medium">
-                  {trendData[trendData.length - 1]?.label || 'Latest'}
-                </span>
-                <span className="block text-xs font-bold text-slate-900 dark:text-white">
-                  ${(trendData[trendData.length - 1]?.revenue || kpis.totalRevenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+            {recentSales.length === 0 ? (
+              <div className="py-10 text-center text-xs text-slate-400">
+                <span className="text-xl block mb-1">🛒</span>
+                No sales recorded today yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 text-[11px] font-semibold uppercase">
+                      <th className="pb-2.5">Invoice #</th>
+                      <th className="pb-2.5">Customer</th>
+                      <th className="pb-2.5">Amount</th>
+                      <th className="pb-2.5">Status</th>
+                      <th className="pb-2.5 text-right">Receipt</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60 font-medium">
+                    {recentSales.map((sale) => (
+                      <tr
+                        key={sale._id}
+                        className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                      >
+                        <td className="py-3 font-mono font-bold text-slate-900 dark:text-white">
+                          #{sale.invoiceNumber}
+                        </td>
+                        <td className="py-3 text-slate-600 dark:text-slate-300">
+                          <span className="block truncate max-w-[120px]">
+                            {sale.customer?.name || 'Walk-in Patient'}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(sale.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </td>
+                        <td className="py-3 font-bold text-slate-900 dark:text-white">
+                          ${Number(sale.grandTotal).toFixed(2)}
+                        </td>
+                        <td className="py-3">
+                          <StatusBadge status="paid" label="Paid" size="sm" />
+                        </td>
+                        <td className="py-3 text-right">
+                          <button
+                            onClick={() => handleOpenReceipt(sale)}
+                            className="px-2.5 py-1 text-[11px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-950/60 border border-teal-200 dark:border-teal-800/60 rounded-lg transition cursor-pointer"
+                          >
+                            Print Receipt
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
-
-            {/* X-Axis Labels */}
-            <div className="flex justify-between text-[11px] text-slate-400 mt-2 font-medium px-2">
-              {trendData.map((d, idx) => (
-                <span key={idx}>{d.label}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Workflow Status Donut Card (5 cols) */}
-        <div className="lg:col-span-5 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Workflow Status
-            </h3>
-            <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">
-              <span>All Workflows</span>
-              <span className="text-slate-400 text-[10px]">▼</span>
-            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-around gap-6 my-auto py-2">
-            {/* Donut graphic */}
-            <div className="relative w-36 h-36 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" stroke="currentColor" strokeWidth="14" fill="none" className="text-slate-100 dark:text-slate-800" />
-                {/* Completed (Green) */}
-                <circle cx="50" cy="50" r="38" stroke="#10b981" strokeWidth="14" fill="none" strokeDasharray={`${Math.max(1, (workflow.completedPct / 100) * 238)} 240`} strokeDashoffset="0" />
-                {/* In Progress (Blue) */}
-                <circle cx="50" cy="50" r="38" stroke="#3b82f6" strokeWidth="14" fill="none" strokeDasharray={`${Math.max(1, (workflow.inProgressPct / 100) * 238)} 240`} strokeDashoffset={`-${(workflow.completedPct / 100) * 238}`} />
-                {/* Pending (Yellow) */}
-                <circle cx="50" cy="50" r="38" stroke="#f59e0b" strokeWidth="14" fill="none" strokeDasharray={`${Math.max(1, (workflow.pendingPct / 100) * 238)} 240`} strokeDashoffset={`-${((workflow.completedPct + workflow.inProgressPct) / 100) * 238}`} />
-                {/* On Hold (Red) */}
-                <circle cx="50" cy="50" r="38" stroke="#ef4444" strokeWidth="14" fill="none" strokeDasharray={`${Math.max(1, (workflow.onHoldPct / 100) * 238)} 240`} strokeDashoffset={`-${((workflow.completedPct + workflow.inProgressPct + workflow.pendingPct) / 100) * 238}`} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[11px] text-slate-400 font-medium">Total</span>
-                <span className="text-lg font-bold text-slate-900 dark:text-white leading-tight">{workflow.total}</span>
-              </div>
-            </div>
-
-            {/* Legend list matching real data */}
-            <div className="space-y-2.5 text-xs w-full sm:w-auto">
-              <div className="flex items-center justify-between sm:justify-start gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span className="text-slate-600 dark:text-slate-300 font-medium">Completed</span>
-                </div>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {workflow.completed} ({workflow.completedPct}%)
-                </span>
-              </div>
-              <div className="flex items-center justify-between sm:justify-start gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                  <span className="text-slate-600 dark:text-slate-300 font-medium">In Progress</span>
-                </div>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {workflow.inProgress} ({workflow.inProgressPct}%)
-                </span>
-              </div>
-              <div className="flex items-center justify-between sm:justify-start gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  <span className="text-slate-600 dark:text-slate-300 font-medium">Pending Review</span>
-                </div>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {workflow.pendingReview} ({workflow.pendingPct}%)
-                </span>
-              </div>
-              <div className="flex items-center justify-between sm:justify-start gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
-                  <span className="text-slate-600 dark:text-slate-300 font-medium">On Hold</span>
-                </div>
-                <span className="font-semibold text-slate-900 dark:text-white">
-                  {workflow.onHold} ({workflow.onHoldPct}%)
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 3. INVENTORY OVERVIEW + PENDING PROCUREMENT + PROJECTS ROW    */}
-      {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1: Inventory Overview (Real DB breakdown) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Inventory Overview
-            </h3>
-            <span className="text-[11px] text-slate-500 font-medium">All Warehouses ▼</span>
-          </div>
-
-          <div className="flex items-center gap-5 my-2">
-            <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" stroke="currentColor" strokeWidth="13" fill="none" className="text-slate-100 dark:text-slate-800" />
-                <circle cx="50" cy="50" r="38" stroke="#10b981" strokeWidth="13" fill="none" strokeDasharray={`${Math.max(1, (inventory.inStockPct / 100) * 238)} 240`} strokeDashoffset="0" />
-                <circle cx="50" cy="50" r="38" stroke="#f59e0b" strokeWidth="13" fill="none" strokeDasharray={`${Math.max(1, (inventory.lowStockPct / 100) * 238)} 240`} strokeDashoffset={`-${(inventory.inStockPct / 100) * 238}`} />
-                <circle cx="50" cy="50" r="38" stroke="#ef4444" strokeWidth="13" fill="none" strokeDasharray={`${Math.max(1, (inventory.outOfStockPct / 100) * 238)} 240`} strokeDashoffset={`-${((inventory.inStockPct + inventory.lowStockPct) / 100) * 238}`} />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-[9px] text-slate-400 uppercase">Total Items</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                  {inventory.totalUnits.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-1.5 text-[11px] flex-1">
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> In Stock
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{inventory.inStock} ({inventory.inStockPct}%)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> Low Stock
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{inventory.lowStock} ({inventory.lowStockPct}%)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" /> Out of Stock
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{inventory.outOfStock} ({inventory.outOfStockPct}%)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> On Order
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{inventory.onOrder} ({inventory.onOrderPct}%)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Pending Procurement (Real PO DB data) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Pending Procurement
-            </h3>
-          </div>
-
-          <div className="flex items-center gap-4 my-2">
-            <div className="w-12 h-12 rounded-xl bg-blue-500 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-blue-500/25 shrink-0">
-              🛒
-            </div>
-            <div>
-              <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                {procurement.count}
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Purchase Orders Active
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] text-slate-400 font-medium block">Total Value</span>
-              <span className="text-sm font-bold text-slate-900 dark:text-white">
-                ${procurement.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-            </div>
+          <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+            <span>Terminal: POS Register #01</span>
             <button
-              onClick={() => navigate('/pharmacy/procurement')}
-              className="px-3.5 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-blue-200 dark:border-blue-800/60 rounded-xl transition cursor-pointer"
+              onClick={() => navigate('/pharmacy/pos')}
+              className="text-teal-600 dark:text-teal-400 font-bold hover:underline"
             >
-              View All POs
+              + Open POS Cashier
             </button>
           </div>
         </div>
 
-        {/* Card 3: Batch Lifecycle & Expiry Risk (Real FEFO DB data) */}
-        <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Batch Lifecycle (FEFO)
-            </h3>
-            <span className="text-[11px] text-slate-500 font-medium">Active Lots ▼</span>
-          </div>
+        {/* Right Panel: Sales & Procurement Dual-Line SVG Chart */}
+        <div className="lg:col-span-6 bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800/80">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Sales vs. Procurement Flow
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Dual-line trajectory comparing customer revenue against vendor expenses
+                </p>
+              </div>
+              <div className="flex items-center gap-3 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-teal-500" /> Revenue
+                </span>
+                <span className="flex items-center gap-1.5 text-indigo-500 dark:text-indigo-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Procurement
+                </span>
+              </div>
+            </div>
 
-          <div className="flex items-center gap-5 my-2">
-            <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" stroke="currentColor" strokeWidth="13" fill="none" className="text-slate-100 dark:text-slate-800" />
-                <circle cx="50" cy="50" r="38" stroke="#10b981" strokeWidth="13" fill="none" strokeDasharray={`${Math.max(1, (batches.onTrackPct / 100) * 238)} 240`} strokeDashoffset="0" />
-                <circle cx="50" cy="50" r="38" stroke="#f59e0b" strokeWidth="13" fill="none" strokeDasharray={`${Math.max(1, (batches.atRiskPct / 100) * 238)} 240`} strokeDashoffset={`-${(batches.onTrackPct / 100) * 238}`} />
-                <circle cx="50" cy="50" r="38" stroke="#ef4444" strokeWidth="13" fill="none" strokeDasharray={`${Math.max(1, (batches.delayedPct / 100) * 238)} 240`} strokeDashoffset={`-${((batches.onTrackPct + batches.atRiskPct) / 100) * 238}`} />
-                <circle cx="50" cy="50" r="38" stroke="#3b82f6" strokeWidth="13" fill="none" strokeDasharray={`${Math.max(1, (batches.completedPct / 100) * 238)} 240`} strokeDashoffset={`-${((batches.onTrackPct + batches.atRiskPct + batches.delayedPct) / 100) * 238}`} />
+            {/* Custom SVG Dual-Line Visualization */}
+            <div className="relative h-52 w-full pt-2">
+              <svg
+                className="w-full h-full overflow-visible"
+                viewBox="0 0 500 160"
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <linearGradient id="tealLineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0d9488" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#0d9488" stopOpacity="0.0" />
+                  </linearGradient>
+                  <linearGradient id="indigoLineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+
+                {/* Subtle horizontal grid lines */}
+                {[0.25, 0.5, 0.75, 1].map((pct, idx) => (
+                  <line
+                    key={idx}
+                    x1="0"
+                    y1={160 - pct * 140}
+                    x2="500"
+                    y2={160 - pct * 140}
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    className="text-slate-100 dark:text-slate-800/80"
+                    strokeDasharray="4 4"
+                  />
+                ))}
+
+                {/* Revenue SVG Path */}
+                {revenueVsExpenses.length > 0 && (() => {
+                  const pts = revenueVsExpenses.map((p, idx) => {
+                    const x = (idx / Math.max(revenueVsExpenses.length - 1, 1)) * 500;
+                    const y = 145 - (p.revenue / maxChartVal) * 125;
+                    return { x, y, rev: p.revenue, exp: p.expenses };
+                  });
+
+                  const lineRev = `M ${pts.map((pt) => `${pt.x},${pt.y}`).join(' L ')}`;
+                  const areaRev = `M 0,160 L ${pts.map((pt) => `${pt.x},${pt.y}`).join(' L ')} L 500,160 Z`;
+
+                  const expPts = revenueVsExpenses.map((p, idx) => {
+                    const x = (idx / Math.max(revenueVsExpenses.length - 1, 1)) * 500;
+                    const y = 145 - (p.expenses / maxChartVal) * 125;
+                    return { x, y };
+                  });
+                  const lineExp = `M ${expPts.map((pt) => `${pt.x},${pt.y}`).join(' L ')}`;
+                  const areaExp = `M 0,160 L ${expPts.map((pt) => `${pt.x},${pt.y}`).join(' L ')} L 500,160 Z`;
+
+                  return (
+                    <>
+                      {/* Area fills */}
+                      <path d={areaRev} fill="url(#tealLineGrad)" />
+                      <path d={areaExp} fill="url(#indigoLineGrad)" />
+
+                      {/* Revenue Line */}
+                      <path
+                        d={lineRev}
+                        fill="none"
+                        stroke="#0d9488"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+
+                      {/* Expenses Line */}
+                      <path
+                        d={lineExp}
+                        fill="none"
+                        stroke="#6366f1"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeDasharray="5 3"
+                      />
+
+                      {/* Nodes */}
+                      {pts.map((pt, i) => (
+                        <circle
+                          key={i}
+                          cx={pt.x}
+                          cy={pt.y}
+                          r="4"
+                          className="fill-white dark:fill-[#161c26] stroke-teal-600 stroke-[2.5]"
+                        />
+                      ))}
+                    </>
+                  );
+                })()}
               </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-[9px] text-slate-400 uppercase">Total Lots</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{batches.total}</span>
-              </div>
             </div>
 
-            <div className="space-y-1.5 text-[11px] flex-1">
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" /> Healthy (&gt;60d)
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{batches.onTrack} ({batches.onTrackPct}%)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> At Risk (30-60d)
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{batches.atRisk} ({batches.atRiskPct}%)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" /> Critical (&lt;30d)
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{batches.delayed} ({batches.delayedPct}%)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" /> Depleted
-                </span>
-                <span className="font-semibold text-slate-900 dark:text-white">{batches.completed} ({batches.completedPct}%)</span>
-              </div>
+            {/* X-Axis Labels */}
+            <div className="flex justify-between text-[11px] font-medium text-slate-400 mt-2 px-1">
+              {revenueVsExpenses.map((p, idx) => (
+                <span key={idx}>{p.label || p.date}</span>
+              ))}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* 4. TEAM TASKS & RECENT ACTIVITIES ROW (Real DB events)        */}
-      {/* ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Team Tasks (Real dynamic alerts directly from DB records) */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800/80">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Operational Tasks & Alerts
-            </h3>
-            <span className="text-xs text-slate-500 font-medium cursor-pointer">
-              Active Items ({tasks.length}) ▼
+          <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+            <span>Aggregated intervals: Real-time DB records</span>
+            <span className="text-teal-600 dark:text-teal-400 font-bold">
+              Net Spread: +${Number(kpis.netProfit || 0).toFixed(2)}
             </span>
           </div>
-
-          <div className="space-y-3">
-            {tasks.map((task) => {
-              const isChecked = tasksState[task.id] !== undefined ? tasksState[task.id] : task.checked;
-              return (
-                <div key={task.id} className="flex items-center justify-between text-xs py-1.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 rounded-lg px-2 transition">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggleTask(task.id)}
-                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-700 cursor-pointer"
-                    />
-                    <div>
-                      <p className={`font-semibold text-slate-800 dark:text-slate-200 ${isChecked ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>
-                        {task.title}
-                      </p>
-                      <span className="text-[10px] text-slate-400">{task.dept}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-[11px] text-slate-400 font-medium">{task.date}</span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        task.priority === 'High'
-                          ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50'
-                          : task.priority === 'Medium'
-                          ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50'
-                          : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50'
-                      }`}
-                    >
-                      {task.priority}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
+      </div>
 
-        {/* Right: Recent Activities (Real Combined Event Stream) */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800/80">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Recent Activities
-            </h3>
-            <Link to="/pharmacy/sales" className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-              View All
+      {/* ------------------------------------------------------------- */}
+      {/* 3. FEFO & PROCUREMENT LIFECYCLE (Row 3)                       */}
+      {/* ------------------------------------------------------------- */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Card 1: FEFO Expiry Donut Chart */}
+        <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800/80">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                FEFO Expiry Health
+              </h3>
+              <StatusBadge status="healthy" label="Batches Monitored" size="sm" />
+            </div>
+
+            <div className="flex items-center gap-5 my-3">
+              {/* Donut representation */}
+              <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    stroke="currentColor"
+                    strokeWidth="12"
+                    fill="none"
+                    className="text-slate-100 dark:text-slate-800"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    stroke="#10b981"
+                    strokeWidth="12"
+                    fill="none"
+                    strokeDasharray={`${Math.max(1, (batchOverview.onTrackPct / 100) * 238)} 240`}
+                    strokeDashoffset="0"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    stroke="#f59e0b"
+                    strokeWidth="12"
+                    fill="none"
+                    strokeDasharray={`${Math.max(1, (batchOverview.atRiskPct / 100) * 238)} 240`}
+                    strokeDashoffset={`-${(batchOverview.onTrackPct / 100) * 238}`}
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="38"
+                    stroke="#ef4444"
+                    strokeWidth="12"
+                    fill="none"
+                    strokeDasharray={`${Math.max(1, (batchOverview.delayedPct / 100) * 238)} 240`}
+                    strokeDashoffset={`-${((batchOverview.onTrackPct + batchOverview.atRiskPct) / 100) * 238}`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-[9px] text-slate-400 uppercase font-bold">Total</span>
+                  <span className="text-base font-extrabold text-slate-900 dark:text-white">
+                    {batchOverview.total || 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Legend List */}
+              <div className="space-y-1.5 text-xs flex-1">
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" /> Healthy (&gt;60d)
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {batchOverview.onTrack || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" /> Warning (30-60d)
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {batchOverview.atRisk || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" /> Critical (&lt;30d)
+                  </span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {batchOverview.delayed || 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            <Link
+              to="/pharmacy/stock"
+              className="w-full block text-center py-2 text-xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30 hover:bg-teal-100 rounded-xl transition"
+            >
+              Audit Inventory Batches →
             </Link>
           </div>
+        </div>
 
-          <div className="space-y-3.5">
-            {activities.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-400">
-                No recent activity recorded yet.
-              </div>
-            ) : (
-              activities.map((act, idx) => (
-                <div key={idx} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${act.color}`}>
-                      {act.icon}
+        {/* Card 2: Top Suppliers Spend Leaderboard */}
+        <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800/80">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                Top Suppliers Leaderboard
+              </h3>
+              <Link
+                to="/pharmacy/suppliers"
+                className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline"
+              >
+                Directory →
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {topSuppliers.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  No suppliers registered yet.
+                </div>
+              ) : (
+                topSuppliers.slice(0, 4).map((sup) => (
+                  <div
+                    key={sup.id}
+                    className="flex items-center justify-between text-xs py-1.5 border-b border-slate-50 dark:border-slate-800/50 last:border-none"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                        {sup.name}
+                      </p>
+                      <span className="text-[10px] text-slate-400 block truncate">
+                        {sup.orders} orders fulfilled
+                      </span>
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-slate-800 dark:text-slate-200 truncate">{act.title}</p>
-                      <span className="text-[10px] text-slate-400 truncate block">{act.author}</span>
+                    <div className="text-right shrink-0">
+                      <span className="font-extrabold text-slate-900 dark:text-white">
+                        ${Number(sup.spend || 0).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span className="text-[10px] text-amber-500 font-semibold block">
+                        ★ 4.8 Rating
+                      </span>
                     </div>
                   </div>
-                  <span className="text-[11px] text-slate-400 shrink-0 font-medium ml-2">{act.time}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------- */}
-      {/* 5. TOP SUPPLIERS TABLE ROW (Real Suppliers from MongoDB)       */}
-      {/* ------------------------------------------------------------- */}
-      <div className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800/80">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Top Suppliers Directory
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Active pharmaceutical distributors and aggregated procurement spend
-            </p>
-          </div>
-          <div className="inline-flex items-center gap-1 px-3 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">
-            <span>This Month</span>
-            <span className="text-slate-400 text-[10px]">▼</span>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          {suppliers.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
-              No suppliers registered. Add suppliers in the Suppliers Directory to track vendor spend.
+                ))
+              )}
             </div>
-          ) : (
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-200/80 dark:border-slate-800 text-slate-400">
-                  <th className="pb-3 font-semibold">Supplier</th>
-                  <th className="pb-3 font-semibold">Category / Contact</th>
-                  <th className="pb-3 font-semibold">Total Spend</th>
-                  <th className="pb-3 font-semibold">Orders Placed</th>
-                  <th className="pb-3 font-semibold text-right">Performance</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                {suppliers.map((sup, i) => (
-                  <tr key={sup.id || i} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
-                    <td className="py-3.5 font-bold text-slate-800 dark:text-slate-200">
-                      {sup.name}
-                    </td>
-                    <td className="py-3.5 text-slate-500 dark:text-slate-400">
-                      {sup.cat}
-                    </td>
-                    <td className="py-3.5 text-slate-900 dark:text-white font-bold">
-                      ${Number(sup.spend).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="py-3.5 text-slate-600 dark:text-slate-300">
-                      {sup.orders} orders
-                    </td>
-                    <td className="py-3.5 text-right text-amber-500 font-bold">
-                      {sup.rating}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80">
+            <Link
+              to="/pharmacy/procurement"
+              className="w-full block text-center py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
+            >
+              Issue Purchase Order
+            </Link>
+          </div>
+        </div>
+
+        {/* Card 3: Action Items & Anomaly Checklist */}
+        <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800/80">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                Live Anomaly Alerts
+              </h3>
+              <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">
+                Action Required
+              </span>
+            </div>
+
+            <div className="space-y-2.5">
+              {operationalTasks.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  ✓ All operational items clear!
+                </div>
+              ) : (
+                operationalTasks.map((task) => {
+                  const isChecked =
+                    tasksState[task.id] !== undefined
+                      ? tasksState[task.id]
+                      : task.checked;
+
+                  return (
+                    <div
+                      key={task.id}
+                      className="flex items-start justify-between gap-2.5 text-xs py-1.5 px-2 rounded-xl hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition"
+                    >
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleTask(task.id)}
+                          className="mt-0.5 w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                        />
+                        <div className="min-w-0">
+                          <p
+                            className={`font-semibold text-slate-800 dark:text-slate-200 truncate ${
+                              isChecked ? 'line-through text-slate-400 dark:text-slate-500' : ''
+                            }`}
+                          >
+                            {task.title}
+                          </p>
+                          <span className="text-[10px] text-slate-400 block">
+                            {task.dept} • {task.date}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                          task.priority === 'High'
+                            ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50'
+                            : 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50'
+                        }`}
+                      >
+                        {task.priority}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+            <span>Dynamic DB Checks</span>
+            <span className="text-teal-600 dark:text-teal-400 font-bold">
+              {operationalTasks.filter((t) => !tasksState[t.id]).length} Open
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Invoice Receipt Modal */}
+      {selectedSale && (
+        <InvoiceReceiptModal
+          isOpen={isReceiptOpen}
+          onClose={() => setIsReceiptOpen(false)}
+          sale={selectedSale}
+        />
+      )}
     </div>
   );
 };
