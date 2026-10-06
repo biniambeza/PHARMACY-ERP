@@ -5,6 +5,7 @@ import RoleRoute from './routes/RoleRoute';
 import Login from './pages/auth/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import PharmacistDashboard from './pages/pharmacist/Dashboard';
+import PharmacyLayout from './pages/pharmacist/PharmacyLayout';
 import Medicines from './pages/pharmacist/Medicines';
 import Stock from './pages/pharmacist/Stock';
 import POS from './pages/pharmacist/POS';
@@ -31,15 +32,17 @@ function App() {
 
             {/* Pharmacist Portal */}
             <Route element={<RoleRoute allowedRoles={['pharmacist']} />}>
-              <Route path="/pharmacy" element={<PharmacistDashboard />} />
-              <Route path="/pharmacy/medicines" element={<Medicines />} />
-              <Route path="/pharmacy/stock" element={<Stock />} />
-              <Route path="/pharmacy/pos" element={<POS />} />
-              <Route path="/pharmacy/sales" element={<SalesHistory />} />
-              <Route path="/pharmacy/suppliers" element={<Suppliers />} />
-              <Route path="/pharmacy/procurement" element={<PurchaseOrders />} />
-              <Route path="/pharmacy/reports" element={<Reports />} />
-              <Route path="/pharmacy/settings" element={<Settings />} />
+              <Route element={<PharmacyLayout />}>
+                <Route path="/pharmacy" element={<PharmacistDashboard />} />
+                <Route path="/pharmacy/medicines" element={<Medicines />} />
+                <Route path="/pharmacy/stock" element={<Stock />} />
+                <Route path="/pharmacy/pos" element={<POS />} />
+                <Route path="/pharmacy/sales" element={<SalesHistory />} />
+                <Route path="/pharmacy/suppliers" element={<Suppliers />} />
+                <Route path="/pharmacy/procurement" element={<PurchaseOrders />} />
+                <Route path="/pharmacy/reports" element={<Reports />} />
+                <Route path="/pharmacy/settings" element={<Settings />} />
+              </Route>
             </Route>
           </Route>
 
