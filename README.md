@@ -393,5 +393,50 @@ cd PHARMACY-ERP
 
 ---
 
+## 🚀 GitHub Actions CI/CD Pipeline
+
+The project includes an automated multi-stage CI/CD workflow defined in [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml):
+
+```
+┌────────────────────────────────────────────────────────┐
+│               GitHub Push / Pull Request               │
+└───────────────────────────┬────────────────────────────┘
+                            │
+              ┌─────────────┴─────────────┐
+              ▼                           ▼
+   ┌────────────────────┐      ┌────────────────────┐
+   │    Backend CI      │      │    Frontend CI     │
+   │  - Node.js 20      │      │  - Node.js 20      │
+   │  - Syntax verify   │      │  - ESLint pass     │
+   │  - Route/Model test│      │  - Vite build      │
+   └──────────┬─────────┘      └──────────┬─────────┘
+              │                           │
+              └─────────────┬─────────────┘
+                            │ (on push to main)
+              ┌─────────────┴─────────────┐
+              ▼                           ▼
+   ┌────────────────────┐      ┌────────────────────┐
+   │ Deploy Backend     │      │ Deploy Frontend    │
+   │ (Render / Railway) │      │ (Vercel)           │
+   └────────────────────┘      └────────────────────┘
+```
+
+### GitHub Repository Secrets (for Automatic Continuous Deployment)
+
+To enable automatic continuous deployment, add the following secrets in your repository settings under **Settings** ➔ **Secrets and variables** ➔ **Actions**:
+
+| Secret Name | Description | Required For |
+|:---|:---|:---|
+| `VERCEL_TOKEN` | Vercel Personal Access Token | Frontend deployment to Vercel |
+| `VERCEL_ORG_ID` | Vercel Team / Account ID (`vercel link`) | Frontend deployment to Vercel |
+| `VERCEL_PROJECT_ID` | Vercel Project ID (`vercel link`) | Frontend deployment to Vercel |
+| `RENDER_DEPLOY_HOOK_URL` | Render Service Deploy Hook URL | Backend auto-deploy trigger |
+| `VITE_API_BASE_URL` | Production Backend API URL (optional) | Frontend build configuration |
+
+*(If secrets are not configured, the CI validation steps will still pass successfully and output informational notices.)*
+
+---
+
 ## 📄 License
 This project is open-source and available under the [MIT License](LICENSE).
+
