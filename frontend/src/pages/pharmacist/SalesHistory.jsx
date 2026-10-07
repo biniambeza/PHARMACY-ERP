@@ -170,9 +170,9 @@ const SalesHistory = () => {
             value={(summary.totalSalesCount || 0).toString()}
             subValue="All recorded receipts"
             badgeText="Receipts"
-            badgeVariant="blue"
-            icon={<Receipt className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />}
-            sparklineColor="#3b82f6"
+            badgeVariant="emerald"
+            icon={<Receipt className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />}
+            sparklineColor="#10b981"
             sparklineId="sales-total-inv-spark"
           />
         </div>

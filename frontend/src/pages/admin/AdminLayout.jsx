@@ -56,14 +56,14 @@ const AdminLayout = () => {
         {/* Brand / Logo Header */}
         <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200/80 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#161c26]">
           <Link to="/admin" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-500/25">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-emerald-500/25">
               AD
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px]">
                 Admin Portal
               </h1>
-              <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold truncate">
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
                 Global Command Center
               </p>
             </div>
@@ -92,7 +92,7 @@ const AdminLayout = () => {
                   className={({ isActive }) =>
                     `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-[13px] transition-all duration-150 ${
                       isActive
-                        ? 'bg-blue-50/90 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 font-semibold shadow-2xs'
+                        ? 'bg-emerald-50/90 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold shadow-2xs'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60 font-medium'
                     }`
                   }
@@ -100,7 +100,7 @@ const AdminLayout = () => {
                   {({ isActive }) => (
                     <>
                       {isActive ? (
-                        <span className="w-7 h-7 rounded-lg bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                        <span className="w-7 h-7 rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs shadow-emerald-500/20">
                           <IconComponent className="w-4 h-4" />
                         </span>
                       ) : (
@@ -113,7 +113,7 @@ const AdminLayout = () => {
                         <span
                           className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                             isActive
-                              ? 'bg-blue-100/80 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                              ? 'bg-emerald-100/90 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
                               : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                           }`}
                         >
@@ -164,7 +164,7 @@ const AdminLayout = () => {
           >
             <div className="flex items-center gap-2">
               {isDark ? (
-                <Moon className="w-4 h-4 text-blue-400" />
+                <Moon className="w-4 h-4 text-emerald-400" />
               ) : (
                 <Sun className="w-4 h-4 text-amber-500" />
               )}
@@ -178,14 +178,14 @@ const AdminLayout = () => {
           {/* User Profile Mini Bar */}
           <div className="flex items-center justify-between px-1.5 py-1">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {user?.name || 'Administrator'}
                 </p>
-                <p className="text-[10px] text-blue-600 dark:text-blue-400 capitalize truncate font-semibold">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 capitalize truncate font-semibold">
                   {user?.role || 'Super Admin'}
                 </p>
               </div>
@@ -223,7 +223,7 @@ const AdminLayout = () => {
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
                 placeholder="Search tenant pharmacies, license IDs, owners, or emails..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-full text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-full text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
               <svg
                 className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
@@ -254,7 +254,7 @@ const AdminLayout = () => {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-teal-500 ring-2 ring-white dark:ring-slate-900" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
             </button>
 
             {/* Quick Dark/Light Toggle */}
@@ -274,7 +274,7 @@ const AdminLayout = () => {
 
             {/* User Profile Dropdown Pill */}
             <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-teal-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-slate-100 dark:ring-slate-800">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-slate-100 dark:ring-slate-800">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
               <div className="hidden lg:block text-left">
@@ -284,7 +284,7 @@ const AdminLayout = () => {
                   </span>
                   <span className="text-slate-400 text-[10px]">▼</span>
                 </div>
-                <span className="text-[11px] text-teal-600 dark:text-teal-400 font-semibold block leading-tight capitalize">
+                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block leading-tight capitalize">
                   {user?.role || 'Super Admin'}
                 </span>
               </div>
