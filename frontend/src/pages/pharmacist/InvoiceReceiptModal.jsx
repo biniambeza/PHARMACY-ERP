@@ -13,7 +13,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
         {/* Header - Screen only */}
         <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/80 dark:border-slate-800 mb-4 print:hidden">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <Receipt className="w-4 h-4" />
             </div>
             <div>
@@ -33,7 +33,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
         <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700/60 rounded-xl p-5 print:border-none print:bg-white print:p-0 print:text-black">
           {/* Pharmacy Branding */}
           <div className="text-center pb-4 border-b border-dashed border-slate-300 dark:border-slate-700 print:border-black">
-            <div className="inline-block px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 text-teal-700 dark:text-teal-400 font-bold text-[11px] mb-1.5 print:border-black print:text-black">
+            <div className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 font-bold text-[11px] mb-1.5 print:border-black print:text-black">
               Rx OFFICIAL RECEIPT
             </div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white print:text-black tracking-tight">
@@ -89,7 +89,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
                   <tr key={idx} className="text-slate-800 dark:text-slate-200 print:text-black">
                     <td className="py-2 pr-2">
                       <span className="font-semibold block text-slate-900 dark:text-white">{item.name}</span>
-                      <span className="text-[10px] text-teal-600 dark:text-teal-400 font-mono print:text-gray-600">
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono print:text-gray-600">
                         Batch: {item.batchNo}
                       </span>
                     </td>
@@ -109,7 +109,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
               <span className="font-mono">${(Number(sale.subtotal) || 0).toFixed(2)}</span>
             </div>
             {Number(sale.discount) > 0 && (
-              <div className="flex justify-between text-teal-600 dark:text-teal-400 print:text-gray-700">
+              <div className="flex justify-between text-emerald-600 dark:text-emerald-400 print:text-gray-700">
                 <span>Discount:</span>
                 <span className="font-mono">-${(Number(sale.discount) || 0).toFixed(2)}</span>
               </div>
@@ -122,7 +122,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
             )}
             <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-800 print:border-black text-sm">
               <span className="font-bold text-slate-900 dark:text-white print:text-black">Grand Total:</span>
-              <span className="font-extrabold text-teal-600 dark:text-teal-400 print:text-black font-mono text-base">
+              <span className="font-extrabold text-emerald-600 dark:text-emerald-400 print:text-black font-mono text-base">
                 ${(Number(sale.grandTotal) || 0).toFixed(2)}
               </span>
             </div>
@@ -154,7 +154,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer"
           >
             Done / Next Sale
           </button>

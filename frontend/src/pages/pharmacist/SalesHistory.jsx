@@ -95,7 +95,7 @@ const SalesHistory = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/60 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
               Dispensary Ledger
             </span>
           </div>
@@ -109,7 +109,7 @@ const SalesHistory = () => {
 
         <Link
           to="/pharmacy/pos"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
         >
           <ShoppingCart className="w-4 h-4" />
           <span>Open POS Terminal</span>
@@ -140,9 +140,9 @@ const SalesHistory = () => {
             value={`$${(Number(summary.todayRevenue) || 0).toFixed(2)}`}
             subValue="Dispensary sales today"
             badgeText="Today"
-            badgeVariant="teal"
-            icon={<DollarSign className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" />}
-            sparklineColor="#0d9488"
+            badgeVariant="emerald"
+            icon={<DollarSign className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />}
+            sparklineColor="#10b981"
             sparklineId="sales-today-rev-spark"
           />
           <MetricCard
@@ -150,7 +150,7 @@ const SalesHistory = () => {
             value={(summary.todaySalesCount || 0).toString()}
             subValue="Checkout transactions today"
             badgeText="Orders"
-            badgeVariant="teal"
+            badgeVariant="emerald"
             icon={<ShoppingCart className="w-4.5 h-4.5 text-cyan-600 dark:text-cyan-400" />}
             sparklineColor="#06b6d4"
             sparklineId="sales-today-orders-spark"
@@ -194,7 +194,7 @@ const SalesHistory = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by invoice #, customer name or phone..."
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
         </div>
 
@@ -240,7 +240,7 @@ const SalesHistory = () => {
               </p>
               <Link
                 to="/pharmacy/pos"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition"
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
                 <span>Go to POS Terminal</span>
@@ -264,10 +264,10 @@ const SalesHistory = () => {
                   <tr key={sale._id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition group">
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                        <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                           <Receipt className="w-3.5 h-3.5" />
                         </div>
-                        <span className="font-mono font-bold text-teal-700 dark:text-teal-400">
+                        <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
                           {sale.invoiceNumber}
                         </span>
                       </div>
@@ -311,7 +311,7 @@ const SalesHistory = () => {
                     <td className="py-3.5 px-4 text-right">
                       <button
                         onClick={() => handleOpenReceipt(sale)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-teal-50 hover:text-teal-700 dark:bg-slate-800 dark:hover:bg-teal-900/40 dark:hover:text-teal-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>View Receipt</span>

@@ -91,7 +91,7 @@ const PharmacistDashboard = () => {
         </p>
         <button
           onClick={fetchOverview}
-          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
         >
           Retry Connection
         </button>
@@ -146,14 +146,14 @@ const PharmacistDashboard = () => {
           changeType="positive"
           subValue="vs last 30 days"
           badgeText="Inflows"
-          badgeVariant="teal"
+          badgeVariant="emerald"
           icon={
-            <svg className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <svg className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           }
           sparklineData={revTrendData}
-          sparklineColor="#0d9488"
+          sparklineColor="#10b981"
           sparklineId="rev-spark"
         />
 
@@ -242,7 +242,7 @@ const PharmacistDashboard = () => {
               </div>
               <Link
                 to="/pharmacy/sales"
-                className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline"
+                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
               >
                 View Ledger →
               </Link>
@@ -298,7 +298,7 @@ const PharmacistDashboard = () => {
                         <td className="py-3 text-right">
                           <button
                             onClick={() => handleOpenReceipt(sale)}
-                            className="px-2.5 py-1 text-[11px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-950/60 border border-teal-200 dark:border-teal-800/60 rounded-lg transition cursor-pointer"
+                            className="px-2.5 py-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 rounded-lg transition cursor-pointer"
                           >
                             Print Receipt
                           </button>
@@ -315,7 +315,7 @@ const PharmacistDashboard = () => {
             <span>Terminal: POS Register #01</span>
             <button
               onClick={() => navigate('/pharmacy/pos')}
-              className="text-teal-600 dark:text-teal-400 font-bold hover:underline"
+              className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
             >
               + Open POS Cashier
             </button>
@@ -335,8 +335,8 @@ const PharmacistDashboard = () => {
                 </p>
               </div>
               <div className="flex items-center gap-3 text-xs font-semibold">
-                <span className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-teal-500" /> Revenue
+                <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Revenue
                 </span>
                 <span className="flex items-center gap-1.5 text-indigo-500 dark:text-indigo-400">
                   <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" /> Procurement
@@ -353,8 +353,8 @@ const PharmacistDashboard = () => {
               >
                 <defs>
                   <linearGradient id="tealLineGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0d9488" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#0d9488" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
                   </linearGradient>
                   <linearGradient id="indigoLineGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#6366f1" stopOpacity="0.2" />
@@ -406,7 +406,7 @@ const PharmacistDashboard = () => {
                       <path
                         d={lineRev}
                         fill="none"
-                        stroke="#0d9488"
+                        stroke="#10b981"
                         strokeWidth="3"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -430,7 +430,7 @@ const PharmacistDashboard = () => {
                           cx={pt.x}
                           cy={pt.y}
                           r="4"
-                          className="fill-white dark:fill-[#161c26] stroke-teal-600 stroke-[2.5]"
+                          className="fill-white dark:fill-[#161c26] stroke-emerald-600 stroke-[2.5]"
                         />
                       ))}
                     </>
@@ -449,7 +449,7 @@ const PharmacistDashboard = () => {
 
           <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
             <span>Aggregated intervals: Real-time DB records</span>
-            <span className="text-teal-600 dark:text-teal-400 font-bold">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
               Net Spread: +${Number(kpis.netProfit || 0).toFixed(2)}
             </span>
           </div>
@@ -555,7 +555,7 @@ const PharmacistDashboard = () => {
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80">
             <Link
               to="/pharmacy/stock"
-              className="w-full block text-center py-2 text-xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/30 hover:bg-teal-100 rounded-xl transition"
+              className="w-full block text-center py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 rounded-xl transition"
             >
               Audit Inventory Batches →
             </Link>
@@ -571,7 +571,7 @@ const PharmacistDashboard = () => {
               </h3>
               <Link
                 to="/pharmacy/suppliers"
-                className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline"
+                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
               >
                 Directory →
               </Link>
@@ -668,7 +668,7 @@ const PharmacistDashboard = () => {
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleTask(task.id)}
-                          className="mt-0.5 w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                          className="mt-0.5 w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 cursor-pointer"
                         />
                         <div className="min-w-0">
                           <p
@@ -702,7 +702,7 @@ const PharmacistDashboard = () => {
 
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
             <span>Dynamic DB Checks</span>
-            <span className="text-teal-600 dark:text-teal-400 font-bold">
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
               {operationalTasks.filter((t) => !tasksState[t.id]).length} Open
             </span>
           </div>

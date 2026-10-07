@@ -115,7 +115,7 @@ const Stock = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/60 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
               FEFO Protocol
             </span>
           </div>
@@ -129,7 +129,7 @@ const Stock = () => {
 
         <button
           onClick={() => setIsStockInOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4" />
           <span>Record Stock In</span>
@@ -143,10 +143,10 @@ const Stock = () => {
           value={totalActiveBatches.toString()}
           subValue="Available for dispensing"
           badgeText="Active"
-          badgeVariant="teal"
-          icon={<Boxes className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+          badgeVariant="emerald"
+          icon={<Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
           sparklineData={[12, 16, 14, 20, 22, 28, 25, totalActiveBatches]}
-          sparklineColor="#0d9488"
+          sparklineColor="#10b981"
           sparklineId="active-stock-spark"
         />
 
@@ -179,10 +179,10 @@ const Stock = () => {
           value={expiringSoonCount.toString()}
           subValue={expiringSoonCount > 0 ? 'Requires priority sale' : 'No near-term expirations'}
           badgeText={expiringSoonCount > 0 ? 'Action Needed' : 'Compliant'}
-          badgeVariant={expiringSoonCount > 0 ? 'rose' : 'teal'}
-          icon={<AlertTriangle className={`w-4 h-4 ${expiringSoonCount > 0 ? 'text-rose-500' : 'text-teal-500'}`} />}
+          badgeVariant={expiringSoonCount > 0 ? 'rose' : 'emerald'}
+          icon={<AlertTriangle className={`w-4 h-4 ${expiringSoonCount > 0 ? 'text-rose-500' : 'text-emerald-500'}`} />}
           sparklineData={[4, 2, 6, 3, 5, 2, 1, expiringSoonCount]}
-          sparklineColor={expiringSoonCount > 0 ? '#f43f5e' : '#0d9488'}
+          sparklineColor={expiringSoonCount > 0 ? '#f43f5e' : '#10b981'}
           sparklineId="expiry-spark"
         />
       </div>
@@ -197,7 +197,7 @@ const Stock = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by lot batch number, brand name, or active formula..."
-            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
         </div>
 
@@ -208,7 +208,7 @@ const Stock = () => {
               onClick={() => setStatusFilter('active')}
               className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
                 statusFilter === 'active'
-                  ? 'bg-white dark:bg-[#161c26] text-teal-600 dark:text-teal-400 font-bold shadow-2xs'
+                  ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -238,7 +238,7 @@ const Stock = () => {
               onClick={() => setStatusFilter('')}
               className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
                 statusFilter === ''
-                  ? 'bg-white dark:bg-[#161c26] text-teal-600 dark:text-teal-400 font-bold shadow-2xs'
+                  ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -266,7 +266,7 @@ const Stock = () => {
             </div>
           ) : filteredBatches.length === 0 ? (
             <div className="py-16 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center mx-auto mb-3 border border-teal-100 dark:border-teal-900/50">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3 border border-emerald-100 dark:border-emerald-900/50">
                 <Boxes className="w-6 h-6" />
               </div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">
@@ -279,7 +279,7 @@ const Stock = () => {
               </p>
               <button
                 onClick={() => setIsStockInOpen(true)}
-                className="mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-4 h-4" /> Record First Stock In
               </button>
@@ -312,7 +312,7 @@ const Stock = () => {
                     >
                       {/* Batch Lot No */}
                       <td className="py-3.5 px-5">
-                        <span className="font-mono font-bold text-slate-900 dark:text-white block group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                        <span className="font-mono font-bold text-slate-900 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                           {batch.batchNo}
                         </span>
                         <span className="text-[10px] text-slate-400 font-mono">
@@ -323,7 +323,7 @@ const Stock = () => {
                       {/* Medicine Item */}
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 border border-teal-100 dark:border-teal-900/50">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/50">
                             <Pill className="w-3.5 h-3.5" />
                           </div>
                           <div>

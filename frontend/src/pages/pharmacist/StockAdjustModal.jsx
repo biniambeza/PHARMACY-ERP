@@ -101,7 +101,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
             <span className="font-bold text-slate-900 dark:text-white">
               {batch.medicineId?.name || 'Selected Item'}
             </span>
-            <span className="font-mono text-teal-600 dark:text-teal-400 font-bold">
+            <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
               {batch.batchNo}
             </span>
           </div>
@@ -129,7 +129,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
             <select
               value={adjustmentType}
               onChange={(e) => setAdjustmentType(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition cursor-pointer"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
             >
               {ADJUSTMENT_REASONS.map((r) => (
                 <option key={r.value} value={r.value}>
@@ -154,7 +154,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
                 onChange={(e) => setReduceQty(e.target.value)}
                 placeholder={`1 to ${currentQuantity}`}
                 required
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
             </div>
           </div>
@@ -175,7 +175,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
             </div>
             <div>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 block">New Balance</span>
-              <span className="font-mono font-bold text-teal-600 dark:text-teal-400 text-sm">
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                 {remainingQty}
               </span>
             </div>

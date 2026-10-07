@@ -220,7 +220,7 @@ const POS = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/60 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
               Dispensary Terminal
             </span>
           </div>
@@ -276,14 +276,14 @@ const POS = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search brand or generic name..."
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
             </div>
 
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full sm:w-52 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 cursor-pointer transition"
+              className="w-full sm:w-52 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer transition"
             >
               <option value="">All Categories</option>
               {categories.map((c) => (
@@ -321,7 +321,7 @@ const POS = () => {
                       className={`p-3.5 rounded-2xl border transition-all duration-150 flex flex-col justify-between ${
                         isOutOfStock
                           ? 'bg-slate-100/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-60 cursor-not-allowed'
-                          : 'bg-slate-50/70 hover:bg-white dark:bg-[#1c222f] border-slate-200/80 dark:border-[#262e3f] hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-md cursor-pointer'
+                          : 'bg-slate-50/70 hover:bg-white dark:bg-[#1c222f] border-slate-200/80 dark:border-[#262e3f] hover:border-emerald-500/60 dark:hover:border-emerald-500/60 hover:shadow-md cursor-pointer'
                       }`}
                     >
                       <div>
@@ -329,7 +329,7 @@ const POS = () => {
                           <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-snug line-clamp-1">
                             {med.name}
                           </h3>
-                          <span className="text-xs font-extrabold text-teal-600 dark:text-teal-400 font-mono shrink-0">
+                          <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 font-mono shrink-0">
                             ${med.price.toFixed(2)}
                           </span>
                         </div>
@@ -366,7 +366,7 @@ const POS = () => {
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition ${
                             isOutOfStock
                               ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
-                              : 'bg-teal-600 hover:bg-teal-500 text-white shadow-xs'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs'
                           }`}
                         >
                           <Plus className="w-3 h-3" />
@@ -386,9 +386,9 @@ const POS = () => {
           <div>
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-200/80 dark:border-slate-800 mb-4">
               <div className="flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <h2 className="text-sm font-bold text-slate-900 dark:text-white">Current Order</h2>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                   {cart.reduce((sum, it) => sum + it.quantity, 0)} items
                 </span>
               </div>
@@ -438,7 +438,7 @@ const POS = () => {
                         min={1}
                         max={item.maxAvailable}
                         onChange={(e) => handleUpdateQty(item.medicineId, e.target.value)}
-                        className="w-10 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg py-0.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-teal-500"
+                        className="w-10 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg py-0.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
                       />
                       <button
                         onClick={() => handleUpdateQty(item.medicineId, item.quantity + 1)}
@@ -472,7 +472,7 @@ const POS = () => {
                     value={customer.name}
                     onChange={(e) => setCustomer((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="Customer Name"
-                    className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                    className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                   />
                 </div>
                 <div className="relative">
@@ -482,7 +482,7 @@ const POS = () => {
                     value={customer.phone}
                     onChange={(e) => setCustomer((prev) => ({ ...prev, phone: e.target.value }))}
                     placeholder="Phone (optional)"
-                    className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 font-mono transition"
+                    className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono transition"
                   />
                 </div>
               </div>
@@ -503,7 +503,7 @@ const POS = () => {
                   value={discount}
                   onChange={(e) => setDiscount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                  className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                 />
               </div>
               <div>
@@ -517,7 +517,7 @@ const POS = () => {
                   value={tax}
                   onChange={(e) => setTax(e.target.value)}
                   placeholder="0.00"
-                  className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                  className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                 />
               </div>
             </div>
@@ -539,7 +539,7 @@ const POS = () => {
                     onClick={() => setPaymentMethod(id)}
                     className={`py-2 px-2 rounded-xl text-[11px] font-semibold uppercase tracking-wider transition cursor-pointer border flex items-center justify-center gap-1.5 ${
                       paymentMethod === id
-                        ? 'bg-teal-600 text-white border-teal-600 shadow-xs'
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
                         : 'bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700/80 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100'
                     }`}
                   >
@@ -559,7 +559,7 @@ const POS = () => {
                 </span>
               </div>
               {discountVal > 0 && (
-                <div className="flex justify-between text-teal-600 dark:text-teal-400 font-semibold">
+                <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
                   <span>Discount:</span>
                   <span className="font-mono">-${discountVal.toFixed(2)}</span>
                 </div>
@@ -572,7 +572,7 @@ const POS = () => {
               )}
               <div className="flex justify-between items-center pt-2 border-t border-slate-200/80 dark:border-slate-800 text-sm font-bold">
                 <span className="text-slate-900 dark:text-white">Grand Total:</span>
-                <span className="text-teal-600 dark:text-teal-400 font-mono text-xl font-extrabold">
+                <span className="text-emerald-600 dark:text-emerald-400 font-mono text-xl font-extrabold">
                   ${grandTotal.toFixed(2)}
                 </span>
               </div>
@@ -582,7 +582,7 @@ const POS = () => {
               type="button"
               onClick={handleCheckout}
               disabled={checkoutLoading || cart.length === 0}
-              className="w-full py-3 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2"
             >
               {checkoutLoading ? (
                 'Processing Sale...'

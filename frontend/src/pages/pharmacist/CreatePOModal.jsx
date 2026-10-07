@@ -157,7 +157,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/80 mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
               <ShoppingCart className="w-5 h-5" />
             </div>
             <div>
@@ -204,7 +204,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                     value={supplierId}
                     onChange={(e) => setSupplierId(e.target.value)}
                     required
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition cursor-pointer"
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
                   >
                     {suppliers.map((s) => (
                       <option key={s._id} value={s._id}>
@@ -226,7 +226,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                   type="date"
                   value={expectedDelivery}
                   onChange={(e) => setExpectedDelivery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition cursor-pointer"
+                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
                 />
               </div>
             </div>
@@ -241,7 +241,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
               <button
                 type="button"
                 onClick={handleAddItem}
-                className="text-[11px] text-teal-600 dark:text-teal-400 hover:text-teal-500 font-semibold flex items-center gap-1 cursor-pointer"
+                className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-semibold flex items-center gap-1 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Product Line
               </button>
@@ -262,7 +262,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                         value={item.medicineId}
                         onChange={(e) => handleItemChange(idx, 'medicineId', e.target.value)}
                         required
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition cursor-pointer"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
                       >
                         {medicines.map((m) => (
                           <option key={m._id} value={m._id}>
@@ -281,7 +281,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                         value={item.quantityOrdered}
                         onChange={(e) => handleItemChange(idx, 'quantityOrdered', e.target.value)}
                         required
-                        className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition text-center"
+                        className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition text-center"
                       />
                     </div>
 
@@ -296,7 +296,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                         value={item.unitCost}
                         onChange={(e) => handleItemChange(idx, 'unitCost', e.target.value)}
                         required
-                        className="w-full pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+                        className="w-full pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                       />
                     </div>
 
@@ -333,7 +333,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. Standard cold-chain required, net 30 days invoice payment..."
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition"
+              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
             />
           </div>
 
@@ -346,7 +346,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
               <span className="text-[11px] text-slate-400 font-mono">
                 ({items.length} product lines)
               </span>
-              <span className="font-mono font-bold text-base text-teal-600 dark:text-teal-400">
+              <span className="font-mono font-bold text-base text-emerald-600 dark:text-emerald-400">
                 ${calculatedTotal.toFixed(2)}
               </span>
             </div>
@@ -365,7 +365,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
             <button
               type="submit"
               disabled={loading || suppliers.length === 0 || medicines.length === 0}
-              className="px-5 py-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <span>Generating Order...</span>

@@ -130,7 +130,7 @@ const AdminDashboard = () => {
         </p>
         <button
           onClick={loadData}
-          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
         >
           Retry Loading
         </button>
@@ -147,7 +147,7 @@ const AdminDashboard = () => {
         <div>
           <button
             onClick={() => handleViewDetails(item)}
-            className="font-bold text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-400 text-left transition cursor-pointer block"
+            className="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 text-left transition cursor-pointer block"
           >
             {item.name}
           </button>
@@ -264,9 +264,9 @@ const AdminDashboard = () => {
           changeType="positive"
           subValue="in SaaS network"
           badgeText="Licensed"
-          badgeVariant="teal"
+          badgeVariant="emerald"
           icon={
-            <svg className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <svg className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           }
@@ -276,7 +276,7 @@ const AdminDashboard = () => {
             (stats.totalPharmacies || 1) * 0.85,
             stats.totalPharmacies || 1,
           ]}
-          sparklineColor="#0d9488"
+          sparklineColor="#10b981"
           sparklineId="pharm-spark"
         />
 
@@ -339,7 +339,7 @@ const AdminDashboard = () => {
           changeType={stats.suspendedPharmacies > 0 ? 'negative' : 'positive'}
           subValue="compliance review queue"
           badgeText={stats.suspendedPharmacies > 0 ? 'Flagged' : 'Healthy'}
-          badgeVariant={stats.suspendedPharmacies > 0 ? 'rose' : 'teal'}
+          badgeVariant={stats.suspendedPharmacies > 0 ? 'rose' : 'emerald'}
           icon={
             <svg className="w-4.5 h-4.5 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -348,7 +348,7 @@ const AdminDashboard = () => {
           sparklineData={
             stats.suspendedPharmacies > 0 ? [1, 2, stats.suspendedPharmacies] : [1, 0.5, 0]
           }
-          sparklineColor={stats.suspendedPharmacies > 0 ? '#ef4444' : '#0d9488'}
+          sparklineColor={stats.suspendedPharmacies > 0 ? '#ef4444' : '#10b981'}
           sparklineId="susp-spark"
         />
       </div>
@@ -381,7 +381,7 @@ const AdminDashboard = () => {
         headerAction={
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer shrink-0"
+            className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer shrink-0"
           >
             <span className="text-base leading-none font-bold">+</span>
             <span>Provision Pharmacy</span>
@@ -399,7 +399,7 @@ const AdminDashboard = () => {
           <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>

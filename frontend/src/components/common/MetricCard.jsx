@@ -10,10 +10,10 @@ const MetricCard = ({
   change,
   changeType = 'positive', // 'positive' | 'negative' | 'neutral'
   badgeText,
-  badgeVariant = 'teal', // 'teal' | 'emerald' | 'amber' | 'rose' | 'indigo' | 'blue'
+  badgeVariant = 'emerald', // 'emerald' | 'emerald' | 'amber' | 'rose' | 'indigo' | 'blue'
   icon,
   sparklineData = [12, 19, 15, 27, 22, 34, 30, 42],
-  sparklineColor = '#0d9488', // teal-600
+  sparklineColor = '#10b981', // emerald-600
   sparklineId = 'sparkline-grad',
   className = '',
 }) => {
@@ -42,7 +42,7 @@ const MetricCard = ({
   const { path, area } = generateSparkline(sparklineData);
 
   const badgeStyles = {
-    teal: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800/60',
+    teal: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60',
     emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60',
     amber: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60',
     rose: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60',
@@ -61,7 +61,7 @@ const MetricCard = ({
     if (React.isValidElement(icon)) return icon;
     if (typeof icon === 'function') {
       const IconComponent = icon;
-      return <IconComponent className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" />;
+      return <IconComponent className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />;
     }
     return null;
   };

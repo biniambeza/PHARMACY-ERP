@@ -35,8 +35,8 @@ const StatusBadge = ({ status = 'active', label, dot = true, size = 'md' }) => {
       defaultLabel: 'Received',
     },
     healthy: {
-      bg: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800/60',
-      dotBg: 'bg-teal-500',
+      bg: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60',
+      dotBg: 'bg-emerald-500',
       defaultLabel: 'Healthy',
     },
     suspended: {

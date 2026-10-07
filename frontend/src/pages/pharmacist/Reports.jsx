@@ -43,7 +43,7 @@ const CustomChartTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800">
         <p className="font-semibold text-slate-600 dark:text-slate-300 mb-1">{label}</p>
-        <p className="font-mono text-teal-600 dark:text-teal-400 font-bold text-sm">
+        <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold text-sm">
           ${Number(payload[0].value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </p>
         {payload[0].payload?.orderCount !== undefined && (
@@ -116,7 +116,7 @@ const Reports = () => {
         <p className="text-xs text-slate-500 dark:text-slate-400">{error || 'No reporting records found.'}</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
         >
           Retry Connection
         </button>
@@ -143,7 +143,7 @@ const Reports = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-800/60 uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
               Executive Analytics
             </span>
           </div>
@@ -162,7 +162,7 @@ const Reports = () => {
               onClick={() => setTimeRange('7d')}
               className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
                 timeRange === '7d'
-                  ? 'bg-white dark:bg-[#161c26] text-teal-600 dark:text-teal-400 font-bold shadow-2xs'
+                  ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -172,7 +172,7 @@ const Reports = () => {
               onClick={() => setTimeRange('mtd')}
               className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
                 timeRange === 'mtd'
-                  ? 'bg-white dark:bg-[#161c26] text-teal-600 dark:text-teal-400 font-bold shadow-2xs'
+                  ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -202,10 +202,10 @@ const Reports = () => {
           changeType="positive"
           subValue="Total dispensary gross receipts"
           badgeText="Inflow"
-          badgeVariant="teal"
-          icon={<DollarSign className="w-4 h-4 text-teal-600 dark:text-teal-400" />}
+          badgeVariant="emerald"
+          icon={<DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
           sparklineData={revenueTrendSeries}
-          sparklineColor="#0d9488"
+          sparklineColor="#10b981"
           sparklineId="rep-rev-spark"
         />
 
@@ -261,7 +261,7 @@ const Reports = () => {
         <div className="lg:col-span-8 bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 sm:p-6 flex flex-col justify-between">
           <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100 dark:border-slate-800/80">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-center text-teal-600 dark:text-teal-400">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                 <BarChart3 className="w-4.5 h-4.5" />
               </div>
               <div>
@@ -276,7 +276,7 @@ const Reports = () => {
 
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
-                <span className="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
                 Revenue ($)
               </span>
             </div>
@@ -287,8 +287,8 @@ const Reports = () => {
               <AreaChart data={dailyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0d9488" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#0d9488" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.15} />
@@ -310,7 +310,7 @@ const Reports = () => {
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#0d9488"
+                  stroke="#10b981"
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#revenueFill)"
@@ -491,7 +491,7 @@ const Reports = () => {
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                   expiryRisk?.expiringBatchesCount > 0
                     ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/60'
-                    : 'bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 border border-teal-200/80 dark:border-teal-800/60'
+                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/60'
                 }`}>
                   <ShieldAlert className="w-4.5 h-4.5" />
                 </div>
@@ -532,7 +532,7 @@ const Reports = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-teal-50/70 dark:bg-teal-950/30 rounded-xl border border-teal-200/80 dark:border-teal-900/40 text-xs text-teal-800 dark:text-teal-300">
+              <div className="p-3 bg-emerald-50/70 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 text-xs text-emerald-800 dark:text-emerald-300">
                 <p className="font-bold flex items-center gap-1.5 mb-1">
                   <Clock className="w-3.5 h-3.5" /> Automated FEFO Protocol
                 </p>
