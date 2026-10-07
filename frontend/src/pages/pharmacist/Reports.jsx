@@ -164,7 +164,7 @@ const Reports = () => {
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Time range toggle */}
+          {/* Time range toggle: 7 Days, Monthly, Yearly */}
           <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs font-medium">
             <button
               onClick={() => setTimeRange('7d')}
@@ -177,14 +177,24 @@ const Reports = () => {
               7 Days
             </button>
             <button
-              onClick={() => setTimeRange('mtd')}
+              onClick={() => setTimeRange('monthly')}
               className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
-                timeRange === 'mtd'
+                timeRange === 'monthly'
                   ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Month to Date
+              Monthly
+            </button>
+            <button
+              onClick={() => setTimeRange('yearly')}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
+                timeRange === 'yearly'
+                  ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Yearly
             </button>
           </div>
 
@@ -208,7 +218,7 @@ const Reports = () => {
           })}`}
           change="+14.2%"
           changeType="positive"
-          subValue="Total dispensary gross receipts"
+          subValue={`${analytics?.rangeLabel || 'Selected period'} gross receipts`}
           badgeText="Inflow"
           badgeVariant="emerald"
           icon={<DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
@@ -225,7 +235,7 @@ const Reports = () => {
           })}`}
           change="+6.8%"
           changeType="neutral"
-          subValue="Wholesale formulation expense"
+          subValue={`${analytics?.rangeLabel || 'Selected period'} wholesale expense`}
           badgeText="Procured"
           badgeVariant="amber"
           icon={<Layers className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
@@ -253,7 +263,7 @@ const Reports = () => {
           value={(financials?.totalOrders || 0).toString()}
           change="+18%"
           changeType="positive"
-          subValue="Completed POS tickets"
+          subValue={`${analytics?.rangeLabel || 'Selected period'} completed tickets`}
           badgeText="Volume"
           badgeVariant="indigo"
           icon={<Receipt className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
@@ -274,10 +284,14 @@ const Reports = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                  Daily Sales Velocity ({timeRange === 'mtd' ? 'Month to Date' : 'Last 7 Days'})
+                  Sales Velocity ({analytics?.rangeLabel || (timeRange === 'yearly' ? 'Yearly' : timeRange === 'monthly' ? 'Monthly' : 'Last 7 Days')})
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Real-time revenue progression and dispensing volume
+                  {timeRange === 'yearly'
+                    ? 'Monthly revenue progression and dispensing volume across 12 months'
+                    : timeRange === 'monthly'
+                    ? 'Daily revenue trajectory and orders over the last 30 days'
+                    : 'Real-time revenue progression and dispensing volume across 7 days'}
                 </p>
               </div>
             </div>
@@ -306,6 +320,7 @@ const Reports = () => {
                   fontSize={11}
                   tickLine={false}
                   axisLine={false}
+                  interval={timeRange === 'monthly' ? 2 : 0}
                 />
                 <YAxis
                   stroke="#94a3b8"
@@ -428,7 +443,7 @@ const Reports = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                  Top Performing Medications
+                  Top Performing Medications ({analytics?.rangeLabel || 'Selected Period'})
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Ranked by total revenue generation
