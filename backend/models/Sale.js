@@ -1,4 +1,8 @@
 const mongoose = require('mongoose');
+require('./User');
+require('./Pharmacy');
+require('./Medicine');
+require('./StockBatch');
 
 const saleItemSchema = new mongoose.Schema({
   medicineId: {

@@ -94,8 +94,8 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
                       </span>
                     </td>
                     <td className="py-2 text-center font-mono">{item.quantity}</td>
-                    <td className="py-2 text-right font-mono">${item.unitPrice.toFixed(2)}</td>
-                    <td className="py-2 text-right font-mono font-bold">${item.subtotal.toFixed(2)}</td>
+                    <td className="py-2 text-right font-mono">${(Number(item.unitPrice) || 0).toFixed(2)}</td>
+                    <td className="py-2 text-right font-mono font-bold">${(Number(item.subtotal) || 0).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -106,24 +106,24 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale }) => {
           <div className="pt-3 text-xs space-y-1.5">
             <div className="flex justify-between text-slate-600 dark:text-slate-300 print:text-gray-700">
               <span>Subtotal:</span>
-              <span className="font-mono">${sale.subtotal.toFixed(2)}</span>
+              <span className="font-mono">${(Number(sale.subtotal) || 0).toFixed(2)}</span>
             </div>
-            {sale.discount > 0 && (
+            {Number(sale.discount) > 0 && (
               <div className="flex justify-between text-teal-600 dark:text-teal-400 print:text-gray-700">
                 <span>Discount:</span>
-                <span className="font-mono">-${sale.discount.toFixed(2)}</span>
+                <span className="font-mono">-${(Number(sale.discount) || 0).toFixed(2)}</span>
               </div>
             )}
-            {sale.tax > 0 && (
+            {Number(sale.tax) > 0 && (
               <div className="flex justify-between text-slate-600 dark:text-slate-300 print:text-gray-700">
                 <span>Tax:</span>
-                <span className="font-mono">+${sale.tax.toFixed(2)}</span>
+                <span className="font-mono">+${(Number(sale.tax) || 0).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-800 print:border-black text-sm">
               <span className="font-bold text-slate-900 dark:text-white print:text-black">Grand Total:</span>
               <span className="font-extrabold text-teal-600 dark:text-teal-400 print:text-black font-mono text-base">
-                ${sale.grandTotal.toFixed(2)}
+                ${(Number(sale.grandTotal) || 0).toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between items-center pt-1 text-[11px] text-slate-500 dark:text-slate-400 print:text-gray-600">

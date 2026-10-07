@@ -1,6 +1,8 @@
 const Sale = require('../models/Sale');
 const StockBatch = require('../models/StockBatch');
 const Medicine = require('../models/Medicine');
+const User = require('../models/User');
+const Pharmacy = require('../models/Pharmacy');
 
 // @desc    Process new sale with automatic FEFO stock batch deduction
 // @route   POST /api/sales
@@ -132,26 +134,31 @@ const getSales = async (req, res) => {
     const { search, limit = 50, page = 1 } = req.query;
     const query = { pharmacyId: req.pharmacyId };
 
-    if (search) {
+    if (search && search.trim()) {
+      const sanitized = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
-        { invoiceNumber: { $regex: search, $options: 'i' } },
-        { 'customer.name': { $regex: search, $options: 'i' } },
-        { 'customer.phone': { $regex: search, $options: 'i' } },
+        { invoiceNumber: { $regex: sanitized, $options: 'i' } },
+        { 'customer.name': { $regex: sanitized, $options: 'i' } },
+        { 'customer.phone': { $regex: sanitized, $options: 'i' } },
       ];
     }
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
 
     const total = await Sale.countDocuments(query);
     const sales = await Sale.find(query)
       .populate('pharmacistId', 'name email')
       .sort({ createdAt: -1 })
-      .skip((Number(page) - 1) * Number(limit))
-      .limit(Number(limit));
+      .skip((pageNum - 1) * limitNum)
+      .limit(limitNum);
 
     return res.status(200).json({
       success: true,
       total,
-      page: Number(page),
-      sales,
+      page: pageNum,
+      limit: limitNum,
+      sales: sales || [],
     });
   } catch (error) {
     return res.status(500).json({
@@ -203,8 +210,8 @@ const getSalesSummary = async (req, res) => {
     const allSales = await Sale.find({ pharmacyId: req.pharmacyId });
     const todaySales = allSales.filter((s) => new Date(s.createdAt) >= startOfToday);
 
-    const todayRevenue = todaySales.reduce((sum, s) => sum + s.grandTotal, 0);
-    const totalRevenue = allSales.reduce((sum, s) => sum + s.grandTotal, 0);
+    const todayRevenue = todaySales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
+    const totalRevenue = allSales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
 
     return res.status(200).json({
       success: true,

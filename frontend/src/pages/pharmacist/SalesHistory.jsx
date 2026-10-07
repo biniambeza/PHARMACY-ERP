@@ -14,6 +14,8 @@ import {
   User,
   Phone,
   ArrowUpRight,
+  RotateCw,
+  AlertCircle,
 } from 'lucide-react';
 import { getSales, getSalesSummary } from '../../api/salesApi';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
@@ -26,25 +28,50 @@ const SalesHistory = () => {
   const [summary, setSummary] = useState(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // Receipt Modal
   const [selectedSale, setSelectedSale] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
 
   const loadData = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
       const params = {};
       if (search) params.search = search;
 
-      const [salesRes, summaryRes] = await Promise.all([
+      const [salesResult, summaryResult] = await Promise.allSettled([
         getSales(params),
         getSalesSummary(),
       ]);
 
-      setSales(salesRes.sales || []);
-      setSummary(summaryRes.summary || null);
+      let loadedSales = [];
+      if (salesResult.status === 'fulfilled' && salesResult.value?.sales) {
+        loadedSales = salesResult.value.sales;
+        setSales(loadedSales);
+      } else if (salesResult.status === 'rejected') {
+        console.error('Failed to load sales list:', salesResult.reason);
+        setError(salesResult.reason?.response?.data?.message || 'Failed to load sales transactions');
+      }
+
+      if (summaryResult.status === 'fulfilled' && summaryResult.value?.summary) {
+        setSummary(summaryResult.value.summary);
+      } else if (loadedSales.length > 0) {
+        // Fallback compute summary from sales if summary endpoint fails
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const today = loadedSales.filter((s) => new Date(s.createdAt) >= startOfToday);
+        setSummary({
+          todaySalesCount: today.length,
+          todayRevenue: today.reduce((acc, s) => acc + (Number(s.grandTotal) || 0), 0),
+          totalSalesCount: loadedSales.length,
+          totalRevenue: loadedSales.reduce((acc, s) => acc + (Number(s.grandTotal) || 0), 0),
+        });
+      }
     } catch (err) {
       console.error('Failed to load sales history:', err);
+      setError('Unable to load dispensary ledger. Please check your network connection.');
     } finally {
       setLoading(false);
     }
@@ -89,33 +116,49 @@ const SalesHistory = () => {
         </Link>
       </div>
 
+      {/* Error Notice */}
+      {error && (
+        <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-700 dark:text-rose-300 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={loadData}
+            className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-semibold transition cursor-pointer self-start sm:self-auto shrink-0 shadow-xs"
+          >
+            Retry Loading
+          </button>
+        </div>
+      )}
+
       {/* KPI Metric Cards */}
       {summary ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           <MetricCard
             title="Today's Revenue"
-            value={`$${summary.todayRevenue.toFixed(2)}`}
+            value={`$${(Number(summary.todayRevenue) || 0).toFixed(2)}`}
             subtitle="Dispensary sales today"
             icon={DollarSign}
             tone="teal"
           />
           <MetricCard
             title="Today's Orders"
-            value={summary.todaySalesCount}
+            value={summary.todaySalesCount || 0}
             subtitle="Checkout transactions today"
             icon={ShoppingCart}
             tone="cyan"
           />
           <MetricCard
             title="Total Revenue"
-            value={`$${summary.totalRevenue.toFixed(2)}`}
+            value={`$${(Number(summary.totalRevenue) || 0).toFixed(2)}`}
             subtitle="Cumulative gross billing"
             icon={TrendingUp}
             tone="indigo"
           />
           <MetricCard
             title="Total Invoices"
-            value={summary.totalSalesCount}
+            value={summary.totalSalesCount || 0}
             subtitle="All recorded receipts"
             icon={Receipt}
             tone="blue"
@@ -143,14 +186,26 @@ const SalesHistory = () => {
           />
         </div>
 
-        {search && (
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white px-2 py-1 transition cursor-pointer"
+            >
+              Clear Search
+            </button>
+          )}
+
           <button
-            onClick={() => setSearch('')}
-            className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white px-2 py-1 transition cursor-pointer self-start sm:self-auto"
+            onClick={loadData}
+            disabled={loading}
+            title="Refresh sales ledger"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
           >
-            Clear Search
+            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </button>
-        )}
+        </div>
       </div>
 
       {/* Invoices Table Card */}
@@ -206,9 +261,11 @@ const SalesHistory = () => {
                       </div>
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">
-                      {new Date(sale.createdAt).toLocaleDateString()}
+                      {sale.createdAt ? new Date(sale.createdAt).toLocaleDateString() : 'N/A'}
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
-                        {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {sale.createdAt
+                          ? new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : ''}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
@@ -223,7 +280,7 @@ const SalesHistory = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="text-slate-700 dark:text-slate-300 font-medium">
-                        {sale.items?.length || 0} item{sale.items?.length > 1 ? 's' : ''}
+                        {sale.items?.length || 0} item{(sale.items?.length || 0) !== 1 ? 's' : ''}
                       </span>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate max-w-xs">
                         {sale.items?.map((it) => `${it.name} (x${it.quantity})`).join(', ')}
@@ -231,12 +288,12 @@ const SalesHistory = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 font-mono">
-                        {sale.paymentMethod?.replace('_', ' ')}
+                        {(sale.paymentMethod || 'cash').replace('_', ' ')}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
-                        ${sale.grandTotal.toFixed(2)}
+                        ${(Number(sale.grandTotal) || 0).toFixed(2)}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
