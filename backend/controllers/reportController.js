@@ -455,70 +455,61 @@ const getFinancialAnalytics = async (req, res) => {
     const todayStr = getLocalDateString(new Date(), timeZone);
     const [fYear, fMonth, fDay] = todayStr.split('-').map(Number);
 
-    // 2. Generate trend points and filtering logic based on range
-    const trendPoints = [];
-    let rangeFilterFn;
-    let rangeLabel = 'Last 7 Days';
-
-    if (range === 'yearly') {
-      rangeLabel = `Year ${fYear}`;
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      for (let m = 0; m < 12; m++) {
-        const monthPrefix = `${fYear}-${String(m + 1).padStart(2, '0')}`;
-        const monthSales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone).startsWith(monthPrefix));
-        const rev = monthSales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
-        trendPoints.push({
-          date: monthPrefix,
-          dayName: monthNames[m],
-          revenue: Number(rev.toFixed(2)),
-          orderCount: monthSales.length,
-        });
-      }
-      rangeFilterFn = (s) => s.createdAt && getLocalDateString(s.createdAt, timeZone).startsWith(String(fYear));
-    } else if (range === 'monthly') {
-      rangeLabel = 'Last 30 Days';
-      const allowedDates = new Set();
-      for (let i = 29; i >= 0; i--) {
-        const targetDate = new Date(Date.UTC(fYear, fMonth - 1, fDay - i, 12, 0, 0));
-        const dateStr = getLocalDateString(targetDate, timeZone);
-        const dayName = getLocalMonthDay(targetDate, timeZone);
-        allowedDates.add(dateStr);
-
-        const daySales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === dateStr);
-        const dayRev = daySales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
-        trendPoints.push({
-          date: dateStr,
-          dayName,
-          revenue: Number(dayRev.toFixed(2)),
-          orderCount: daySales.length,
-        });
-      }
-      rangeFilterFn = (s) => s.createdAt && allowedDates.has(getLocalDateString(s.createdAt, timeZone));
-    } else {
-      // Default: '7d'
-      rangeLabel = 'Last 7 Days';
-      const allowedDates = new Set();
-      for (let i = 6; i >= 0; i--) {
-        const targetDate = new Date(Date.UTC(fYear, fMonth - 1, fDay - i, 12, 0, 0));
-        const dateStr = getLocalDateString(targetDate, timeZone);
-        const dayName = getLocalDayName(targetDate, timeZone);
-        allowedDates.add(dateStr);
-
-        const daySales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === dateStr);
-        const dayRev = daySales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
-        trendPoints.push({
-          date: dateStr,
-          dayName,
-          revenue: Number(dayRev.toFixed(2)),
-          orderCount: daySales.length,
-        });
-      }
-      rangeFilterFn = (s) => s.createdAt && allowedDates.has(getLocalDateString(s.createdAt, timeZone));
+    // 2. Precompute all 3 trend curves for instantaneous switching without page reloads
+    // 2a. Last 7 Days trend
+    const trend7d = [];
+    for (let i = 6; i >= 0; i--) {
+      const targetDate = new Date(Date.UTC(fYear, fMonth - 1, fDay - i, 12, 0, 0));
+      const dateStr = getLocalDateString(targetDate, timeZone);
+      const dayName = getLocalDayName(targetDate, timeZone);
+      const daySales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === dateStr);
+      const rev = daySales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
+      trend7d.push({
+        date: dateStr,
+        dayName,
+        revenue: Number(rev.toFixed(2)),
+        orderCount: daySales.length,
+      });
     }
 
-    // 3. Compute period metrics from filtered sales
-    const filteredSales = sales.filter(rangeFilterFn);
+    // 2b. Monthly (Last 30 days) trend
+    const trendMonthly = [];
+    for (let i = 29; i >= 0; i--) {
+      const targetDate = new Date(Date.UTC(fYear, fMonth - 1, fDay - i, 12, 0, 0));
+      const dateStr = getLocalDateString(targetDate, timeZone);
+      const dayName = getLocalMonthDay(targetDate, timeZone);
+      const daySales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === dateStr);
+      const rev = daySales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
+      trendMonthly.push({
+        date: dateStr,
+        dayName,
+        revenue: Number(rev.toFixed(2)),
+        orderCount: daySales.length,
+      });
+    }
 
+    // 2c. Yearly (12 calendar months) trend
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const trendYearly = [];
+    for (let m = 0; m < 12; m++) {
+      const monthPrefix = `${fYear}-${String(m + 1).padStart(2, '0')}`;
+      const monthSales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone).startsWith(monthPrefix));
+      const rev = monthSales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
+      trendYearly.push({
+        date: monthPrefix,
+        dayName: monthNames[m],
+        revenue: Number(rev.toFixed(2)),
+        orderCount: monthSales.length,
+      });
+    }
+
+    const trends = {
+      '7d': trend7d,
+      monthly: trendMonthly,
+      yearly: trendYearly,
+    };
+
+    // 3. Compute overall dispensary financials
     let totalRevenue = 0;
     let totalCOGS = 0;
     const paymentMethods = {
@@ -530,7 +521,7 @@ const getFinancialAnalytics = async (req, res) => {
 
     const medicineSalesMap = {};
 
-    filteredSales.forEach((sale) => {
+    sales.forEach((sale) => {
       totalRevenue += (sale.grandTotal || 0);
 
       const pm = sale.paymentMethod || 'cash';
@@ -574,9 +565,6 @@ const getFinancialAnalytics = async (req, res) => {
         estimatedProfit: Number(m.estimatedProfit.toFixed(2)),
       }));
 
-    const allTimeRevenue = Number(sales.reduce((sum, s) => sum + (s.grandTotal || 0), 0).toFixed(2));
-    const allTimeOrders = sales.length;
-
     const thirtyDaysFromNow = new Date();
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
@@ -604,22 +592,20 @@ const getFinancialAnalytics = async (req, res) => {
       success: true,
       analytics: {
         range,
-        rangeLabel,
         financials: {
           totalRevenue,
           totalCOGS,
           grossProfit,
           profitMargin,
-          totalOrders: filteredSales.length,
-          allTimeRevenue,
-          allTimeOrders,
+          totalOrders: sales.length,
         },
         paymentMethods: {
           cash: { count: paymentMethods.cash.count, total: Number(paymentMethods.cash.total.toFixed(2)) },
           card: { count: paymentMethods.card.count, total: Number(paymentMethods.card.total.toFixed(2)) },
           mobile_money: { count: paymentMethods.mobile_money.count, total: Number(paymentMethods.mobile_money.total.toFixed(2)) },
         },
-        dailyTrend: trendPoints,
+        dailyTrend: trends[range] || trend7d,
+        trends,
         topMedicines,
         expiryRisk: {
           expiringBatchesCount: expiringBatches.length,

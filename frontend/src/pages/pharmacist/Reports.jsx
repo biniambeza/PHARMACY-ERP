@@ -76,7 +76,7 @@ const Reports = () => {
       try {
         setLoading(true);
         setError('');
-        const data = await getFinancialAnalytics(timeRange);
+        const data = await getFinancialAnalytics();
         setAnalytics(data.analytics);
       } catch (err) {
         console.error('Failed to load reports:', err);
@@ -87,7 +87,7 @@ const Reports = () => {
     };
 
     fetchAnalytics();
-  }, [timeRange]);
+  }, []);
 
   const handlePrint = () => {
     window.print();
@@ -132,7 +132,10 @@ const Reports = () => {
     );
   }
 
-  const { financials, paymentMethods, dailyTrend, topMedicines, expiryRisk } = analytics;
+  const { financials, paymentMethods, dailyTrend, trends, topMedicines, expiryRisk } = analytics;
+
+  // Active chart data based on selected time frame ('7d', 'monthly', 'yearly')
+  const activeChartData = trends?.[timeRange] || dailyTrend || [];
 
   // Prepare Pie Chart data for payment tender methods
   const paymentChartData = [
@@ -142,8 +145,8 @@ const Reports = () => {
   ].filter((p) => p.value > 0 || p.count > 0);
 
   // Sparkline data for KPI cards
-  const revenueTrendSeries = dailyTrend?.map((d) => d.revenue) || [100, 150, 120, 200, 180, 220, 260];
-  const orderTrendSeries = dailyTrend?.map((d) => d.orderCount) || [5, 8, 7, 12, 10, 14, 16];
+  const revenueTrendSeries = trends?.['7d']?.map((d) => d.revenue) || activeChartData.map((d) => d.revenue);
+  const orderTrendSeries = trends?.['7d']?.map((d) => d.orderCount) || activeChartData.map((d) => d.orderCount);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -284,7 +287,7 @@ const Reports = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                  Sales Velocity ({analytics?.rangeLabel || (timeRange === 'yearly' ? 'Yearly' : timeRange === 'monthly' ? 'Monthly' : 'Last 7 Days')})
+                  Sales Velocity ({timeRange === 'yearly' ? 'Yearly' : timeRange === 'monthly' ? 'Monthly' : 'Last 7 Days'})
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {timeRange === 'yearly'
@@ -306,7 +309,7 @@ const Reports = () => {
 
           <div className="h-72 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={activeChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
