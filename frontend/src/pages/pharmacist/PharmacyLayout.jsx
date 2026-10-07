@@ -4,131 +4,43 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getMyPharmacy } from '../../api/pharmacyApi';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
+import {
+  Home,
+  Receipt,
+  Boxes,
+  ShoppingCart,
+  TrendingUp,
+  Pill,
+  Building2,
+  BarChart3,
+  Settings,
+  PackagePlus,
+  Moon,
+  Sun,
+  LogOut,
+  X,
+  Search,
+  Bell,
+  Menu,
+} from 'lucide-react';
 
-const navGroups = [
-  {
-    header: 'GENERAL',
-    items: [
-      {
-        name: 'Overview',
-        to: '/pharmacy',
-        end: true,
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        ),
-      },
-    ],
-  },
-  {
-    header: 'DISPENSARY',
-    items: [
-      {
-        name: 'Point of Sale',
-        to: '/pharmacy/pos',
-        end: false,
-        badge: 'Cashier',
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-        ),
-      },
-      {
-        name: 'Sales Ledger',
-        to: '/pharmacy/sales',
-        end: false,
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        ),
-      },
-    ],
-  },
-  {
-    header: 'INVENTORY',
-    items: [
-      {
-        name: 'Stock & Batches',
-        to: '/pharmacy/stock',
-        end: false,
-        badge: 'FEFO',
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-          </svg>
-        ),
-      },
-      {
-        name: 'Medicine Catalog',
-        to: '/pharmacy/medicines',
-        end: false,
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-          </svg>
-        ),
-      },
-    ],
-  },
-  {
-    header: 'SUPPLY CHAIN',
-    items: [
-      {
-        name: 'Procurement (POs)',
-        to: '/pharmacy/procurement',
-        end: false,
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        ),
-      },
-      {
-        name: 'Suppliers',
-        to: '/pharmacy/suppliers',
-        end: false,
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
-        ),
-      },
-    ],
-  },
-  {
-    header: 'INTELLIGENCE',
-    items: [
-      {
-        name: 'Financial Reports',
-        to: '/pharmacy/reports',
-        end: false,
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        ),
-      },
-    ],
-  },
-  {
-    header: 'MANAGEMENT',
-    items: [
-      {
-        name: 'Settings',
-        to: '/pharmacy/settings',
-        end: false,
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        ),
-      },
-    ],
-  },
+const navItems = [
+  { name: 'Overview', to: '/pharmacy', end: true, icon: Home },
+  { name: 'Point of Sale', to: '/pharmacy/pos', end: false, icon: Receipt, badge: 'POS' },
+  { name: 'Inventory', to: '/pharmacy/stock', end: false, icon: Boxes, badge: 'FEFO' },
+  { name: 'Procurement', to: '/pharmacy/procurement', end: false, icon: ShoppingCart },
+  { name: 'Sales Ledger', to: '/pharmacy/sales', end: false, icon: TrendingUp },
+  { name: 'Medicine Catalog', to: '/pharmacy/medicines', end: false, icon: Pill },
+  { name: 'Suppliers', to: '/pharmacy/suppliers', end: false, icon: Building2 },
+  { name: 'Reports', to: '/pharmacy/reports', end: false, icon: BarChart3 },
+  { name: 'Settings', to: '/pharmacy/settings', end: false, icon: Settings },
+];
+
+const quickActions = [
+  { name: 'Create Purchase', to: '/pharmacy/procurement', icon: ShoppingCart },
+  { name: 'New Sale (POS)', to: '/pharmacy/pos', icon: Receipt },
+  { name: 'Record Stock', to: '/pharmacy/stock', icon: PackagePlus },
+  { name: 'Add Supplier', to: '/pharmacy/suppliers', icon: Building2 },
 ];
 
 const PharmacyLayout = () => {
@@ -161,23 +73,23 @@ const PharmacyLayout = () => {
         />
       )}
 
-      {/* Left Sidebar (Pure White in Light Mode, Dark Executive Theme in Dark Mode) */}
+      {/* Left Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white dark:bg-[#1c222f] border-r border-slate-200 dark:border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white dark:bg-[#161c26] border-r border-slate-200/80 dark:border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Brand / Logo Header */}
-        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#171c26]">
+        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200/80 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#161c26]">
           <Link to="/pharmacy" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-teal-500/25">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-500/25">
               Rx
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px]">
                 {pharmacy ? pharmacy.name : 'Pharmacy ERP'}
               </h1>
-              <p className="text-[11px] text-teal-600 dark:text-teal-400 font-semibold truncate">
+              <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold truncate">
                 Dispensary Portal
               </p>
             </div>
@@ -186,119 +98,120 @@ const PharmacyLayout = () => {
           {/* Mobile Close Button */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Categorized Navigation with Section Headers */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 custom-scrollbar">
-          {navGroups.map((group) => (
-            <div key={group.header} className="space-y-1">
-              <div className="px-3 pb-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-                {group.header}
-              </div>
-
-              {group.items.map((item) => (
+        {/* Unified Navigation List matching reference design */}
+        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 custom-scrollbar">
+          <div className="space-y-1">
+            {navItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 ${
+                    `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-[13px] transition-all duration-150 ${
                       isActive
-                        ? 'bg-teal-50 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300 font-semibold border-l-2 border-teal-500 dark:border-teal-400 shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#252c3c]'
+                        ? 'bg-blue-50/90 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 font-semibold shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60 font-medium'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <span
-                        className={`transition-colors shrink-0 ${
-                          isActive
-                            ? 'text-teal-600 dark:text-teal-400'
-                            : 'text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        {item.icon}
-                      </span>
+                      {isActive ? (
+                        <span className="w-7 h-7 rounded-lg bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                          <IconComponent className="w-4 h-4" />
+                        </span>
+                      ) : (
+                        <span className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
+                          <IconComponent className="w-4.5 h-4.5" />
+                        </span>
+                      )}
                       <span className="flex-1 truncate">{item.name}</span>
                       {item.badge && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/30">
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            isActive
+                              ? 'bg-blue-100/80 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
                           {item.badge}
                         </span>
                       )}
                     </>
                   )}
                 </NavLink>
-              ))}
-            </div>
-          ))}
+              );
+            })}
+          </div>
 
-          {/* Quick Actions Shortcuts */}
-          <div className="pt-2 pb-1 border-t border-slate-200 dark:border-[#262e3f]">
-            <div className="px-3 pb-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-              QUICK LAUNCH
+          {/* Quick Actions Shortcuts matching reference layout */}
+          <div className="pt-3 pb-1 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="px-3 pb-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+              Quick Actions
             </div>
             <div className="space-y-1.5">
-              <button
-                onClick={() => navigate('/pharmacy/pos')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/80 dark:text-slate-300 dark:bg-[#252c3c]/60 dark:hover:bg-[#2b3446] dark:hover:text-white dark:border-[#2b3446] rounded-xl transition cursor-pointer text-left shadow-2xs"
-              >
-                <svg className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <span className="truncate">New Sale (POS)</span>
-              </button>
-              <button
-                onClick={() => navigate('/pharmacy/stock')}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/80 dark:text-slate-300 dark:bg-[#252c3c]/60 dark:hover:bg-[#2b3446] dark:hover:text-white dark:border-[#2b3446] rounded-xl transition cursor-pointer text-left shadow-2xs"
-              >
-                <svg className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <span className="truncate">Receive Lot (Stock)</span>
-              </button>
+              {quickActions.map((action) => {
+                const ActionIcon = action.icon;
+                return (
+                  <button
+                    key={action.name}
+                    onClick={() => {
+                      navigate(action.to);
+                      setMobileOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-slate-300 dark:text-slate-300 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] dark:hover:text-white dark:border-slate-800 rounded-xl transition shadow-2xs cursor-pointer text-left group"
+                  >
+                    <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
+                      <ActionIcon className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="truncate">{action.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Sidebar Footer with Theme Switch & User Bar */}
-        <div className="p-3 border-t border-slate-200 dark:border-[#262e3f] bg-white dark:bg-[#171c26] shrink-0 space-y-2">
+        <div className="p-3 border-t border-slate-200/80 dark:border-[#262e3f] bg-white dark:bg-[#161c26] shrink-0 space-y-2">
           {/* Light / Dark Mode Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-[#252c3c] dark:border-[#2e3749] dark:text-slate-200 hover:border-teal-400/60 transition cursor-pointer shadow-2xs"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 dark:bg-[#1f2635] dark:border-[#2b3548] dark:text-slate-200 transition cursor-pointer shadow-2xs"
           >
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                {isDark ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                )}
-              </svg>
+              {isDark ? (
+                <Moon className="w-4 h-4 text-blue-400" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-500" />
+              )}
               <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1c222f] text-slate-500 dark:text-slate-400 font-mono">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-[#161c26] text-slate-500 dark:text-slate-400 font-mono border border-slate-200/60 dark:border-slate-700/60">
               Toggle
             </span>
           </button>
 
           {/* User Profile Info Chip */}
-          <div className="flex items-center justify-between px-2 py-1.5">
+          <div className="flex items-center justify-between px-1.5 py-1">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'P'}
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {user?.name || 'Pharmacist'}
                 </p>
-                <p className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold capitalize truncate">
+                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold capitalize truncate">
                   {user?.role || 'Pharmacist'}
                 </p>
               </div>
@@ -308,9 +221,7 @@ const PharmacyLayout = () => {
               title="Sign Out"
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>

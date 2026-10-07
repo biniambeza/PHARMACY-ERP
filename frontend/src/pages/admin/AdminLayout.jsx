@@ -3,24 +3,21 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
+import {
+  Home,
+  PlusCircle,
+  RefreshCw,
+  Moon,
+  Sun,
+  LogOut,
+  X,
+  Search,
+  Bell,
+  Menu,
+} from 'lucide-react';
 
-const adminNavGroups = [
-  {
-    header: 'GENERAL',
-    items: [
-      {
-        name: 'Command Center',
-        to: '/admin',
-        end: true,
-        badge: 'Hub',
-        icon: (
-          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-        ),
-      },
-    ],
-  },
+const adminNavItems = [
+  { name: 'Command Center', to: '/admin', end: true, icon: Home, badge: 'Hub' },
 ];
 
 const AdminLayout = () => {
@@ -35,6 +32,11 @@ const AdminLayout = () => {
     setMobileOpen(false);
   };
 
+  const handleSyncStats = () => {
+    window.dispatchEvent(new CustomEvent('refresh-admin-data'));
+    setMobileOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-[#f4f7fa] dark:bg-[#0d1117] text-slate-800 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-200">
       {/* Mobile Backdrop */}
@@ -45,23 +47,23 @@ const AdminLayout = () => {
         />
       )}
 
-      {/* Left Sidebar (Pure White in Light Mode, Dark Executive Theme in Dark Mode) */}
+      {/* Left Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white dark:bg-[#1c222f] border-r border-slate-200 dark:border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white dark:bg-[#161c26] border-r border-slate-200/80 dark:border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Brand / Logo Header */}
-        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#171c26]">
+        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200/80 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#161c26]">
           <Link to="/admin" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-teal-500/25">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-blue-500/25">
               AD
             </div>
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px]">
                 Admin Portal
               </h1>
-              <p className="text-[11px] text-teal-600 dark:text-teal-400 font-semibold truncate">
+              <p className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold truncate">
                 Global Command Center
               </p>
             </div>
@@ -70,133 +72,120 @@ const AdminLayout = () => {
           {/* Mobile Close Button */}
           <button
             onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Categorized Navigation with Section Headers */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 custom-scrollbar">
-          {adminNavGroups.map((group) => (
-            <div key={group.header} className="space-y-1">
-              <div className="px-3 pb-1 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-                {group.header}
-              </div>
-
-              {group.items.map((item) => (
+        {/* Unified Navigation List */}
+        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 custom-scrollbar">
+          <div className="space-y-1">
+            {adminNavItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 ${
+                    `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-[13px] transition-all duration-150 ${
                       isActive
-                        ? 'bg-teal-50 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300 font-semibold border-l-2 border-teal-500 dark:border-teal-400 shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#252c3c]'
+                        ? 'bg-blue-50/90 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 font-semibold shadow-2xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60 font-medium'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <span
-                        className={`transition-colors shrink-0 ${
-                          isActive
-                            ? 'text-teal-600 dark:text-teal-400'
-                            : 'text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        {item.icon}
-                      </span>
+                      {isActive ? (
+                        <span className="w-7 h-7 rounded-lg bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                          <IconComponent className="w-4 h-4" />
+                        </span>
+                      ) : (
+                        <span className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
+                          <IconComponent className="w-4.5 h-4.5" />
+                        </span>
+                      )}
                       <span className="flex-1 truncate">{item.name}</span>
                       {item.badge && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/20 dark:text-teal-300 dark:border-teal-500/30">
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                            isActive
+                              ? 'bg-blue-100/80 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
                           {item.badge}
                         </span>
                       )}
                     </>
                   )}
                 </NavLink>
-              ))}
-            </div>
-          ))}
+              );
+            })}
+          </div>
 
-          {/* Quick Actions Card */}
-          <div className="pt-2 pb-1 border-t border-slate-200 dark:border-[#262e3f]">
-            <div className="px-3 pb-2 text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-              TENANT CONTROLS
+          {/* Quick Actions Shortcuts */}
+          <div className="pt-3 pb-1 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="px-3 pb-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+              Quick Actions
             </div>
             <div className="space-y-1.5">
               <button
                 onClick={handleOpenCreateModal}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/80 dark:text-slate-300 dark:bg-[#252c3c]/60 dark:hover:bg-[#2b3446] dark:hover:text-white dark:border-[#2b3446] rounded-xl transition cursor-pointer text-left shadow-2xs"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-slate-300 dark:text-slate-300 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] dark:hover:text-white dark:border-slate-800 rounded-xl transition shadow-2xs cursor-pointer text-left group"
               >
-                <svg className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="truncate">Provision New Pharmacy</span>
+                <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
+                  <PlusCircle className="w-3.5 h-3.5" />
+                </span>
+                <span className="truncate">Provision Pharmacy</span>
               </button>
               <button
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('refresh-admin-data'));
-                  setMobileOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/80 dark:text-slate-300 dark:bg-[#252c3c]/60 dark:hover:bg-[#2b3446] dark:hover:text-white dark:border-[#2b3446] rounded-xl transition cursor-pointer text-left shadow-2xs"
+                onClick={handleSyncStats}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-slate-300 dark:text-slate-300 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] dark:hover:text-white dark:border-slate-800 rounded-xl transition shadow-2xs cursor-pointer text-left group"
               >
-                <svg className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
+                <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </span>
                 <span className="truncate">Sync Platform Stats</span>
               </button>
             </div>
           </div>
-
-          {/* Security & Multi-Tenant Status Badge */}
-          <div className="p-3 bg-teal-50/60 dark:bg-[#171c26] border border-teal-100 dark:border-[#262e3f] rounded-xl text-xs space-y-1">
-            <div className="flex items-center gap-2 text-teal-700 dark:text-teal-400 font-bold">
-              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-              <span>Multi-Tenant Engine</span>
-            </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              Real-time tenant data isolation active via strict query partitioning.
-            </p>
-          </div>
         </div>
 
         {/* Sidebar Footer with Dark/Light Switch & Profile */}
-        <div className="p-3 border-t border-slate-200 dark:border-[#262e3f] bg-white dark:bg-[#171c26] shrink-0 space-y-2">
+        <div className="p-3 border-t border-slate-200/80 dark:border-[#262e3f] bg-white dark:bg-[#161c26] shrink-0 space-y-2">
           {/* Light / Dark Mode Toggle Pill */}
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 dark:bg-[#252c3c] dark:border-[#2e3749] dark:text-slate-200 hover:border-teal-400/60 transition cursor-pointer shadow-2xs"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 dark:bg-[#1f2635] dark:border-[#2b3548] dark:text-slate-200 transition cursor-pointer shadow-2xs"
           >
             <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                {isDark ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                )}
-              </svg>
+              {isDark ? (
+                <Moon className="w-4 h-4 text-blue-400" />
+              ) : (
+                <Sun className="w-4 h-4 text-amber-500" />
+              )}
               <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#1c222f] text-slate-500 dark:text-slate-400 font-mono">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-[#161c26] text-slate-500 dark:text-slate-400 font-mono border border-slate-200/60 dark:border-slate-700/60">
               Toggle
             </span>
           </button>
 
           {/* User Profile Mini Bar */}
-          <div className="flex items-center justify-between px-2 py-1.5">
+          <div className="flex items-center justify-between px-1.5 py-1">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                   {user?.name || 'Administrator'}
                 </p>
-                <p className="text-[10px] text-teal-600 dark:text-teal-400 capitalize truncate font-semibold">
+                <p className="text-[10px] text-blue-600 dark:text-blue-400 capitalize truncate font-semibold">
                   {user?.role || 'Super Admin'}
                 </p>
               </div>
@@ -206,9 +195,7 @@ const AdminLayout = () => {
               title="Sign Out"
               className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
