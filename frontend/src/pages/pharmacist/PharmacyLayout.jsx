@@ -3,6 +3,7 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getMyPharmacy } from '../../api/pharmacyApi';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 
 const navGroups = [
   {
@@ -408,7 +409,9 @@ const PharmacyLayout = () => {
 
         {/* Scrollable Page Body with Cool Gray Canvas */}
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
-          <Outlet context={{ pharmacy, globalSearch }} />
+          <ErrorBoundary>
+            <Outlet context={{ pharmacy, globalSearch }} />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

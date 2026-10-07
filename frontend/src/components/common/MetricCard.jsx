@@ -56,6 +56,16 @@ const MetricCard = ({
     neutral: 'text-slate-500 dark:text-slate-400',
   };
 
+  const renderIcon = () => {
+    if (!icon) return null;
+    if (React.isValidElement(icon)) return icon;
+    if (typeof icon === 'function') {
+      const IconComponent = icon;
+      return <IconComponent className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" />;
+    }
+    return null;
+  };
+
   return (
     <div
       className={`bg-white dark:bg-[#161c26] rounded-2xl border border-slate-100/90 dark:border-slate-800/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:border-slate-200 dark:hover:border-slate-700 ${className}`}
@@ -65,7 +75,7 @@ const MetricCard = ({
         <div className="flex items-center gap-2.5">
           {icon && (
             <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60 flex items-center justify-center text-slate-700 dark:text-slate-200 shrink-0 shadow-2xs">
-              {icon}
+              {renderIcon()}
             </div>
           )}
           <div>

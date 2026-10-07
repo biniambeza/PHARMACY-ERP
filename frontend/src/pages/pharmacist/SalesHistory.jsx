@@ -138,30 +138,42 @@ const SalesHistory = () => {
           <MetricCard
             title="Today's Revenue"
             value={`$${(Number(summary.todayRevenue) || 0).toFixed(2)}`}
-            subtitle="Dispensary sales today"
-            icon={DollarSign}
-            tone="teal"
+            subValue="Dispensary sales today"
+            badgeText="Today"
+            badgeVariant="teal"
+            icon={<DollarSign className="w-4.5 h-4.5 text-teal-600 dark:text-teal-400" />}
+            sparklineColor="#0d9488"
+            sparklineId="sales-today-rev-spark"
           />
           <MetricCard
             title="Today's Orders"
-            value={summary.todaySalesCount || 0}
-            subtitle="Checkout transactions today"
-            icon={ShoppingCart}
-            tone="cyan"
+            value={(summary.todaySalesCount || 0).toString()}
+            subValue="Checkout transactions today"
+            badgeText="Orders"
+            badgeVariant="teal"
+            icon={<ShoppingCart className="w-4.5 h-4.5 text-cyan-600 dark:text-cyan-400" />}
+            sparklineColor="#06b6d4"
+            sparklineId="sales-today-orders-spark"
           />
           <MetricCard
             title="Total Revenue"
             value={`$${(Number(summary.totalRevenue) || 0).toFixed(2)}`}
-            subtitle="Cumulative gross billing"
-            icon={TrendingUp}
-            tone="indigo"
+            subValue="Cumulative gross billing"
+            badgeText="Gross"
+            badgeVariant="indigo"
+            icon={<TrendingUp className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />}
+            sparklineColor="#6366f1"
+            sparklineId="sales-total-rev-spark"
           />
           <MetricCard
             title="Total Invoices"
-            value={summary.totalSalesCount || 0}
-            subtitle="All recorded receipts"
-            icon={Receipt}
-            tone="blue"
+            value={(summary.totalSalesCount || 0).toString()}
+            subValue="All recorded receipts"
+            badgeText="Receipts"
+            badgeVariant="blue"
+            icon={<Receipt className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />}
+            sparklineColor="#3b82f6"
+            sparklineId="sales-total-inv-spark"
           />
         </div>
       ) : (

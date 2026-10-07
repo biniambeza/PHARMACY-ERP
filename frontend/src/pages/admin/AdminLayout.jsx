@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 
 const adminNavGroups = [
   {
@@ -306,7 +307,9 @@ const AdminLayout = () => {
 
         {/* Scrollable Page Body with Cool Gray Canvas */}
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
-          <Outlet context={{ globalSearch }} />
+          <ErrorBoundary>
+            <Outlet context={{ globalSearch }} />
+          </ErrorBoundary>
         </main>
       </div>
     </div>
