@@ -22,6 +22,10 @@ import {
   Search,
   Bell,
   Menu,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 
 const navItems = [
@@ -49,7 +53,18 @@ const PharmacyLayout = () => {
   const [pharmacy, setPharmacy] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('erp_sidebar_collapsed') === 'true';
+  });
   const navigate = useNavigate();
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('erp_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     const fetchPharmacy = async () => {
@@ -75,37 +90,72 @@ const PharmacyLayout = () => {
 
       {/* Left Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-white dark:bg-[#161c26] border-r border-slate-200/80 dark:border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-white dark:bg-[#161c26] border-r border-slate-200/80 dark:border-[#262e3f] transition-all duration-300 ease-in-out lg:static ${
+          sidebarCollapsed ? 'w-64 lg:w-20' : 'w-64'
+        } ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Brand / Logo Header */}
-        <div className="h-20 px-6 flex items-center justify-between border-b border-slate-200/80 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#161c26]">
-          <Link to="/pharmacy" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-emerald-500/25">
-              Rx
+        <div
+          className={`h-20 ${
+            sidebarCollapsed ? 'px-3 justify-center' : 'px-5 justify-between'
+          } flex items-center border-b border-slate-200/80 dark:border-[#262e3f] shrink-0 bg-white dark:bg-[#161c26] relative transition-all duration-200`}
+        >
+          {!sidebarCollapsed ? (
+            <>
+              <Link to="/pharmacy" className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-emerald-500/25 shrink-0">
+                  Rx
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[115px]">
+                    {pharmacy ? pharmacy.name : 'Pharmacy ERP'}
+                  </h1>
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+                    Dispensary Portal
+                  </p>
+                </div>
+              </Link>
+              <div className="flex items-center gap-1">
+                {/* Desktop Collapse Toggle */}
+                <button
+                  onClick={toggleSidebarCollapse}
+                  title="Minimize Sidebar"
+                  className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition cursor-pointer"
+                >
+                  <ChevronLeft className="w-4.5 h-4.5" />
+                </button>
+                {/* Mobile Close Button */}
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center justify-center relative w-full">
+              <Link to="/pharmacy" title={pharmacy?.name || 'Pharmacy ERP'} className="group flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-emerald-500/25 group-hover:scale-105 transition-transform">
+                  Rx
+                </div>
+              </Link>
+              {/* Expand Toggle floating button on border */}
+              <button
+                onClick={toggleSidebarCollapse}
+                title="Expand Sidebar"
+                className="hidden lg:flex absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-[#161c26] border border-slate-200 dark:border-slate-700 shadow-md items-center justify-center text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer z-50 hover:scale-110"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[130px]">
-                {pharmacy ? pharmacy.name : 'Pharmacy ERP'}
-              </h1>
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-                Dispensary Portal
-              </p>
-            </div>
-          </Link>
-
-          {/* Mobile Close Button */}
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          )}
         </div>
 
-        {/* Unified Navigation List matching reference design */}
-        <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-4 custom-scrollbar">
+        {/* Unified Navigation List */}
+        <div className={`flex-1 overflow-y-auto ${sidebarCollapsed ? 'px-2.5 py-3 space-y-3' : 'px-3.5 py-4 space-y-4'} custom-scrollbar`}>
           <div className="space-y-1">
             {navItems.map((item) => {
               const IconComponent = item.icon;
@@ -115,8 +165,13 @@ const PharmacyLayout = () => {
                   to={item.to}
                   end={item.end}
                   onClick={() => setMobileOpen(false)}
+                  title={sidebarCollapsed ? item.name : undefined}
                   className={({ isActive }) =>
-                    `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-[13px] transition-all duration-150 ${
+                    `group relative flex items-center ${
+                      sidebarCollapsed
+                        ? 'justify-center p-2.5 rounded-xl'
+                        : 'gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-[13px]'
+                    } transition-all duration-150 ${
                       isActive
                         ? 'bg-emerald-50/90 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold shadow-2xs'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60 font-medium'
@@ -126,25 +181,40 @@ const PharmacyLayout = () => {
                   {({ isActive }) => (
                     <>
                       {isActive ? (
-                        <span className="w-7 h-7 rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs shadow-emerald-500/20">
+                        <span className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-7 h-7'} rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs shadow-emerald-500/20`}>
                           <IconComponent className="w-4 h-4" />
                         </span>
                       ) : (
-                        <span className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
+                        <span className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-7 h-7'} flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors`}>
                           <IconComponent className="w-4.5 h-4.5" />
                         </span>
                       )}
-                      <span className="flex-1 truncate">{item.name}</span>
-                      {item.badge && (
-                        <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                            isActive
-                              ? 'bg-emerald-100/90 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                          }`}
-                        >
-                          {item.badge}
-                        </span>
+
+                      {!sidebarCollapsed ? (
+                        <>
+                          <span className="flex-1 truncate">{item.name}</span>
+                          {item.badge && (
+                            <span
+                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                isActive
+                                  ? 'bg-emerald-100/90 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
+                                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        /* Tooltip for collapsed mode */
+                        <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 items-center gap-2 border border-slate-700/60">
+                          <span>{item.name}</span>
+                          {item.badge && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </>
                   )}
@@ -153,77 +223,143 @@ const PharmacyLayout = () => {
             })}
           </div>
 
-          {/* Quick Actions Shortcuts matching reference layout */}
-          <div className="pt-3 pb-1 border-t border-slate-100 dark:border-slate-800/80">
-            <div className="px-3 pb-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
-              Quick Actions
-            </div>
-            <div className="space-y-1.5">
-              {quickActions.map((action) => {
-                const ActionIcon = action.icon;
-                return (
-                  <button
-                    key={action.name}
-                    onClick={() => {
-                      navigate(action.to);
-                      setMobileOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-slate-300 dark:text-slate-300 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] dark:hover:text-white dark:border-slate-800 rounded-xl transition shadow-2xs cursor-pointer text-left group"
-                  >
-                    <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
-                      <ActionIcon className="w-3.5 h-3.5" />
-                    </span>
-                    <span className="truncate">{action.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Quick Actions Shortcuts */}
+          <div className={`pt-3 pb-1 border-t border-slate-100 dark:border-slate-800/80 ${sidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
+            {!sidebarCollapsed ? (
+              <>
+                <div className="px-3 pb-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+                  Quick Actions
+                </div>
+                <div className="space-y-1.5">
+                  {quickActions.map((action) => {
+                    const ActionIcon = action.icon;
+                    return (
+                      <button
+                        key={action.name}
+                        onClick={() => {
+                          navigate(action.to);
+                          setMobileOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-slate-300 dark:text-slate-300 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] dark:hover:text-white dark:border-slate-800 rounded-xl transition shadow-2xs cursor-pointer text-left group"
+                      >
+                        <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
+                          <ActionIcon className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="truncate">{action.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-1.5 w-full flex flex-col items-center">
+                {quickActions.map((action) => {
+                  const ActionIcon = action.icon;
+                  return (
+                    <button
+                      key={action.name}
+                      onClick={() => {
+                        navigate(action.to);
+                        setMobileOpen(false);
+                      }}
+                      title={action.name}
+                      className="group relative w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] border border-slate-200/70 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer shadow-2xs"
+                    >
+                      <ActionIcon className="w-4 h-4" />
+                      {/* Tooltip */}
+                      <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
+                        {action.name}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Sidebar Footer with Theme Switch & User Bar */}
-        <div className="p-3 border-t border-slate-200/80 dark:border-[#262e3f] bg-white dark:bg-[#161c26] shrink-0 space-y-2">
+        <div className={`p-3 border-t border-slate-200/80 dark:border-[#262e3f] bg-white dark:bg-[#161c26] shrink-0 space-y-2 ${sidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
           {/* Light / Dark Mode Toggle Button */}
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 dark:bg-[#1f2635] dark:border-[#2b3548] dark:text-slate-200 transition cursor-pointer shadow-2xs"
-          >
-            <div className="flex items-center gap-2">
+          {!sidebarCollapsed ? (
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 dark:bg-[#1f2635] dark:border-[#2b3548] dark:text-slate-200 transition cursor-pointer shadow-2xs"
+            >
+              <div className="flex items-center gap-2">
+                {isDark ? (
+                  <Moon className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Sun className="w-4 h-4 text-amber-500" />
+                )}
+                <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-[#161c26] text-slate-500 dark:text-slate-400 font-mono border border-slate-200/60 dark:border-slate-700/60">
+                Toggle
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={toggleTheme}
+              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="group relative w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 dark:bg-[#1f2635] dark:border-[#2b3548] dark:text-slate-200 transition cursor-pointer shadow-2xs"
+            >
               {isDark ? (
-                <Moon className="w-4 h-4 text-emerald-400" />
+                <Moon className="w-4.5 h-4.5 text-emerald-400" />
               ) : (
-                <Sun className="w-4 h-4 text-amber-500" />
+                <Sun className="w-4.5 h-4.5 text-amber-500" />
               )}
-              <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
-            </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-[#161c26] text-slate-500 dark:text-slate-400 font-mono border border-slate-200/60 dark:border-slate-700/60">
-              Toggle
-            </span>
-          </button>
+              {/* Tooltip */}
+              <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
+                {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              </div>
+            </button>
+          )}
 
           {/* User Profile Info Chip */}
-          <div className="flex items-center justify-between px-1.5 py-1">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+          {!sidebarCollapsed ? (
+            <div className="flex items-center justify-between px-1.5 py-1">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'P'}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                    {user?.name || 'Pharmacist'}
+                  </p>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold capitalize truncate">
+                    {user?.role || 'Pharmacist'}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={logout}
+                title="Sign Out"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <div
+                title={`${user?.name || 'Pharmacist'} (${user?.role || 'Staff'})`}
+                className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-default"
+              >
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'P'}
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                  {user?.name || 'Pharmacist'}
-                </p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold capitalize truncate">
-                  {user?.role || 'Pharmacist'}
-                </p>
-              </div>
+              <button
+                onClick={logout}
+                title="Sign Out"
+                className="group relative p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
+              >
+                <LogOut className="w-4.5 h-4.5" />
+                <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
+                  Sign Out
+                </div>
+              </button>
             </div>
-            <button
-              onClick={logout}
-              title="Sign Out"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+          )}
         </div>
       </aside>
 
@@ -231,7 +367,20 @@ const PharmacyLayout = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Floating Top Header Bar matching reference design */}
         <header className="h-20 bg-white dark:bg-[#151a24] border-b border-slate-100 dark:border-slate-800 px-6 sm:px-8 flex items-center justify-between gap-4 shrink-0 z-30 shadow-xs transition-colors">
-          <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            {/* Desktop Sidebar Toggle Button */}
+            <button
+              onClick={toggleSidebarCollapse}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Minimize sidebar'}
+              className="hidden lg:flex p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              {sidebarCollapsed ? (
+                <PanelLeftOpen className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <PanelLeftClose className="w-5 h-5" />
+              )}
+            </button>
+
             {/* Mobile menu trigger */}
             <button
               onClick={() => setMobileOpen(true)}
