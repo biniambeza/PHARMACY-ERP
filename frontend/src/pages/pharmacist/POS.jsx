@@ -67,13 +67,21 @@ const POS = () => {
 
   // Compute available quantity per medicine (sum of non-expired/active batches)
   const getAvailableStock = (medicineId) => {
+    const targetId = String(medicineId?._id || medicineId || '');
     return stockBatches
       .filter((b) => {
-        const match = b.medicineId?._id === medicineId || b.medicineId === medicineId;
+        const batchMedId = String(b.medicineId?._id || b.medicineId || '');
+        const match = batchMedId === targetId;
+        const isAvailableStatus =
+          (!b.status || b.status === 'active' || b.status === 'in_stock') &&
+          b.status !== 'depleted' &&
+          b.status !== 'expired' &&
+          b.status !== 'discarded';
         const notExpired = !b.expiryDate || new Date(b.expiryDate) > new Date();
-        return match && b.status === 'in_stock' && notExpired;
+        const hasQuantity = (Number(b.quantity) || 0) > 0;
+        return match && isAvailableStatus && notExpired && hasQuantity;
       })
-      .reduce((sum, b) => sum + (b.quantity || 0), 0);
+      .reduce((sum, b) => sum + (Number(b.quantity) || 0), 0);
   };
 
   // Add Item to Cart
@@ -92,7 +100,9 @@ const POS = () => {
           return prevCart;
         }
         return prevCart.map((it) =>
-          it.medicineId === med._id ? { ...it, quantity: it.quantity + 1 } : it
+          it.medicineId === med._id
+            ? { ...it, quantity: it.quantity + 1, maxAvailable: available }
+            : it
         );
       } else {
         return [
@@ -115,12 +125,14 @@ const POS = () => {
   const handleUpdateQty = (medicineId, newQty) => {
     const qty = parseInt(newQty, 10);
     if (isNaN(qty) || qty <= 0) return;
+    const currentAvailable = getAvailableStock(medicineId);
 
     setCart((prevCart) =>
       prevCart.map((it) => {
         if (it.medicineId === medicineId) {
-          const clamped = Math.min(qty, it.maxAvailable);
-          return { ...it, quantity: clamped };
+          const max = currentAvailable > 0 ? currentAvailable : it.maxAvailable;
+          const clamped = Math.min(qty, max);
+          return { ...it, quantity: clamped, maxAvailable: max };
         }
         return it;
       })
