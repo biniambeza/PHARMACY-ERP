@@ -204,11 +204,23 @@ const getSaleById = async (req, res) => {
 // @access  Private (Pharmacist only)
 const getSalesSummary = async (req, res) => {
   try {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const timeZone = req.headers['x-timezone'] || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const getLocalDateString = (date, tz) => {
+      try {
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).format(new Date(date));
+      } catch {
+        return new Date(date).toISOString().split('T')[0];
+      }
+    };
 
+    const todayStr = getLocalDateString(new Date(), timeZone);
     const allSales = await Sale.find({ pharmacyId: req.pharmacyId });
-    const todaySales = allSales.filter((s) => new Date(s.createdAt) >= startOfToday);
+    const todaySales = allSales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === todayStr);
 
     const todayRevenue = todaySales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
     const totalRevenue = allSales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);

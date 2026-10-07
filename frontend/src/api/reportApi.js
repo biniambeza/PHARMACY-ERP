@@ -1,7 +1,7 @@
 import api from './axios';
 
-export const getFinancialAnalytics = async () => {
-  const res = await api.get('/reports/analytics');
+export const getFinancialAnalytics = async (range = '7d') => {
+  const res = await api.get(`/reports/analytics?range=${range}`);
   return res.data;
 };
 

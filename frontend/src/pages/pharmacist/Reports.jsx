@@ -40,15 +40,23 @@ const PAYMENT_COLORS = {
 
 const CustomChartTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
+    const itemData = payload[0].payload;
     return (
       <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs p-3 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800">
-        <p className="font-semibold text-slate-600 dark:text-slate-300 mb-1">{label}</p>
+        <div className="font-semibold text-slate-600 dark:text-slate-300 mb-1 flex items-center justify-between gap-3">
+          <span>{label}</span>
+          {itemData?.date && (
+            <span className="font-normal font-mono text-[10px] text-slate-400">
+              {itemData.date}
+            </span>
+          )}
+        </div>
         <p className="font-mono text-emerald-600 dark:text-emerald-400 font-bold text-sm">
           ${Number(payload[0].value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </p>
-        {payload[0].payload?.orderCount !== undefined && (
+        {itemData?.orderCount !== undefined && (
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            {payload[0].payload.orderCount} orders processed
+            {itemData.orderCount} orders processed
           </p>
         )}
       </div>
@@ -68,7 +76,7 @@ const Reports = () => {
       try {
         setLoading(true);
         setError('');
-        const data = await getFinancialAnalytics();
+        const data = await getFinancialAnalytics(timeRange);
         setAnalytics(data.analytics);
       } catch (err) {
         console.error('Failed to load reports:', err);
@@ -79,7 +87,7 @@ const Reports = () => {
     };
 
     fetchAnalytics();
-  }, []);
+  }, [timeRange]);
 
   const handlePrint = () => {
     window.print();
@@ -266,7 +274,7 @@ const Reports = () => {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                  Daily Sales Velocity (Last 7 Days)
+                  Daily Sales Velocity ({timeRange === 'mtd' ? 'Month to Date' : 'Last 7 Days'})
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Real-time revenue progression and dispensing volume

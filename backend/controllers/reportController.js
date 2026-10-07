@@ -5,6 +5,68 @@ const PurchaseOrder = require('../models/PurchaseOrder');
 const Supplier = require('../models/Supplier');
 const Pharmacy = require('../models/Pharmacy');
 
+// Helper to extract client timezone from request headers or query
+const getClientTimezone = (req) => {
+  const headerTz = req?.headers?.['x-timezone'] || req?.query?.timezone;
+  if (headerTz) {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: headerTz });
+      return headerTz;
+    } catch {
+      // Fallback if invalid timezone string
+    }
+  }
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+};
+
+// Helper to format Date into YYYY-MM-DD in the target timezone
+const getLocalDateString = (date, timeZone) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+  } catch {
+    return d.toISOString().split('T')[0];
+  }
+};
+
+// Helper to format weekday ('Thu', 'Wed', etc.) in the target timezone
+const getLocalDayName = (date, timeZone) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      weekday: 'short',
+    }).format(d);
+  } catch {
+    return d.toLocaleDateString('en-US', { weekday: 'short' });
+  }
+};
+
+// Helper to format month and day ('Oct 8', 'Oct 7', etc.) in the target timezone
+const getLocalMonthDay = (date, timeZone) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      month: 'short',
+      day: 'numeric',
+    }).format(d);
+  } catch {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+};
+
 // Helper to format timestamps into relative time strings
 const formatRelativeTime = (date) => {
   if (!date) return 'Recently';
@@ -24,6 +86,8 @@ const formatRelativeTime = (date) => {
 const getDashboardOverview = async (req, res) => {
   try {
     const pharmacyId = req.pharmacyId;
+    const timeZone = getClientTimezone(req);
+    const todayStr = getLocalDateString(new Date(), timeZone);
 
     // 1. Parallel fetch from MongoDB collections for this pharmacy
     const [pharmacy, medicines, stockBatches, sales, purchaseOrders, suppliers] = await Promise.all([
@@ -39,10 +103,8 @@ const getDashboardOverview = async (req, res) => {
     const totalRevenue = sales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
     const totalOrders = sales.length;
 
-    // Start of today
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const todaySales = sales.filter((s) => new Date(s.createdAt) >= startOfToday);
+    // Filter today's sales accurately based on user's timezone date
+    const todaySales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === todayStr);
     const todayRevenue = todaySales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
 
     // Total expenses: sum of all PO costs + COGS of sold items
@@ -62,25 +124,24 @@ const getDashboardOverview = async (req, res) => {
     const totalStockUnits = activeBatchesList.reduce((sum, b) => sum + (b.quantity || 0), 0);
     const totalMedicinesCount = medicines.length;
 
-    // 3. Revenue vs Expenses Chart Trend (Last 5 intervals / days)
+    // 3. Revenue vs Expenses Chart Trend (Last 5 daily intervals in user's timezone)
+    const [tYear, tMonth, tDay] = todayStr.split('-').map(Number);
     const trendPoints = [];
     for (let i = 4; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i * 3); // 3-day steps or daily
-      const dStr = d.toISOString().split('T')[0];
-      const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const targetDate = new Date(Date.UTC(tYear, tMonth - 1, tDay - i, 12, 0, 0));
+      const dStr = getLocalDateString(targetDate, timeZone);
+      const label = getLocalMonthDay(targetDate, timeZone);
 
-      // Sales revenue matching this date bucket
+      // Sales revenue matching this date bucket in user's timezone
       const bucketSales = sales.filter((s) => {
-        const sDate = new Date(s.createdAt).toISOString().split('T')[0];
-        return sDate === dStr;
+        return s.createdAt && getLocalDateString(s.createdAt, timeZone) === dStr;
       });
       const rev = bucketSales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
 
-      // PO expenses matching this date bucket
+      // PO expenses matching this date bucket in user's timezone
       const bucketPOs = purchaseOrders.filter((po) => {
-        const poDate = new Date(po.createdAt || po.orderDate).toISOString().split('T')[0];
-        return poDate === dStr;
+        const poDate = po.createdAt || po.orderDate;
+        return poDate && getLocalDateString(poDate, timeZone) === dStr;
       });
       const exp = bucketPOs.reduce((sum, po) => sum + (po.totalAmount || 0), 0);
 
@@ -444,17 +505,28 @@ const getFinancialAnalytics = async (req, res) => {
         estimatedProfit: Number(m.estimatedProfit.toFixed(2)),
       }));
 
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const daySales = sales.filter((s) => s.createdAt.toISOString().split('T')[0] === dateStr);
-      const dayRev = daySales.reduce((sum, s) => sum + s.grandTotal, 0);
+    const timeZone = getClientTimezone(req);
+    const todayStr = getLocalDateString(new Date(), timeZone);
+    const [fYear, fMonth, fDay] = todayStr.split('-').map(Number);
 
-      last7Days.push({
+    // Support time range: 'mtd' (month-to-date) or default '7d' (last 7 days)
+    const isMTD = req.query.range === 'mtd';
+    const dayCount = isMTD ? Math.max(fDay, 1) : 7;
+
+    const dailyTrend = [];
+    for (let i = dayCount - 1; i >= 0; i--) {
+      const targetDate = new Date(Date.UTC(fYear, fMonth - 1, fDay - i, 12, 0, 0));
+      const dateStr = getLocalDateString(targetDate, timeZone);
+      const dayName = isMTD
+        ? getLocalMonthDay(targetDate, timeZone)
+        : getLocalDayName(targetDate, timeZone);
+
+      const daySales = sales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === dateStr);
+      const dayRev = daySales.reduce((sum, s) => sum + (s.grandTotal || 0), 0);
+
+      dailyTrend.push({
         date: dateStr,
-        dayName: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayName,
         revenue: Number(dayRev.toFixed(2)),
         orderCount: daySales.length,
       });
@@ -498,7 +570,7 @@ const getFinancialAnalytics = async (req, res) => {
           card: { count: paymentMethods.card.count, total: Number(paymentMethods.card.total.toFixed(2)) },
           mobile_money: { count: paymentMethods.mobile_money.count, total: Number(paymentMethods.mobile_money.total.toFixed(2)) },
         },
-        dailyTrend: last7Days,
+        dailyTrend,
         topMedicines,
         expiryRisk: {
           expiringBatchesCount: expiringBatches.length,

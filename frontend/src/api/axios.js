@@ -18,6 +18,15 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) {
+        config.headers['x-timezone'] = tz;
+      }
+      config.headers['x-timezone-offset'] = new Date().getTimezoneOffset();
+    } catch {
+      // ignore
+    }
     return config;
   },
   (error) => Promise.reject(error)

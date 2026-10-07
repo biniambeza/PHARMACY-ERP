@@ -59,9 +59,8 @@ const SalesHistory = () => {
         setSummary(summaryResult.value.summary);
       } else if (loadedSales.length > 0) {
         // Fallback compute summary from sales if summary endpoint fails
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-        const today = loadedSales.filter((s) => new Date(s.createdAt) >= startOfToday);
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const today = loadedSales.filter((s) => s.createdAt && new Date(s.createdAt).toLocaleDateString('en-CA') === todayStr);
         setSummary({
           todaySalesCount: today.length,
           todayRevenue: today.reduce((acc, s) => acc + (Number(s.grandTotal) || 0), 0),
