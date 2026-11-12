@@ -3,6 +3,7 @@ import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
+import ChangePasswordModal from './ChangePasswordModal';
 import {
   Home,
   PlusCircle,
@@ -18,6 +19,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  KeyRound,
 } from 'lucide-react';
 
 const adminNavItems = [
@@ -28,6 +30,7 @@ const AdminLayout = () => {
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('erp_admin_sidebar_collapsed') === 'true';
@@ -306,6 +309,14 @@ const AdminLayout = () => {
                   </p>
                 </div>
               </div>
+              <div className="flex items-center gap-0.5 shrink-0">
+              <button
+                onClick={() => setPasswordOpen(true)}
+                title="Change Password"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition cursor-pointer"
+              >
+                <KeyRound className="w-4 h-4" />
+              </button>
               <button
                 onClick={logout}
                 title="Sign Out"
@@ -313,6 +324,7 @@ const AdminLayout = () => {
               >
                 <LogOut className="w-4 h-4" />
               </button>
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2 pt-1">
@@ -322,6 +334,13 @@ const AdminLayout = () => {
               >
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
+              <button
+                onClick={() => setPasswordOpen(true)}
+                title="Change Password"
+                className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition cursor-pointer"
+              >
+                <KeyRound className="w-4.5 h-4.5" />
+              </button>
               <button
                 onClick={logout}
                 title="Sign Out"
@@ -447,6 +466,7 @@ const AdminLayout = () => {
             <Outlet context={{ globalSearch }} />
           </ErrorBoundary>
         </main>
+        <ChangePasswordModal isOpen={passwordOpen} onClose={() => setPasswordOpen(false)} />
       </div>
     </div>
   );

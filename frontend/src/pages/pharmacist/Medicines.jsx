@@ -72,7 +72,8 @@ const Medicines = () => {
 
     setDeletingId(id);
     try {
-      await deleteMedicine(id);
+      const res = await deleteMedicine(id);
+      if (res?.archived) alert(res.message);
       await loadMedicines();
       await loadCategories();
     } catch (err) {

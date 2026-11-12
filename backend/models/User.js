@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Please provide a password'],
-      minlength: [6, 'Password must be at least 6 characters long'],
+      minlength: [8, 'Password must be at least 8 characters long'],
     },
     role: {
       type: String,
@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema(
         message: '{VALUE} is not a valid role. Allowed roles: admin, pharmacist',
       },
       default: 'pharmacist',
+    },
+    // Included in every JWT (claim `tv`). Incrementing it revokes all tokens
+    // issued before, e.g. after a password change.
+    tokenVersion: {
+      type: Number,
+      default: 0,
     },
   },
   {

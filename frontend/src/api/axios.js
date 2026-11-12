@@ -32,4 +32,32 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Global auth failure handling: an expired/revoked token (401) or a pharmacy
+// that was suspended/archived (403 with a PHARMACY_* code) ends the session.
+// The login request itself is excluded so a wrong password just shows an error.
+const SESSION_ENDING_CODES = ['PHARMACY_SUSPENDED', 'PHARMACY_ARCHIVED'];
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const code = error.response?.data?.code;
+    const url = error.config?.url || '';
+    const isLoginRequest = url.includes('/auth/login');
+
+    const sessionEnded =
+      status === 401 || (status === 403 && SESSION_ENDING_CODES.includes(code));
+
+    if (sessionEnded && !isLoginRequest && localStorage.getItem('token')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (window.location.pathname !== '/login') {
+        // Full reload resets in-memory auth state in AuthContext.
+        window.location.assign('/login?session=expired');
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

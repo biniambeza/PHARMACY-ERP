@@ -1,116 +1,223 @@
+const mongoose = require('mongoose');
 const Sale = require('../models/Sale');
 const StockBatch = require('../models/StockBatch');
 const Medicine = require('../models/Medicine');
-const User = require('../models/User');
-const Pharmacy = require('../models/Pharmacy');
+const AppError = require('../utils/AppError');
+const { nextSequence, formatSequence } = require('../utils/sequence');
+const { recordMovement } = require('../utils/stockMovement');
+
+const ALLOWED_PAYMENTS = ['cash', 'card', 'mobile_money', 'credit'];
+
+const toMoney = (n) => Number(Number(n).toFixed(2));
+const cleanString = (v) => (typeof v === 'string' ? v.trim() : '');
+
+// Returns a valid IANA timezone name, falling back to UTC.
+const resolveTimeZone = (tz) => {
+  if (typeof tz !== 'string' || !tz.trim()) return 'UTC';
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz.trim() });
+    return tz.trim();
+  } catch {
+    return 'UTC';
+  }
+};
 
 // @desc    Process new sale with automatic FEFO stock batch deduction
 // @route   POST /api/sales
 // @access  Private (Pharmacist only)
 const createSale = async (req, res) => {
+  const {
+    items,
+    customer,
+    discount = 0,
+    tax = 0,
+    paymentMethod = 'cash',
+    notes = '',
+    prescription,
+  } = req.body;
+
+  // ---- Validate everything before touching stock ----
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new AppError('Sale must contain at least one item', 400);
+  }
+
+  const requested = items.map((item) => {
+    const qty = Number(item?.quantity);
+    if (
+      !item?.medicineId ||
+      !mongoose.isValidObjectId(item.medicineId) ||
+      !Number.isInteger(qty) ||
+      qty <= 0
+    ) {
+      throw new AppError('Invalid item data provided', 400);
+    }
+    return { medicineId: String(item.medicineId), quantity: qty };
+  });
+
+  const discountVal = Number(discount);
+  const taxVal = Number(tax);
+  if (!Number.isFinite(discountVal) || !Number.isFinite(taxVal) || discountVal < 0 || taxVal < 0) {
+    throw new AppError('Discount and tax must be non-negative numbers', 400);
+  }
+  if (!ALLOWED_PAYMENTS.includes(paymentMethod)) {
+    throw new AppError('Invalid payment method', 400);
+  }
+
+  const prescriptionData = {
+    number: cleanString(prescription?.number),
+    prescriber: cleanString(prescription?.prescriber),
+    notes: cleanString(prescription?.notes),
+  };
+
+  const session = await mongoose.startSession();
   try {
-    const { items, customer, discount = 0, tax = 0, paymentMethod = 'cash', notes = '' } = req.body;
+    let sale;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Sale must contain at least one item',
-      });
-    }
+    await session.withTransaction(async () => {
+      // Reset per-attempt state (withTransaction may retry this callback)
+      const saleItems = [];
+      const movements = [];
+      const now = new Date();
 
-    const saleItems = [];
-    let subtotal = 0;
-
-    // Process each item and deduct stock using FEFO (First-Expired, First-Out)
-    for (const item of items) {
-      const qtyRequested = Number(item.quantity);
-      if (!item.medicineId || isNaN(qtyRequested) || qtyRequested <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid item data provided',
-        });
-      }
-
-      const medicine = await Medicine.findOne({
-        _id: item.medicineId,
+      const uniqueIds = [...new Set(requested.map((r) => r.medicineId))];
+      const medicines = await Medicine.find({
+        _id: { $in: uniqueIds },
         pharmacyId: req.pharmacyId,
-      });
+      }).session(session);
 
-      if (!medicine) {
-        return res.status(404).json({
-          success: false,
-          message: `Medicine not found in your catalog`,
-        });
+      if (medicines.length !== uniqueIds.length) {
+        throw new AppError('Medicine not found in your catalog', 404);
+      }
+      const archived = medicines.filter((m) => m.isArchived);
+      if (archived.length > 0) {
+        throw new AppError(`Medicine is archived: ${archived.map((m) => m.name).join(', ')}`, 400);
+      }
+      const medById = new Map(medicines.map((m) => [m._id.toString(), m]));
+
+      // Prescription enforcement (#14)
+      const rxMeds = medicines.filter((m) => m.requiresPrescription);
+      if (rxMeds.length > 0 && (!prescriptionData.number || !prescriptionData.prescriber)) {
+        throw new AppError(
+          `Prescription number and prescriber are required for: ${rxMeds.map((m) => m.name).join(', ')}`,
+          400
+        );
       }
 
-      // Fetch active batches sorted by earliest expiry date (FEFO)
-      const batches = await StockBatch.find({
-        pharmacyId: req.pharmacyId,
-        medicineId: medicine._id,
-        status: 'active',
-        quantity: { $gt: 0 },
-      }).sort({ expiryDate: 1 });
-
-      const totalAvailable = batches.reduce((sum, b) => sum + b.quantity, 0);
-      if (totalAvailable < qtyRequested) {
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock for "${medicine.name}". Requested: ${qtyRequested}, Available: ${totalAvailable}`,
-        });
+      // Subtotal is known before deducting stock, so check discount up front
+      const expectedSubtotal = toMoney(
+        requested.reduce((sum, r) => sum + r.quantity * medById.get(r.medicineId).price, 0)
+      );
+      if (discountVal > expectedSubtotal) {
+        throw new AppError('Discount cannot exceed subtotal', 400);
       }
 
-      // Deduct from batches sequentially (FEFO)
-      let remainingToDeduct = qtyRequested;
-      for (const batch of batches) {
-        if (remainingToDeduct <= 0) break;
+      let subtotal = 0;
 
-        const take = Math.min(batch.quantity, remainingToDeduct);
-        batch.quantity -= take;
-        if (batch.quantity === 0) {
-          batch.status = 'depleted';
-        }
-        await batch.save();
+      for (const reqItem of requested) {
+        const medicine = medById.get(reqItem.medicineId);
 
-        const itemSubtotal = Number((take * medicine.price).toFixed(2));
-        subtotal += itemSubtotal;
-
-        saleItems.push({
+        // Active, non-expired batches by earliest expiry (FEFO)
+        const batches = await StockBatch.find({
+          pharmacyId: req.pharmacyId,
           medicineId: medicine._id,
-          name: medicine.name,
-          batchId: batch._id,
-          batchNo: batch.batchNo,
-          quantity: take,
-          unitPrice: medicine.price,
-          subtotal: itemSubtotal,
-        });
+          status: 'active',
+          quantity: { $gt: 0 },
+          expiryDate: { $gt: now },
+        })
+          .sort({ expiryDate: 1 })
+          .session(session);
 
-        remainingToDeduct -= take;
+        const totalAvailable = batches.reduce((sum, b) => sum + b.quantity, 0);
+        if (totalAvailable < reqItem.quantity) {
+          throw new AppError(
+            `Insufficient stock for "${medicine.name}". Requested: ${reqItem.quantity}, Available: ${totalAvailable}`,
+            400
+          );
+        }
+
+        let remaining = reqItem.quantity;
+        for (const batch of batches) {
+          if (remaining <= 0) break;
+          const take = Math.min(batch.quantity, remaining);
+
+          // Atomic conditional decrement: never oversell under concurrency
+          const updated = await StockBatch.findOneAndUpdate(
+            { _id: batch._id, quantity: { $gte: take } },
+            { $inc: { quantity: -take } },
+            { returnDocument: 'after', session }
+          );
+          if (!updated) {
+            throw new AppError('Stock changed while processing the sale, please retry', 409);
+          }
+          if (updated.quantity === 0) {
+            await StockBatch.updateOne(
+              { _id: updated._id, quantity: 0, status: 'active' },
+              { $set: { status: 'depleted' } },
+              { session }
+            );
+          }
+
+          const itemSubtotal = toMoney(take * medicine.price);
+          subtotal += itemSubtotal;
+
+          saleItems.push({
+            medicineId: medicine._id,
+            name: medicine.name,
+            batchId: batch._id,
+            batchNo: batch.batchNo,
+            quantity: take,
+            unitPrice: medicine.price,
+            subtotal: itemSubtotal,
+          });
+          movements.push({
+            pharmacyId: req.pharmacyId,
+            batchId: batch._id,
+            medicineId: medicine._id,
+            type: 'sale',
+            quantityChange: -take,
+            balanceAfter: updated.quantity,
+            userId: req.user._id,
+          });
+
+          remaining -= take;
+        }
       }
-    }
 
-    subtotal = Number(subtotal.toFixed(2));
-    const discountVal = Number(discount) || 0;
-    const taxVal = Number(tax) || 0;
-    const grandTotal = Number(Math.max(0, subtotal - discountVal + taxVal).toFixed(2));
+      subtotal = toMoney(subtotal);
+      if (discountVal > subtotal) {
+        throw new AppError('Discount cannot exceed subtotal', 400);
+      }
+      const grandTotal = toMoney(Math.max(0, subtotal - discountVal + taxVal));
 
-    const invoiceNumber = `INV-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const seq = await nextSequence(req.pharmacyId, 'invoice', { session });
+      const invoiceNumber = formatSequence('INV', seq);
 
-    const sale = await Sale.create({
-      pharmacyId: req.pharmacyId,
-      pharmacistId: req.user._id,
-      invoiceNumber,
-      customer: {
-        name: customer?.name?.trim() || 'Walk-in Customer',
-        phone: customer?.phone?.trim() || '',
-      },
-      items: saleItems,
-      subtotal,
-      discount: discountVal,
-      tax: taxVal,
-      grandTotal,
-      paymentMethod,
-      paymentStatus: 'paid',
-      notes,
+      const saleDoc = {
+        pharmacyId: req.pharmacyId,
+        pharmacistId: req.user._id,
+        invoiceNumber,
+        customer: {
+          name: cleanString(customer?.name) || 'Walk-in Customer',
+          phone: cleanString(customer?.phone),
+        },
+        items: saleItems,
+        subtotal,
+        discount: discountVal,
+        tax: taxVal,
+        grandTotal,
+        paymentMethod,
+        paymentStatus: 'paid',
+        notes: typeof notes === 'string' ? notes : '',
+      };
+      if (prescriptionData.number || prescriptionData.prescriber) {
+        saleDoc.prescription = prescriptionData;
+      }
+
+      [sale] = await Sale.create([saleDoc], { session });
+
+      for (const m of movements) {
+        await recordMovement({ ...m, refId: sale._id, refModel: 'Sale' }, { session });
+      }
     });
 
     return res.status(201).json({
@@ -118,11 +225,8 @@ const createSale = async (req, res) => {
       message: 'Sale completed successfully',
       sale,
     });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  } finally {
+    await session.endSession();
   }
 };
 
@@ -130,116 +234,105 @@ const createSale = async (req, res) => {
 // @route   GET /api/sales
 // @access  Private (Pharmacist only)
 const getSales = async (req, res) => {
-  try {
-    const { search, limit = 50, page = 1 } = req.query;
-    const query = { pharmacyId: req.pharmacyId };
+  const { search, limit = 50, page = 1 } = req.query;
+  const query = { pharmacyId: req.pharmacyId };
 
-    if (search && search.trim()) {
-      const sanitized = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query.$or = [
-        { invoiceNumber: { $regex: sanitized, $options: 'i' } },
-        { 'customer.name': { $regex: sanitized, $options: 'i' } },
-        { 'customer.phone': { $regex: sanitized, $options: 'i' } },
-      ];
-    }
-
-    const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
-
-    const total = await Sale.countDocuments(query);
-    const sales = await Sale.find(query)
-      .populate('pharmacistId', 'name email')
-      .sort({ createdAt: -1 })
-      .skip((pageNum - 1) * limitNum)
-      .limit(limitNum);
-
-    return res.status(200).json({
-      success: true,
-      total,
-      page: pageNum,
-      limit: limitNum,
-      sales: sales || [],
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  if (typeof search === 'string' && search.trim()) {
+    const sanitized = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query.$or = [
+      { invoiceNumber: { $regex: sanitized, $options: 'i' } },
+      { 'customer.name': { $regex: sanitized, $options: 'i' } },
+      { 'customer.phone': { $regex: sanitized, $options: 'i' } },
+    ];
   }
+
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50));
+
+  const total = await Sale.countDocuments(query);
+  const sales = await Sale.find(query)
+    .populate('pharmacistId', 'name email')
+    .sort({ createdAt: -1 })
+    .skip((pageNum - 1) * limitNum)
+    .limit(limitNum);
+
+  return res.status(200).json({
+    success: true,
+    total,
+    page: pageNum,
+    limit: limitNum,
+    sales: sales || [],
+  });
 };
 
 // @desc    Get single sale details
 // @route   GET /api/sales/:id
 // @access  Private (Pharmacist only)
 const getSaleById = async (req, res) => {
-  try {
-    const sale = await Sale.findOne({
-      _id: req.params.id,
-      pharmacyId: req.pharmacyId,
-    })
-      .populate('pharmacistId', 'name email')
-      .populate('items.medicineId', 'name genericName category dosageForm strength');
+  const sale = await Sale.findOne({
+    _id: req.params.id,
+    pharmacyId: req.pharmacyId,
+  })
+    .populate('pharmacistId', 'name email')
+    .populate('items.medicineId', 'name genericName category dosageForm strength');
 
-    if (!sale) {
-      return res.status(404).json({
-        success: false,
-        message: 'Sale transaction not found',
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      sale,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  if (!sale) {
+    throw new AppError('Sale transaction not found', 404);
   }
+
+  return res.status(200).json({
+    success: true,
+    sale,
+  });
 };
 
 // @desc    Get sales statistics for dashboard
 // @route   GET /api/sales/summary
 // @access  Private (Pharmacist only)
 const getSalesSummary = async (req, res) => {
-  try {
-    const timeZone = req.headers['x-timezone'] || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-    const getLocalDateString = (date, tz) => {
-      try {
-        return new Intl.DateTimeFormat('en-CA', {
-          timeZone: tz,
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        }).format(new Date(date));
-      } catch {
-        return new Date(date).toISOString().split('T')[0];
-      }
-    };
+  const timeZone = resolveTimeZone(req.headers['x-timezone']);
+  const todayStr = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 
-    const todayStr = getLocalDateString(new Date(), timeZone);
-    const allSales = await Sale.find({ pharmacyId: req.pharmacyId });
-    const todaySales = allSales.filter((s) => s.createdAt && getLocalDateString(s.createdAt, timeZone) === todayStr);
+  const pharmacyId = new mongoose.Types.ObjectId(String(req.pharmacyId));
 
-    const todayRevenue = todaySales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
-    const totalRevenue = allSales.reduce((sum, s) => sum + (Number(s.grandTotal) || 0), 0);
-
-    return res.status(200).json({
-      success: true,
-      summary: {
-        todaySalesCount: todaySales.length,
-        todayRevenue: Number(todayRevenue.toFixed(2)),
-        totalSalesCount: allSales.length,
-        totalRevenue: Number(totalRevenue.toFixed(2)),
+  const [result] = await Sale.aggregate([
+    { $match: { pharmacyId } },
+    {
+      $project: {
+        grandTotal: { $ifNull: ['$grandTotal', 0] },
+        isToday: {
+          $eq: [
+            { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: timeZone } },
+            todayStr,
+          ],
+        },
       },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+    },
+    {
+      $group: {
+        _id: null,
+        totalSalesCount: { $sum: 1 },
+        totalRevenue: { $sum: '$grandTotal' },
+        todaySalesCount: { $sum: { $cond: ['$isToday', 1, 0] } },
+        todayRevenue: { $sum: { $cond: ['$isToday', '$grandTotal', 0] } },
+      },
+    },
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    summary: {
+      todaySalesCount: result?.todaySalesCount || 0,
+      todayRevenue: toMoney(result?.todayRevenue || 0),
+      totalSalesCount: result?.totalSalesCount || 0,
+      totalRevenue: toMoney(result?.totalRevenue || 0),
+    },
+  });
 };
 
 module.exports = {

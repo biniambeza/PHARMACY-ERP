@@ -65,7 +65,8 @@ const Suppliers = () => {
 
     setDeletingId(id);
     try {
-      await deleteSupplier(id);
+      const res = await deleteSupplier(id);
+      if (res?.archived) alert(res.message);
       await loadSuppliers();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to delete supplier');

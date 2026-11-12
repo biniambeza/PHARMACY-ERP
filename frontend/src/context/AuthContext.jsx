@@ -28,7 +28,9 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userData };
     } catch (err) {
       setLoading(false);
-      const message = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      const message = !err.response
+        ? 'Cannot reach the server. Make sure the backend is running and VITE_API_URL is correct.'
+        : err.response.data?.message || 'Login failed. Please check your credentials.';
       setError(message);
       return { success: false, message };
     }
@@ -44,6 +46,22 @@ export const AuthProvider = ({ children }) => {
 
   const clearError = () => setError('');
 
+  // Replace the stored token and/or merge user fields, e.g. after a password
+  // change (the server revokes old tokens and returns a new one).
+  const updateSession = ({ token: newToken, user: userUpdates } = {}) => {
+    if (newToken) {
+      localStorage.setItem('token', newToken);
+      setToken(newToken);
+    }
+    if (userUpdates) {
+      setUser((prev) => {
+        const next = { ...prev, ...userUpdates };
+        localStorage.setItem('user', JSON.stringify(next));
+        return next;
+      });
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -54,6 +72,8 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         clearError,
+        setUser,
+        updateSession,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isPharmacist: user?.role === 'pharmacist',

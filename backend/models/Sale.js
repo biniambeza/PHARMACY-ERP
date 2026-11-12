@@ -107,6 +107,12 @@ const saleSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    // Required (number + prescriber) when any sold medicine requiresPrescription
+    prescription: {
+      number: { type: String, trim: true },
+      prescriber: { type: String, trim: true },
+      notes: { type: String, trim: true, default: '' },
+    },
   },
   {
     timestamps: true,
@@ -115,5 +121,8 @@ const saleSchema = new mongoose.Schema(
 
 // Compound index for efficient tenant chronological queries
 saleSchema.index({ pharmacyId: 1, createdAt: -1 });
+saleSchema.index({ pharmacyId: 1, invoiceNumber: 1 }, { unique: true });
+// Used to check whether a stock batch is referenced by any sale before deleting it
+saleSchema.index({ 'items.batchId': 1 });
 
 module.exports = mongoose.model('Sale', saleSchema);

@@ -74,10 +74,14 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDelete = async (id, name) => {
+  const handleArchive = async (id, name) => {
     if (
       !window.confirm(
-        `Are you sure you want to permanently delete "${name}" and its associated pharmacist user account? This action cannot be undone.`
+        `Archive "${name}"?
+
+The pharmacy will be closed and its pharmacist will no longer be able to sign in. ` +
+          'All of its records (medicines, stock, sales, suppliers, purchase orders) are kept for retention. ' +
+          'Archived pharmacies cannot be reactivated from this screen.'
       )
     ) {
       return;
@@ -87,7 +91,7 @@ const AdminDashboard = () => {
       await deletePharmacy(id);
       await loadData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete pharmacy');
+      alert(err.response?.data?.message || 'Failed to archive pharmacy');
     } finally {
       setActionLoading(null);
     }
@@ -206,7 +210,13 @@ const AdminDashboard = () => {
       render: (item) => (
         <StatusBadge
           status={item.status}
-          label={item.status === 'active' ? 'Active' : 'Suspended'}
+          label={
+            item.status === 'active'
+              ? 'Active'
+              : item.status === 'archived'
+              ? 'Archived'
+              : 'Suspended'
+          }
           size="sm"
         />
       ),
@@ -239,11 +249,12 @@ const AdminDashboard = () => {
               : 'Activate'}
           </button>
           <button
-            onClick={() => handleDelete(item._id, item.name)}
+            onClick={() => handleArchive(item._id, item.name)}
             disabled={actionLoading === item._id}
+            title="Close this pharmacy and keep its records"
             className="px-2.5 py-1 text-[11px] font-semibold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 border border-rose-200 dark:border-rose-800/60 rounded-lg transition cursor-pointer"
           >
-            Delete
+            Archive
           </button>
         </div>
       ),

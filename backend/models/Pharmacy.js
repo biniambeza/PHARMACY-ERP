@@ -32,10 +32,16 @@ const pharmacySchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
-        values: ['active', 'suspended'],
-        message: '{VALUE} is not a valid status. Allowed: active, suspended',
+        values: ['active', 'suspended', 'archived'],
+        message: '{VALUE} is not a valid status. Allowed: active, suspended, archived',
       },
       default: 'active',
+    },
+    // Set when an admin archives (soft-deletes) the pharmacy. Its data is kept
+    // for record retention, but its pharmacist can no longer sign in.
+    archivedAt: {
+      type: Date,
+      default: null,
     },
   },
   {

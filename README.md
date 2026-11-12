@@ -24,7 +24,7 @@ The application implements a **SaaS Multi-Tenant Architecture** using a unified 
                               │           React 19 Frontend            │
                               │    (Tailwind v4 · Dark/Light Mode)     │
                               └───────────────────┬────────────────────┘
-                                                  │ JWT (Cookie / Bearer)
+                                                  │ JWT (Bearer header)
                                                   ▼
                               ┌────────────────────────────────────────┐
                               │          Express 5 API Gateway         │
@@ -72,7 +72,7 @@ The platform enforces strict **Role-Based Access Control (RBAC)** across the bac
 
 | Role | Access Level | Responsibilities |
 |---|---|---|
-| **System Admin** | System-Wide (`/admin`) | Provisions new pharmacies, assigns owner credentials, monitors global tenant counts, suspends or removes pharmacies. |
+| **System Admin** | System-Wide (`/admin`) | Provisions new pharmacies, assigns owner credentials, monitors global tenant counts, suspends or archives pharmacies. |
 | **Pharmacist** | Single-Tenant (`/pharmacy/*`) | Manages medicines catalog, FEFO stock batches, cashier checkout, vendor procurement, team tasks, and financial business intelligence. |
 
 ---
@@ -106,6 +106,7 @@ The platform enforces strict **Role-Based Access Control (RBAC)** across the bac
 - Create pharmacy entities with official license numbers, locations, and contact details.
 - Automatically creates and binds the pharmacy's primary pharmacist account.
 - Instant suspension and reactivation toggles for tenant lifecycle management.
+- Archiving (soft delete): an archived pharmacy's records are retained for legal retention, its pharmacist can no longer sign in, and it is hidden from the admin list by default.
 - Real-time admin dashboard metrics (total pharmacies, active accounts, suspended accounts).
 
 ### 4. Medicine Catalog
@@ -159,9 +160,10 @@ The platform enforces strict **Role-Based Access Control (RBAC)** across the bac
 ### Backend
 - **Runtime**: [Node.js](https://nodejs.org/) (v24+)
 - **Server Framework**: [Express 5](https://expressjs.com/)
-- **Database & ODM**: [MongoDB Atlas](https://www.mongodb.com/atlas) with [Mongoose 8](https://mongoosejs.com/)
+- **Database & ODM**: [MongoDB Atlas](https://www.mongodb.com/atlas) with [Mongoose 9](https://mongoosejs.com/)
 - **Authentication**: [JSON Web Tokens (JWT)](https://jwt.io/) + [Bcrypt.js](https://github.com/dcodeIO/bcrypt.js)
-- **Utilities**: `cookie-parser`, `cors`, `dotenv`, `nodemon`
+- **Security**: `helmet` headers, `express-rate-limit` on login, strict CORS allow-list
+- **Utilities**: `cors`, `dotenv`, `nodemon`
 
 ### DevOps & Quality Assurance
 - **CI/CD**: [GitHub Actions](https://github.com/features/actions) with automated multi-stage linting, testing, and deployment hooks
@@ -171,21 +173,31 @@ The platform enforces strict **Role-Based Access Control (RBAC)** across the bac
 
 ## 📡 REST API Reference
 
-All protected endpoints require authentication via Bearer Token (`Authorization: Bearer <token>`) or HTTP-only cookie.
+All routes are served under `/api` only. Protected endpoints require a JWT sent as a Bearer token (`Authorization: Bearer <token>`); cookie-based auth is not implemented. The frontend keeps the token in `localStorage` and returns to the login page on any `401`.
+
+**Sessions:** tokens expire after `JWT_EXPIRES_IN` (default `12h`). Each token carries the user's `tokenVersion`; changing a password increments it, which revokes every older token. Pharmacists of suspended or archived pharmacies are rejected on every request (`403`).
+
+**Errors:** every error response has the shape `{ "success": false, "message": "..." }`. Validation errors return `400`, duplicates `409`, unexpected failures `500` with a generic message (details are logged server-side only).
+
+### Health (`/api`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/health` | Public | `{ success, db: "up" \| "down" }`; responds `503` when the database is disconnected |
 
 ### Authentication (`/api/auth`)
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/login` | Public | Authenticate user & issue JWT token |
+| `POST` | `/api/auth/login` | Public | Authenticate user & issue JWT token (rate limited: 10 attempts / 15 min per IP) |
 | `GET` | `/api/auth/me` | Private | Retrieve current user profile & role |
+| `PUT` | `/api/auth/password` | Private (any role) | Change own password (`currentPassword`, `newPassword` of 8+ chars); returns a new token and revokes older ones |
 
 ### System Administration (`/api/admin`)
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `GET` | `/api/admin/pharmacies` | Admin | List all registered pharmacies with metrics |
+| `GET` | `/api/admin/pharmacies` | Admin | List pharmacies with metrics. Archived ones are hidden unless `?includeArchived=true`; optional `?page=&limit=` |
 | `POST` | `/api/admin/pharmacies` | Admin | Provision new pharmacy & owner pharmacist |
-| `PATCH` | `/api/admin/pharmacies/:id/status` | Admin | Toggle pharmacy status (`active`/`suspended`) |
-| `DELETE` | `/api/admin/pharmacies/:id` | Admin | Delete pharmacy and its associated users |
+| `PATCH` | `/api/admin/pharmacies/:id/toggle-status` | Admin | Toggle pharmacy status (`active`/`suspended`); archived pharmacies cannot be toggled |
+| `DELETE` | `/api/admin/pharmacies/:id` | Admin | Archive (soft-delete) the pharmacy: data is kept, its pharmacist can no longer sign in |
 | `GET` | `/api/admin/stats` | Admin | Retrieve system-wide platform statistics |
 
 ### Pharmacy Profile & Settings (`/api/pharmacy`)
@@ -193,7 +205,7 @@ All protected endpoints require authentication via Bearer Token (`Authorization:
 |---|---|---|---|
 | `GET` | `/api/pharmacy/my-pharmacy` | Pharmacist | Get current tenant details & isolation check |
 | `PUT` | `/api/pharmacy/my-pharmacy` | Pharmacist | Update pharmacy phone and physical address |
-| `PUT` | `/api/pharmacy/profile` | Pharmacist | Update pharmacist name or change password |
+| `PUT` | `/api/pharmacy/profile` | Pharmacist | Update pharmacist name or change password (returns a new token when the password changes) |
 
 ### Real-Time Reports & Executive Overview (`/api/reports`)
 | Method | Endpoint | Access | Description |
@@ -270,7 +282,8 @@ PHARMACY-ERP/
 │   │   ├── stockController.js           # Batches, adjustments & alerts
 │   │   └── supplierController.js        # Supplier directory CRUD
 │   ├── middleware/
-│   │   ├── authMiddleware.js            # JWT protection
+│   │   ├── authMiddleware.js            # JWT protection, token revocation, suspension check
+│   │   ├── errorHandler.js              # Central error handler & 404
 │   │   ├── pharmacyScope.js             # Tenant data isolation engine
 │   │   └── roleMiddleware.js            # Role-based route authorization
 │   ├── models/
@@ -295,9 +308,10 @@ PHARMACY-ERP/
 │   │   ├── generateToken.js             # JWT signer
 │   │   ├── seedAdmin.js                 # Initial admin account seeder
 │   │   └── seedPharmacyData.js          # Comprehensive realistic pharmacy dataset seeder
-│   ├── .env                             # Environment configuration
+│   ├── .env.example                     # Environment variable template
+│   ├── app.js                           # Express app (middleware, routes, error handler)
 │   ├── package.json
-│   └── server.js                        # Express app entrypoint
+│   └── server.js                        # Entrypoint: env check, DB connect, listen
 │
 └── frontend/
     ├── src/
@@ -377,14 +391,18 @@ cd PHARMACY-ERP
    npm install
    ```
 
-2. Create a `.env` file in `backend/`:
-   ```env
-   PORT=5000
-   NODE_ENV=development
-   MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/pharmacy-erp?retryWrites=true&w=majority
-   JWT_SECRET=your_super_secret_jwt_key_here
-   CLIENT_URL=http://localhost:5173
-   ```
+2. Copy `backend/.env.example` to `backend/.env` and fill it in:
+
+   | Variable | Required | Description |
+   |---|---|---|
+   | `MONGO_URI` | Yes | MongoDB connection string. Must be a replica set (Atlas is fine) because transactions are used. |
+   | `JWT_SECRET` | Yes | Long random secret for signing JWTs. The server refuses to start without it. |
+   | `JWT_EXPIRES_IN` | No | Token lifetime, e.g. `12h` (default) or `1h`. |
+   | `CLIENT_URL` | Yes in production | Allowed frontend origin(s), comma-separated, exact match. Other origins are rejected by CORS. `localhost:5173`/`3000` are also allowed outside production. |
+   | `CORS_ALLOW_VERCEL_PREVIEWS_PREFIX` | No | Off by default. Allows `https://<prefix>*.vercel.app` preview URLs. |
+   | `TRUST_PROXY` | No | Express `trust proxy` value (defaults to `1` in production) so login rate limiting sees real client IPs. |
+   | `PORT`, `NODE_ENV` | No | Defaults `5000` and `development`. |
+   | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | For seeding | Credentials for the initial admin account (password of 8+ characters). |
 
 3. **Seed Initial Accounts & Data**:
    
@@ -392,9 +410,7 @@ cd PHARMACY-ERP
      ```bash
      node utils/seedAdmin.js
      ```
-     *Default Admin Credentials:*
-     - **Email**: `admin@pharmacy.com`
-     - **Password**: `admin123456`
+     Requires `ADMIN_EMAIL` and `ADMIN_PASSWORD` to be set (there are no default credentials, and the password is never printed). The admin can change the password later from the key icon in the admin sidebar.
 
    - **Seed Realistic Pharmacy Operational Dataset**:
      ```bash
@@ -415,7 +431,9 @@ cd PHARMACY-ERP
    npm install
    ```
 
-2. Start the Vite development server:
+2. Optionally copy `frontend/.env.example` to `frontend/.env.local` and set `VITE_API_URL` (the backend base URL; `/api` is appended if missing, default `http://localhost:5000/api`).
+
+3. Start the Vite development server:
    ```bash
    npm run dev
    ```
@@ -427,7 +445,7 @@ cd PHARMACY-ERP
 
 1. **Log in as System Admin**:
    - Navigate to `http://localhost:5173/login`.
-   - Log in with `admin@pharmacy.com` / `admin123456`.
+   - Log in with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` you seeded.
    - Click **+ Add Pharmacy** to provision a new pharmacy and assign its pharmacist login credentials.
 2. **Log in as Pharmacist**:
    - Sign out and log in with your pharmacist credentials.

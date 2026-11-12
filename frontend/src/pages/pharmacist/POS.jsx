@@ -38,6 +38,7 @@ const POS = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'card' | 'mobile_money'
   const [discount, setDiscount] = useState('');
   const [tax, setTax] = useState('');
+  const [prescription, setPrescription] = useState({ number: '', prescriber: '', notes: '' });
 
   // Checkout Status & Receipts
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -151,6 +152,7 @@ const POS = () => {
       setCustomer({ name: '', phone: '' });
       setDiscount('');
       setTax('');
+      setPrescription({ number: '', prescriber: '', notes: '' });
     }
   };
 
@@ -160,9 +162,19 @@ const POS = () => {
   const taxVal = parseFloat(tax) || 0;
   const grandTotal = Math.max(0, subtotal - discountVal + taxVal);
 
+  // Prescription-only medicines require prescription details at checkout
+  const rxItems = cart.filter((it) => it.requiresPrescription);
+  const needsPrescription = rxItems.length > 0;
+  const prescriptionMissing =
+    needsPrescription && (!prescription.number.trim() || !prescription.prescriber.trim());
+
   // Handle Checkout Execution
   const handleCheckout = async () => {
     if (cart.length === 0) return;
+    if (prescriptionMissing) {
+      setError('Prescription number and prescriber are required for prescription medicines');
+      return;
+    }
 
     setError('');
     setCheckoutLoading(true);
@@ -180,6 +192,13 @@ const POS = () => {
         paymentMethod,
         discount: discountVal,
         tax: taxVal,
+        ...(needsPrescription && {
+          prescription: {
+            number: prescription.number.trim(),
+            prescriber: prescription.prescriber.trim(),
+            notes: prescription.notes.trim(),
+          },
+        }),
       };
 
       const res = await createSale(payload);
@@ -192,6 +211,7 @@ const POS = () => {
         setCustomer({ name: '', phone: '' });
         setDiscount('');
         setTax('');
+        setPrescription({ number: '', prescriber: '', notes: '' });
 
         // Refresh stock batches so subsequent clicks reflect accurate batch levels
         const stockRes = await getStockBatches({ limit: 500 });
@@ -487,6 +507,47 @@ const POS = () => {
                 </div>
               </div>
             </div>
+
+            {/* Prescription Details (only when cart has Rx medicines) */}
+            {needsPrescription && (
+              <div className="bg-amber-50/70 dark:bg-amber-500/5 border border-amber-200/80 dark:border-amber-500/20 rounded-xl p-3.5 mb-4 space-y-2">
+                <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider block">
+                  Prescription Required
+                </span>
+                <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
+                  {rxItems.map((it) => it.name).join(', ')}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <FileText className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                    <input
+                      type="text"
+                      value={prescription.number}
+                      onChange={(e) => setPrescription((prev) => ({ ...prev, number: e.target.value }))}
+                      placeholder="Prescription No. *"
+                      className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition font-mono"
+                    />
+                  </div>
+                  <div className="relative">
+                    <User className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                    <input
+                      type="text"
+                      value={prescription.prescriber}
+                      onChange={(e) => setPrescription((prev) => ({ ...prev, prescriber: e.target.value }))}
+                      placeholder="Prescriber *"
+                      className="w-full pl-8 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+                    />
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={prescription.notes}
+                  onChange={(e) => setPrescription((prev) => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Prescription notes (optional)"
+                  className="w-full pl-2.5 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+                />
+              </div>
+            )}
           </div>
 
           {/* Billing Summary & Payment */}
@@ -581,7 +642,7 @@ const POS = () => {
             <button
               type="button"
               onClick={handleCheckout}
-              disabled={checkoutLoading || cart.length === 0}
+              disabled={checkoutLoading || cart.length === 0 || prescriptionMissing}
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2"
             >
               {checkoutLoading ? (

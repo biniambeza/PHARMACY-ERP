@@ -52,6 +52,13 @@ const medicineSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Soft-delete flag: medicines referenced by sales / purchase orders / stock
+    // history are archived instead of deleted so that history stays intact.
+    isArchived: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,

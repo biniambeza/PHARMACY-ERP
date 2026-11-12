@@ -43,6 +43,13 @@ const supplierSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    // Soft-delete flag: suppliers referenced by purchase orders are archived
+    // instead of deleted so that procurement history stays intact.
+    isArchived: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,

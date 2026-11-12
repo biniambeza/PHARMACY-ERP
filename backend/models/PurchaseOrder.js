@@ -45,10 +45,11 @@ const purchaseOrderSchema = new mongoose.Schema(
       ref: 'Supplier',
       required: true,
     },
+    // Unique per pharmacy (see compound index below); generated from an atomic
+    // per-pharmacy counter, e.g. PO-2026-000001.
     poNumber: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     items: [poItemSchema],
@@ -84,5 +85,8 @@ const purchaseOrderSchema = new mongoose.Schema(
 );
 
 purchaseOrderSchema.index({ pharmacyId: 1, createdAt: -1 });
+purchaseOrderSchema.index({ pharmacyId: 1, poNumber: 1 }, { unique: true });
+purchaseOrderSchema.index({ pharmacyId: 1, 'items.medicineId': 1 });
+purchaseOrderSchema.index({ pharmacyId: 1, supplierId: 1 });
 
 module.exports = mongoose.model('PurchaseOrder', purchaseOrderSchema);

@@ -1,247 +1,367 @@
+const mongoose = require('mongoose');
 const StockBatch = require('../models/StockBatch');
 const Medicine = require('../models/Medicine');
+const Sale = require('../models/Sale');
+const AppError = require('../utils/AppError');
+const { recordMovement } = require('../utils/stockMovement');
+
+const ADJUSTMENT_TYPES = ['damaged', 'expired', 'correction'];
+const ADJUSTMENT_MOVEMENT = {
+  damaged: 'adjust_damaged',
+  expired: 'adjust_expired',
+  correction: 'correction',
+};
+
+// Compare two dates by calendar day (UTC)
+const sameDay = (a, b) => new Date(a).toISOString().slice(0, 10) === new Date(b).toISOString().slice(0, 10);
 
 // @desc    Get all stock batches for logged-in pharmacy (FEFO ordered)
 // @route   GET /api/stock
 // @access  Private (Pharmacist only)
 const getStockBatches = async (req, res) => {
-  try {
-    const { medicineId, status } = req.query;
-    const query = { pharmacyId: req.pharmacyId };
+  const { medicineId, status } = req.query;
+  const query = { pharmacyId: req.pharmacyId };
 
-    if (medicineId) {
-      query.medicineId = medicineId;
+  if (medicineId) {
+    if (!mongoose.isValidObjectId(medicineId)) {
+      throw new AppError('Invalid medicine id', 400);
     }
-
-    if (status) {
-      query.status = status;
-    }
-
-    const batches = await StockBatch.find(query)
-      .populate('medicineId', 'name genericName category dosageForm strength price minStockLevel')
-      .sort({ expiryDate: 1 });
-
-    return res.status(200).json({
-      success: true,
-      count: batches.length,
-      batches,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    query.medicineId = medicineId;
   }
+
+  if (typeof status === 'string' && status) {
+    query.status = status;
+  }
+
+  const batches = await StockBatch.find(query)
+    .populate('medicineId', 'name genericName category dosageForm strength price minStockLevel')
+    .sort({ expiryDate: 1 });
+
+  return res.status(200).json({
+    success: true,
+    count: batches.length,
+    batches,
+  });
 };
 
 // @desc    Add a new stock batch (Stock-In)
 // @route   POST /api/stock
 // @access  Private (Pharmacist only)
 const addStockBatch = async (req, res) => {
+  const { medicineId, batchNo, quantity, expiryDate, purchasePrice } = req.body;
+
+  if (!medicineId || typeof batchNo !== 'string' || !batchNo.trim() || quantity === undefined || !expiryDate) {
+    throw new AppError('Please provide medicine, batch number, quantity, and expiry date', 400);
+  }
+  if (!mongoose.isValidObjectId(medicineId)) {
+    throw new AppError('Invalid medicine id', 400);
+  }
+
+  const qty = Number(quantity);
+  if (!Number.isInteger(qty) || qty <= 0) {
+    throw new AppError('Quantity must be a positive whole number', 400);
+  }
+
+  const exp = new Date(expiryDate);
+  if (Number.isNaN(exp.getTime()) || exp <= new Date()) {
+    throw new AppError('Expiry date must be a valid future date', 400);
+  }
+
+  let price;
+  if (purchasePrice !== undefined && purchasePrice !== null && purchasePrice !== '') {
+    price = Number(purchasePrice);
+    if (!Number.isFinite(price) || price < 0) {
+      throw new AppError('Purchase price must be a non-negative number', 400);
+    }
+  }
+
+  const trimmedBatchNo = batchNo.trim();
+  const session = await mongoose.startSession();
+  let batchId;
+
   try {
-    const { medicineId, batchNo, quantity, expiryDate, purchasePrice } = req.body;
+    await session.withTransaction(async () => {
+      const medicine = await Medicine.findOne({
+        _id: medicineId,
+        pharmacyId: req.pharmacyId,
+      }).session(session);
 
-    if (!medicineId || !batchNo || quantity === undefined || !expiryDate) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide medicine, batch number, quantity, and expiry date',
-      });
-    }
+      if (!medicine) {
+        throw new AppError('Medicine not found in your pharmacy catalog', 404);
+      }
+      if (medicine.isArchived) {
+        throw new AppError('Medicine is archived', 400);
+      }
 
-    const medicine = await Medicine.findOne({
-      _id: medicineId,
-      pharmacyId: req.pharmacyId,
-    });
-
-    if (!medicine) {
-      return res.status(404).json({
-        success: false,
-        message: 'Medicine not found in your pharmacy catalog',
-      });
-    }
-
-    let batch = await StockBatch.findOne({
-      pharmacyId: req.pharmacyId,
-      medicineId,
-      batchNo: batchNo.trim(),
-    });
-
-    if (batch) {
-      batch.quantity += Number(quantity);
-      batch.initialQuantity += Number(quantity);
-      if (purchasePrice !== undefined) batch.purchasePrice = Number(purchasePrice);
-      if (batch.quantity > 0) batch.status = 'active';
-      await batch.save();
-    } else {
-      batch = await StockBatch.create({
+      let batch = await StockBatch.findOne({
         pharmacyId: req.pharmacyId,
         medicineId,
-        batchNo: batchNo.trim(),
-        quantity: Number(quantity),
-        initialQuantity: Number(quantity),
-        expiryDate: new Date(expiryDate),
-        purchasePrice: purchasePrice ? Number(purchasePrice) : 0,
-        status: 'active',
-      });
-    }
+        batchNo: trimmedBatchNo,
+      }).session(session);
 
-    await batch.populate('medicineId', 'name genericName category dosageForm strength price');
+      if (batch) {
+        if (!sameDay(batch.expiryDate, exp)) {
+          throw new AppError(
+            `Batch "${trimmedBatchNo}" already exists with a different expiry date (${batch.expiryDate.toISOString().slice(0, 10)})`,
+            400
+          );
+        }
+        batch.quantity += qty;
+        batch.initialQuantity += qty;
+        if (price !== undefined) batch.purchasePrice = price;
+        if (batch.quantity > 0 && batch.status === 'depleted') batch.status = 'active';
+        await batch.save({ session });
+      } else {
+        [batch] = await StockBatch.create(
+          [
+            {
+              pharmacyId: req.pharmacyId,
+              medicineId,
+              batchNo: trimmedBatchNo,
+              quantity: qty,
+              initialQuantity: qty,
+              expiryDate: exp,
+              purchasePrice: price ?? 0,
+              status: 'active',
+            },
+          ],
+          { session }
+        );
+      }
 
-    return res.status(201).json({
-      success: true,
-      message: 'Stock batch added successfully',
-      batch,
+      await recordMovement(
+        {
+          pharmacyId: req.pharmacyId,
+          batchId: batch._id,
+          medicineId: medicine._id,
+          type: 'stock_in',
+          quantityChange: qty,
+          balanceAfter: batch.quantity,
+          userId: req.user?._id,
+        },
+        { session }
+      );
+
+      batchId = batch._id;
     });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  } finally {
+    await session.endSession();
   }
+
+  const batch = await StockBatch.findById(batchId).populate(
+    'medicineId',
+    'name genericName category dosageForm strength price'
+  );
+
+  return res.status(201).json({
+    success: true,
+    message: 'Stock batch added successfully',
+    batch,
+  });
 };
 
 // @desc    Adjust stock (damaged, expired, or correction)
 // @route   PATCH /api/stock/:id/adjust
 // @access  Private (Pharmacist only)
 const adjustStock = async (req, res) => {
-  try {
-    const { adjustmentType, reduceQty } = req.body;
+  const { adjustmentType = 'correction', reduceQty, reason } = req.body;
 
-    const batch = await StockBatch.findOne({
-      _id: req.params.id,
-      pharmacyId: req.pharmacyId,
-    });
-
-    if (!batch) {
-      return res.status(404).json({
-        success: false,
-        message: 'Stock batch not found',
-      });
-    }
-
-    const qtyToReduce = Number(reduceQty);
-    if (isNaN(qtyToReduce) || qtyToReduce <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a valid quantity to reduce',
-      });
-    }
-
-    if (qtyToReduce > batch.quantity) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot reduce more than current available quantity (${batch.quantity})`,
-      });
-    }
-
-    batch.quantity -= qtyToReduce;
-
-    if (batch.quantity === 0) {
-      batch.status = adjustmentType === 'expired' ? 'expired' : 'depleted';
-    }
-
-    await batch.save();
-    await batch.populate('medicineId', 'name genericName dosageForm strength');
-
-    return res.status(200).json({
-      success: true,
-      message: `Stock adjusted successfully (${adjustmentType || 'correction'})`,
-      batch,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  if (!ADJUSTMENT_TYPES.includes(adjustmentType)) {
+    throw new AppError(`Adjustment type must be one of: ${ADJUSTMENT_TYPES.join(', ')}`, 400);
   }
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    throw new AppError('Stock batch not found', 404);
+  }
+
+  const qtyToReduce = Number(reduceQty);
+  if (!Number.isInteger(qtyToReduce) || qtyToReduce <= 0) {
+    throw new AppError('Please provide a valid quantity to reduce', 400);
+  }
+
+  const session = await mongoose.startSession();
+  let batchId;
+
+  try {
+    await session.withTransaction(async () => {
+      const existing = await StockBatch.findOne({
+        _id: req.params.id,
+        pharmacyId: req.pharmacyId,
+      }).session(session);
+
+      if (!existing) {
+        throw new AppError('Stock batch not found', 404);
+      }
+      if (qtyToReduce > existing.quantity) {
+        throw new AppError(
+          `Cannot reduce more than current available quantity (${existing.quantity})`,
+          400
+        );
+      }
+
+      const updated = await StockBatch.findOneAndUpdate(
+        { _id: existing._id, pharmacyId: req.pharmacyId, quantity: { $gte: qtyToReduce } },
+        { $inc: { quantity: -qtyToReduce } },
+        { returnDocument: 'after', session }
+      );
+      if (!updated) {
+        throw new AppError('Stock changed while adjusting, please retry', 409);
+      }
+
+      if (updated.quantity === 0) {
+        updated.status = adjustmentType === 'expired' ? 'expired' : 'depleted';
+        await updated.save({ session });
+      }
+
+      await recordMovement(
+        {
+          pharmacyId: req.pharmacyId,
+          batchId: updated._id,
+          medicineId: updated.medicineId,
+          type: ADJUSTMENT_MOVEMENT[adjustmentType],
+          quantityChange: -qtyToReduce,
+          balanceAfter: updated.quantity,
+          reason: typeof reason === 'string' ? reason.trim() : '',
+          userId: req.user?._id,
+        },
+        { session }
+      );
+
+      batchId = updated._id;
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  const batch = await StockBatch.findById(batchId).populate(
+    'medicineId',
+    'name genericName dosageForm strength'
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: `Stock adjusted successfully (${adjustmentType})`,
+    batch,
+  });
 };
 
 // @desc    Get inventory summary, low stock, and expiring items
 // @route   GET /api/stock/summary
 // @access  Private (Pharmacist only)
 const getInventorySummary = async (req, res) => {
-  try {
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+  const now = new Date();
+  const thirtyDaysFromNow = new Date(now);
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    const activeBatches = await StockBatch.find({
-      pharmacyId: req.pharmacyId,
-      status: 'active',
-      quantity: { $gt: 0 },
-    }).populate('medicineId', 'name minStockLevel');
+  const stockedBatches = await StockBatch.find({
+    pharmacyId: req.pharmacyId,
+    status: 'active',
+    quantity: { $gt: 0 },
+  }).populate('medicineId', 'name minStockLevel');
 
-    const totalStockUnits = activeBatches.reduce((sum, b) => sum + b.quantity, 0);
+  // Only non-expired batches count as sellable stock
+  const activeBatches = stockedBatches.filter((b) => new Date(b.expiryDate) > now);
+  const expiredActiveBatches = stockedBatches.filter((b) => new Date(b.expiryDate) <= now);
 
-    const expiringSoonBatches = activeBatches.filter(
-      (b) => new Date(b.expiryDate) <= thirtyDaysFromNow
-    );
+  const totalStockUnits = activeBatches.reduce((sum, b) => sum + b.quantity, 0);
 
-    const medicines = await Medicine.find({ pharmacyId: req.pharmacyId });
-    const lowStockMedicines = [];
+  const expiringSoonBatches = activeBatches.filter(
+    (b) => new Date(b.expiryDate) <= thirtyDaysFromNow
+  );
 
-    medicines.forEach((med) => {
-      const medStock = activeBatches
-        .filter((b) => b.medicineId?._id?.toString() === med._id.toString())
-        .reduce((sum, b) => sum + b.quantity, 0);
+  const stockByMedicine = new Map();
+  activeBatches.forEach((b) => {
+    const id = b.medicineId?._id?.toString();
+    if (!id) return;
+    stockByMedicine.set(id, (stockByMedicine.get(id) || 0) + b.quantity);
+  });
 
-      if (medStock <= med.minStockLevel) {
-        lowStockMedicines.push({
-          _id: med._id,
-          name: med.name,
-          currentStock: medStock,
-          minStockLevel: med.minStockLevel,
-        });
-      }
-    });
+  const medicines = await Medicine.find({ pharmacyId: req.pharmacyId }).select('name minStockLevel');
+  const lowStockMedicines = [];
 
-    return res.status(200).json({
-      success: true,
-      summary: {
-        totalBatches: activeBatches.length,
-        totalStockUnits,
-        expiringSoonCount: expiringSoonBatches.length,
-        expiringSoonBatches,
-        lowStockCount: lowStockMedicines.length,
-        lowStockMedicines,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+  medicines.forEach((med) => {
+    const medStock = stockByMedicine.get(med._id.toString()) || 0;
+    if (medStock <= med.minStockLevel) {
+      lowStockMedicines.push({
+        _id: med._id,
+        name: med.name,
+        currentStock: medStock,
+        minStockLevel: med.minStockLevel,
+      });
+    }
+  });
+
+  return res.status(200).json({
+    success: true,
+    summary: {
+      totalBatches: activeBatches.length,
+      totalStockUnits,
+      expiringSoonCount: expiringSoonBatches.length,
+      expiringSoonBatches,
+      lowStockCount: lowStockMedicines.length,
+      lowStockMedicines,
+      // Batches past expiry still marked active with stock: need to be written off
+      expiredCount: expiredActiveBatches.length,
+      expiredUnits: expiredActiveBatches.reduce((sum, b) => sum + b.quantity, 0),
+      expiredBatches: expiredActiveBatches,
+    },
+  });
 };
 
 // @desc    Delete a stock batch
 // @route   DELETE /api/stock/:id
 // @access  Private (Pharmacist only)
 const deleteStockBatch = async (req, res) => {
-  try {
-    const batch = await StockBatch.findOne({
-      _id: req.params.id,
-      pharmacyId: req.pharmacyId,
-    });
-
-    if (!batch) {
-      return res.status(404).json({
-        success: false,
-        message: 'Stock batch not found',
-      });
-    }
-
-    await batch.deleteOne();
-
-    return res.status(200).json({
-      success: true,
-      message: 'Stock batch deleted successfully',
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    throw new AppError('Stock batch not found', 404);
   }
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const batch = await StockBatch.findOne({
+        _id: req.params.id,
+        pharmacyId: req.pharmacyId,
+      }).session(session);
+
+      if (!batch) {
+        throw new AppError('Stock batch not found', 404);
+      }
+
+      const referenced = await Sale.exists({
+        pharmacyId: req.pharmacyId,
+        'items.batchId': batch._id,
+      }).session(session);
+      if (referenced) {
+        throw new AppError(
+          'This batch has sales recorded against it and cannot be deleted. Adjust its quantity instead.',
+          409
+        );
+      }
+
+      await recordMovement(
+        {
+          pharmacyId: req.pharmacyId,
+          batchId: batch._id,
+          medicineId: batch.medicineId,
+          type: 'delete',
+          quantityChange: -batch.quantity,
+          balanceAfter: 0,
+          reason: `Batch ${batch.batchNo} deleted`,
+          userId: req.user?._id,
+        },
+        { session }
+      );
+
+      await batch.deleteOne({ session });
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  return res.status(200).json({
+    success: true,
+    message: 'Stock batch deleted successfully',
+  });
 };
 
 module.exports = {

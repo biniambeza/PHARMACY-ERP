@@ -59,5 +59,7 @@ stockBatchSchema.pre('save', function () {
 
 // Ensure unique batch per medicine within pharmacy
 stockBatchSchema.index({ pharmacyId: 1, medicineId: 1, batchNo: 1 }, { unique: true });
+// FEFO lookup for sales
+stockBatchSchema.index({ pharmacyId: 1, medicineId: 1, status: 1, expiryDate: 1 });
 
 module.exports = mongoose.model('StockBatch', stockBatchSchema);

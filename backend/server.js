@@ -1,84 +1,48 @@
+// Process entrypoint: validate env, connect to MongoDB, then start listening.
+// The Express app itself lives in app.js (importable by tests without side effects).
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const cookieParser = require('cookie-parser');
+
+const REQUIRED_ENV = ['MONGO_URI', 'JWT_SECRET'];
+const missing = REQUIRED_ENV.filter((key) => !process.env[key] || !process.env[key].trim());
+if (missing.length) {
+  console.error(`Missing required environment variable(s): ${missing.join(', ')}. See backend/.env.example.`);
+  process.exit(1);
+}
+
+if (process.env.NODE_ENV === 'production' && !process.env.CLIENT_URL) {
+  console.warn('Warning: CLIENT_URL is not set; browser requests from any origin will be rejected by CORS.');
+}
+
 const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const pharmacyRoutes = require('./routes/pharmacyRoutes');
-const medicineRoutes = require('./routes/medicineRoutes');
-const stockRoutes = require('./routes/stockRoutes');
-const salesRoutes = require('./routes/salesRoutes');
-const supplierRoutes = require('./routes/supplierRoutes');
-const procurementRoutes = require('./routes/procurementRoutes');
-const reportRoutes = require('./routes/reportRoutes');
-
-const app = express();
-
-// Connect to Database
-connectDB();
-
-// Middlewares
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'http://localhost:5173',
-  'http://localhost:3000'
-].filter(Boolean);
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (
-      allowedOrigins.includes(origin) ||
-      process.env.NODE_ENV !== 'production' ||
-      origin.endsWith('.vercel.app')
-    ) {
-      return callback(null, true);
-    }
-    return callback(null, true);
-  },
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// Test Route
-app.get('/api/test', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Pharmacy ERP Backend API is running successfully!',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Routes (supports both /api/* and root /* for resilient deployment)
-const apiRoutes = [
-  ['/auth', authRoutes],
-  ['/admin', adminRoutes],
-  ['/pharmacy', pharmacyRoutes],
-  ['/medicines', medicineRoutes],
-  ['/stock', stockRoutes],
-  ['/sales', salesRoutes],
-  ['/suppliers', supplierRoutes],
-  ['/procurement', procurementRoutes],
-  ['/reports', reportRoutes]
-];
-
-apiRoutes.forEach(([path, router]) => {
-  app.use(`/api${path}`, router);
-  app.use(path, router);
-});
-
-// 404 Route Handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
+const app = require('./app');
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+const start = async () => {
+  try {
+    await connectDB();
+  } catch (error) {
+    console.error(`MongoDB connection error: ${error.message}`);
+    process.exit(1);
+  }
 
-module.exports = app;
+  // invoiceNumber / poNumber are unique per pharmacy (compound indexes). Older
+  // deployments still carry global unique indexes (invoiceNumber_1, poNumber_1)
+  // that would cause cross-pharmacy 409s; syncIndexes drops them and builds the
+  // new ones. Non-fatal: log and keep starting.
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      const Sale = require('./models/Sale');
+      const PurchaseOrder = require('./models/PurchaseOrder');
+      await Promise.all([Sale.syncIndexes(), PurchaseOrder.syncIndexes()]);
+    } catch (error) {
+      console.warn(`Warning: index sync failed: ${error.message}`);
+    }
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+};
+
+start();

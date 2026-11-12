@@ -18,7 +18,7 @@ import { getMyPharmacy, updateMyPharmacy, updateProfile } from '../../api/pharma
 import { useAuth } from '../../context/AuthContext';
 
 const Settings = () => {
-  const { user, setUser } = useAuth();
+  const { user, updateSession } = useAuth();
 
   const [pharmacy, setPharmacy] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -82,6 +82,11 @@ const Settings = () => {
       return;
     }
 
+    if (newPassword && newPassword.length < 8) {
+      setProfileError('New password must be at least 8 characters long');
+      return;
+    }
+
     setProfileLoading(true);
     try {
       const payload = { name };
@@ -91,9 +96,8 @@ const Settings = () => {
       }
 
       const res = await updateProfile(payload);
-      if (res.user) {
-        setUser((prev) => ({ ...prev, ...res.user }));
-      }
+      // A password change revokes old tokens; the response carries a new one.
+      updateSession({ token: res.token, user: res.user });
       setProfileSuccess('Profile credentials updated successfully.');
       setCurrentPassword('');
       setNewPassword('');
@@ -306,7 +310,8 @@ const Settings = () => {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
+                    minLength={8}
+                    placeholder="At least 8 characters"
                     className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                   />
                 </div>
