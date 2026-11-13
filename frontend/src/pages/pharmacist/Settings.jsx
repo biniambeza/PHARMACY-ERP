@@ -89,6 +89,8 @@ const toForm = (settings = {}) => ({
   notifySms: Boolean(settings.notify?.sms),
   notifyDailySummary: Boolean(settings.notify?.dailySummary),
   maxDiscountPercent: settings.maxDiscountPercent ?? 100,
+  // POS (#7): missing = required in the POS UI; saving persists it for server-side enforcement
+  requireShift: settings.requireShift !== false,
 });
 
 const Settings = () => {
@@ -198,6 +200,7 @@ const Settings = () => {
           expiryAlertDays: days,
           notify: { email: form.notifyEmail, sms: form.notifySms, dailySummary: form.notifyDailySummary },
           maxDiscountPercent: maxDiscount,
+          requireShift: form.requireShift,
         },
       });
       setPharmacy(res.pharmacy);
@@ -552,6 +555,7 @@ const Settings = () => {
                 <Toggle checked={form.notifyEmail} onChange={setField('notifyEmail')} label="Email notifications" />
                 <Toggle checked={form.notifySms} onChange={setField('notifySms')} label="SMS notifications" />
                 <Toggle checked={form.notifyDailySummary} onChange={setField('notifyDailySummary')} label="Daily summary" hint="Sales, low stock and expiry digest" />
+                <Toggle checked={form.requireShift} onChange={setField('requireShift')} label="Require an open shift to sell" hint="Cashiers must open a cash-drawer shift before selling at the POS" />
               </div>
               <div>
                 <label className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium mb-1">

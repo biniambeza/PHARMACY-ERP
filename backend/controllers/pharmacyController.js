@@ -111,6 +111,10 @@ const buildSettingsUpdate = (settings) => {
     });
   }
 
+  if (settings.requireShift !== undefined) {
+    set['settings.requireShift'] = asBool(settings.requireShift, 'Require shift');
+  }
+
   if (settings.maxDiscountPercent !== undefined) {
     set['settings.maxDiscountPercent'] = asNumber(settings.maxDiscountPercent, 'Max discount %', 0, 100);
   }

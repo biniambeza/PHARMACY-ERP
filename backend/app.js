@@ -38,6 +38,7 @@ const transferRoutes = require('./routes/transferRoutes');
 const announcementRoutes = require('./routes/announcementRoutes');
 const shiftRoutes = require('./routes/shiftRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const paymentWebhookRoutes = require('./routes/paymentWebhookRoutes');
 
 const app = express();
 
@@ -170,6 +171,8 @@ app.use('/api/export', exportRoutes);
 app.use('/api/transfers', transferRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/shifts', shiftRoutes);
+// Public provider webhook (shared-secret header, no JWT) must be mounted before the protected router
+app.use('/api/payments/webhook', paymentWebhookRoutes);
 app.use('/api/payments', paymentRoutes);
 
 // ---------- 404 + central error handler (must be last) ----------

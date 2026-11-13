@@ -336,6 +336,16 @@ const voidSale = async (req, res) => {
       if (localDay(sale.createdAt, timeZone) !== localDay(now, timeZone)) {
         throw new AppError('Only sales made today can be voided; use a return instead', 400);
       }
+      // A sale of a closed shift (drawer already counted) can only be returned, not voided
+      if (sale.shiftId) {
+        const Shift = require('../models/Shift');
+        const shift = await Shift.findOne({ _id: sale.shiftId, pharmacyId: req.pharmacyId })
+          .select('status')
+          .session(session);
+        if (shift && shift.status === 'closed') {
+          throw new AppError('Shift already closed', 400);
+        }
+      }
 
       for (const si of sale.items) {
         const updated = await StockBatch.findOneAndUpdate(

@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const {
   createSale,
+  syncOfflineSales,
+  getPosCatalog,
+  getTopItems,
   getSales,
   getSaleById,
   getSalesSummary,
@@ -17,6 +20,9 @@ router.use(protect, authorize('pharmacist'), pharmacyScope);
 router.route('/')
   .post(requirePermission('sales:create'), createSale)
   .get(requirePermission('sales:view'), getSales);
+router.post('/sync', requirePermission('sales:create'), syncOfflineSales);
+router.get('/pos-catalog', requirePermission('sales:create'), getPosCatalog);
+router.get('/top-items', requirePermission('sales:create'), getTopItems);
 router.get('/summary', requirePermission('sales:view'), getSalesSummary);
 router.get('/:id', requirePermission('sales:view'), getSaleById);
 

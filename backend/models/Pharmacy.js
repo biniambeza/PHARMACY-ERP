@@ -21,6 +21,9 @@ const settingsSchema = new mongoose.Schema(
     },
     // 100 = no limit
     maxDiscountPercent: { type: Number, default: 100, min: 0, max: 100 },
+    // POS (#7): require an open cash-drawer shift to sell. No default: pharmacies
+    // without the setting (legacy) don't require one; the POS UI asks to open a shift anyway.
+    requireShift: { type: Boolean },
   },
   { _id: false }
 );

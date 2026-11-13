@@ -4,6 +4,7 @@ const {
   connectTestDb, disconnectTestDb, createPharmacist, createMedicine, insertBatchRaw,
 } = require('./helpers');
 const Sale = require('../models/Sale');
+const StockBatch = require('../models/StockBatch');
 const ControlledEntry = require('../models/ControlledEntry');
 const Prescription = require('../models/Prescription');
 const {
@@ -38,25 +39,15 @@ const createRx = async (token, body) => {
   return res;
 };
 
-// Sells through the real sales API, then registers controlled entries in a transaction
+// Sells through the real sales API with a patient + prescription; since Wave 3 the POS
+// sale itself writes the controlled register entries (services/sales.js).
 const sellAndRegister = async ({ owner, items, patientId, prescriptionId }) => {
   const res = await request(app).post('/api/sales').set(auth(owner.token))
-    .send({ items, paymentMethod: 'cash', prescription: { number: 'P-1', prescriber: 'Dr. Test' } });
+    .send({ items, paymentMethod: 'cash', patientId, prescriptionId });
   expect(res.status).toBe(201);
   const sale = await Sale.findById(res.body.sale._id).lean();
-  const session = await mongoose.startSession();
-  try {
-    let entries;
-    await session.withTransaction(async () => {
-      entries = await recordControlledDispenses(
-        { pharmacyId: owner.pharmacy._id, sale, patientId, prescriptionId, userId: owner.user._id },
-        { session }
-      );
-    });
-    return { sale, entries };
-  } finally {
-    await session.endSession();
-  }
+  const entries = await ControlledEntry.find({ saleId: sale._id }).sort({ _id: 1 }).lean();
+  return { sale, entries };
 };
 
 beforeAll(async () => {
@@ -202,9 +193,14 @@ describe('Controlled register', () => {
   });
 
   test('dispense without patient/prescription is rejected', async () => {
+    // The POS refuses a controlled sale without patient + prescription (nothing is written)
     const res = await request(app).post('/api/sales').set(auth(A.token))
       .send({ items: [{ medicineId: med._id, quantity: 1 }], paymentMethod: 'cash', prescription: { number: 'X', prescriber: 'Y' } });
-    const sale = await Sale.findById(res.body.sale._id).lean();
+    expect(res.status).toBe(400);
+    expect(await ControlledEntry.countDocuments({ medicineId: med._id })).toBe(0);
+    // Simulate the 1 unit dispensed earlier so the next test starts from a stock of 24
+    await StockBatch.updateOne({ pharmacyId: A.pharmacy._id, medicineId: med._id, batchNo: 'M1' }, { $inc: { quantity: -1 } });
+    const sale = { _id: new mongoose.Types.ObjectId(), items: [{ medicineId: med._id, quantity: 1 }] };
     await expect(recordControlledDispenses({ pharmacyId: A.pharmacy._id, sale, userId: A.user._id }))
       .rejects.toMatchObject({ status: 400 });
     await expect(recordControlledDispenses({ pharmacyId: A.pharmacy._id, sale, patientId: patient._id }))

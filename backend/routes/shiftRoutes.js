@@ -1,14 +1,29 @@
 // Mounted at /api/shifts: cash drawer shifts (#7). Owner: POS agent.
-// Scaffolded by Foundation: every route is authenticated and tenant-scoped
-// (req.pharmacyId, req.membershipRole). Gate each route with
-// requirePermission('module:action') from middleware/permission.js.
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
+const { authorize } = require('../middleware/roleMiddleware');
 const pharmacyScope = require('../middleware/pharmacyScope');
-// eslint-disable-next-line no-unused-vars
-const { requirePermission } = require('../middleware/permission');
+const { requireAnyPermission } = require('../middleware/permission');
+const {
+  openShift,
+  getCurrentShift,
+  closeShift,
+  getShifts,
+  getShift,
+  getZReport,
+} = require('../controllers/shiftController');
 
-router.use(protect, pharmacyScope);
+router.use(protect, authorize('pharmacist'), pharmacyScope);
+
+// shift:own = own shifts; shift:manage = every shift of the pharmacy (checked in the controller)
+const shiftAccess = requireAnyPermission('shift:own', 'shift:manage');
+
+router.post('/open', shiftAccess, openShift);
+router.get('/current', shiftAccess, getCurrentShift);
+router.get('/', shiftAccess, getShifts);
+router.get('/:id', shiftAccess, getShift);
+router.get('/:id/z-report', shiftAccess, getZReport);
+router.post('/:id/close', shiftAccess, closeShift);
 
 module.exports = router;

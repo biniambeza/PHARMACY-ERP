@@ -81,6 +81,8 @@ const paymentSchema = new mongoose.Schema(
       enum: ['pending', 'completed', 'failed', 'refunded'],
       default: 'completed',
     },
+    // Mobile-money payment intent that confirmed this payment (provider flow)
+    intentId: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentIntent', default: null },
   },
   { _id: true }
 );
@@ -191,6 +193,22 @@ const saleSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    // Cash handed over by the customer and change given back.
+    // payments[].amount always holds the amount applied to the sale (sums to grandTotal).
+    amountTendered: {
+      type: Number,
+      min: 0,
+    },
+    change: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // Offline POS: when the sale was made on the client (createdAt = sync time)
+    offlineCreatedAt: {
+      type: Date,
+      default: null,
+    },
     // Returns and voids
     returnStatus: {
       type: String,
@@ -249,5 +267,6 @@ saleSchema.index(
 );
 saleSchema.index({ pharmacyId: 1, customerId: 1, createdAt: -1 });
 saleSchema.index({ pharmacyId: 1, staffId: 1, createdAt: -1 });
+saleSchema.index({ pharmacyId: 1, shiftId: 1 });
 
 module.exports = mongoose.model('Sale', saleSchema);

@@ -78,7 +78,11 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
     ? sale.payments.filter((p) => p.status !== 'failed')
     : [{ method: sale.paymentMethod, amount: sale.amountPaid ?? sale.grandTotal }];
   const paid = sale.amountPaid ?? payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-  const change = Math.max(0, paid - (Number(sale.grandTotal) || 0) - (Number(sale.balanceDue) || 0));
+  // POS sales store the applied payment amounts plus `change` / `amountTendered` (Wave 3)
+  const change =
+    sale.change !== undefined && sale.change !== null
+      ? Number(sale.change) || 0
+      : Math.max(0, paid - (Number(sale.grandTotal) || 0) - (Number(sale.balanceDue) || 0));
   const staffName = sale.staffId?.name || sale.pharmacistId?.name;
   const customerName = sale.customerId?.name || sale.customer?.name || 'Walk-in Customer';
   const customerPhone = sale.customerId?.phone || sale.customer?.phone;
@@ -164,6 +168,9 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
           <span>{money(p.amount)}</span>
         </div>
       ))}
+      {change > 0 && Number(sale.amountTendered) > 0 && (
+        <div className="row"><span>Cash tendered</span><span>{money(sale.amountTendered)}</span></div>
+      )}
       {change > 0 && <div className="row"><span>Change</span><span>{money(change)}</span></div>}
       {Number(sale.balanceDue) > 0 && (
         <>
