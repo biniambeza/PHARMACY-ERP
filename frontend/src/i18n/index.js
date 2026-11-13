@@ -8,15 +8,19 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { setDefaultCurrency, setDefaultLocale } from '../utils/format.js';
 
-import enCommon from './locales/en/common.json';
-import enNav from './locales/en/nav.json';
-import enAuth from './locales/en/auth.json';
-import amCommon from './locales/am/common.json';
-import amNav from './locales/am/nav.json';
-import amAuth from './locales/am/auth.json';
-import omCommon from './locales/om/common.json';
-import omNav from './locales/om/nav.json';
-import omAuth from './locales/om/auth.json';
+// Every locales/<lang>/<namespace>.json file is picked up automatically, so a
+// new namespace only needs its JSON files (no change here).
+const localeModules = import.meta.glob('./locales/*/*.json', { eager: true, import: 'default' });
+const resources = {};
+const namespaces = new Set();
+for (const [path, messages] of Object.entries(localeModules)) {
+  const match = path.match(/\.\/locales\/([^/]+)\/([^/]+)\.json$/);
+  if (!match) continue;
+  const [, lang, ns] = match;
+  resources[lang] = resources[lang] || {};
+  resources[lang][ns] = messages;
+  namespaces.add(ns);
+}
 
 export const LANG_KEY = 'lang';
 export const SUPPORTED_LANGUAGES = [
@@ -47,15 +51,11 @@ const applyDocumentLanguage = (lng) => {
 const initialLanguage = readStoredLanguage() || 'en';
 
 i18n.use(initReactI18next).init({
-  resources: {
-    en: { common: enCommon, nav: enNav, auth: enAuth },
-    am: { common: amCommon, nav: amNav, auth: amAuth },
-    om: { common: omCommon, nav: omNav, auth: omAuth },
-  },
+  resources,
   lng: initialLanguage,
   fallbackLng: 'en',
   supportedLngs: SUPPORTED,
-  ns: ['common', 'nav', 'auth'],
+  ns: [...namespaces],
   defaultNS: 'common',
   interpolation: { escapeValue: false }, // React already escapes
   returnNull: false,
