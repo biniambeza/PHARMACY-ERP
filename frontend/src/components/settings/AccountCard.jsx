@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { User, Mail, KeyRound, Lock, Save } from 'lucide-react';
 import { updateProfile } from '../../api/pharmacyApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { Alert, CardHeader } from './SettingsUi';
 import { inputCls, disabledCls, cardCls, labelCls, mutedLabelCls } from './settingsStyles';
 

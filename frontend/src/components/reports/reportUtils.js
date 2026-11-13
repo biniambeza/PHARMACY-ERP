@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import useAsync from '../../hooks/useAsync';
 import { CreditCard, Smartphone, Banknote, Wallet } from 'lucide-react';
 import { formatMoney } from '../../utils/format';
 
@@ -27,19 +28,15 @@ export const EN = { lng: 'en' };
 // Small data-loading hook: re-runs when `key` changes.
 export const useReport = (fetcher, key) => {
   const { t } = useTranslation('reports');
-  const [state, setState] = useState({ data: null, loading: true, error: '' });
-  const run = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true, error: '' }));
-    try {
-      const data = await fetcher();
-      setState({ data, loading: false, error: '' });
-    } catch (err) {
-      setState({ data: null, loading: false, error: err.response?.data?.message || t('loadFailed') });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
-  useEffect(() => {
-    run();
-  }, [run]);
-  return { ...state, reload: run };
+  // `fetcher` is an inline closure recreated on every render; callers pass `key`
+  // to say which of its inputs matter, so memoising on `key` alone is intentional.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const run = useCallback(() => fetcher(), [key]);
+  const { data, error, loading, reload } = useAsync(run);
+  return {
+    data: error ? null : data,
+    loading,
+    error: error ? error.response?.data?.message || t('loadFailed') : '',
+    reload,
+  };
 };

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getDashboardOverview } from '../../api/reportApi';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
+import useAsync from '../../hooks/useAsync';
 import { formatMoney } from '../../utils/format';
 import { exportCSV, exportPDF } from '../../utils/export';
 import { downloadExport } from '../../api/exportApi';
@@ -19,9 +20,6 @@ import OnboardingChecklist from '../../components/onboarding/OnboardingChecklist
 const PharmacistDashboard = () => {
   const { t } = useTranslation(['dashboard', 'common']);
 
-  const [overview, setOverview] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [tasksState, setTasksState] = useState({});
   const [selectedSale, setSelectedSale] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
@@ -29,26 +27,17 @@ const PharmacistDashboard = () => {
   const [exportingSales, setExportingSales] = useState(false);
   const { can, activePharmacy, user } = useAuth();
 
-  const fetchOverview = async (selectedRange = range) => {
+  const fetchOverview = useCallback(async () => {
     try {
-      setLoading(true);
-      setError('');
-      const res = await getDashboardOverview(selectedRange);
-      if (res.success && res.overview) {
-        setOverview(res.overview);
-      }
+      const res = await getDashboardOverview(range);
+      return res.success && res.overview ? res.overview : null;
     } catch (err) {
       console.error('Failed to load real dashboard overview data:', err);
-      setError(t('error.fetchFailed'));
-    } finally {
-      setLoading(false);
+      throw err;
     }
-  };
-
-  useEffect(() => {
-    fetchOverview(range);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range]);
+  const { data: overview, error: loadError, loading, reload } = useAsync(fetchOverview);
+  const error = loadError ? t('error.fetchFailed') : '';
 
   const toggleTask = (taskId) => {
     setTasksState((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
@@ -61,7 +50,7 @@ const PharmacistDashboard = () => {
 
   if (loading) return <DashboardSkeleton />;
 
-  if (error || !overview) return <DashboardError error={error} onRetry={() => fetchOverview()} />;
+  if (error || !overview) return <DashboardError error={error} onRetry={reload} />;
 
   const {
     kpis = {},

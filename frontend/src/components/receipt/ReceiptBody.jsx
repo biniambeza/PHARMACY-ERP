@@ -63,6 +63,8 @@ const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
     sale.change !== undefined && sale.change !== null
       ? Number(sale.change) || 0
       : Math.max(0, paid - (Number(sale.grandTotal) || 0) - (Number(sale.balanceDue) || 0));
+  // Insurance sale: the insurer's share stays pending until the claim is paid.
+  const insurance = sale.insurance?.schemeId || sale.insurance?.schemeName ? sale.insurance : null;
   const staffName = sale.staffId?.name || sale.pharmacistId?.name;
   const customerName = sale.customerId?.name || sale.customer?.name || t('walkIn');
   const customerPhone = sale.customerId?.phone || sale.customer?.phone;
@@ -184,6 +186,22 @@ const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
           />
         );
       })}
+      {insurance && (
+        <>
+          <div className="sep" />
+          <div className="b">{t('insuranceHeading')}</div>
+          {insurance.schemeName && <Row label={t('insuranceScheme')} value={insurance.schemeName} />}
+          {(insurance.memberNo || insurance.memberName) && (
+            <Row
+              label={t('insuranceMember')}
+              value={[insurance.memberNo, insurance.memberName].filter(Boolean).join(' - ')}
+            />
+          )}
+          <Row label={t('insurerPays')} value={money(insurance.insurerAmount)} />
+          <Row className="b" label={t('patientPaid')} value={money(insurance.patientAmount)} />
+          <div className="sep" />
+        </>
+      )}
       {Number(sale.amountTendered) > 0 && <Row label={t('cashTendered')} value={money(sale.amountTendered)} />}
       {change > 0 && <Row label={t('change')} value={money(change)} />}
       {Number(sale.balanceDue) > 0 && (

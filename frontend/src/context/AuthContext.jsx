@@ -1,8 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AuthContext } from './authContextObject';
 import api, { ACTIVE_PHARMACY_KEY } from '../api/axios';
 import { roleCan } from '../config/permissions';
-
-const AuthContext = createContext();
 
 const MEMBERSHIPS_KEY = 'memberships';
 
@@ -248,10 +247,3 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};

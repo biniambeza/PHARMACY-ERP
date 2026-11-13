@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/useAuth';
+import { useTheme } from '../../context/useTheme';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import ChangePasswordModal from './ChangePasswordModal';
 import SecurityModal from './SecurityModal';
 import TwoFactorNudge from '../../components/settings/TwoFactorNudge';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import { formatDate } from '../../utils/format';
 import {
   Home,
   PlusCircle,
@@ -424,12 +426,15 @@ const AdminLayout = () => {
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* Language + calendar switcher */}
+            <LanguageSwitcher />
+
             {/* Date Pill */}
             <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span>{new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              <span>{formatDate(new Date())}</span>
             </div>
 
             {/* Notification Bell */}

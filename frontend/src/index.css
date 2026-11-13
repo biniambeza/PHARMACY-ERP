@@ -62,8 +62,12 @@
   --text-muted: #64748b;
 }
 
+/* Inter has no Ethiopic glyphs, so Amharic text (in any language mode, e.g. the
+   "አማርኛ" option or customer names) falls through per glyph to Noto Sans Ethiopic
+   (loaded in index.html) while Latin text keeps Inter. Noto is listed before the
+   system fonts so Ethiopic never renders in a system fallback such as Nyala/Ebrima. */
 * {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', 'Noto Sans Ethiopic', system-ui, -apple-system, sans-serif;
 }
 
 .font-mono {

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { ShieldCheck, Users, FileStack, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import SchemesTab from '../../components/insurance/SchemesTab';
 import MembersTab from '../../components/insurance/MembersTab';
 import ClaimsTab from '../../components/insurance/ClaimsTab';

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Undo2, Search, RotateCw, AlertCircle, FileText, ChevronLeft, ChevronRight, Receipt } from 'lucide-react';
 import { getReturns, getReturnById } from '../../api/returnApi';
 import { formatMoney, formatDateTime } from '../../utils/format';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import CreditNote from '../../components/returns/CreditNote';
 
 const LIMIT = 25;

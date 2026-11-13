@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Plus, Barcode, Percent } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getMedicines, getCategories, deleteMedicine } from '../../api/medicineApi';
+import useAsync from '../../hooks/useAsync';
 import MedicineModal from './MedicineModal';
 import Can from '../../components/common/Can';
 import BarcodeLabelsModal from '../../components/catalog/BarcodeLabelsModal';
@@ -14,7 +15,6 @@ import MedicineTable from '../../components/inventory/MedicineTable';
 const Medicines = () => {
   const { t } = useTranslation('medicines');
   const [medicines, setMedicines] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [rxFilter, setRxFilter] = useState('all'); // 'all' | 'rx' | 'otc'
@@ -43,18 +43,16 @@ const Medicines = () => {
     }
   }, [search, selectedCategory]);
 
-  const loadCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const data = await getCategories();
-      setCategories(data.categories || []);
+      return data.categories || [];
     } catch (err) {
       console.error('Failed to load categories:', err);
+      throw err;
     }
-  };
-
-  useEffect(() => {
-    loadCategories();
   }, []);
+  const { data: categories, reload: loadCategories } = useAsync(fetchCategories, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {

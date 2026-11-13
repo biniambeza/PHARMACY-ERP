@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollText, Search, ChevronDown, ChevronRight, ChevronLeft, RefreshCw, Download, AlertTriangle, Filter } from 'lucide-react';
 import { getAuditLogs, getAuditFacets } from '../../api/auditApi';
+import useAsync from '../../hooks/useAsync';
 import { formatDateTime } from '../../utils/format';
 import { exportCSV } from '../../utils/export';
 
@@ -131,6 +132,7 @@ const DiffView = ({ log }) => {
   );
 };
 
+const EMPTY_DATA = { logs: [], pagination: { page: 1, pages: 1, total: 0 } };
 const EMPTY_FILTERS = { search: '', userId: '', action: '', entity: '', from: '', to: '' };
 
 const AuditLog = () => {
@@ -138,28 +140,15 @@ const AuditLog = () => {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [applied, setApplied] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
-  const [data, setData] = useState({ logs: [], pagination: { page: 1, pages: 1, total: 0 } });
   const [facets, setFacets] = useState({ actions: [], entities: [], users: [] });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [expanded, setExpanded] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await getAuditLogs({ ...applied, page, limit: 25 });
-      setData({ logs: res.logs || [], pagination: res.pagination || { page: 1, pages: 1, total: 0 } });
-    } catch (err) {
-      setError(err.response?.data?.message || t('loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [applied, page, t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const fetchLogs = useCallback(async () => {
+    const res = await getAuditLogs({ ...applied, page, limit: 25 });
+    return { logs: res.logs || [], pagination: res.pagination || { page: 1, pages: 1, total: 0 } };
+  }, [applied, page]);
+  const { data, error: loadError, loading, reload: load } = useAsync(fetchLogs, EMPTY_DATA);
+  const error = loadError ? loadError.response?.data?.message || t('loadFailed') : '';
 
   useEffect(() => {
     getAuditFacets()

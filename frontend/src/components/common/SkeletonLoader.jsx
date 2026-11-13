@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * SkeletonLoader - Enterprise shimmer placeholders for metric cards and tables
  */

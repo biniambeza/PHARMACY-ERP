@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { ShieldCheck, Server } from 'lucide-react';
 import { getMyPharmacy } from '../../api/pharmacyApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import BusinessInfoCard from '../../components/settings/BusinessInfoCard';
 import AccountCard from '../../components/settings/AccountCard';
 import SecurityCard from '../../components/settings/SecurityCard';

@@ -82,10 +82,10 @@ const POTableRow = ({
 
         <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 font-mono">
           <div>
-            <span>{new Date(po.orderDate).toLocaleDateString()}</span>
+            <span>{formatDate(po.orderDate)}</span>
             {po.expectedDelivery && (
               <span className="text-[10px] text-slate-400 block">
-                {t('table.expected', { date: new Date(po.expectedDelivery).toLocaleDateString() })}
+                {t('table.expected', { date: formatDate(po.expectedDelivery) })}
               </span>
             )}
           </div>

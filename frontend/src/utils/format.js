@@ -3,7 +3,25 @@
 // The app calls setDefaultCurrency()/setDefaultLocale() (or applyPharmacySettings() from
 // src/i18n) after loading the pharmacy settings. Existing signatures are unchanged:
 //   formatMoney(amount, currency?)  formatDate(d, options?)  formatDateTime(d)
-import { formatEthiopianDate as formatEthiopian } from '../i18n/ethiopianCalendar.js';
+//
+// Calendar (DISPLAY only): formatDate/formatDateTime show Ethiopian calendar dates when the
+// calendar preference is 'ethiopian'. Values sent to the API and <input type="date"> values
+// stay Gregorian ISO. Preference: localStorage[CALENDAR_KEY] (per device) -> 'ethiopian'
+// when the language is Amharic -> 'gregorian'.
+import { formatEthiopianDate as formatEthiopian } from './ethiopianCalendar.js';
+
+export const CALENDAR_KEY = 'calendar';
+export const CALENDARS = ['gregorian', 'ethiopian'];
+
+const normalizeCalendar = (value) => (CALENDARS.includes(value) ? value : null);
+
+const readStoredCalendar = () => {
+  try {
+    return typeof localStorage === 'undefined' ? null : normalizeCalendar(localStorage.getItem(CALENDAR_KEY));
+  } catch {
+    return null;
+  }
+};
 
 // App language code -> BCP 47 locale used for Intl.
 const INTL_LOCALES = { en: 'en-US', am: 'am-ET', om: 'om-ET' };
@@ -23,6 +41,24 @@ export const setDefaultLocale = (loc) => {
 
 export const getDefaultCurrency = () => defaultCurrency;
 export const getDefaultLocale = () => defaultLocale;
+
+/** Default calendar for a language when the user has not chosen one. */
+export const defaultCalendarFor = (loc) => (String(loc || '').slice(0, 2) === 'am' ? 'ethiopian' : 'gregorian');
+
+/** Active display calendar: explicit per-device choice, else language default. */
+export const getCalendar = () => readStoredCalendar() || defaultCalendarFor(defaultLocale);
+
+/** Persist an explicit calendar choice (null/'' clears it, back to the language default). */
+export const setCalendar = (value) => {
+  const cal = normalizeCalendar(value);
+  try {
+    if (cal) localStorage.setItem(CALENDAR_KEY, cal);
+    else localStorage.removeItem(CALENDAR_KEY);
+  } catch {
+    /* storage unavailable: preference not saved */
+  }
+  return getCalendar();
+};
 
 // Resolve to a locale Intl actually supports (om-ET is missing in some browsers).
 const intlLocale = (loc = defaultLocale) => {
@@ -88,9 +124,30 @@ const toDate = (d) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+const hasDatePart = (o) => Boolean(o && (o.year || o.month || o.day || o.dateStyle));
+const hasTimePart = (o) => Boolean(o && (o.hour || o.minute || o.timeStyle));
+
+const formatTime = (date, options) => {
+  const timeOptions = {};
+  for (const k of ['hour', 'minute', 'second', 'hour12', 'hourCycle', 'timeZone']) {
+    if (options[k] !== undefined) timeOptions[k] = options[k];
+  }
+  if (options.timeStyle) timeOptions.timeStyle = options.timeStyle;
+  try {
+    return date.toLocaleTimeString(intlLocale(), timeOptions);
+  } catch {
+    return date.toLocaleTimeString('en-US', timeOptions);
+  }
+};
+
 export const formatDate = (d, options = { year: 'numeric', month: 'short', day: 'numeric' }) => {
+  // A bare 'YYYY-MM-DD' is a calendar day; keep it on that day in the Ethiopian view.
   const date = toDate(d);
   if (!date) return '';
+  if (getCalendar() === 'ethiopian' && hasDatePart(options)) {
+    const datePart = formatEthiopian(typeof d === 'string' ? d : date, defaultLocale, 'medium');
+    return hasTimePart(options) ? `${datePart} ${formatTime(date, options)}` : datePart;
+  }
   try {
     return date.toLocaleDateString(intlLocale(), options);
   } catch {
@@ -105,4 +162,11 @@ export const formatDateTime = (d) =>
  * Ethiopian calendar date, e.g. "Meskerem 1, 2017 E.C." / "መስከረም 1 ቀን 2017 ዓ.ም.".
  * Language defaults to the current app locale.
  */
-export const formatEthiopianDate = (d, lang = defaultLocale) => formatEthiopian(d, lang);
+export const formatEthiopianDate = (d, lang = defaultLocale, style = 'long') => formatEthiopian(d, lang, style);
+
+/**
+ * Hint to show next to a Gregorian <input type="date"> value: the Ethiopian equivalent
+ * when the Ethiopian calendar is active, '' otherwise (or for an empty/invalid value).
+ */
+export const ethiopianDateHint = (isoDate) =>
+  getCalendar() === 'ethiopian' ? formatEthiopian(isoDate, defaultLocale, 'medium') : '';

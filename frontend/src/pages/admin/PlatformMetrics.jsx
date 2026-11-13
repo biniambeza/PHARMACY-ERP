@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, RefreshCw, ShieldAlert } from 'lucide-react';
 import {
@@ -14,6 +14,7 @@ import {
   Legend,
 } from 'recharts';
 import { getPlatformMetrics, runSubscriptionCheck } from '../../api/adminApi';
+import useAsync from '../../hooks/useAsync';
 import { formatMoney } from '../../utils/format';
 
 const card = 'bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5';
@@ -30,27 +31,11 @@ const Stat = ({ label, value, hint, tone = 'text-slate-900 dark:text-white' }) =
 const PlatformMetrics = () => {
   const { t } = useTranslation('admin');
   const [months, setMonths] = useState(12);
-  const [metrics, setMetrics] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await getPlatformMetrics(months);
-      setMetrics(data.metrics);
-    } catch (err) {
-      setError(err.response?.data?.message || t('metrics.loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [months, t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const fetchMetrics = useCallback(async () => (await getPlatformMetrics(months)).metrics, [months]);
+  const { data: metrics, error: loadError, loading, reload: load } = useAsync(fetchMetrics);
+  const error = loadError ? loadError.response?.data?.message || t('metrics.loadFailed') : '';
 
   const check = async () => {
     setChecking(true);

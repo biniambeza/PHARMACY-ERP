@@ -49,8 +49,8 @@
     "openShift": "መሸጥ ለመጀመር ፈረቃ ይክፈቱ",
     "controlledOffline": "ቁጥጥር የሚደረግባቸው መድኃኒቶች ከመስመር ውጭ ሊሸጡ አይችሉም",
     "controlledRole": "ቁጥጥር የሚደረግባቸውን መድኃኒቶች መስጠት የሚችሉት ፋርማሲስት ወይም ባለቤት ብቻ ናቸው",
-    "controlledNeeds": "ቁጥጥር የሚደረግባቸው መድኃኒቶች ታካሚ እና የሐኪም ማዘዣ ያስፈልጋቸዋል",
-    "rxRequired": "የማዘዣ ቁጥር እና አዛዡን ያስገቡ (ወይም ማዘዣ ይምረጡ)",
+    "controlledNeeds": "ቁጥጥር የሚደረግባቸው መድኃኒቶች ታካሚ እና የሐኪም ትዕዛዝ ያስፈልጋቸዋል",
+    "rxRequired": "የሐኪም ትዕዛዝ ቁጥር እና አዛዡን ያስገቡ (ወይም የሐኪም ትዕዛዝ ይምረጡ)",
     "reviewWarnings": "ክሊኒካዊ ማስጠንቀቂያዎችን ገምግመው ያረጋግጡ",
     "onlyCashExcess": "ከጠቅላላው በላይ መክፈል የሚቻለው በጥሬ ገንዘብ ብቻ ነው",
     "notCovered": "ክፍያዎቹ ጠቅላላውን አይሸፍኑም",
@@ -58,9 +58,9 @@
     "creditCustomer": "ለዱቤ ደንበኛ ይምረጡ",
     "waitingMobile": "የሞባይል ገንዘብ ማረጋገጫን በመጠበቅ ላይ",
     "mobileRef": "የሞባይል ገንዘብ ግብይት ማጣቀሻ ያስገቡ",
-    "insuranceOffline": "የመድን ሽያጭ የኢንተርኔት ግንኙነት ይፈልጋል",
-    "insuranceMember": "የመድን ዕቅዱን እና አባሉን ይምረጡ",
-    "insurancePreview": "የመድን ሽፋን ስሌትን በመጠበቅ ላይ"
+    "insuranceOffline": "የኢንሹራንስ ሽያጭ የኢንተርኔት ግንኙነት ይፈልጋል",
+    "insuranceMember": "የኢንሹራንስ ዕቅዱን እና አባሉን ይምረጡ",
+    "insurancePreview": "የኢንሹራንስ ሽፋን ስሌትን በመጠበቅ ላይ"
   },
   "errors": {
     "loadCatalog": "ካታሎጉን መጫን አልተቻለም",
@@ -127,17 +127,17 @@
     "createFailed": "ደንበኛውን መፍጠር አልተቻለም"
   },
   "clinical": {
-    "title": "ታካሚ እና ማዘዣ",
-    "controlledRequired": "ቁጥጥር የሚደረግበት፦ ታካሚ + ማዘዣ ያስፈልጋል",
-    "rxRequired": "ማዘዣ ያስፈልጋል",
+    "title": "ታካሚ እና የሐኪም ትዕዛዝ",
+    "controlledRequired": "ቁጥጥር የሚደረግበት፦ ታካሚ + የሐኪም ትዕዛዝ ያስፈልጋል",
+    "rxRequired": "የሐኪም ትዕዛዝ ያስፈልጋል",
     "optional": "አማራጭ",
     "patientPlaceholder": "ታካሚ ይምረጡ (የአለርጂ እና የመስተጋብር ፍተሻ)",
-    "selectRx": "ማዘዣ ይምረጡ…",
-    "noActiveRx": "ንቁ ማዘዣዎች የሉም",
+    "selectRx": "የሐኪም ትዕዛዝ ይምረጡ…",
+    "noActiveRx": "ንቁ የሐኪም ትዕዛዞች የሉም",
     "new": "አዲስ",
-    "rxNo": "የማዘዣ ቁ. *",
+    "rxNo": "የሐኪም ትዕዛዝ ቁ. *",
     "prescriber": "አዛዥ *",
-    "newRx": "አዲስ ማዘዣ"
+    "newRx": "አዲስ የሐኪም ትዕዛዝ"
   },
   "payment": {
     "discount": "ቅናሽ",
@@ -170,7 +170,7 @@
     "card": "ካርድ",
     "mobile_money": "የሞባይል ገንዘብ",
     "credit": "ዱቤ",
-    "insurance": "መድን"
+    "insurance": "ኢንሹራንስ"
   },
   "shift": {
     "title": "ፈረቃ ክፈት",
@@ -178,7 +178,7 @@
     "withoutShift": "ያለ ፈረቃ ሽጥ",
     "opening": "በመክፈት ላይ…",
     "open": "ፈረቃ ክፈት",
-    "requiredHint": "ይህ ፋርማሲ ከመሸጥ በፊት ክፍት ፈረቃ ይፈልጋል። በመሳቢያው ያለውን ጥሬ ገንዘብ ቆጥረው እንደ መነሻ ገንዘብ ያስገቡ።",
+    "requiredHint": "ይህ መድኃኒት ቤት ከመሸጥ በፊት ክፍት ፈረቃ ይፈልጋል። በመሳቢያው ያለውን ጥሬ ገንዘብ ቆጥረው እንደ መነሻ ገንዘብ ያስገቡ።",
     "hint": "የገንዘብ መሳቢያዎን ለመከታተል ፈረቃ ይክፈቱ። በመሳቢያው ያለውን ጥሬ ገንዘብ ቆጥረው እንደ መነሻ ገንዘብ ያስገቡ።",
     "float": "መነሻ ገንዘብ (በመሳቢያው ያለ ጥሬ ገንዘብ)",
     "notes": "ማስታወሻ (አማራጭ)",
@@ -204,16 +204,16 @@
     "notProcessed": "አልተሰራም"
   },
   "insurance": {
-    "selectScheme": "የመድን ዕቅድ ይምረጡ…",
+    "selectScheme": "የኢንሹራንስ ዕቅድ ይምረጡ…",
     "memberSearch": "የአባል ቁጥር፣ ስም ወይም ስልክ",
     "noMember": "አባል አልተገኘም",
     "changeMember": "አባል ቀይር",
     "calculating": "ሽፋን በማስላት ላይ…",
-    "insurerPays": "መድን ሰጪው የሚከፍለው",
+    "insurerPays": "ኢንሹራንስ ሰጪው የሚከፍለው",
     "patientPays": "ታካሚው የሚከፍለው",
     "copay": "የጋራ ክፍያ",
     "notCovered": "ሽፋን የሌላቸው፦ {{names}}",
-    "previewFailed": "የመድን ሽፋኑን ማስላት አልተቻለም",
+    "previewFailed": "የኢንሹራንስ ሽፋኑን ማስላት አልተቻለም",
     "invalid": {
       "expired": "ጊዜው ያለፈበት",
       "inactive": "ንቁ ያልሆነ",

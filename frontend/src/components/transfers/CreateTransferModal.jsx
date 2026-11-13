@@ -25,11 +25,12 @@ const groupByMedicine = (batches) => {
   return [...map.values()].sort((a, b) => a.medicine.name.localeCompare(b.medicine.name));
 };
 
-const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
+// Mounted only while open, so every opening starts from fresh state.
+const CreateTransferModalBody = ({ onClose, onCreated }) => {
   const { t } = useTranslation('transfers');
   const [destinations, setDestinations] = useState([]);
   const [stock, setStock] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [toPharmacyId, setToPharmacyId] = useState('');
   const [lines, setLines] = useState([]);
   const [search, setSearch] = useState('');
@@ -38,13 +39,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!isOpen) return;
     let cancelled = false;
-    setLoading(true);
-    setError('');
-    setLines([]);
-    setNotes('');
-    setSearch('');
     Promise.all([getTransferDestinations(), getStockBatches({ status: 'active' })])
       .then(([d, s]) => {
         if (cancelled) return;
@@ -61,7 +56,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, []);
 
   const stockById = useMemo(() => new Map(stock.map((s) => [s.medicine._id, s])), [stock]);
 
@@ -77,8 +72,6 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
       )
       .slice(0, 8);
   }, [search, stock]);
-
-  if (!isOpen) return null;
 
   const addLine = (entry) => {
     setLines((prev) => [...prev, { key: `${entry.medicine._id}-${Date.now()}`, medicineId: entry.medicine._id, batchId: '', quantity: 1 }]);
@@ -287,5 +280,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
     </div>
   );
 };
+
+const CreateTransferModal = ({ isOpen, ...props }) => (isOpen ? <CreateTransferModalBody {...props} /> : null);
 
 export default CreateTransferModal;

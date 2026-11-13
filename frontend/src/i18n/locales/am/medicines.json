@@ -31,7 +31,7 @@
     "searchPlaceholder": "በብራንድ ስም ወይም በጄኔሪክ ኬሚካል ስም ይፈልጉ...",
     "allTypes": "ሁሉም ዓይነቶች",
     "rxOnly": "Rx ብቻ",
-    "otc": "OTC",
+    "otc": "ያለ ሐኪም ትዕዛዝ",
     "allCategories": "ሁሉም ምድቦች",
     "marginWarnings_one": "{{count}} የትርፍ ህዳግ ማስጠንቀቂያ",
     "marginWarnings_other": "{{count}} የትርፍ ህዳግ ማስጠንቀቂያዎች"
@@ -54,7 +54,7 @@
     "generalCategory": "አጠቃላይ",
     "marginPct": "+{{percent}}% ትርፍ",
     "rxRequired": "የሐኪም ትዕዛዝ ያስፈልጋል",
-    "otc": "OTC",
+    "otc": "ያለ ሐኪም ትዕዛዝ",
     "priceHistory": "የዋጋ ታሪክ",
     "stockMovements": "የክምችት እንቅስቃሴዎች",
     "editProduct": "ምርቱን አርትዕ",

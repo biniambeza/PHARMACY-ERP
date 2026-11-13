@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Lock, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, KeyRound } from 'lucide-react';
 import { resetPasswordWithToken } from '../../api/authApi';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 
 const MIN_LENGTH = 8;
 
@@ -55,6 +56,11 @@ const ResetPassword = () => {
     <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 bg-slate-50 dark:bg-[#0b0f17] font-sans selection:bg-emerald-500 selection:text-white overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-emerald-500/15 via-cyan-500/10 to-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
+
+      {/* Language picker (kept after sign-in: saved to localStorage) */}
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSwitcher showCalendar={false} />
+      </div>
 
       <div className="relative z-10 w-full max-w-[390px] bg-white/95 dark:bg-[#141b26]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xl shadow-slate-900/5 dark:shadow-black/50 p-7 sm:p-8 transition-all">
         <div className="flex flex-col items-center text-center mb-6">

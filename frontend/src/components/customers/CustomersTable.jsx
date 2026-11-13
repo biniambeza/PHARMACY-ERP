@@ -1,7 +1,7 @@
 import { Users, Edit3, Trash2, Wallet, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Can from '../common/Can';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { CardSkeleton } from '../common/SkeletonLoader';
 import { formatMoney } from '../../utils/format';
 import { cardCls, limitLabel } from './customerUi';

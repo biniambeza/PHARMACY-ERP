@@ -48,7 +48,7 @@
   "ordersCount_other": "{{count}} ትዕዛዞች",
   "na": "የለም",
   "cols": {
-    "medicine": "መድሃኒት",
+    "medicine": "መድኃኒት",
     "category": "ምድብ",
     "medicines": "መድሃኒቶች",
     "unitsSold": "የተሸጡ ብዛት",
@@ -136,10 +136,10 @@
     "fefoText": "ኪሳራን ለመቀነስ POS መጀመሪያ ቀድሞ የሚያበቃውን ባች ይሸጣል።"
   },
   "profit": {
-    "titleByMedicine": "ትርፍ በመድሃኒት",
+    "titleByMedicine": "ትርፍ በመድኃኒት",
     "titleByCategory": "ትርፍ በምድብ",
     "subtitle": "ለእያንዳንዱ የተሸጠ ዕቃ የተመዘገበውን ትክክለኛ ወጪ (የባች የግዢ ዋጋ) ይጠቀማል፤ ተመላሾችና ቅናሾች ተቀንሰው፣ ግብርን ሳይጨምር",
-    "groupMedicine": "መድሃኒት",
+    "groupMedicine": "መድኃኒት",
     "groupCategory": "ምድብ",
     "netRevenue": "የተጣራ ገቢ",
     "costOfGoods": "የሸቀጥ ወጪ",
@@ -186,7 +186,7 @@
     "byMonthSub": "ጊዜው አልፎ የተሰረዘ ክምችት (expire / adjust expired አይነት እንቅስቃሴዎች)",
     "noneWrittenOff": "በዚህ ጊዜ ጊዜው ያለፈ ክምችት አልተሰረዘም።",
     "biggest": "ትልቁ ኪሳራዎች",
-    "biggestSub": "በመድሃኒት",
+    "biggestSub": "በመድኃኒት",
     "noLosses": "ምንም ኪሳራ አልተመዘገበም።"
   },
   "tax": {

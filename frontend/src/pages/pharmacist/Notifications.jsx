@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -14,13 +14,14 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
   runNotificationChecks,
 } from '../../api/notificationApi';
+import useAsync from '../../hooks/useAsync';
 import { formatDateTime } from '../../utils/format';
 
 const SEVERITY_STYLES = {
@@ -49,34 +50,27 @@ const Notifications = () => {
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [type, setType] = useState('');
   const [severity, setSeverity] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [actionError, setError] = useState('');
   const [running, setRunning] = useState(false);
   const [runResult, setRunResult] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const fetchNotifications = useCallback(async () => {
+    const params = { page, limit: PAGE_SIZE };
+    if (onlyUnread) params.unread = 'true';
+    if (type) params.type = type;
+    if (severity) params.severity = severity;
     try {
-      const params = { page, limit: PAGE_SIZE };
-      if (onlyUnread) params.unread = 'true';
-      if (type) params.type = type;
-      if (severity) params.severity = severity;
       const data = await getNotifications(params);
       setItems(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
       setTotal(data.total || 0);
       setPages(data.pages || 1);
-    } catch (err) {
-      setError(err.response?.data?.message || t('errors.load'));
     } finally {
-      setLoading(false);
+      setError(''); // a fresh load replaces any earlier action error
     }
-  }, [page, onlyUnread, type, severity, t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  }, [page, onlyUnread, type, severity]);
+  const { error: loadError, loading, reload: load } = useAsync(fetchNotifications);
+  const error = loadError ? loadError.response?.data?.message || t('errors.load') : actionError;
 
   const changeFilter = (setter) => (value) => {
     setter(value);

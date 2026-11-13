@@ -5,60 +5,42 @@ import { formatMoney } from '../../utils/format';
 import { addStockBatch } from '../../api/stockApi';
 import { useTranslation, Trans } from 'react-i18next';
 
-const StockInModal = ({ isOpen, onClose, onSuccess }) => {
+// Mounted only while open, so every opening starts from a fresh form.
+const newLotNo = () => `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+const StockInModalBody = ({ onClose, onSuccess }) => {
   const { t } = useTranslation('stock');
   const [medicines, setMedicines] = useState([]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
     medicineId: '',
-    batchNo: '',
+    batchNo: newLotNo(),
     quantity: '',
     expiryDate: '',
     purchasePrice: '',
     unitName: '',
-  });
+  }));
   const [scanCode, setScanCode] = useState('');
   const [scanMessage, setScanMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fetchingMeds, setFetchingMeds] = useState(false);
+  const [fetchingMeds, setFetchingMeds] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      const fetchMeds = async () => {
-        setFetchingMeds(true);
-        try {
-          const res = await getMedicines();
-          const medList = res.medicines || [];
-          setMedicines(medList);
-          if (medList.length > 0) {
-            setFormData((prev) => ({
-              ...prev,
-              medicineId: medList[0]._id,
-              purchasePrice: medList[0].costPrice || '',
-            }));
-          }
-        } catch (err) {
-          setError(t('stockIn.loadFailed'));
-        } finally {
-          setFetchingMeds(false);
+    getMedicines()
+      .then((res) => {
+        const medList = res.medicines || [];
+        setMedicines(medList);
+        if (medList.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            medicineId: medList[0]._id,
+            purchasePrice: medList[0].costPrice || '',
+          }));
         }
-      };
-      fetchMeds();
-      setError('');
-      setFormData({
-        medicineId: '',
-        batchNo: `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        quantity: '',
-        expiryDate: '',
-        purchasePrice: '',
-        unitName: '',
-      });
-      setScanCode('');
-      setScanMessage('');
-    }
-  }, [isOpen, t]);
-
-  if (!isOpen) return null;
+      })
+      .catch(() => setError(t('stockIn.loadFailed')))
+      .finally(() => setFetchingMeds(false));
+  }, [t]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -408,5 +390,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
     </div>
   );
 };
+
+const StockInModal = ({ isOpen, ...props }) => (isOpen ? <StockInModalBody {...props} /> : null);
 
 export default StockInModal;

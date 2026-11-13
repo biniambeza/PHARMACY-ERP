@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import {
   getPatients, getPatientHistory, archivePatient, getRefillsDue,
 } from '../../api/clinicalApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import Can from '../../components/common/Can';
 import StatusBadge from '../../components/common/StatusBadge';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';

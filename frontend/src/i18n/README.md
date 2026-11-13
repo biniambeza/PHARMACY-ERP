@@ -17,8 +17,14 @@
   `config/navigation.js`.
 - `LocaleSync.jsx` – renders nothing; loads `/api/pharmacy/my-pharmacy` and applies the
   pharmacy currency and default language. Mount once inside `AuthProvider` (PharmacyLayout).
-- `ethiopianCalendar.js` – pure Gregorian <-> Ethiopian conversion (also exposed as
-  `formatEthiopianDate` in `utils/format.js`).
+- `ethiopianCalendar.js` – re-exports `src/utils/ethiopianCalendar.js` (pure Gregorian <->
+  Ethiopian conversion, also exposed as `formatEthiopianDate` in `utils/format.js`).
+- Display calendar: `CalendarSwitcher` (rendered by `LanguageSwitcher`) calls
+  `setCalendarPreference('gregorian' | 'ethiopian')`. It is saved per device in
+  `localStorage.calendar`; without a saved choice Amharic uses the Ethiopian calendar and other
+  languages use the Gregorian one. Only `formatDate` / `formatDateTime` change: API values and
+  `<input type="date">` stay Gregorian ISO. Use `ethiopianDateHint(iso)` for a hint next to a date input.
+- Amharic terminology: see `docs/AMHARIC_GLOSSARY.md`.
 
 ## Language resolution
 

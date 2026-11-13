@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { landingPath } from '../config/navigation';
 
 // Renders nested routes only when the active membership role has `perm`.

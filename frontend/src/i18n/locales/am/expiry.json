@@ -11,7 +11,7 @@
   "bucketBatches": "{{label}} ባችዎች",
   "sortedByExpiry": "በማብቂያ ቀን የተደረደረ",
   "noBatches": "በዚህ ቡድን ውስጥ ምንም ባች የለም።",
-  "table": { "medicine": "መድሃኒት", "batch": "ባች", "expiry": "ማብቂያ", "qty": "ብዛት", "costValue": "የግዢ ዋጋ", "retailValue": "የችርቻሮ ዋጋ" },
+  "table": { "medicine": "መድኃኒት", "batch": "ባች", "expiry": "ማብቂያ", "qty": "ብዛት", "costValue": "የግዢ ዋጋ", "retailValue": "የችርቻሮ ዋጋ" },
   "days": {
     "today": "ዛሬ",
     "ago_one": "ከ{{count}} ቀን በፊት", "ago_other": "ከ{{count}} ቀናት በፊት",

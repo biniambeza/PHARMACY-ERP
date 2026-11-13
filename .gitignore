@@ -17,3 +17,9 @@ Thumbs.db
 # Logs
 *.log
 backups/
+
+# Playwright (frontend/e2e) output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

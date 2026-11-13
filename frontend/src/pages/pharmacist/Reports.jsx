@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Percent, Download, FileDown, FileSpreadsheet, Users, Archive, CalendarX, Landmark, GitCompare } from 'lucide-react';
 import { downloadExport } from '../../api/exportApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { exportCSV, exportPDF } from '../../utils/export';
 import { btn, todayIso, daysAgoIso, fileSlug } from '../../components/reports/reportUtils';
 import { Empty } from '../../components/reports/ReportUi';

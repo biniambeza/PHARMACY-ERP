@@ -68,7 +68,7 @@
   "statement": {
     "title": "የደንበኛ መግለጫ",
     "printTitle": "መግለጫ - {{name}}",
-    "pharmacy": "ፋርማሲ",
+    "pharmacy": "መድኃኒት ቤት",
     "loadFailed": "መግለጫውን መጫን አልተቻለም",
     "from": "ከ",
     "to": "እስከ",

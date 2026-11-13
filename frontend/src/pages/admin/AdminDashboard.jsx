@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   getPharmacies,
@@ -6,6 +6,7 @@ import {
   togglePharmacyStatus,
   deletePharmacy,
 } from '../../api/adminApi';
+import useAsync from '../../hooks/useAsync';
 import DataTable from '../../components/common/DataTable';
 import { MetricCardSkeleton, CardSkeleton } from '../../components/common/SkeletonLoader';
 import AdminKpiCards from '../../components/admin/AdminKpiCards';
@@ -20,19 +21,20 @@ import AnnouncementsManager from './AnnouncementsManager';
 
 const TABS = ['pharmacies', 'metrics', 'announcements'];
 
-const AdminDashboard = () => {
-  const { t } = useTranslation('admin');
-  const [pharmacies, setPharmacies] = useState([]);
-  const [stats, setStats] = useState({
+const INITIAL_DATA = {
+  pharmacies: [],
+  stats: {
     totalPharmacies: 0,
     activePharmacies: 0,
     suspendedPharmacies: 0,
     totalPharmacists: 0,
     totalGrossVolume: 0,
     totalTransactions: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  },
+};
+
+const AdminDashboard = () => {
+  const { t } = useTranslation('admin');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -43,27 +45,23 @@ const AdminDashboard = () => {
   const [supportPharmacy, setSupportPharmacy] = useState(null);
   const [resetUser, setResetUser] = useState(null);
 
-  const loadData = async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
-      setLoading(true);
-      setError('');
       const [pharmacyData, statsData] = await Promise.all([
         getPharmacies(),
         getSystemStats(),
       ]);
-      setPharmacies(pharmacyData.pharmacies || []);
-      setStats(statsData.stats || {});
+      return { pharmacies: pharmacyData.pharmacies || [], stats: statsData.stats || {} };
     } catch (err) {
       console.error('Failed to load admin platform metrics:', err);
-      setError('dashboard.loadError'); // i18n key, translated when rendered
-    } finally {
-      setLoading(false);
+      throw err;
     }
-  };
+  }, []);
+  const { data, error: loadError, loading, reload: loadData } = useAsync(fetchDashboard, INITIAL_DATA);
+  const { pharmacies, stats } = data;
+  const error = loadError ? 'dashboard.loadError' : ''; // i18n key, translated when rendered
 
   useEffect(() => {
-    loadData();
-
     const handleOpenCreate = () => setIsModalOpen(true);
     const handleRefresh = () => loadData();
 
@@ -74,7 +72,7 @@ const AdminDashboard = () => {
       window.removeEventListener('open-create-pharmacy', handleOpenCreate);
       window.removeEventListener('refresh-admin-data', handleRefresh);
     };
-  }, []);
+  }, [loadData]);
 
   const handleToggleStatus = async (id) => {
     setActionLoading(id);

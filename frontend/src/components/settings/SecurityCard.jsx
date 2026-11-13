@@ -8,10 +8,11 @@ import {
   disableTwoFactor,
   regenerateRecoveryCodes,
 } from '../../api/authApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { Alert, CardHeader } from './SettingsUi';
 import { inputCls, cardCls, labelCls } from './settingsStyles';
 import RecoveryCodesPanel from './RecoveryCodesPanel';
+import { formatDate } from '../../utils/format';
 
 const primaryBtn =
   'inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer';
@@ -235,7 +236,7 @@ const SecurityCard = ({ className = '' }) => {
               <p className="font-semibold text-slate-900 dark:text-white">{enabled ? t('statusOn') : t('statusOff')}</p>
               <p className="text-slate-500 dark:text-slate-400">
                 {enabled
-                  ? t('enabledSince', { date: status.enabledAt ? new Date(status.enabledAt).toLocaleDateString() : '-' })
+                  ? t('enabledSince', { date: status.enabledAt ? formatDate(status.enabledAt) : '-' })
                   : t('explain')}
               </p>
               {enabled && (

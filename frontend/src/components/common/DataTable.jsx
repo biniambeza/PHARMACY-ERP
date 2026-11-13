@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 

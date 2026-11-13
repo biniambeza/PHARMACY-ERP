@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ShieldAlert, X } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { getTwoFactorStatus } from '../../api/authApi';
 
 const SNOOZE_MS = 30 * 24 * 60 * 60 * 1000;

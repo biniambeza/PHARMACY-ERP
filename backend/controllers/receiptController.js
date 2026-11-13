@@ -56,7 +56,7 @@ const sendReceipt = async (req, res) => {
     const text = receipts.buildReceiptText({ sale, pharmacy });
     result = await notify.sendEmail({
       to: recipient,
-      subject: `Receipt ${sale.invoiceNumber} - ${pharmacy?.name || 'Pharmacy'}`,
+      subject: receipts.buildReceiptSubject({ sale, pharmacy }),
       text,
     });
   }

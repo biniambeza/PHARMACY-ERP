@@ -6,6 +6,7 @@ import { getReorderSuggestions, createReorderPOs } from '../../api/reorderApi';
 import { getSuppliers } from '../../api/supplierApi';
 import Can from '../../components/common/Can';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
+import useAsync from '../../hooks/useAsync';
 import { formatMoney } from '../../utils/format';
 
 const WINDOWS = [30, 60, 90];
@@ -16,7 +17,7 @@ const inputCls =
 const groupKey = (g) => (g.supplier ? String(g.supplier._id) : 'none');
 
 const Reorder = () => {
-  const { t, i18n } = useTranslation('reorder');
+  const { t } = useTranslation('reorder');
   const navigate = useNavigate();
   const [days, setDays] = useState(30);
   const [groups, setGroups] = useState([]);
@@ -26,14 +27,11 @@ const Reorder = () => {
   // supplier chosen for the "no preferred supplier" group
   const [fallbackSupplierId, setFallbackSupplierId] = useState('');
   const [asDraft, setAsDraft] = useState(true);
-  const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [error, setError] = useState('');
+  const [actionError, setError] = useState('');
   const [message, setMessage] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const fetchSuggestions = useCallback(async () => {
     try {
       const data = await getReorderSuggestions(days);
       const nextGroups = data.groups || [];
@@ -49,16 +47,12 @@ const Reorder = () => {
         })
       );
       setRows(next);
-    } catch (err) {
-      setError(err.response?.data?.message || i18n.t('reorder:errors.loadFailed'));
     } finally {
-      setLoading(false);
+      setError(''); // a fresh load replaces any earlier action error
     }
-  }, [days, i18n]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  }, [days]);
+  const { error: loadError, loading, reload: load } = useAsync(fetchSuggestions);
+  const error = loadError ? loadError.response?.data?.message || t('errors.loadFailed') : actionError;
 
   useEffect(() => {
     getSuppliers({ status: 'active' })

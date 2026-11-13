@@ -72,11 +72,7 @@ export const buildPharmacyColumns = ({
     render: (item) => (
       <span className="text-slate-600 dark:text-slate-400 text-[11px] font-mono">
         {item.createdAt
-          ? new Date(item.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            })
+          ? formatDate(item.createdAt)
           : t('shared.na')}
       </span>
     ),

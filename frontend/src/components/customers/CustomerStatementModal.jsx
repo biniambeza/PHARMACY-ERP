@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, Printer } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getCustomerStatement } from '../../api/customerApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { CardSkeleton } from '../common/SkeletonLoader';
 import { formatMoney, formatDate } from '../../utils/format';
 import { Modal, ErrorBox } from './CustomerModal';

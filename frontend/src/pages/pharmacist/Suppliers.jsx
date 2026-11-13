@@ -13,7 +13,7 @@ import {
 import { useTranslation, Trans } from 'react-i18next';
 import { getSuppliers, deleteSupplier } from '../../api/supplierApi';
 import { formatMoney } from '../../utils/format';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import SupplierModal from './SupplierModal';
 import MetricCard from '../../components/common/MetricCard';
 import StatusBadge from '../../components/common/StatusBadge';

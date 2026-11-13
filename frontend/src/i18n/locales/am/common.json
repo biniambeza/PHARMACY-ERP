@@ -1,7 +1,9 @@
 {
-  "appName": "የፋርማሲ ኢአርፒ",
+  "appName": "የመድኃኒት ቤት ኢአርፒ",
   "language": "ቋንቋ",
   "languages": { "en": "English", "am": "አማርኛ", "om": "Afaan Oromoo" },
+  "calendar": "የቀን መቁጠሪያ",
+  "calendars": { "gregorian": "ግሪጎሪያን (የፈረንጅ)", "ethiopian": "የኢትዮጵያ" },
   "buttons": {
     "save": "አስቀምጥ", "cancel": "ተው", "delete": "አጥፋ", "edit": "አርትዕ", "add": "ጨምር",
     "create": "ፍጠር", "update": "አዘምን", "close": "ዝጋ", "confirm": "አረጋግጥ",

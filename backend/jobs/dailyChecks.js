@@ -14,6 +14,7 @@ const User = require('../models/User');
 const { recordMovement } = require('../utils/stockMovement');
 const { audit } = require('../utils/audit');
 const notify = require('../services/notify');
+const { t, pharmacyLocale, localDate } = require('../i18n/messages');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 // Daily reminders use a window a bit shorter than a day so that a job running
@@ -42,11 +43,13 @@ const daysUntil = (date, now) => Math.ceil((new Date(date).getTime() - now.getTi
 const unitCost = (batch, medicine) =>
   Number(batch.purchasePrice) > 0 ? Number(batch.purchasePrice) : Number(medicine?.costPrice) || 0;
 
-const describeBatch = (b) => `${b.medicineId?.name || 'Medicine'} (batch ${b.batchNo}, qty ${b.quantity})`;
+// Alert texts follow the pharmacy language (settings.locale), see backend/i18n/messages.js.
+const describeBatch = (b, loc = 'en') =>
+  t(loc, 'alert.batch', { name: b.medicineId?.name || t(loc, 'alert.medicine'), batch: b.batchNo, qty: b.quantity });
 
-const listPreview = (items, max = 5) => {
+const listPreview = (items, max = 5, loc = 'en') => {
   const shown = items.slice(0, max).join('; ');
-  return items.length > max ? `${shown}; and ${items.length - max} more` : shown;
+  return items.length > max ? t(loc, 'alert.andMore', { list: shown, count: String(items.length - max) }) : shown;
 };
 
 // ------------------------------------------------------------------ expire
@@ -59,6 +62,7 @@ const listPreview = (items, max = 5) => {
  */
 const expireBatches = async (pharmacy, { now = new Date() } = {}) => {
   const pharmacyId = pharmacy._id;
+  const loc = pharmacyLocale(pharmacy);
   const candidates = await StockBatch.find({
     pharmacyId,
     status: 'active',
@@ -105,8 +109,8 @@ const expireBatches = async (pharmacy, { now = new Date() } = {}) => {
       pharmacyId,
       type: 'expired',
       severity: 'critical',
-      title: `${expired.length} batch${expired.length === 1 ? '' : 'es'} expired`,
-      message: `Removed from sale: ${listPreview(expired.map(describeBatch))}.`,
+      title: t(loc, 'alert.expiredTitle', { count: expired.length }),
+      message: t(loc, 'alert.expiredMessage', { list: listPreview(expired.map((b) => describeBatch(b, loc)), 5, loc) }),
       link: '/pharmacy/expiry',
       perm: 'stock:view',
       meta: { batchIds: expired.map((b) => b._id), costValue },
@@ -131,6 +135,7 @@ const expireBatches = async (pharmacy, { now = new Date() } = {}) => {
  */
 const notifyExpiringSoon = async (pharmacy, { now = new Date() } = {}) => {
   const pharmacyId = pharmacy._id;
+  const loc = pharmacyLocale(pharmacy);
   const thresholds = normalizeThresholds(pharmacy.settings?.expiryAlertDays);
   const maxDays = thresholds[thresholds.length - 1];
 
@@ -149,15 +154,18 @@ const notifyExpiringSoon = async (pharmacy, { now = new Date() } = {}) => {
     const daysLeft = daysUntil(batch.expiryDate, now);
     const threshold = thresholds.find((t) => daysLeft <= t);
     if (!threshold) continue;
-    const name = batch.medicineId?.name || 'Medicine';
+    const name = batch.medicineId?.name || t(loc, 'alert.medicine');
     const n = await notify.createNotification({
       pharmacyId,
       type: 'expiring_soon',
       severity: threshold === thresholds[0] ? 'warning' : 'info',
-      title: `${name} expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`,
-      message: `Batch ${batch.batchNo} (qty ${batch.quantity}) expires on ${new Date(batch.expiryDate)
-        .toISOString()
-        .slice(0, 10)} (within ${threshold} days).`,
+      title: t(loc, 'alert.expiringTitle', { name, count: daysLeft }),
+      message: t(loc, 'alert.expiringMessage', {
+        batch: batch.batchNo,
+        qty: batch.quantity,
+        date: localDate(loc, batch.expiryDate),
+        threshold,
+      }),
       link: '/pharmacy/expiry',
       perm: 'stock:view',
       dedupeKey: `${batch._id}:${threshold}`,
@@ -197,12 +205,17 @@ const notifyLowStock = async (pharmacy, { now = new Date() } = {}) => {
   if (!low.length) return { lowStock: 0, lowStockNotified: false };
 
   const out = low.filter((m) => m.stock === 0).length;
+  const loc = pharmacyLocale(pharmacy);
   const n = await notify.createNotification({
     pharmacyId,
     type: 'low_stock',
     severity: out ? 'critical' : 'warning',
-    title: `${low.length} medicine${low.length === 1 ? ' is' : 's are'} low on stock`,
-    message: `${out ? `${out} out of stock. ` : ''}${listPreview(low.map((m) => `${m.name} (${m.stock}/${m.minStockLevel})`))}.`,
+    title: t(loc, 'alert.lowStockTitle', { count: low.length }),
+    message: `${out ? t(loc, 'alert.outOfStock', { count: String(out) }) : ''}${listPreview(
+      low.map((m) => `${m.name} (${m.stock}/${m.minStockLevel})`),
+      5,
+      loc
+    )}${loc === 'am' ? '።' : '.'}`,
     link: '/pharmacy/stock',
     perm: 'stock:view',
     dedupeKey: 'daily',
@@ -227,6 +240,7 @@ const notifyOverduePOs = async (pharmacy, { now = new Date() } = {}) => {
     .select('poNumber expectedDelivery supplierId status totalAmount')
     .lean();
 
+  const loc = pharmacyLocale(pharmacy);
   let created = 0;
   for (const po of pos) {
     const daysLate = Math.max(1, Math.floor((now.getTime() - new Date(po.expectedDelivery).getTime()) / DAY_MS));
@@ -234,10 +248,12 @@ const notifyOverduePOs = async (pharmacy, { now = new Date() } = {}) => {
       pharmacyId,
       type: 'po_overdue',
       severity: daysLate > 7 ? 'critical' : 'warning',
-      title: `Purchase order ${po.poNumber} is overdue`,
-      message: `${po.supplierId?.name || 'Supplier'} delivery was expected on ${new Date(po.expectedDelivery)
-        .toISOString()
-        .slice(0, 10)} (${daysLate} day${daysLate === 1 ? '' : 's'} late).`,
+      title: t(loc, 'alert.poOverdueTitle', { number: po.poNumber }),
+      message: t(loc, 'alert.poOverdueMessage', {
+        supplier: po.supplierId?.name || t(loc, 'alert.supplier'),
+        date: localDate(loc, po.expectedDelivery),
+        count: daysLate,
+      }),
       link: '/pharmacy/procurement',
       perm: 'po:view',
       dedupeKey: String(po._id),
@@ -279,15 +295,18 @@ const sendDailySummary = async (pharmacy, stats = {}, { now = new Date() } = {})
   const currency = pharmacy.settings?.currency || 'ETB';
   const salesCount = salesAgg?.count || 0;
   const revenue = round2(salesAgg?.revenue || 0);
+  const loc = pharmacyLocale(pharmacy);
+  const amount = `${currency} ${revenue.toFixed(2)}`;
 
+  // String counts: these lines have no singular/plural variants.
   const lines = [
-    `Daily summary for ${pharmacy.name} (${now.toISOString().slice(0, 10)})`,
+    t(loc, 'summary.heading', { pharmacy: pharmacy.name, date: localDate(loc, now) }),
     '',
-    `Sales in the last 24 hours: ${salesCount} (${currency} ${revenue.toFixed(2)})`,
-    `Batches expired today: ${stats.expired || 0}`,
-    `Batches expiring soon: ${stats.expiringSoon || 0}`,
-    `Medicines low on stock: ${stats.lowStock || 0}`,
-    `Overdue purchase orders: ${stats.overduePOs || 0}`,
+    t(loc, 'summary.sales', { count: String(salesCount), amount }),
+    t(loc, 'summary.expired', { count: String(stats.expired || 0) }),
+    t(loc, 'summary.expiring', { count: String(stats.expiringSoon || 0) }),
+    t(loc, 'summary.lowStock', { count: String(stats.lowStock || 0) }),
+    t(loc, 'summary.overduePOs', { count: String(stats.overduePOs || 0) }),
   ];
   const text = lines.join('\n');
 
@@ -299,7 +318,7 @@ const sendDailySummary = async (pharmacy, stats = {}, { now = new Date() } = {})
       if (!owner.email) continue;
       const res = await notify.sendEmail({
         to: owner.email,
-        subject: `${pharmacy.name}: daily summary`,
+        subject: t(loc, 'summary.subject', { pharmacy: pharmacy.name }),
         text,
         html: `<pre style="font-family:system-ui,sans-serif">${text
           .replace(/&/g, '&amp;')
@@ -312,9 +331,14 @@ const sendDailySummary = async (pharmacy, stats = {}, { now = new Date() } = {})
   if (n.sms && pharmacy.phone) {
     const res = await notify.sendSms({
       to: pharmacy.phone,
-      text: `${pharmacy.name}: ${salesCount} sales (${currency} ${revenue.toFixed(2)}), ${stats.expired || 0} expired, ${
-        stats.lowStock || 0
-      } low stock, ${stats.overduePOs || 0} overdue POs.`,
+      text: t(loc, 'summary.sms', {
+        pharmacy: pharmacy.name,
+        sales: salesCount,
+        amount,
+        expired: stats.expired || 0,
+        lowStock: stats.lowStock || 0,
+        overdue: stats.overduePOs || 0,
+      }),
     });
     texted = Boolean(res && res.sent);
   }

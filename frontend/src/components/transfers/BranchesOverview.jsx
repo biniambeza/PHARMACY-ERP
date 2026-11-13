@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import useAsync from '../../hooks/useAsync';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useTranslation } from 'react-i18next';
@@ -12,25 +13,9 @@ const BranchesOverview = () => {
   const { t } = useTranslation('transfers');
   const [from, setFrom] = useState(() => toInput(new Date(Date.now() - 29 * 864e5)));
   const [to, setTo] = useState(() => toInput(new Date()));
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      setData(await getConsolidatedReport({ from, to }));
-    } catch (err) {
-      setError(err.response?.data?.message || t('overview.errors.load'));
-    } finally {
-      setLoading(false);
-    }
-  }, [from, to, t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const fetchReport = useCallback(() => getConsolidatedReport({ from, to }), [from, to]);
+  const { data, error: loadError, loading, reload: load } = useAsync(fetchReport);
+  const error = loadError ? loadError.response?.data?.message || t('overview.errors.load') : '';
 
   const inputClass =
     'px-3 py-1.5 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200';

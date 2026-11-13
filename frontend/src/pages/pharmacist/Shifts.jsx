@@ -5,7 +5,7 @@ import {
   Clock, PlayCircle, StopCircle, FileBarChart2, AlertCircle, RotateCw, ChevronLeft, ChevronRight, ShoppingCart,
 } from 'lucide-react';
 import { getCurrentShift, getShifts, closeShift } from '../../api/shiftApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { formatMoney, formatDateTime } from '../../utils/format';
 import OpenShiftModal from '../../components/pos/OpenShiftModal';
 import ZReportModal from '../../components/pos/ZReportModal';

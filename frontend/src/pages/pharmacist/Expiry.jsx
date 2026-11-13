@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   CalendarClock,
   AlertOctagon,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useTranslation, Trans } from 'react-i18next';
 import { getExpiryOverview } from '../../api/notificationApi';
+import useAsync from '../../hooks/useAsync';
 import { formatMoney, formatDate } from '../../utils/format';
 
 const BUCKETS = [
@@ -39,28 +40,11 @@ const daysLabel = (t, item) => {
 
 const Expiry = () => {
   const { t } = useTranslation('expiry');
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [activeBucket, setActiveBucket] = useState('expired');
   const [openSuppliers, setOpenSuppliers] = useState({});
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await getExpiryOverview();
-      setData(res);
-    } catch (err) {
-      setError(err.response?.data?.message || t('errors.load'));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data, error: loadError, loading, reload: load } = useAsync(getExpiryOverview);
+  const error = loadError ? loadError.response?.data?.message || t('errors.load') : '';
 
   const currency = data?.currency || 'ETB';
   const money = (v) => formatMoney(v, currency);

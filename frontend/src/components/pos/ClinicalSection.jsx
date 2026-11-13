@@ -5,7 +5,7 @@ import PatientPicker from '../clinical/PatientPicker';
 import ClinicalWarnings from '../clinical/ClinicalWarnings';
 import PrescriptionForm from '../clinical/PrescriptionForm';
 import { getPrescriptions } from '../../api/clinicalApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import PosModal from './PosModal';
 import { inputCls, sectionCls, labelCls } from './posUtils';
 

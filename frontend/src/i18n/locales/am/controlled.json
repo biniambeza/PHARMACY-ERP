@@ -19,7 +19,7 @@
   "scheduleTag": "ሰንጠረዥ {{schedule}}",
   "stats": { "opening": "መክፈቻ", "closing": "መዝጊያ", "stockNow": "የአሁኑ ክምችት {{stock}}" },
   "cols": {
-    "date": "ቀን", "type": "ዓይነት", "patient": "ታካሚ", "prescriber": "አዛዥ", "rxNo": "ማዘዣ ቁ.",
+    "date": "ቀን", "type": "ዓይነት", "patient": "ታካሚ", "prescriber": "አዛዥ", "rxNo": "የሐኪም ትዕዛዝ ቁ.",
     "batch": "ባች", "invoice": "ደረሰኝ", "in": "ገቢ", "out": "ወጪ", "balance": "ሚዛን", "by": "በ"
   },
   "opening": "የመክፈቻ ሚዛን",

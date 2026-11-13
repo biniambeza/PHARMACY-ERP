@@ -5,6 +5,7 @@ const Pharmacy = require('../models/Pharmacy');
 const PasswordResetToken = require('../models/PasswordResetToken');
 // Accessed as notify.sendEmail (not destructured) so tests can stub it.
 const notify = require('../services/notify');
+const i18n = require('../i18n/messages');
 const { audit } = require('../utils/audit');
 const AppError = require('../utils/AppError');
 const generateToken = require('../utils/generateToken');
@@ -420,6 +421,20 @@ const clientBaseUrl = () => {
 const escapeHtml = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
+// Reset email language: the settings.locale of the user's first active pharmacy
+// (or the pharmacy they own); platform admins and failures fall back to English.
+const resetEmailLocale = async (user) => {
+  try {
+    if (user.role === 'admin') return 'en';
+    const membership = (user.memberships || []).find((m) => m.active !== false);
+    const filter = membership ? { _id: membership.pharmacyId } : { owner: user._id };
+    const pharmacy = await Pharmacy.findOne(filter).select('settings.locale').lean();
+    return i18n.pharmacyLocale(pharmacy);
+  } catch {
+    return 'en';
+  }
+};
+
 // Replaces any outstanding tokens of the user with a fresh one and emails the link.
 const issueResetToken = async (user, { createdBy = null, ip = '' } = {}) => {
   const token = crypto.randomBytes(32).toString('hex');
@@ -433,21 +448,23 @@ const issueResetToken = async (user, { createdBy = null, ip = '' } = {}) => {
   });
 
   const link = `${clientBaseUrl()}/reset-password?token=${token}`;
+  const loc = await resetEmailLocale(user);
+  const tr = (key, vars) => i18n.t(loc, key, vars);
   const text = [
-    `Hello ${user.name},`,
+    tr('reset.hello', { name: user.name }),
     '',
-    'We received a request to reset the password of your pharmacy account.',
-    `Open this link within 30 minutes to choose a new password:`,
+    tr('reset.requested'),
+    tr('reset.openLink'),
     link,
     '',
-    'If you did not request this, you can ignore this email; your password stays the same.',
+    tr('reset.ignore'),
   ].join('\n');
-  const html = `<p>Hello ${escapeHtml(user.name)},</p>
-<p>We received a request to reset the password of your pharmacy account.</p>
-<p><a href="${escapeHtml(link)}">Reset your password</a> (valid for 30 minutes)</p>
-<p>If you did not request this, you can ignore this email; your password stays the same.</p>`;
+  const html = `<p>${escapeHtml(tr('reset.hello', { name: user.name }))}</p>
+<p>${escapeHtml(tr('reset.requested'))}</p>
+<p><a href="${escapeHtml(link)}">${escapeHtml(tr('reset.linkLabel'))}</a> ${escapeHtml(tr('reset.validFor'))}</p>
+<p>${escapeHtml(tr('reset.ignore'))}</p>`;
 
-  return notify.sendEmail({ to: user.email, subject: 'Reset your password', text, html });
+  return notify.sendEmail({ to: user.email, subject: tr('reset.subject'), text, html });
 };
 
 // @desc    Request a password reset email. Always answers 200 with the same message.

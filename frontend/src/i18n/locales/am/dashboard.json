@@ -56,9 +56,9 @@
     "unitsInInventory": "በክምችት ውስጥ {{count}} ፍሬዎች",
     "unitsInInventory_one": "በክምችት ውስጥ {{count}} ፍሬ",
     "unitsInInventory_other": "በክምችት ውስጥ {{count}} ፍሬዎች",
-    "skus": "{{count}} SKU",
-    "skus_one": "{{count}} SKU",
-    "skus_other": "{{count}} SKU"
+    "skus": "{{count}} የምርት ዓይነቶች",
+    "skus_one": "{{count}} የምርት ዓይነት",
+    "skus_other": "{{count}} የምርት ዓይነቶች"
   },
   "recentSales": {
     "title": "የቅርብ ጊዜ የሽያጭ ግብይቶች",

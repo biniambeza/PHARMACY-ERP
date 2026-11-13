@@ -18,7 +18,8 @@ import { formatMoney, getDefaultCurrency } from '../../utils/format';
 // Sentinel so the load error is translated at render time (keeps the effect deps unchanged).
 const LOAD_FAILED = '__loadFailed__';
 
-const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
+// Mounted only while open, so every opening starts from a fresh form.
+const CreatePOModalBody = ({ onClose, onSuccess }) => {
   const { t } = useTranslation('procurement');
   const [suppliers, setSuppliers] = useState([]);
   const [medicines, setMedicines] = useState([]);
@@ -30,49 +31,32 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
   const [notes, setNotes] = useState('');
 
   const [loading, setLoading] = useState(false);
-  const [fetchingData, setFetchingData] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      const loadOptions = async () => {
-        setFetchingData(true);
-        try {
-          const [supRes, medRes] = await Promise.all([
-            getSuppliers({ status: 'active' }),
-            getMedicines(),
-          ]);
-          setSuppliers(supRes.suppliers || []);
-          const medList = medRes.medicines || [];
-          setMedicines(medList);
+    Promise.all([getSuppliers({ status: 'active' }), getMedicines()])
+      .then(([supRes, medRes]) => {
+        setSuppliers(supRes.suppliers || []);
+        const medList = medRes.medicines || [];
+        setMedicines(medList);
 
-          if (supRes.suppliers?.length > 0) {
-            setSupplierId(supRes.suppliers[0]._id);
-          }
-          if (medList.length > 0) {
-            setItems([
-              {
-                medicineId: medList[0]._id,
-                quantityOrdered: 50,
-                unitCost: medList[0].costPrice || '',
-              },
-            ]);
-          }
-        } catch (err) {
-          setError(LOAD_FAILED);
-        } finally {
-          setFetchingData(false);
+        if (supRes.suppliers?.length > 0) {
+          setSupplierId(supRes.suppliers[0]._id);
         }
-      };
-
-      loadOptions();
-      setError('');
-      setExpectedDelivery('');
-      setNotes('');
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+        if (medList.length > 0) {
+          setItems([
+            {
+              medicineId: medList[0]._id,
+              quantityOrdered: 50,
+              unitCost: medList[0].costPrice || '',
+            },
+          ]);
+        }
+      })
+      .catch(() => setError(LOAD_FAILED))
+      .finally(() => setFetchingData(false));
+  }, []);
 
   const handleAddItem = () => {
     const defaultMed = medicines[0];
@@ -398,5 +382,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
     </div>
   );
 };
+
+const CreatePOModal = ({ isOpen, ...props }) => (isOpen ? <CreatePOModalBody {...props} /> : null);
 
 export default CreatePOModal;

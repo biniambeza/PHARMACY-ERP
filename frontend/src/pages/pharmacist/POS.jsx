@@ -1,37 +1,25 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { lookupMedicine } from '../../api/medicineApi';
-import { createSale } from '../../api/salesApi';
-import { decrementCachedStock } from '../../offline/catalogCache';
-import { enqueueSale, newOfflineId, isNetworkError } from '../../offline/queue';
 import { useOfflineSync } from '../../offline/useOfflineSync';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
 import ProductSearch from '../../components/pos/ProductSearch';
 import QuickPick from '../../components/pos/QuickPick';
-import CartLines from '../../components/pos/CartLines';
-import CustomerSection from '../../components/pos/CustomerSection';
-import ClinicalSection from '../../components/pos/ClinicalSection';
-import PaymentPanel from '../../components/pos/PaymentPanel';
 import OpenShiftModal from '../../components/pos/OpenShiftModal';
 import HeldSalesModal, { HoldSaleModal } from '../../components/pos/HeldSalesModal';
 import OfflinePanel from '../../components/pos/OfflinePanel';
 import PosHeader from '../../components/pos/PosHeader';
-import CartHeader from '../../components/pos/CartHeader';
 import PosNotice from '../../components/pos/PosNotice';
-import CheckoutFooter, { ClinicalAck } from '../../components/pos/CheckoutFooter';
+import PosCartPanel from '../../components/pos/PosCartPanel';
 import { usePosData } from '../../components/pos/usePosData';
 import { useHeldSales } from '../../components/pos/useHeldSales';
 import { usePosDerived } from '../../components/pos/usePosDerived';
+import { usePosSale } from '../../components/pos/usePosSale';
+import { usePosCheckout } from '../../components/pos/usePosCheckout';
 import { useBarcodeScanner, usePosShortcuts } from '../../components/pos/usePosKeyboard';
-import {
-  cardCls, unitsOf, findUnit, matchCode, baseQtyInCart, newPaymentRow, cacheShift, errMsg,
-} from '../../components/pos/posUtils';
-import { SEVERE, computeBlockers, buildSalePayload, buildProvisionalSale } from '../../components/pos/posCheckout';
-
-const emptyRx = { number: '', prescriber: '', notes: '' };
-const emptyWalkIn = { name: '', phone: '' };
-let lineSeq = 0;
+import { findUnit, matchCode, cacheShift, errMsg } from '../../components/pos/posUtils';
+import { SEVERE, computeBlockers } from '../../components/pos/posCheckout';
 
 const POS = () => {
   const { t } = useTranslation('pos');
@@ -39,31 +27,16 @@ const POS = () => {
   const userId = user?._id;
   const pharmacyId = activePharmacyId || 'default';
 
-  // ---------- Sale state ----------
-  const [cart, setCart] = useState([]);
-  const [selectedKey, setSelectedKey] = useState(null);
-  const [customer, setCustomer] = useState(null);
-  const [walkIn, setWalkIn] = useState(emptyWalkIn);
-  const [patient, setPatient] = useState(null);
-  const [prescription, setPrescription] = useState(null);
-  const [legacyRx, setLegacyRx] = useState(emptyRx);
-  const [warnings, setWarnings] = useState({ interactions: [], allergyHits: [] });
-  const [ackKey, setAckKey] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [payments, setPayments] = useState(() => [newPaymentRow('cash')]);
-
   // ---------- UI state ----------
   const [shiftModal, setShiftModal] = useState(false);
   const [holdOpen, setHoldOpen] = useState(false);
   const [heldOpen, setHeldOpen] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [completedSale, setCompletedSale] = useState(null);
 
   const searchRef = useRef(null);
   const qtyInputs = useRef(new Map());
-  const offlineIdRef = useRef(null); // reused when a checkout is retried (idempotent)
 
   // ---------- Catalog / settings / shift ----------
   const {
@@ -80,9 +53,13 @@ const POS = () => {
     },
   });
 
+  // ---------- Sale state ----------
+  const sale = usePosSale({ t, online, setError });
+  const { cart, selectedKey, customer, walkIn, patient, prescription, legacyRx, warnings, ackKey, payments, addToCart, resetSale } = sale;
+
   // ---------- Derived ----------
   const { medById, quickPicks, availableOf, maxQtyOf, totals, effectivePayments, payStatus, insuranceLines } = usePosDerived({
-    medicines, topIds, cart, discount, pharmacy, payments,
+    medicines, topIds, cart, discount: sale.discount, pharmacy, payments,
   });
 
   const needsRx = cart.some((l) => l.medicine.requiresPrescription);
@@ -117,81 +94,6 @@ const POS = () => {
     ]
   );
 
-  // ---------- Cart actions ----------
-  const addToCart = useCallback(
-    (med, unitArg) => {
-      setError('');
-      const unit = unitArg || unitsOf(med)[0];
-      const id = String(med._id);
-      if (med.isControlled && !online) {
-        setError(t('errors.controlledOffline', { name: med.name }));
-        return;
-      }
-      const available = (Number(med.stock) || 0) - baseQtyInCart(cart, id);
-      if (available < unit.factor) {
-        setError(t('errors.notEnoughStock', { name: med.name, available: Math.max(0, available), unit: med.baseUnit || t('unit') }));
-        return;
-      }
-      const existing = cart.find((l) => l.medicineId === id && l.unit.name === unit.name);
-      if (existing) {
-        setSelectedKey(existing.key);
-        setCart((prev) => prev.map((l) => (l.key === existing.key ? { ...l, quantity: l.quantity + 1 } : l)));
-        return;
-      }
-      lineSeq += 1;
-      const key = `${id}-${lineSeq}`;
-      setSelectedKey(key);
-      setCart((prev) => [
-        ...prev,
-        { key, medicineId: id, name: med.name, medicine: med, unit, quantity: 1, taxExempt: Boolean(med.taxExempt) },
-      ]);
-    },
-    [online, cart, t]
-  );
-
-  const setQty = (key, value) => {
-    const qty = parseInt(value, 10);
-    if (Number.isNaN(qty) || qty <= 0) return;
-    setCart((prev) =>
-      prev.map((l) => {
-        if (l.key !== key) return l;
-        const stock = Number(l.medicine.stock) || 0;
-        const max = Math.max(1, Math.floor((stock - baseQtyInCart(prev, l.medicineId, l.key)) / l.unit.factor));
-        return { ...l, quantity: Math.min(qty, max) };
-      })
-    );
-  };
-
-  const setUnit = (key, unitName) => {
-    const line = cart.find((l) => l.key === key);
-    if (!line) return;
-    const unit = findUnit(line.medicine, unitName);
-    const stock = Number(line.medicine.stock) || 0;
-    const max = Math.floor((stock - baseQtyInCart(cart, line.medicineId, line.key)) / unit.factor);
-    if (max < 1) {
-      setError(t('errors.notEnoughForUnit', { unit: unit.name, name: line.name }));
-      return;
-    }
-    setCart((prev) => prev.map((l) => (l.key === key ? { ...l, unit, quantity: Math.min(l.quantity, max) } : l)));
-  };
-
-  const removeLine = (key) => setCart((prev) => prev.filter((l) => l.key !== key));
-
-  const resetSale = useCallback(() => {
-    setCart([]);
-    setSelectedKey(null);
-    setCustomer(null);
-    setWalkIn(emptyWalkIn);
-    setPatient(null);
-    setPrescription(null);
-    setLegacyRx(emptyRx);
-    setWarnings({ interactions: [], allergyHits: [] });
-    setAckKey('');
-    setDiscount('');
-    setPayments([newPaymentRow('cash')]);
-    offlineIdRef.current = null;
-  }, []);
-
   // Code from the scanner or typed into the search box: local catalog first, then the API
   const handleCode = useCallback(
     async (code) => {
@@ -223,120 +125,28 @@ const POS = () => {
 
   // ---------- Held sales ----------
   const { held, hold, take, remove: deleteHeld } = useHeldSales({ pharmacyId, userId });
-  const snapshot = (label) => ({
-    label,
-    cart,
-    customer,
-    walkIn,
-    patient,
-    prescription,
-    legacyRx,
-    discount,
-    total: totals.grandTotal,
-  });
 
   const holdCurrent = (label) => {
     if (cart.length === 0) return;
-    hold(snapshot(label));
+    hold(sale.snapshot(label, totals.grandTotal));
     resetSale();
     setHoldOpen(false);
     setInfo(t('info.held', { label }));
   };
 
   const resumeHeld = (entry) => {
-    take(entry.id, cart.length > 0 ? snapshot(t('held.autoLabel', { time: new Date().toLocaleTimeString() })) : null);
+    take(entry.id, cart.length > 0 ? sale.snapshot(t('held.autoLabel', { time: new Date().toLocaleTimeString() }), totals.grandTotal) : null);
     resetSale();
-    // Refresh stock info from the current catalog
-    setCart(entry.cart.map((l) => ({ ...l, medicine: medById.get(l.medicineId) || l.medicine })));
-    setCustomer(entry.customer || null);
-    setWalkIn(entry.walkIn || emptyWalkIn);
-    setPatient(entry.patient || null);
-    setPrescription(entry.prescription || null);
-    setLegacyRx(entry.legacyRx || emptyRx);
-    setDiscount(entry.discount || '');
+    sale.restore(entry, medById);
     setHeldOpen(false);
   };
 
   // ---------- Checkout ----------
-  const buildPayload = (offlineId) =>
-    buildSalePayload({ cart, customer, walkIn, patient, prescription, needsRx, legacyRx, totals, effectivePayments, offlineId });
-
-  const offlineEligible = () =>
-    !hasControlled && effectivePayments.every((p) => p.method === 'cash' || p.amount <= 0);
-
-  const saveOffline = async (offlineId, payload) => {
-    await enqueueSale({
-      offlineId,
-      pharmacyId,
-      userId,
-      payload,
-      summary: {
-        grandTotal: totals.grandTotal,
-        lines: cart.map((l) => ({ name: l.name, quantity: l.quantity, unitName: l.unit.name })),
-      },
-    });
-    const lines = cart.map((l) => ({ medicineId: l.medicineId, baseQuantity: l.quantity * l.unit.factor }));
-    decrementCachedStock(pharmacyId, lines);
-    setMedicines((prev) =>
-      prev.map((m) => {
-        const used = lines.filter((x) => x.medicineId === String(m._id)).reduce((s, x) => s + x.baseQuantity, 0);
-        return used ? { ...m, stock: Math.max(0, (Number(m.stock) || 0) - used) } : m;
-      })
-    );
-    setCompletedSale(buildProvisionalSale({ t, offlineId, payload, cart, walkIn, totals, payStatus }));
-    resetSale();
-    setInfo(t('info.savedOffline'));
-  };
-
-  const handleCheckout = async () => {
-    if (cart.length === 0 || checkoutLoading) return;
-    if (shiftState.loaded && !shiftState.shift && requireShiftUi) {
-      setShiftModal(true);
-      return;
-    }
-    if (blockers.length > 0) {
-      setError(blockers[0]);
-      return;
-    }
-    setError('');
-    setInfo('');
-    if (!offlineIdRef.current) offlineIdRef.current = newOfflineId();
-    const offlineId = offlineIdRef.current;
-    const payload = buildPayload(offlineId);
-
-    if (!online) {
-      if (!offlineEligible()) {
-        setError(t('errors.offlineRules'));
-        return;
-      }
-      await saveOffline(offlineId, payload);
-      return;
-    }
-
-    setCheckoutLoading(true);
-    try {
-      const res = await createSale(payload);
-      setCompletedSale(res.sale);
-      resetSale();
-      loadCatalogData();
-      if (shiftState.shift) loadShift();
-    } catch (err) {
-      if (isNetworkError(err)) {
-        if (offlineEligible()) {
-          await saveOffline(offlineId, payload);
-        } else {
-          setError(t('errors.connectionLost'));
-        }
-      } else if (err.response?.data?.code === 'SHIFT_REQUIRED') {
-        setShiftModal(true);
-        setError(err.response.data.message);
-      } else {
-        setError(errMsg(err, t('errors.checkoutFailed')));
-      }
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
+  const { checkoutLoading, handleCheckout } = usePosCheckout({
+    t, sale, pharmacyId, userId, online, hasControlled, needsRx, totals, effectivePayments, payStatus,
+    blockers, shiftState, requireShiftUi, setMedicines, loadCatalogData, loadShift,
+    setError, setInfo, setShiftModal, setCompletedSale,
+  });
 
   const clearWithConfirm = () => {
     if (cart.length > 0 && window.confirm(t('cart.confirmClear'))) resetSale();
@@ -388,85 +198,27 @@ const POS = () => {
         </div>
 
         {/* Right: cart + checkout */}
-        <div className={`lg:col-span-5 ${cardCls} p-4 space-y-3`}>
-          <CartHeader count={cart.length} onHold={() => setHoldOpen(true)} onClear={clearWithConfirm} />
-
-          <div className="max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
-            <CartLines
-              cart={cart}
-              selectedKey={selectedKey}
-              onSelect={setSelectedKey}
-              onQty={setQty}
-              onUnit={setUnit}
-              onRemove={removeLine}
-              maxQtyOf={maxQtyOf}
-              registerQtyInput={registerQtyInput}
-            />
-          </div>
-
-          {cart.length > 0 && (
-            <>
-              <CustomerSection
-                customer={customer}
-                onChange={(c) => {
-                  setCustomer(c);
-                  if (!c) setPayments((rows) => rows.map((r) => (r.method === 'credit' ? { ...r, method: 'cash' } : r)));
-                }}
-                walkIn={walkIn}
-                onWalkIn={setWalkIn}
-                online={online}
-              />
-
-              <ClinicalSection
-                cart={cart}
-                online={online}
-                patient={patient}
-                onPatient={setPatient}
-                prescription={prescription}
-                onPrescription={setPrescription}
-                legacyRx={legacyRx}
-                onLegacyRx={setLegacyRx}
-                onWarnings={setWarnings}
-                needsRx={needsRx}
-                hasControlled={hasControlled}
-              />
-
-              {severeWarnings && (
-                <ClinicalAck
-                  warnings={warnings}
-                  checked={ackKey === warningKey}
-                  onChange={(checked) => setAckKey(checked ? warningKey : '')}
-                />
-              )}
-
-              {canCredit && !customer && online && (
-                <p className="text-[11px] text-slate-400">{t('creditHint')}</p>
-              )}
-
-              <PaymentPanel
-                totals={totals}
-                discount={discount}
-                onDiscount={setDiscount}
-                payments={payments}
-                onPayments={setPayments}
-                status={payStatus}
-                allowedMethods={allowedMethods}
-                providers={providers.providers}
-                defaultProvider={providers.default}
-                insuranceLines={insuranceLines}
-              />
-            </>
-          )}
-
-          <CheckoutFooter
-            blockers={blockers}
-            online={online}
-            loading={checkoutLoading}
-            disabled={checkoutLoading || cart.length === 0}
-            total={totals.grandTotal}
-            onCheckout={handleCheckout}
-          />
-        </div>
+        <PosCartPanel
+          sale={sale}
+          online={online}
+          canCredit={canCredit}
+          needsRx={needsRx}
+          hasControlled={hasControlled}
+          severeWarnings={severeWarnings}
+          warningKey={warningKey}
+          totals={totals}
+          payStatus={payStatus}
+          allowedMethods={allowedMethods}
+          providers={providers}
+          insuranceLines={insuranceLines}
+          maxQtyOf={maxQtyOf}
+          registerQtyInput={registerQtyInput}
+          blockers={blockers}
+          checkoutLoading={checkoutLoading}
+          onCheckout={handleCheckout}
+          onHold={() => setHoldOpen(true)}
+          onClear={clearWithConfirm}
+        />
       </div>
 
       <OpenShiftModal

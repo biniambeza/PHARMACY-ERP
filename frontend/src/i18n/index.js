@@ -6,7 +6,7 @@
 //   -> pharmacy settings.locale (applyPharmacySettings) -> 'en'.
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { setDefaultCurrency, setDefaultLocale } from '../utils/format.js';
+import { setCalendar, setDefaultCurrency, setDefaultLocale } from '../utils/format.js';
 
 // Every locales/<lang>/<namespace>.json file is picked up automatically, so a
 // new namespace only needs its JSON files (no change here).
@@ -73,6 +73,17 @@ export const setLanguage = (lng) => {
     /* storage unavailable: still switch for this session */
   }
   return i18n.changeLanguage(code);
+};
+
+/**
+ * Explicit display-calendar choice (CalendarSwitcher): 'gregorian' | 'ethiopian', saved per
+ * device. Re-emits languageChanged (same language) so every useTranslation() consumer
+ * re-renders and formatDate() picks up the new calendar.
+ */
+export const setCalendarPreference = (calendar) => {
+  const active = setCalendar(calendar);
+  i18n.changeLanguage(i18n.resolvedLanguage || i18n.language);
+  return active;
 };
 
 /**

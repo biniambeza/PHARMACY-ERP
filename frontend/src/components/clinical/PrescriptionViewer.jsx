@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, FileText, Download, Ban } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getPrescription, updatePrescription } from '../../api/clinicalApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import StatusBadge from '../common/StatusBadge';
 import { formatDate } from '../../utils/format';
 import { secondaryBtn, errMsg } from './ui';

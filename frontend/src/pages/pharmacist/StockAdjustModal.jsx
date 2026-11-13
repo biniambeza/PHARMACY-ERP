@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SlidersHorizontal, X, AlertTriangle, ArrowDown, CheckCircle } from 'lucide-react';
 import { adjustStock } from '../../api/stockApi';
 import { useTranslation } from 'react-i18next';
+import { formatDate } from '../../utils/format';
 
 const ADJUSTMENT_REASONS = [
   { value: 'damaged', label: 'Damaged / Broken Packaging', desc: 'Physically compromised goods' },
@@ -11,24 +12,15 @@ const ADJUSTMENT_REASONS = [
   { value: 'dispensing_loss', label: 'Compounding / Dispensing Waste', desc: 'Lost during reconstitution or measurement' },
 ];
 
-const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
+// Mounted per opening (and per batch), so the form always starts fresh.
+const StockAdjustModalBody = ({ onClose, onSuccess, batch }) => {
   const { t } = useTranslation('stock');
   const [adjustmentType, setAdjustmentType] = useState('damaged');
   const [reduceQty, setReduceQty] = useState('');
-  const [reasonNote, setReasonNote] = useState('');
+  // No note field in the UI yet; the API accepts one, so send an empty note.
+  const reasonNote = '';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (isOpen) {
-      setAdjustmentType('damaged');
-      setReduceQty('');
-      setReasonNote('');
-      setError('');
-    }
-  }, [isOpen, batch]);
-
-  if (!isOpen || !batch) return null;
 
   const currentQuantity = Number(batch.quantity) || 0;
   const parsedQty = parseInt(reduceQty, 10) || 0;
@@ -113,11 +105,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
             <span>
               {t('adjust.expires')}{' '}
               {batch.expiryDate
-                ? new Date(batch.expiryDate).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })
+                ? formatDate(batch.expiryDate)
                 : t('table.na')}
             </span>
           </div>
@@ -214,5 +202,8 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
     </div>
   );
 };
+
+const StockAdjustModal = ({ isOpen, batch, ...props }) =>
+  isOpen && batch ? <StockAdjustModalBody key={batch._id} batch={batch} {...props} /> : null;
 
 export default StockAdjustModal;

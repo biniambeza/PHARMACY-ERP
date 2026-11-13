@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Megaphone, Plus, Edit3, Trash2, Loader2 } from 'lucide-react';
 import {
@@ -7,6 +7,7 @@ import {
   updateAnnouncement,
   deleteAnnouncement,
 } from '../../api/announcementApi';
+import useAsync from '../../hooks/useAsync';
 import { formatDateTime } from '../../utils/format';
 
 const SEVERITY_STYLES = {
@@ -38,28 +39,14 @@ const stateOf = (a) => {
 // Platform announcements management (#24)
 const AnnouncementsManager = ({ pharmacies = [] }) => {
   const { t } = useTranslation('admin');
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(null); // null = closed
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [formError, setError] = useState('');
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getAnnouncements();
-      setItems(data.announcements || []);
-    } catch (err) {
-      setError(err.response?.data?.message || t('announcements.loadFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const fetchAnnouncements = useCallback(async () => (await getAnnouncements()).announcements || [], []);
+  const { data: items, error: loadError, loading, reload: load } = useAsync(fetchAnnouncements, []);
+  const error = formError || (loadError ? loadError.response?.data?.message || t('announcements.loadFailed') : '');
 
   const openCreate = () => {
     setEditingId(null);

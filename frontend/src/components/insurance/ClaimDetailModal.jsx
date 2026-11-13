@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   getClaim, submitClaim, refreshClaim, deleteClaim, recordClaimPayment, rejectClaim, downloadClaimExcel,
 } from '../../api/insuranceApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { formatMoney, formatDate } from '../../utils/format';
 import { Modal, ErrorBox } from '../customers/CustomerModal';
 import { printClaim } from './claimPrint';

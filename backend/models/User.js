@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { isValidEmail } = require('../utils/email');
 
 const MEMBERSHIP_ROLES = ['owner', 'pharmacist', 'cashier', 'storekeeper'];
 
@@ -39,10 +40,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-        'Please provide a valid email address',
-      ],
+      validate: {
+        validator: isValidEmail,
+        message: 'Please provide a valid email address',
+      },
     },
     password: {
       type: String,

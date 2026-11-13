@@ -1,4 +1,4 @@
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 // Renders children only when the active membership role has the permission(s).
 //   <Can perm="medicine:manage">...</Can>

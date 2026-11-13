@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Search, UserPlus, X, User, Phone, Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getCustomers, createCustomer } from '../../api/customerApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { formatMoney } from '../../utils/format';
 import { inputCls, sectionCls, labelCls, errMsg } from './posUtils';
 

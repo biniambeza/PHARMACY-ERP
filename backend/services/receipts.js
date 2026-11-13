@@ -1,13 +1,9 @@
 // Plain-text receipts for digital delivery (SMS / email / copy & share).
-// buildReceiptText({ sale, pharmacy, compact? }) -> string
-const METHOD_LABELS = {
-  cash: 'Cash',
-  card: 'Card',
-  mobile_money: 'Mobile money',
-  credit: 'Credit',
-  store_credit: 'Store credit',
-  insurance: 'Insurance',
-};
+// buildReceiptText({ sale, pharmacy, compact?, locale? }) -> string
+// Texts follow the pharmacy language (settings.locale: en | am | om), see backend/i18n.
+const { t, pharmacyLocale, normalizeLocale, localDate } = require('../i18n/messages');
+
+const METHODS = ['cash', 'card', 'mobile_money', 'credit', 'store_credit', 'insurance'];
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
@@ -16,7 +12,8 @@ const fmtMoney = (amount, currency = 'ETB') => {
   return currency ? `${currency} ${value}` : value;
 };
 
-const methodLabel = (m) => METHOD_LABELS[m] || String(m || 'other').replace(/_/g, ' ');
+const methodLabel = (m, locale = 'en') =>
+  METHODS.includes(m) ? t(locale, `method.${m}`) : String(m || 'other').replace(/_/g, ' ');
 
 const fmtDate = (d) => {
   const date = d ? new Date(d) : new Date();
@@ -41,26 +38,32 @@ const amountPaid = (sale) => {
 /**
  * Builds a short text receipt.
  * compact=true (SMS) keeps it brief: at most `maxItems` item lines and no footer.
+ * locale defaults to the pharmacy's settings.locale (falls back to English).
  */
-const buildReceiptText = ({ sale, pharmacy, compact = false, maxItems = 5 } = {}) => {
+const buildReceiptText = ({ sale, pharmacy, compact = false, maxItems = 5, locale } = {}) => {
   if (!sale) return '';
   const settings = (pharmacy && pharmacy.settings) || {};
+  const loc = locale ? normalizeLocale(locale) : pharmacyLocale(pharmacy);
+  const tr = (key, vars) => t(loc, key, vars);
   const currency = settings.currency || 'ETB';
   const money = (v) => fmtMoney(v, currency);
   const lines = [];
 
-  lines.push(pharmacy?.name || 'Pharmacy');
+  lines.push(pharmacy?.name || tr('receipt.pharmacy'));
   if (!compact) {
     if (pharmacy?.address) lines.push(pharmacy.address);
-    if (pharmacy?.phone) lines.push(`Tel: ${pharmacy.phone}`);
+    if (pharmacy?.phone) lines.push(tr('receipt.tel', { phone: pharmacy.phone }));
     const tin = pharmacy?.tin || settings.tax?.registrationNo;
-    if (tin) lines.push(`TIN: ${tin}`);
+    if (tin) lines.push(tr('receipt.tin', { tin }));
   }
-  lines.push(`Invoice: ${sale.invoiceNumber}`);
-  lines.push(`Date: ${fmtDate(sale.offlineCreatedAt || sale.createdAt)}`);
-  if (sale.voided) lines.push('Status: VOIDED');
-  else if (sale.returnStatus === 'full') lines.push('Status: RETURNED');
-  else if (sale.returnStatus === 'partial') lines.push('Status: PARTIALLY RETURNED');
+  lines.push(tr('receipt.invoice', { number: sale.invoiceNumber }));
+  const soldAt = sale.offlineCreatedAt || sale.createdAt || new Date();
+  // Amharic: Gregorian date/time plus the Ethiopian calendar date (full receipt only, SMS stays short).
+  const dateText = compact ? fmtDate(soldAt) : localDate(loc, soldAt, { gregorian: fmtDate(soldAt), utc: false });
+  lines.push(tr('receipt.date', { date: dateText }));
+  if (sale.voided) lines.push(tr('receipt.statusVoided'));
+  else if (sale.returnStatus === 'full') lines.push(tr('receipt.statusReturned'));
+  else if (sale.returnStatus === 'partial') lines.push(tr('receipt.statusPartial'));
 
   const items = Array.isArray(sale.items) ? sale.items : [];
   if (!compact) lines.push('--------------------------------');
@@ -70,37 +73,46 @@ const buildReceiptText = ({ sale, pharmacy, compact = false, maxItems = 5 } = {}
     const qty = factor > 1 ? `${round2(item.quantity / factor)} ${item.unitName}` : `${item.quantity}`;
     lines.push(`${item.name} x${qty} ${money(item.subtotal)}`);
   }
-  if (items.length > shown.length) lines.push(`+${items.length - shown.length} more item(s)`);
+  if (items.length > shown.length) lines.push(tr('receipt.moreItems', { count: String(items.length - shown.length) }));
   if (!compact) lines.push('--------------------------------');
 
-  if (Number(sale.discount) > 0) lines.push(`Discount: -${money(sale.discount)}`);
+  if (Number(sale.discount) > 0) lines.push(tr('receipt.discount', { amount: money(sale.discount) }));
   if (!compact) {
     const taxLines = Array.isArray(sale.taxLines) ? sale.taxLines : [];
     if (taxLines.length) {
       for (const tl of taxLines) lines.push(`${tl.name} ${tl.rate}%: ${money(tl.amount)}`);
     } else if (Number(sale.tax) > 0) {
-      lines.push(`Tax: ${money(sale.tax)}`);
+      lines.push(tr('receipt.tax', { amount: money(sale.tax) }));
     }
   }
-  lines.push(`Total: ${money(sale.grandTotal)}`);
+  lines.push(tr('receipt.total', { amount: money(sale.grandTotal) }));
   const paid = amountPaid(sale);
-  lines.push(`Paid: ${money(paid)}`);
+  lines.push(tr('receipt.paid', { amount: money(paid) }));
   if (!compact) {
     for (const p of receiptPayments(sale)) {
-      const status = p.status === 'pending' ? ' (pending)' : p.status === 'refunded' ? ' (refunded)' : '';
-      lines.push(`  ${methodLabel(p.method)}: ${money(p.amount)}${status}`);
+      const status = p.status === 'pending' ? tr('receipt.pending') : p.status === 'refunded' ? tr('receipt.refunded') : '';
+      lines.push(`  ${methodLabel(p.method, loc)}: ${money(p.amount)}${status}`);
     }
-    if (Number(sale.change) > 0) lines.push(`Change: ${money(sale.change)}`);
+    if (Number(sale.change) > 0) lines.push(tr('receipt.change', { amount: money(sale.change) }));
   }
-  if (Number(sale.balanceDue) > 0) lines.push(`Balance due: ${money(sale.balanceDue)}`);
+  if (Number(sale.balanceDue) > 0) lines.push(tr('receipt.balanceDue', { amount: money(sale.balanceDue) }));
 
   if (!compact) {
     lines.push('');
-    lines.push(settings.receiptFooter ? String(settings.receiptFooter) : 'Thank you!');
+    lines.push(settings.receiptFooter ? String(settings.receiptFooter) : tr('receipt.thankYou'));
   } else {
-    lines.push('Thank you!');
+    lines.push(tr('receipt.thankYou'));
   }
   return lines.join('\n');
+};
+
+/** Email subject for a receipt, in the pharmacy language. */
+const buildReceiptSubject = ({ sale, pharmacy, locale } = {}) => {
+  const loc = locale ? normalizeLocale(locale) : pharmacyLocale(pharmacy);
+  return t(loc, 'receipt.subject', {
+    number: sale?.invoiceNumber || '',
+    pharmacy: pharmacy?.name || t(loc, 'receipt.pharmacy'),
+  });
 };
 
 // ------------------------------------------------------------- validation
@@ -154,6 +166,7 @@ const resetSendRate = () => sendLog.clear();
 
 module.exports = {
   buildReceiptText,
+  buildReceiptSubject,
   normalizePhone,
   normalizeEmail,
   checkSendRate,

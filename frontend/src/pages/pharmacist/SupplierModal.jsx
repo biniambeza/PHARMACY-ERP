@@ -1,27 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Building2, User, Phone, Mail, MapPin, X, CheckCircle, FileText, AlertCircle, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { createSupplier, updateSupplier } from '../../api/supplierApi';
 
-const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
-  const { t } = useTranslation('suppliers');
-  const [formData, setFormData] = useState({
-    name: '',
-    contactPerson: '',
-    phone: '',
-    email: '',
-    address: '',
-    status: 'active',
-    notes: '',
-    paymentTermsDays: '30',
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (supplier) {
-      setFormData({
+const formFromSupplier = (supplier) =>
+  supplier
+    ? {
         name: supplier.name || '',
         contactPerson: supplier.contactPerson || '',
         phone: supplier.phone || '',
@@ -30,9 +14,8 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
         status: supplier.status || 'active',
         notes: supplier.notes || '',
         paymentTermsDays: String(supplier.paymentTermsDays ?? 30),
-      });
-    } else {
-      setFormData({
+      }
+    : {
         name: '',
         contactPerson: '',
         phone: '',
@@ -41,12 +24,15 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
         status: 'active',
         notes: '',
         paymentTermsDays: '30',
-      });
-    }
-    setError('');
-  }, [supplier, isOpen]);
+      };
 
-  if (!isOpen) return null;
+// Mounted per opening (and per supplier), so the form always starts from `supplier`.
+const SupplierModalBody = ({ onClose, onSuccess, supplier }) => {
+  const { t } = useTranslation('suppliers');
+  const [formData, setFormData] = useState(() => formFromSupplier(supplier));
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -302,5 +288,8 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
     </div>
   );
 };
+
+const SupplierModal = ({ isOpen, supplier, ...props }) =>
+  isOpen ? <SupplierModalBody key={supplier?._id || 'new'} supplier={supplier} {...props} /> : null;
 
 export default SupplierModal;

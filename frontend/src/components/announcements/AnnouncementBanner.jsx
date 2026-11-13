@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Megaphone, AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { getActiveAnnouncements } from '../../api/announcementApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 // Platform announcements shown at the top of the pharmacy layout (#24).
 // Dismissals are stored per browser in localStorage (keyed by id + last update,

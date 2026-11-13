@@ -6,7 +6,7 @@ const { ensureMemberships, sameId } = require('../utils/membership');
 const { MIN_PASSWORD_LENGTH } = require('./authController');
 
 const STAFF_ROLES = User.MEMBERSHIP_ROLES; // owner, pharmacist, cashier, storekeeper
-const EMAIL_RE = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+const { isValidEmail } = require('../utils/email');
 
 const membershipOf = (user, pharmacyId) =>
   (user.memberships || []).find((m) => sameId(m.pharmacyId, pharmacyId));
@@ -73,7 +73,7 @@ const createStaff = async (req, res) => {
   if (!STAFF_ROLES.includes(role)) {
     throw new AppError(`Role must be one of: ${STAFF_ROLES.join(', ')}`, 400);
   }
-  if (typeof email !== 'string' || !EMAIL_RE.test(email.trim().toLowerCase())) {
+  if (typeof email !== 'string' || !isValidEmail(email.trim().toLowerCase())) {
     throw new AppError('Please provide a valid email address', 400);
   }
   const normalizedEmail = email.trim().toLowerCase();

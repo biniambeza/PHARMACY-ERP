@@ -4,7 +4,7 @@ import { Barcode, Printer, Wand2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CatalogModal from './CatalogModal';
 import { generateBarcode } from '../../api/medicineApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { formatMoney } from '../../utils/format';
 import { inputCls, primaryBtn, secondaryBtn, errorBox } from './styles';
 

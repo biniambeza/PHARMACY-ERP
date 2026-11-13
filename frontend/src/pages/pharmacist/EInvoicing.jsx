@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, ChevronLeft, ChevronRight, RotateCw, Search } from 'lucide-react';
 import { getEInvoiceSettings, getFiscalInvoices, submitFiscalInvoice } from '../../api/einvoiceApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import EInvoiceSettingsPanel from '../../components/einvoice/EInvoiceSettingsPanel';
 import FiscalInvoiceTable from '../../components/einvoice/FiscalInvoiceTable';
 import FiscalInvoiceDetailModal from '../../components/einvoice/FiscalInvoiceDetailModal';

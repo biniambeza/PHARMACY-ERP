@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Pill, X, AlertCircle, CheckCircle, Wand2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { createMedicine, updateMedicine, generateBarcode } from '../../api/medicineApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import PackUnitsEditor from '../../components/catalog/PackUnitsEditor';
 import { marginWarningFor, validatePackUnits } from '../../components/catalog/catalogUtils';
 import MedicinePricingSection from '../../components/inventory/MedicinePricingSection';
@@ -19,34 +19,21 @@ import {
   packsFromMedicine,
 } from '../../components/inventory/medicineForm';
 
-const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
+// Mounted per opening (and per medicine), so the form always starts from `medicine`.
+const MedicineModalBody = ({ onClose, onSuccess, medicine }) => {
   const { t } = useTranslation('medicines');
   const { can } = useAuth();
-  const [formData, setFormData] = useState(emptyForm);
-  const [packUnits, setPackUnits] = useState([]);
-  const [customCategory, setCustomCategory] = useState(false);
+  const [formData, setFormData] = useState(() => (medicine ? formFromMedicine(medicine) : emptyForm()));
+  const [packUnits, setPackUnits] = useState(() => (medicine ? packsFromMedicine(medicine) : []));
+  const [customCategory, setCustomCategory] = useState(
+    () => !!medicine && !DEFAULT_CATEGORIES.includes(medicine.category) && !!medicine.category
+  );
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
   // Editing prices of an existing medicine needs price:manage (creating sets the initial price)
   const pricesLocked = !!medicine && !can('price:manage');
-
-  useEffect(() => {
-    if (medicine) {
-      const isKnownCategory = DEFAULT_CATEGORIES.includes(medicine.category);
-      setFormData(formFromMedicine(medicine));
-      setPackUnits(packsFromMedicine(medicine));
-      setCustomCategory(!isKnownCategory && !!medicine.category);
-    } else {
-      setFormData(emptyForm());
-      setPackUnits([]);
-      setCustomCategory(false);
-    }
-    setError('');
-  }, [medicine, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -394,5 +381,8 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
     </div>
   );
 };
+
+const MedicineModal = ({ isOpen, medicine, ...props }) =>
+  isOpen ? <MedicineModalBody key={medicine?._id || 'new'} medicine={medicine} {...props} /> : null;
 
 export default MedicineModal;

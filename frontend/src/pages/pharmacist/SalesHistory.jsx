@@ -15,12 +15,12 @@ import {
 } from 'lucide-react';
 import { getSales, getSalesSummary } from '../../api/salesApi';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatDate } from '../../utils/format';
 import MetricCard from '../../components/common/MetricCard';
 import { MetricCardSkeleton } from '../../components/common/SkeletonLoader';
 import ReturnModal from '../../components/returns/ReturnModal';
 import VoidSaleModal from '../../components/returns/VoidSaleModal';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 const isToday = (d) => d && new Date(d).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
 
@@ -295,7 +295,7 @@ const SalesHistory = () => {
                       </div>
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">
-                      {sale.createdAt ? new Date(sale.createdAt).toLocaleDateString() : t('na')}
+                      {sale.createdAt ? formatDate(sale.createdAt) : t('na')}
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
                         {sale.createdAt
                           ? new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })

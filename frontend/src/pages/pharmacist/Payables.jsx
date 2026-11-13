@@ -11,7 +11,7 @@ import {
 } from '../../api/payableApi';
 import { getSuppliers } from '../../api/supplierApi';
 import Can from '../../components/common/Can';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
 import { formatMoney } from '../../utils/format';
 import { inputCls, cardCls, btnPrimary, AP_BUCKETS, errMsg } from '../../components/payables/payablesUtils';

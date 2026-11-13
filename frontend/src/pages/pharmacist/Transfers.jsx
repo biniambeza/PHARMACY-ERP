@@ -1,12 +1,13 @@
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
 import { Truck, Plus, ArrowUpRight, ArrowDownLeft, LayoutGrid, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { getTransfers, sendTransfer, receiveTransfer, cancelTransfer } from '../../api/transferApi';
 import StatusBadge from '../../components/common/StatusBadge';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
 import CreateTransferModal from '../../components/transfers/CreateTransferModal';
 import BranchesOverview from '../../components/transfers/BranchesOverview';
+import useAsync from '../../hooks/useAsync';
 import { formatMoney, formatDate, formatDateTime } from '../../utils/format';
 
 const STATUSES = ['draft', 'in_transit', 'received', 'cancelled'];
@@ -21,32 +22,20 @@ const Transfers = () => {
   const isOwner = membershipRole === 'owner';
   const [tab, setTab] = useState(canManage ? 'outgoing' : 'overview');
   const [statusFilter, setStatusFilter] = useState('');
-  const [transfers, setTransfers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [expanded, setExpanded] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const load = useCallback(async () => {
-    if (tab === 'overview' || !canManage) return;
-    setLoading(true);
-    setError('');
-    try {
-      const params = { direction: tab };
-      if (statusFilter) params.status = statusFilter;
-      const data = await getTransfers(params);
-      setTransfers(data.transfers || []);
-    } catch (err) {
-      setError(err.response?.data?.message || t('errors.load'));
-    } finally {
-      setLoading(false);
-    }
-  }, [tab, statusFilter, canManage, t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const fetchTransfers = useCallback(async () => {
+    if (tab === 'overview' || !canManage) return null;
+    const params = { direction: tab };
+    if (statusFilter) params.status = statusFilter;
+    const data = await getTransfers(params);
+    return data.transfers || [];
+  }, [tab, statusFilter, canManage]);
+  const { data, error: loadError, loading, reload: load } = useAsync(fetchTransfers);
+  const transfers = data || [];
+  const error = loadError ? loadError.response?.data?.message || t('errors.load') : '';
 
   const act = async (id, fn, confirmText) => {
     if (confirmText && !window.confirm(confirmText)) return;

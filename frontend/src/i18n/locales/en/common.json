@@ -2,6 +2,8 @@
   "appName": "Pharmacy ERP",
   "language": "Language",
   "languages": { "en": "English", "am": "አማርኛ", "om": "Afaan Oromoo" },
+  "calendar": "Calendar",
+  "calendars": { "gregorian": "Gregorian", "ethiopian": "Ethiopian" },
   "buttons": {
     "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit", "add": "Add",
     "create": "Create", "update": "Update", "close": "Close", "confirm": "Confirm",

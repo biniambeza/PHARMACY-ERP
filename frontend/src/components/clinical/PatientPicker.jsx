@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Search, X, UserPlus, User, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getPatients } from '../../api/clinicalApi';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import PatientFormModal from './PatientFormModal';
 import { inputCls, severityCls, patientAge } from './ui';
 

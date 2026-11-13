@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   CheckCircle,
   Truck,
@@ -31,41 +31,31 @@ const newBatch = (quantity = 0) => ({
   bonusQuantity: 0,
 });
 
-const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
+const linesFromOrder = (order) =>
+  (order.items || []).map((it, idx) => {
+    const received = it.quantityReceived || 0;
+    const outstanding = Math.max(0, it.quantityOrdered - received);
+    return {
+      medicineId: it.medicineId?._id || it.medicineId,
+      name: it.name || it.medicineId?.name || '',
+      itemNo: idx + 1,
+      quantityOrdered: it.quantityOrdered,
+      quantityReceived: received,
+      outstanding,
+      unitCost: it.unitCost,
+      batches: outstanding > 0 ? [newBatch(outstanding)] : [],
+    };
+  });
+
+// Mounted per opening (and per order), so the lines always start from `order`.
+const ReceivePOModalBody = ({ onClose, onSuccess, order }) => {
   const { t } = useTranslation('procurement');
-  const [lines, setLines] = useState([]);
+  const [lines, setLines] = useState(() => linesFromOrder(order));
   const [supplierInvoiceNo, setSupplierInvoiceNo] = useState('');
   const [supplierInvoiceDate, setSupplierInvoiceDate] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (order && order.items) {
-      setLines(
-        order.items.map((it, idx) => {
-          const received = it.quantityReceived || 0;
-          const outstanding = Math.max(0, it.quantityOrdered - received);
-          return {
-            medicineId: it.medicineId?._id || it.medicineId,
-            name: it.name || it.medicineId?.name || '',
-            itemNo: idx + 1,
-            quantityOrdered: it.quantityOrdered,
-            quantityReceived: received,
-            outstanding,
-            unitCost: it.unitCost,
-            batches: outstanding > 0 ? [newBatch(outstanding)] : [],
-          };
-        })
-      );
-      setSupplierInvoiceNo('');
-      setSupplierInvoiceDate('');
-      setNotes('');
-      setError('');
-    }
-  }, [order, isOpen]);
-
-  if (!isOpen || !order) return null;
 
   const updateBatch = (lineIdx, batchIdx, field, value) => {
     setLines((prev) =>
@@ -401,5 +391,8 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
     </div>
   );
 };
+
+const ReceivePOModal = ({ isOpen, order, ...props }) =>
+  isOpen && order ? <ReceivePOModalBody key={order._id} order={order} {...props} /> : null;
 
 export default ReceivePOModal;

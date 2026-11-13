@@ -1,16 +1,19 @@
 import { Languages } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, normalizeLanguage, setLanguage } from '../../i18n';
+import CalendarSwitcher from './CalendarSwitcher';
 
-// Compact language picker. Persists the choice to localStorage and sets <html lang>
-// (both handled by setLanguage in src/i18n). Works on public pages (login) too.
-const LanguageSwitcher = ({ className = '' }) => {
+// Compact language picker (native names: English / አማርኛ / Afaan Oromoo). Persists the
+// choice to localStorage and sets <html lang> (both handled by setLanguage in src/i18n),
+// so a language picked on the login page is kept after signing in.
+// Also shows the display-calendar picker next to it unless showCalendar={false}.
+const LanguageSwitcher = ({ className = '', showCalendar = true }) => {
   const { t, i18n } = useTranslation('common');
   const current = normalizeLanguage(i18n.resolvedLanguage || i18n.language) || 'en';
 
-  return (
+  const language = (
     <label
-      className={`flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-400 transition ${className}`}
+      className={`flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-emerald-400 transition ${showCalendar ? '' : className}`}
       title={t('language')}
     >
       <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
@@ -22,12 +25,20 @@ const LanguageSwitcher = ({ className = '' }) => {
         aria-label={t('language')}
       >
         {SUPPORTED_LANGUAGES.map((l) => (
-          <option key={l.code} value={l.code} className="text-slate-800">
+          <option key={l.code} value={l.code} lang={l.code} className="text-slate-800">
             {l.label}
           </option>
         ))}
       </select>
     </label>
+  );
+
+  if (!showCalendar) return language;
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      {language}
+      <CalendarSwitcher />
+    </div>
   );
 };
 

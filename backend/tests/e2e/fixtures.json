@@ -1,0 +1,20 @@
+{
+  "port": 5055,
+  "password": "E2e-Passw0rd!",
+  "admin": { "name": "E2E Platform Admin", "email": "e2e.admin@example.com" },
+  "pharmacy": { "name": "E2E Pharmacy", "licenseNo": "LIC-E2E-001" },
+  "owner": { "name": "Olivia Owner", "email": "e2e.owner@example.com" },
+  "cashier": { "name": "Carl Cashier", "email": "e2e.cashier@example.com" },
+  "supplier": { "name": "E2E Pharma Supply", "phone": "0911000222" },
+  "medicines": {
+    "posCash": { "name": "E2E Amoxicillin 500mg", "price": 25, "stock": 200 },
+    "returns": { "name": "E2E Ibuprofen 400mg", "price": 15, "stock": 200 },
+    "purchase": { "name": "E2E Vitamin C 1000mg", "price": 8, "stock": 10 },
+    "insurance": { "name": "E2E Metformin 850mg", "price": 40, "stock": 200 },
+    "nearExpiry": { "name": "E2E Cough Syrup 100ml", "price": 60, "stock": 12, "expiresInDays": 20 }
+  },
+  "insurance": {
+    "scheme": { "name": "E2E Health Cover", "coveragePercent": 100, "copayType": "fixed", "copayValue": 5 },
+    "member": { "memberNo": "E2E-M-0001", "name": "Martha Member", "phone": "0911000333" }
+  }
+}

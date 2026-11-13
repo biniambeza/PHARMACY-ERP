@@ -11,7 +11,8 @@
     "restore": "node scripts/restore.js",
     "backup:verify": "node scripts/verifyRestore.js",
     "db:clone": "node scripts/cloneDatabase.js",
-    "seed:demo": "node utils/seedPharmacyData.js"
+    "seed:demo": "node utils/seedPharmacyData.js",
+    "e2e:server": "node tests/e2e/server.js"
   },
   "keywords": [],
   "author": "",

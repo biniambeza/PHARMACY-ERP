@@ -2,6 +2,8 @@
   "appName": "Pharmacy ERP",
   "language": "Afaan",
   "languages": { "en": "English", "am": "አማርኛ", "om": "Afaan Oromoo" },
+  "calendar": "Dhaha guyyaa",
+  "calendars": { "gregorian": "Gorgoorii", "ethiopian": "Itoophiyaa" },
   "buttons": {
     "save": "Olkaa'i", "cancel": "Dhiisi", "delete": "Haqi", "edit": "Gulaali", "add": "Dabali",
     "create": "Uumi", "update": "Haaromsi", "close": "Cufi", "confirm": "Mirkaneessi",
