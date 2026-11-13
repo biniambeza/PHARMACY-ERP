@@ -5,7 +5,6 @@ import { roleCan } from '../config/permissions';
 const AuthContext = createContext();
 
 const MEMBERSHIPS_KEY = 'memberships';
-const LEGACY_OWNER_KEY = 'legacyOwner';
 
 const readJson = (key, fallback) => {
   try {
@@ -40,7 +39,6 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [memberships, setMemberships] = useState(() => readJson(MEMBERSHIPS_KEY, []));
   const [activePharmacyId, setActivePharmacyId] = useState(() => localStorage.getItem(ACTIVE_PHARMACY_KEY));
-  const [legacyOwner, setLegacyOwner] = useState(() => localStorage.getItem(LEGACY_OWNER_KEY) === '1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -61,12 +59,9 @@ export const AuthProvider = ({ children }) => {
     (async () => {
       try {
         const res = await api.get('/auth/me');
-        if (cancelled) return;
-        const legacy = !Array.isArray(res.data?.memberships);
-        if (legacy) localStorage.setItem(LEGACY_OWNER_KEY, '1');
-        else localStorage.removeItem(LEGACY_OWNER_KEY);
-        setLegacyOwner(legacy);
-        if (!legacy) applyMemberships(res.data.memberships, localStorage.getItem(ACTIVE_PHARMACY_KEY));
+        if (!cancelled && Array.isArray(res.data?.memberships)) {
+          applyMemberships(res.data.memberships, localStorage.getItem(ACTIVE_PHARMACY_KEY));
+        }
       } catch {
         // 401/403 are handled globally by the axios interceptor
       }
@@ -86,13 +81,6 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('token', userToken);
-
-      // Older backends (before staff roles) send no memberships at all; their
-      // pharmacists are always the pharmacy owner.
-      const legacy = userData.role === 'pharmacist' && !Array.isArray(userMemberships);
-      if (legacy) localStorage.setItem(LEGACY_OWNER_KEY, '1');
-      else localStorage.removeItem(LEGACY_OWNER_KEY);
-      setLegacyOwner(legacy);
 
       if (userData.role === 'pharmacist') {
         applyMemberships(userMemberships || [], localStorage.getItem(ACTIVE_PHARMACY_KEY));
@@ -119,8 +107,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem(MEMBERSHIPS_KEY);
     localStorage.removeItem(ACTIVE_PHARMACY_KEY);
-    localStorage.removeItem(LEGACY_OWNER_KEY);
-    setLegacyOwner(false);
     setUser(null);
     setToken(null);
     setMemberships([]);
@@ -163,8 +149,7 @@ export const AuthProvider = ({ children }) => {
     () => pharmacies.find((m) => String(m.pharmacyId) === String(activePharmacyId)) || null,
     [pharmacies, activePharmacyId]
   );
-  const membershipRole =
-    activeMembership?.role || (legacyOwner && user?.role === 'pharmacist' ? 'owner' : null);
+  const membershipRole = activeMembership?.role || null;
 
   const can = useCallback(
     (perm) => {

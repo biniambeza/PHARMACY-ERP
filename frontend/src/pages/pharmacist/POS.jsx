@@ -97,7 +97,8 @@ const POS = () => {
   const severeWarnings =
     warnings.allergyHits.length > 0 || warnings.interactions.some((i) => SEVERE.includes(i.severity));
   const warningsAcked = !severeWarnings || ackKey === warningKey;
-  const requireShiftUi = pharmacy?.settings?.requireShift !== false || shiftState.requireShift;
+  // Same rule as the server: opt-in per pharmacy (missing = not required).
+  const requireShiftUi = pharmacy?.settings?.requireShift === true || shiftState.requireShift;
 
   const blockers = useMemo(
     () =>

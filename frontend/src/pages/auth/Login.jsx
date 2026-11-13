@@ -4,6 +4,20 @@ import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Pill, Info, CheckCircle2 } from 'lucide-react';
 
+// Demo quick-fill buttons: local development only, credentials come from
+// frontend/.env (never committed). Format: VITE_DEMO_PHARMACIST=email:password
+const parseDemo = (value) => {
+  const raw = String(value || '');
+  const i = raw.indexOf(':');
+  return i > 0 ? { email: raw.slice(0, i), password: raw.slice(i + 1) } : null;
+};
+const DEMO_ACCOUNTS = import.meta.env.DEV
+  ? [
+      { key: 'demoPharmacist', account: parseDemo(import.meta.env.VITE_DEMO_PHARMACIST) },
+      { key: 'demoAdmin', account: parseDemo(import.meta.env.VITE_DEMO_ADMIN) },
+    ].filter((d) => d.account)
+  : [];
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -160,26 +174,24 @@ const Login = () => {
             )}
           </button>
 
-          {/* Quick Demo Fill */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-            <span>{t('demoAccounts')}</span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleDemoFill('biniambeza@gmail.com', '123456')}
-                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition cursor-pointer"
-              >
-                {t('demoPharmacist')}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoFill('admin@pharmacy.com', 'admin123456')}
-                className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition cursor-pointer"
-              >
-                {t('demoAdmin')}
-              </button>
+          {/* Quick Demo Fill (local development only) */}
+          {DEMO_ACCOUNTS.length > 0 && (
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <span>{t('demoAccounts')}</span>
+              <div className="flex items-center gap-1.5">
+                {DEMO_ACCOUNTS.map(({ key, account }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleDemoFill(account.email, account.password)}
+                    className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition cursor-pointer"
+                  >
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </form>
       </div>
     </div>

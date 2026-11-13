@@ -23,7 +23,7 @@ const toForm = (settings = {}) => ({
   notifyDailySummary: Boolean(settings.notify?.dailySummary),
   maxDiscountPercent: settings.maxDiscountPercent ?? 100,
   // POS (#7): missing = required in the POS UI; saving persists it for server-side enforcement
-  requireShift: settings.requireShift !== false,
+  requireShift: settings.requireShift === true,
 });
 
 /** Owner-only pharmacy settings: tax, receipts, locale, alerts & POS limits. */
