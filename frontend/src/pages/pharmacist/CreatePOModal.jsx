@@ -11,10 +11,10 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getSuppliers } from '../../api/supplierApi';
-import { getMedicines } from '../../api/medicineApi';
 import { createPurchaseOrder } from '../../api/procurementApi';
 import { formatMoney, getDefaultCurrency } from '../../utils/format';
 import EthiopianDateHint from '../../components/common/EthiopianDateHint';
+import MedicinePicker from '../../components/common/MedicinePicker';
 
 // Sentinel so the load error is translated at render time (keeps the effect deps unchanged).
 const LOAD_FAILED = '__loadFailed__';
@@ -23,10 +23,10 @@ const LOAD_FAILED = '__loadFailed__';
 const CreatePOModalBody = ({ onClose, onSuccess }) => {
   const { t } = useTranslation('procurement');
   const [suppliers, setSuppliers] = useState([]);
-  const [medicines, setMedicines] = useState([]);
   const [supplierId, setSupplierId] = useState('');
+  // Each line keeps the picked medicine (for the picker label) next to its id.
   const [items, setItems] = useState([
-    { medicineId: '', quantityOrdered: 50, unitCost: '' },
+    { medicineId: '', medicine: null, quantityOrdered: 50, unitCost: '' },
   ]);
   const [expectedDelivery, setExpectedDelivery] = useState('');
   const [notes, setNotes] = useState('');
@@ -36,23 +36,12 @@ const CreatePOModalBody = ({ onClose, onSuccess }) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([getSuppliers({ status: 'active' }), getMedicines()])
-      .then(([supRes, medRes]) => {
+    // Medicines are searched on demand by the line pickers (the catalog can be large).
+    getSuppliers({ status: 'active' })
+      .then((supRes) => {
         setSuppliers(supRes.suppliers || []);
-        const medList = medRes.medicines || [];
-        setMedicines(medList);
-
         if (supRes.suppliers?.length > 0) {
           setSupplierId(supRes.suppliers[0]._id);
-        }
-        if (medList.length > 0) {
-          setItems([
-            {
-              medicineId: medList[0]._id,
-              quantityOrdered: 50,
-              unitCost: medList[0].costPrice || '',
-            },
-          ]);
         }
       })
       .catch(() => setError(LOAD_FAILED))
@@ -60,15 +49,7 @@ const CreatePOModalBody = ({ onClose, onSuccess }) => {
   }, []);
 
   const handleAddItem = () => {
-    const defaultMed = medicines[0];
-    setItems((prev) => [
-      ...prev,
-      {
-        medicineId: defaultMed ? defaultMed._id : '',
-        quantityOrdered: 50,
-        unitCost: defaultMed?.costPrice || '',
-      },
-    ]);
+    setItems((prev) => [...prev, { medicineId: '', medicine: null, quantityOrdered: 50, unitCost: '' }]);
   };
 
   const handleRemoveItem = (index) => {
@@ -81,15 +62,16 @@ const CreatePOModalBody = ({ onClose, onSuccess }) => {
       prev.map((item, i) => {
         if (i !== index) return item;
 
-        const updated = { ...item, [field]: value };
-        // If medicine changed, auto-suggest unitCost from medicine costPrice
-        if (field === 'medicineId') {
-          const selectedMed = medicines.find((m) => m._id === value);
-          if (selectedMed && selectedMed.costPrice) {
-            updated.unitCost = selectedMed.costPrice;
-          }
+        if (field === 'medicine') {
+          // Picked (or cleared) a medicine: auto-suggest unitCost from its costPrice
+          return {
+            ...item,
+            medicine: value,
+            medicineId: value?._id || '',
+            unitCost: value?.costPrice ? value.costPrice : item.unitCost,
+          };
         }
-        return updated;
+        return { ...item, [field]: value };
       })
     );
   };
@@ -253,19 +235,15 @@ const CreatePOModalBody = ({ onClose, onSuccess }) => {
                     className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 flex flex-col sm:flex-row items-center gap-2.5"
                   >
                     {/* Medicine selection */}
-                    <div className="flex-1 w-full sm:w-auto">
-                      <select
-                        value={item.medicineId}
-                        onChange={(e) => handleItemChange(idx, 'medicineId', e.target.value)}
+                    <div className="flex-1 w-full sm:w-auto min-w-0">
+                      <MedicinePicker
+                        value={item.medicine}
+                        onChange={(med) => handleItemChange(idx, 'medicine', med)}
+                        ariaLabel={t('create.medicineLabel', { line: idx + 1 })}
+                        placeholder={t('create.medicinePlaceholder')}
                         required
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
-                      >
-                        {medicines.map((m) => (
-                          <option key={m._id} value={m._id}>
-                            {m.name} ({m.dosageForm || t('create.unit')})
-                          </option>
-                        ))}
-                      </select>
+                        inputClassName="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+                      />
                     </div>
 
                     {/* Quantity */}
@@ -361,14 +339,14 @@ const CreatePOModalBody = ({ onClose, onSuccess }) => {
             <button
               type="button"
               onClick={(e) => handleSubmit(e, true)}
-              disabled={loading || suppliers.length === 0 || medicines.length === 0}
+              disabled={loading || suppliers.length === 0}
               className="px-4 py-2 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 disabled:opacity-50 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
               {t('create.saveDraft')}
             </button>
             <button
               type="submit"
-              disabled={loading || suppliers.length === 0 || medicines.length === 0}
+              disabled={loading || suppliers.length === 0}
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (

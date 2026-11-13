@@ -7,6 +7,7 @@
     "searchPlaceholder": "Search by lot batch number, brand name, or active formula...",
     "confirmDelete": "Are you sure you want to permanently delete batch \"{{batchNo}}\"?",
     "deleteFailed": "Failed to delete batch",
+    "pageOf": "Page {{page}} of {{pages}}",
     "footerShowing": "Showing <b>{{shown}}</b> of <b>{{total}}</b> inventory batches",
     "footerProtocol": "Protocol: FEFO Compliance Enforced"
   },
@@ -77,6 +78,7 @@
     "scanLabel": "Scan Barcode (optional)",
     "scanPlaceholder": "Scan or type a barcode / SKU and press Enter",
     "medicineLabel": "Select Medicine Item",
+    "medicineSearchPlaceholder": "Search medicine by name, generic name or barcode...",
     "loadingCatalog": "Loading catalog...",
     "noMedicines": "No medicines found in catalog. Please register a product first.",
     "retail": "Retail: {{price}}",

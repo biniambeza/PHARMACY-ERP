@@ -61,5 +61,7 @@ stockBatchSchema.pre('save', function () {
 stockBatchSchema.index({ pharmacyId: 1, medicineId: 1, batchNo: 1 }, { unique: true });
 // FEFO lookup for sales
 stockBatchSchema.index({ pharmacyId: 1, medicineId: 1, status: 1, expiryDate: 1 });
+// Pharmacy-wide expiry scans (expiring soon, expired write-offs, stock summary, daily checks)
+stockBatchSchema.index({ pharmacyId: 1, status: 1, expiryDate: 1 });
 
 module.exports = mongoose.model('StockBatch', stockBatchSchema);

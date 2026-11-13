@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 const mongoose = require('mongoose');
 
 const { getSentry, sentryRequestContext } = require('./instrument');
@@ -132,6 +133,14 @@ app.use(
 
 // ---------- Security & parsing ----------
 app.use(helmet());
+// gzip/deflate JSON and text responses. The streaming exports (/api/export: CSV with
+// backpressure, XLSX which is already zipped) are left alone: compression only proxies
+// res.on('drain'), not res.off, so the export's drain handling would leak listeners.
+app.use(
+  compression({
+    filter: (req, res) => !req.originalUrl.startsWith('/api/export') && compression.filter(req, res),
+  })
+);
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(cookieParser());
@@ -145,18 +154,23 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Liveness: cheap, unauthenticated, no DB round trip. Point uptime monitors here.
+// Liveness: cheap, unauthenticated, never touches the DB and always 200 while the process
+// is up (Render's health check points here: a MongoDB blip must not get the instance
+// restarted). The current mongoose connection state is reported as a field only.
+// Readiness (DB ping) is /api/health/ready.
 const buildInfo = () => ({
   version: APP_VERSION,
   commit: process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || null,
 });
 
+const DB_STATES = { 0: 'down', 1: 'up', 2: 'connecting', 3: 'disconnecting' };
+
 app.get('/api/health', (req, res) => {
-  const up = mongoose.connection.readyState === 1;
   res.set('Cache-Control', 'no-store');
-  res.status(up ? 200 : 503).json({
-    success: up,
-    db: up ? 'up' : 'down',
+  res.status(200).json({
+    success: true,
+    status: 'ok',
+    db: DB_STATES[mongoose.connection.readyState] || 'unknown',
     ...buildInfo(),
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),

@@ -28,7 +28,20 @@ export default defineConfig({
     locale: 'en-US',
     timezoneId: 'Africa/Addis_Ababa',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+        // Tests never depend on the internet: Google Fonts requests fail immediately instead of
+        // hanging the page 'load' event on slow or offline networks (fallback fonts are used).
+        launchOptions: {
+          args: ['--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND, MAP fonts.gstatic.com ~NOTFOUND'],
+        },
+      },
+    },
+  ],
   webServer: [
     {
       command: 'node tests/e2e/server.js',

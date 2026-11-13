@@ -10,6 +10,7 @@
 // notification problem never breaks the business operation that caused it.
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
+const DedupeMarker = require('../models/DedupeMarker');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const isTest = () => process.env.NODE_ENV === 'test';
@@ -29,12 +30,32 @@ const toObjectId = (v) => {
 };
 
 /**
+ * Atomically claims marker `_id` for `windowMs`. Free when missing or expired.
+ * A concurrent claim loses with a duplicate-key error (unique _id): returns false.
+ */
+const claimMarker = async (_id, windowMs) => {
+  const now = new Date();
+  try {
+    await DedupeMarker.findOneAndUpdate(
+      { _id, expiresAt: { $lte: now } },
+      { $set: { expiresAt: new Date(now.getTime() + windowMs), createdAt: now } },
+      { upsert: true }
+    );
+    return true;
+  } catch (err) {
+    if (err && err.code === 11000) return false;
+    throw err;
+  }
+};
+
+/**
  * Creates an in-app notification.
  * - userIds empty/omitted: visible to every staff member of the pharmacy
  *   (optionally restricted to roles holding `perm`).
  * - dedupeKey: if a notification with the same pharmacyId + type + dedupeKey
  *   was created within dedupeWindowMs (default 24h), nothing is created and
- *   the existing notification is returned.
+ *   the existing notification is returned. Race-free: a DedupeMarker with a
+ *   unique _id is claimed before inserting (concurrent runs / instances).
  * Returns the notification document (new or existing) or null on failure.
  * The returned doc has a non-persisted `wasCreated` flag.
  */
@@ -51,6 +72,7 @@ const createNotification = async ({
   perm = null,
   meta = null,
 } = {}) => {
+  let markerId = null;
   try {
     const pid = toObjectId(pharmacyId);
     if (!pid || !type || !title) {
@@ -59,17 +81,35 @@ const createNotification = async ({
     }
 
     if (dedupeKey) {
-      const since = new Date(Date.now() - Math.max(0, Number(dedupeWindowMs) || DAY_MS));
-      const existing = await Notification.findOne({
-        pharmacyId: pid,
-        type,
-        dedupeKey: String(dedupeKey),
-        createdAt: { $gte: since },
-      });
+      const windowMs = Math.max(0, Number(dedupeWindowMs) || DAY_MS);
+      const findExisting = () =>
+        Notification.findOne({
+          pharmacyId: pid,
+          type,
+          dedupeKey: String(dedupeKey),
+          createdAt: { $gte: new Date(Date.now() - windowMs) },
+        });
+      const existing = await findExisting();
       if (existing) {
         existing.wasCreated = false;
         return existing;
       }
+      // Atomic claim (unique _id): two concurrent callers (or instances) cannot both
+      // pass the check above and insert. The marker is a lease until the window ends.
+      const key = `notify:${pid}:${type}:${String(dedupeKey)}`;
+      if (!(await claimMarker(key, windowMs))) {
+        // Another caller is creating (or created) it: return theirs when visible.
+        for (let i = 0; i < 5; i += 1) {
+          const other = await findExisting();
+          if (other) {
+            other.wasCreated = false;
+            return other;
+          }
+          await new Promise((r) => setTimeout(r, 50));
+        }
+        return null;
+      }
+      markerId = key;
     }
 
     const doc = await Notification.create({
@@ -88,6 +128,8 @@ const createNotification = async ({
     return doc;
   } catch (err) {
     logError('createNotification failed:', err && err.message);
+    // Nothing was created: free the dedupe slot so the next run can retry.
+    if (markerId) await DedupeMarker.deleteOne({ _id: markerId }).catch(() => {});
     return null;
   }
 };
@@ -110,6 +152,10 @@ const getTransporter = () => {
     port,
     secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : port === 465,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    // Never let a slow / unreachable SMTP server hang a request or a job.
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
   });
   transporterKey = key;
   return transporter;

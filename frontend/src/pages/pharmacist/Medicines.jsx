@@ -12,6 +12,10 @@ import MedicineKpiCards from '../../components/inventory/MedicineKpiCards';
 import MedicineFilters from '../../components/inventory/MedicineFilters';
 import MedicineTable from '../../components/inventory/MedicineTable';
 import { logApiError } from '../../api/logApiError';
+import Pager from '../../components/common/Pager';
+
+// Medicines per page (the server caps unpaged lists, so the page always pages).
+const PAGE_SIZE = 200;
 
 const Medicines = () => {
   const { t } = useTranslation('medicines');
@@ -28,21 +32,24 @@ const Medicines = () => {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [historyFor, setHistoryFor] = useState(null);
   const [marginOnly, setMarginOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageInfo, setPageInfo] = useState({ pages: 1, total: 0 });
 
   const loadMedicines = useCallback(async () => {
     try {
-      const params = {};
+      const params = { page, limit: PAGE_SIZE };
       if (search) params.search = search;
       if (selectedCategory) params.category = selectedCategory;
 
       const data = await getMedicines(params);
       setMedicines(data.medicines || []);
+      setPageInfo({ pages: data.pages || 1, total: data.total ?? (data.medicines || []).length });
     } catch (err) {
       logApiError('Failed to load medicines', err);
     } finally {
       setLoading(false);
     }
-  }, [search, selectedCategory]);
+  }, [search, selectedCategory, page]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -175,11 +182,11 @@ const Medicines = () => {
       {/* Filter and Controls Toolbar */}
       <MedicineFilters
         search={search}
-        setSearch={setSearch}
+        setSearch={(v) => { setSearch(v); setPage(1); }}
         rxFilter={rxFilter}
         setRxFilter={setRxFilter}
         selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        setSelectedCategory={(v) => { setSelectedCategory(v); setPage(1); }}
         categories={categories}
         marginWarningCount={marginWarningCount}
         marginOnly={marginOnly}
@@ -202,6 +209,8 @@ const Medicines = () => {
         onHistory={setHistoryFor}
         deletingId={deletingId}
       />
+
+      <Pager page={page} pages={pageInfo.pages} total={pageInfo.total} shown={medicines.length} onChange={setPage} disabled={loading} />
 
       {/* Modal */}
       <MedicineModal

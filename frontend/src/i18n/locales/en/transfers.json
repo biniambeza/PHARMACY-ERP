@@ -55,6 +55,7 @@
     "remove": "Remove",
     "saveDraft": "Save as draft",
     "sendNow": "Send now",
+    "loadingStock": "Loading stock...",
     "errors": {
       "load": "Failed to load branches and stock",
       "noStock": "No usable stock",
@@ -63,6 +64,7 @@
       "onlyAvailable_other": "Only {{count}} available",
       "destination": "Choose a destination branch",
       "noLines": "Add at least one medicine",
+      "stillLoading": "Wait until the stock of every line has loaded",
       "save": "Failed to create transfer"
     }
   },

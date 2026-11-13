@@ -2,7 +2,7 @@ const Sale = require('../../models/Sale');
 const Medicine = require('../../models/Medicine');
 const StockBatch = require('../../models/StockBatch');
 const AppError = require('../../utils/AppError');
-const { DAY_MS, toObjectId, round2, getLocalDateString, getLocalDayName, getLocalMonthDay, parseRange } = require('./helpers');
+const { DAY_MS, toObjectId, round2, getLocalDateString, getLocalDayName, getLocalMonthDay, parseReportRange, periodStart, REPORT_AGG_OPTS } = require('./helpers');
 const { saleMatch, itemCostStages, getReturnTotals, getPeriodSummary, buildComparison, getDailySales, getPaymentBreakdown, buildRangeTrend, rangeMeta } = require('./aggregates');
 
 // @desc    Financial analytics for a period: revenue, COGS, margin, payment
@@ -11,9 +11,9 @@ const { saleMatch, itemCostStages, getReturnTotals, getPeriodSummary, buildCompa
 // @access  Private (reports:view)
 const getFinancialAnalytics = async (req, res) => {
   const pharmacyId = toObjectId(req.pharmacyId);
-  const period = parseRange(req, '7d');
+  const period = parseReportRange(req, '7d');
   const { timeZone } = period;
-  const periodFrom = period.range === 'all' ? null : period.from;
+  const periodFrom = periodStart(period);
 
   const nowMs = Date.now();
   const todayStr = getLocalDateString(new Date(nowMs), timeZone);
@@ -42,7 +42,7 @@ const getFinancialAnalytics = async (req, res) => {
             cogs: { $sum: '$_lineCost' },
           },
         },
-      ]).option({ allowDiskUse: true }),
+      ]).option({ ...REPORT_AGG_OPTS, allowDiskUse: true }),
       getReturnTotals(pharmacyId, periodFrom, period.to),
       StockBatch.aggregate([
         {
@@ -72,7 +72,7 @@ const getFinancialAnalytics = async (req, res) => {
             },
           },
         },
-      ]),
+      ]).option(REPORT_AGG_OPTS),
     ]);
 
   // Trend curves
@@ -115,7 +115,7 @@ const getFinancialAnalytics = async (req, res) => {
 
   const trends = { '7d': trend7d, monthly: trendMonthly, yearly: trendYearly };
   const rangeTrend =
-    trends[period.range] || buildRangeTrend(rangeDaily, period.range === 'all' ? new Date(nowMs - 3700 * DAY_MS) : period.from, period.to, timeZone);
+    trends[period.range] || buildRangeTrend(rangeDaily, periodStart(period) || new Date(nowMs - 3700 * DAY_MS), period.to, timeZone);
   if (period.range === 'custom' || period.range === 'today') trends.custom = rangeTrend;
 
   // Top medicines in the period, net of returns, with actual cost
@@ -176,8 +176,8 @@ const getFinancialAnalytics = async (req, res) => {
 // @access  Private (reports:view)
 const getProfitReport = async (req, res) => {
   const pharmacyId = toObjectId(req.pharmacyId);
-  const period = parseRange(req, 'monthly');
-  const periodFrom = period.range === 'all' ? null : period.from;
+  const period = parseReportRange(req, 'monthly');
+  const periodFrom = periodStart(period);
   const groupBy = req.query.groupBy === 'category' ? 'category' : 'medicine';
 
   const [rows, returns] = await Promise.all([
@@ -196,7 +196,7 @@ const getProfitReport = async (req, res) => {
         },
       },
       { $project: { name: 1, category: 1, unitsSold: 1, revenue: 1, cogs: 1, orders: { $size: '$orders' } } },
-    ]).option({ allowDiskUse: true }),
+    ]).option({ ...REPORT_AGG_OPTS, allowDiskUse: true }),
     getReturnTotals(pharmacyId, periodFrom, period.to),
   ]);
 
@@ -288,7 +288,7 @@ const getProfitReport = async (req, res) => {
 // @access  Private (reports:view)
 const getPeriodComparison = async (req, res) => {
   const pharmacyId = toObjectId(req.pharmacyId);
-  const period = parseRange(req, 'monthly');
+  const period = parseReportRange(req, 'monthly');
   if (period.range === 'all') throw new AppError('Comparison needs a bounded range', 400);
   const [current, previous] = await Promise.all([
     getPeriodSummary(pharmacyId, period.from, period.to),

@@ -1,10 +1,41 @@
 const mongoose = require('mongoose');
 const ControlledEntry = require('../models/ControlledEntry');
 const Medicine = require('../models/Medicine');
+const StockBatch = require('../models/StockBatch');
 const AppError = require('../utils/AppError');
-const { currentStock } = require('../services/clinical');
 
 const MAX_ENTRIES = 5000;
+
+const toId = (id) => new mongoose.Types.ObjectId(String(id));
+
+// Current register stock (active + expired batches with stock, as services/clinical currentStock)
+// for many medicines in one aggregate. Returns Map(medicineId string -> units).
+const stockByMedicine = async (pharmacyId, medicineIds) => {
+  if (!medicineIds.length) return new Map();
+  const rows = await StockBatch.aggregate([
+    {
+      $match: {
+        pharmacyId: toId(pharmacyId),
+        medicineId: { $in: medicineIds.map(toId) },
+        status: { $in: ['active', 'expired'] },
+        quantity: { $gt: 0 },
+      },
+    },
+    { $group: { _id: '$medicineId', total: { $sum: '$quantity' } } },
+  ]);
+  return new Map(rows.map((r) => [String(r._id), r.total]));
+};
+
+// Last register balance before `before` for each medicine, in one aggregate.
+const balancesBefore = async (pharmacyId, medicineIds, before) => {
+  if (!medicineIds.length) return new Map();
+  const rows = await ControlledEntry.aggregate([
+    { $match: { pharmacyId: toId(pharmacyId), medicineId: { $in: medicineIds.map(toId) }, date: { $lt: before } } },
+    { $sort: { medicineId: 1, date: -1, _id: -1 } },
+    { $group: { _id: '$medicineId', balanceAfter: { $first: '$balanceAfter' } } },
+  ]);
+  return new Map(rows.map((r) => [String(r._id), r.balanceAfter]));
+};
 
 const parseDate = (v, label, endOfDay = false) => {
   const d = new Date(v);
@@ -20,9 +51,8 @@ const getControlledMedicines = async (req, res) => {
     .select('name genericName strength dosageForm controlledSchedule isArchived baseUnit')
     .sort({ name: 1 })
     .lean();
-  const withStock = await Promise.all(
-    medicines.map(async (m) => ({ ...m, currentStock: await currentStock(req.pharmacyId, m._id) }))
-  );
+  const stock = await stockByMedicine(req.pharmacyId, medicines.map((m) => m._id));
+  const withStock = medicines.map((m) => ({ ...m, currentStock: stock.get(String(m._id)) || 0 }));
   res.json({ success: true, medicines: withStock });
 };
 
@@ -70,51 +100,50 @@ const getRegister = async (req, res) => {
     if (list) list.push(e);
   });
 
-  const groups = await Promise.all(
-    medicines.map(async (m) => {
-      const list = byMed.get(String(m._id));
-      let opening = null;
-      if (fromDate) {
-        const prior = await ControlledEntry.findOne({
-          pharmacyId: req.pharmacyId, medicineId: m._id, date: { $lt: fromDate },
-        }).sort({ date: -1, _id: -1 }).select('balanceAfter').lean();
-        if (prior) opening = prior.balanceAfter;
-      }
-      if (opening === null && list.length) {
-        const first = list[0];
-        opening = first.balanceAfter - (first.quantityIn || 0) + (first.quantityOut || 0);
-      }
-      const stockNow = await currentStock(req.pharmacyId, m._id);
-      if (opening === null) opening = stockNow;
-      const totalIn = list.reduce((s, e) => s + (e.quantityIn || 0), 0);
-      const totalOut = list.reduce((s, e) => s + (e.quantityOut || 0), 0);
-      const closing = list.length ? list[list.length - 1].balanceAfter : opening;
-      return {
-        medicine: m,
-        openingBalance: opening,
-        totalIn,
-        totalOut,
-        closingBalance: closing,
-        currentStock: stockNow,
-        entries: list.map((e) => ({
-          _id: e._id,
-          date: e.date,
-          entryType: e.entryType,
-          quantityIn: e.quantityIn,
-          quantityOut: e.quantityOut,
-          balanceAfter: e.balanceAfter,
-          patient: e.patientId,
-          prescriptionId: e.prescriptionId,
-          prescriptionNumber: e.prescriptionNumber,
-          prescriberName: e.prescriberName,
-          batch: e.batchId,
-          sale: e.saleId,
-          user: e.userId,
-          notes: e.notes,
-        })),
-      };
-    })
-  );
+  // Current stock and opening balances for all medicines in two aggregates (not one query per medicine).
+  const medIds = medicines.map((m) => m._id);
+  const [stock, priorBalances] = await Promise.all([
+    stockByMedicine(req.pharmacyId, medIds),
+    fromDate ? balancesBefore(req.pharmacyId, medIds, fromDate) : new Map(),
+  ]);
+
+  const groups = medicines.map((m) => {
+    const list = byMed.get(String(m._id));
+    let opening = priorBalances.has(String(m._id)) ? priorBalances.get(String(m._id)) : null;
+    if (opening === null && list.length) {
+      const first = list[0];
+      opening = first.balanceAfter - (first.quantityIn || 0) + (first.quantityOut || 0);
+    }
+    const stockNow = stock.get(String(m._id)) || 0;
+    if (opening === null) opening = stockNow;
+    const totalIn = list.reduce((s, e) => s + (e.quantityIn || 0), 0);
+    const totalOut = list.reduce((s, e) => s + (e.quantityOut || 0), 0);
+    const closing = list.length ? list[list.length - 1].balanceAfter : opening;
+    return {
+      medicine: m,
+      openingBalance: opening,
+      totalIn,
+      totalOut,
+      closingBalance: closing,
+      currentStock: stockNow,
+      entries: list.map((e) => ({
+        _id: e._id,
+        date: e.date,
+        entryType: e.entryType,
+        quantityIn: e.quantityIn,
+        quantityOut: e.quantityOut,
+        balanceAfter: e.balanceAfter,
+        patient: e.patientId,
+        prescriptionId: e.prescriptionId,
+        prescriptionNumber: e.prescriptionNumber,
+        prescriberName: e.prescriberName,
+        batch: e.batchId,
+        sale: e.saleId,
+        user: e.userId,
+        notes: e.notes,
+      })),
+    };
+  });
 
   res.json({
     success: true,

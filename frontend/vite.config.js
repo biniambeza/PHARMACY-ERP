@@ -1,3 +1,4 @@
+import process from 'node:process'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
@@ -11,6 +12,10 @@ const SEP = String.raw`[\\/]`
 const pkgs = (...names) => new RegExp(`node_modules${SEP}(${names.join('|')})${SEP}`)
 
 const vendorGroups = [
+  // Vite's dynamic-import preload helper is used by the entry (lazy routes) and by jspdf's own
+  // dynamic imports. Without this group it was captured into vendor-pdf as a jspdf dependency,
+  // which made the entry import (and modulepreload) the whole ~800 kB PDF chunk on first load.
+  { name: 'vite-preload', priority: 40, test: /vite[\\/]preload-helper/ },
   { name: 'vendor-react', priority: 30, test: pkgs('react', 'react-dom', 'scheduler', 'react-router', 'react-router-dom', 'cookie', 'set-cookie-parser') },
   { name: 'vendor-i18n', priority: 20, test: pkgs('i18next', 'react-i18next', 'html-parse-stringify', 'void-elements') },
   { name: 'vendor-icons', priority: 20, test: pkgs('lucide-react') },
@@ -30,9 +35,28 @@ const vendorGroups = [
   { name: 'vendor-idb', priority: 10, test: pkgs('idb') },
 ]
 
+// A production build without VITE_API_URL would talk to the wrong API (src/api/axios.js only
+// falls back to localhost in dev), so it fails here instead. Checked in configResolved so the
+// value can come from a .env file or the process environment (CI / Vercel project settings).
+// Dev server (incl. the Playwright run, E2E=1) and non-production modes are not affected.
+const requireApiUrl = () => ({
+  name: 'require-vite-api-url',
+  configResolved(config) {
+    if (config.command !== 'build' || config.mode !== 'production' || process.env.E2E) return;
+    if (!String(config.env.VITE_API_URL || '').trim()) {
+      throw new Error(
+        'VITE_API_URL is not set. A production build needs the backend API URL, e.g. '
+          + 'VITE_API_URL=https://your-backend.onrender.com/api (set it in the Vercel project '
+          + 'environment variables or frontend/.env.production).'
+      );
+    }
+  },
+});
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    requireApiUrl(),
     react(),
     tailwindcss(),
     // PWA groundwork for the Wave 3 offline POS: app-shell precache only.

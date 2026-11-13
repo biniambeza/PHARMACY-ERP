@@ -1,17 +1,20 @@
 const mongoose = require('mongoose');
 
-const MAX_PAGE_LIMIT = 200;
+const MAX_PAGE_LIMIT = 1000;
 const DEFAULT_PAGE_LIMIT = 50;
+const DEFAULT_UNPAGED_LIMIT = 200;
 
-// Pagination is opt-in via `?page=`. Without it every match is returned.
+// Lists are always bounded: ?page= pages through (default 50 per page); without it the
+// first DEFAULT_UNPAGED_LIMIT rows are returned. ?limit= raises either up to MAX_PAGE_LIMIT.
+// `paged` tells whether the caller asked for a page.
 const parsePagination = (query) => {
-  if (query.page === undefined) return null;
-  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const paged = query.page !== undefined;
+  const page = paged ? Math.max(1, parseInt(query.page, 10) || 1) : 1;
   const limit = Math.min(
     MAX_PAGE_LIMIT,
-    Math.max(1, parseInt(query.limit, 10) || DEFAULT_PAGE_LIMIT)
+    Math.max(1, parseInt(query.limit, 10) || (paged ? DEFAULT_PAGE_LIMIT : DEFAULT_UNPAGED_LIMIT))
   );
-  return { page, limit, skip: (page - 1) * limit };
+  return { paged, page, limit, skip: (page - 1) * limit };
 };
 
 const OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;

@@ -8,7 +8,10 @@
 //   BACKUP_DIR              parent folder for backups (default backend/backups)
 //   BACKUP_RETENTION_DAYS   delete job backups older than this many days (default 14, 0 = keep all)
 //   BACKUP_GZIP             'false' to write plain JSON (default gzip)
-//   JOBS_TZ                 optional IANA timezone for the schedule
+//   JOBS_TZ                 IANA timezone for the schedule (default Africa/Addis_Ababa)
+//
+// Runs take the 'database-backup' lease lock (jobs/lock.js) so only one instance backs up
+// at a time; jobs/index.js catches up a missed run (> 24h since the last success) at start-up.
 //
 // The newest backup is never deleted by rotation, even if it is older than the
 // retention window. Backups on the server disk are NOT off-site: see docs/OPERATIONS.md.
@@ -17,6 +20,10 @@ const path = require('path');
 const cron = require('node-cron');
 const mongoose = require('mongoose');
 const { exportDatabase } = require('../scripts/backupLib');
+const { runWithLock, jobsTimeZone } = require('./lock');
+
+const BACKUP_JOB = 'database-backup';
+const BACKUP_LOCK_TTL_MS = 2 * 60 * 60 * 1000;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_RETENTION_DAYS = 14;
@@ -84,6 +91,10 @@ const runBackup = async ({ db = mongoose.connection.db, env = process.env, now =
   return { dir: out, documents, deleted };
 };
 
+/** runBackup under the lease lock (never throws; see runWithLock). */
+const runBackupLocked = () =>
+  runWithLock(BACKUP_JOB, BACKUP_LOCK_TTL_MS, () => runBackup({ log: (line) => console.log(line) }));
+
 let task = null;
 
 const startBackupJob = (env = process.env) => {
@@ -95,21 +106,10 @@ const startBackupJob = (env = process.env) => {
     return null;
   }
   if (task) return task;
-  const options = { name: 'database-backup', noOverlap: true };
-  if (env.JOBS_TZ) options.timezone = env.JOBS_TZ;
-  task = cron.schedule(
-    expr,
-    async () => {
-      try {
-        await runBackup({ log: (line) => console.log(line) });
-      } catch (err) {
-        console.error('[backup] scheduled backup failed:', err && err.message);
-      }
-    },
-    options
-  );
+  const options = { name: BACKUP_JOB, noOverlap: true, timezone: jobsTimeZone(env) };
+  task = cron.schedule(expr, () => runBackupLocked(), options);
   console.log(
-    `[jobs] database backup scheduled "${expr}"${options.timezone ? ` (${options.timezone})` : ''} -> ${backupDir(env)}, ` +
+    `[jobs] database backup scheduled "${expr}" (${options.timezone}) -> ${backupDir(env)}, ` +
       `retention ${retentionDays(env) || 'unlimited'} day(s)`
   );
   return task;
@@ -129,6 +129,8 @@ module.exports = {
   startBackupJob,
   stopBackupJob,
   runBackup,
+  runBackupLocked,
+  BACKUP_JOB,
   rotateBackups,
   listBackups,
   parseBackupDate,

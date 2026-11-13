@@ -4,14 +4,13 @@ const StockBatch = require('../../models/StockBatch');
 const PurchaseOrder = require('../../models/PurchaseOrder');
 const Supplier = require('../../models/Supplier');
 const Pharmacy = require('../../models/Pharmacy');
-const { DAY_MS, toObjectId, round2, getLocalDateString, getLocalMonthDay, formatRelativeTime, parseRange } = require('./helpers');
+const { DAY_MS, toObjectId, round2, getLocalDateString, getLocalMonthDay, formatRelativeTime, parseRange, getClientTimezone, REPORT_AGG_OPTS, REPORT_MAX_TIME_MS } = require('./helpers');
+const { createTtlCache } = require('../../utils/ttlCache');
 const { getPeriodSummary, buildComparison, formatGrowth, getDailySales, rangeMeta } = require('./aggregates');
 const { poOverviewPipeline, batchOverviewPipeline, medicineStockPipeline } = require('./dashboardPipelines');
 
-// @desc    Get complete real-time dashboard overview aggregated from all collections
-// @route   GET /api/reports/overview
-// @access  Private (Pharmacist only)
-const getDashboardOverview = async (req, res) => {
+// Builds the dashboard overview payload from all collections (uncached).
+const buildDashboardOverview = async (req) => {
   const pharmacyId = toObjectId(req.pharmacyId);
   const period = parseRange(req, '7d');
   const { timeZone } = period;
@@ -28,7 +27,7 @@ const getDashboardOverview = async (req, res) => {
     pharmacy, allTime, periodSummary, prevSummary, dailySales, recentSales, poFacetRows, batchFacetRows, medFacetRows, suppliers,
   ] =
     await Promise.all([
-      Pharmacy.findById(pharmacyId).select('name licenseNo address phone settings').lean(),
+      Pharmacy.findById(pharmacyId).maxTimeMS(REPORT_MAX_TIME_MS).select('name licenseNo address phone settings').lean(),
 
       // All-time totals (net of voids and returns, COGS from actual costs)
       getPeriodSummary(pharmacyId, null, null),
@@ -38,16 +37,16 @@ const getDashboardOverview = async (req, res) => {
 
       getDailySales(pharmacyId, trendFrom, timeZone),
 
-      Sale.find({ pharmacyId }).sort({ createdAt: -1 }).limit(5).lean(),
+      Sale.find({ pharmacyId }).maxTimeMS(REPORT_MAX_TIME_MS).sort({ createdAt: -1 }).limit(5).lean(),
 
-      PurchaseOrder.aggregate(poOverviewPipeline({ pharmacyId, trendFrom, timeZone })),
+      PurchaseOrder.aggregate(poOverviewPipeline({ pharmacyId, trendFrom, timeZone })).option(REPORT_AGG_OPTS),
 
-      StockBatch.aggregate(batchOverviewPipeline({ pharmacyId, now, thirtyDays, sixtyDays })),
+      StockBatch.aggregate(batchOverviewPipeline({ pharmacyId, now, thirtyDays, sixtyDays })).option(REPORT_AGG_OPTS),
 
       // Per-medicine sellable stock vs. min level, computed in the database.
-      Medicine.aggregate(medicineStockPipeline({ pharmacyId, now })),
+      Medicine.aggregate(medicineStockPipeline({ pharmacyId, now })).option(REPORT_AGG_OPTS),
 
-      Supplier.find({ pharmacyId }).select('name contactPerson').lean(),
+      Supplier.find({ pharmacyId }).maxTimeMS(REPORT_MAX_TIME_MS).select('name contactPerson').lean(),
     ]);
 
   // 2. Financial KPIs (all-time totals keep their names; period values live in kpis.period)
@@ -286,50 +285,68 @@ const getDashboardOverview = async (req, res) => {
   supplierStats.sort((a, b) => b.spend - a.spend);
   const topSuppliers = supplierStats.slice(0, 4);
 
-  return res.status(200).json({
-    success: true,
-    overview: {
-      pharmacy: {
-        name: pharmacy?.name || 'Pharmacy ERP',
-        licenseNo: pharmacy?.licenseNo || 'N/A',
-        address: pharmacy?.address || 'N/A',
-        phone: pharmacy?.phone || 'N/A',
-      },
-      kpis: {
-        totalRevenue: round2(totalRevenue),
-        todayRevenue: round2(todayRevenue),
-        totalOrders,
-        todayOrders,
-        totalExpenses: round2(totalExpenses),
-        netProfit: round2(netProfit),
-        activeBatches: totalBatches,
-        activeMedicines: totalMedicinesCount,
-        totalStockUnits,
-        totalCOGS: round2(totalCOGS),
-        totalPurchaseCost: round2(totalPOCost),
-        totalRefunds: allTime.refunds,
-        // Growth of the selected period vs the previous one
-        revenueGrowth: formatGrowth(comparison.revenue.changePct),
-        expenseGrowth: formatGrowth(comparison.cogs.changePct),
-        profitGrowth: formatGrowth(comparison.grossProfit.changePct),
-        period: { ...rangeMeta(period), ...periodSummary },
-        allTime,
-      },
-      comparison,
-      currency: pharmacy?.settings?.currency || 'ETB',
-      revenueVsExpenses: trendPoints,
-      workflowStatus,
-      inventoryOverview,
-      pendingProcurement,
-      batchOverview,
-      operationalTasks: operationalTasks.slice(0, 5),
-      recentActivities,
-      topSuppliers,
-      recentSales,
+  return {
+    pharmacy: {
+      name: pharmacy?.name || 'Pharmacy ERP',
+      licenseNo: pharmacy?.licenseNo || 'N/A',
+      address: pharmacy?.address || 'N/A',
+      phone: pharmacy?.phone || 'N/A',
     },
-  });
+    kpis: {
+      totalRevenue: round2(totalRevenue),
+      todayRevenue: round2(todayRevenue),
+      totalOrders,
+      todayOrders,
+      totalExpenses: round2(totalExpenses),
+      netProfit: round2(netProfit),
+      activeBatches: totalBatches,
+      activeMedicines: totalMedicinesCount,
+      totalStockUnits,
+      totalCOGS: round2(totalCOGS),
+      totalPurchaseCost: round2(totalPOCost),
+      totalRefunds: allTime.refunds,
+      // Growth of the selected period vs the previous one
+      revenueGrowth: formatGrowth(comparison.revenue.changePct),
+      expenseGrowth: formatGrowth(comparison.cogs.changePct),
+      profitGrowth: formatGrowth(comparison.grossProfit.changePct),
+      period: { ...rangeMeta(period), ...periodSummary },
+      allTime,
+    },
+    comparison,
+    currency: pharmacy?.settings?.currency || 'ETB',
+    revenueVsExpenses: trendPoints,
+    workflowStatus,
+    inventoryOverview,
+    pendingProcurement,
+    batchOverview,
+    operationalTasks: operationalTasks.slice(0, 5),
+    recentActivities,
+    topSuppliers,
+    recentSales,
+  };
+};
+
+// Dashboard figures are cached per pharmacy (and range / timezone) for 60 seconds, so a busy
+// dashboard does not re-run all the aggregations on every refresh. Not invalidated on writes:
+// figures can lag by up to a minute. Disabled in tests (ttlMs 0) unless a test turns it on.
+const dashboardCache = createTtlCache({ ttlMs: process.env.NODE_ENV === 'test' ? 0 : 60 * 1000, max: 1000 });
+
+// @desc    Get complete real-time dashboard overview aggregated from all collections
+// @route   GET /api/reports/overview
+// @access  Private (dashboard:view)
+const getDashboardOverview = async (req, res) => {
+  const q = req.query || {};
+  const key = [String(req.pharmacyId), q.range, q.from, q.to, getClientTimezone(req)].map((v) => (v === undefined ? '' : String(v))).join('|');
+  let overview = dashboardCache.get(key);
+  if (overview === undefined) {
+    overview = await buildDashboardOverview(req);
+    dashboardCache.set(key, overview);
+  }
+  return res.status(200).json({ success: true, overview });
 };
 
 module.exports = {
   getDashboardOverview,
+  // exported for tests
+  dashboardCache,
 };

@@ -7,7 +7,7 @@ const {
 
 const Sale = require('../models/Sale');
 const InsuranceClaim = require('../models/InsuranceClaim');
-const { runInsuranceClaims } = require('../jobs/insuranceClaimsJob');
+const { runInsuranceClaims, claimTimeZone } = require('../jobs/insuranceClaimsJob');
 const { previousMonthRange } = require('../services/insurance');
 
 let A;
@@ -54,11 +54,13 @@ const saleOn = async (owner, { scheme, member, med, qty = 1, date }) => {
   return res.body.sale;
 };
 
+// Month edges follow the job's zone (JOBS_TZ, default Africa/Addis_Ababa), not the test machine's.
+const HOUR_MS = 60 * 60 * 1000;
 const now = new Date();
-const { periodFrom, periodTo } = previousMonthRange(now);
-const lastMonth = (day) => new Date(periodFrom.getFullYear(), periodFrom.getMonth(), day, 10, 0, 0);
-const twoMonthsAgo = new Date(periodFrom.getFullYear(), periodFrom.getMonth() - 1, 15, 10, 0, 0);
-const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1, 12, 0, 0);
+const { periodFrom, periodTo } = previousMonthRange(now, claimTimeZone());
+const lastMonth = (day) => new Date(periodFrom.getTime() + (day - 1) * 24 * HOUR_MS + 10 * HOUR_MS);
+const twoMonthsAgo = new Date(periodFrom.getTime() - 15 * 24 * HOUR_MS);
+const thisMonth = new Date(periodTo.getTime() + 12 * HOUR_MS);
 
 const rowsFor = (results, pharmacyId) => (results.find((r) => String(r.pharmacyId) === String(pharmacyId)) || { schemes: [] }).schemes;
 

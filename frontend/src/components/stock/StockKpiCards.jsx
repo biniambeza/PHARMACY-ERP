@@ -4,17 +4,22 @@ import MetricCard from '../common/MetricCard';
 import { formatMoney } from '../../utils/format';
 import { getDaysUntilExpiry } from './stockUtils';
 
-// KPI metric cards for the Stock page: from the server summary, falling back to batch calculations.
+// KPI metric cards for the Stock page: from the server summary (whole inventory), falling back
+// to the loaded batches only until the summary arrives.
 const StockKpiCards = ({ batches, summary }) => {
   const { t } = useTranslation('stock');
 
   const totalActiveBatches = summary?.activeBatchesCount ?? batches.filter((b) => b.quantity > 0).length;
   const totalStockUnits = summary?.totalUnits ?? batches.reduce((acc, b) => acc + (b.quantity || 0), 0);
   const totalValuation = summary?.totalValuation ?? batches.reduce((acc, b) => acc + (b.quantity || 0) * (b.purchasePrice || 0), 0);
-  const expiringSoonCount = batches.filter((b) => {
-    const days = getDaysUntilExpiry(b.expiryDate);
-    return days !== null && days <= 30 && b.quantity > 0;
-  }).length;
+  // Expiring within 30 days or already past expiry. From the server summary (covers every batch,
+  // not just the page on screen); the batch fallback is only used before the summary loads.
+  const expiringSoonCount = summary
+    ? (summary.expiringSoonCount || 0) + (summary.expiredCount || 0)
+    : batches.filter((b) => {
+        const days = getDaysUntilExpiry(b.expiryDate);
+        return days !== null && days <= 30 && b.quantity > 0;
+      }).length;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Sale = require('../../models/Sale');
 const User = require('../../models/User');
-const { DAY_MS, toObjectId, round2, localDayExpr, localMonthExpr, parseRange, getLocalDateString } = require('./helpers');
+const { DAY_MS, toObjectId, round2, localDayExpr, localMonthExpr, parseReportRange, periodStart, getLocalDateString, REPORT_AGG_OPTS } = require('./helpers');
 const { saleMatch, getReturnTotals, loadReturnLines, lineAmountStages, rangeMeta } = require('./aggregates');
 
 // @desc    Sales per staff member (staffId, falling back to pharmacistId)
@@ -9,8 +9,8 @@ const { saleMatch, getReturnTotals, loadReturnLines, lineAmountStages, rangeMeta
 // @access  Private (reports:view)
 const getSalesByStaff = async (req, res) => {
   const pharmacyId = toObjectId(req.pharmacyId);
-  const period = parseRange(req, 'monthly');
-  const periodFrom = period.range === 'all' ? null : period.from;
+  const period = parseReportRange(req, 'monthly');
+  const periodFrom = periodStart(period);
 
   const [rows, returns] = await Promise.all([
     Sale.aggregate([
@@ -36,7 +36,7 @@ const getSalesByStaff = async (req, res) => {
           as: 'user',
         },
       },
-    ]),
+    ]).option(REPORT_AGG_OPTS),
     getReturnTotals(pharmacyId, periodFrom, period.to),
   ]);
 
@@ -72,8 +72,8 @@ const getSalesByStaff = async (req, res) => {
 // @access  Private (reports:view)
 const getSalesByShift = async (req, res) => {
   const pharmacyId = toObjectId(req.pharmacyId);
-  const period = parseRange(req, 'monthly');
-  const periodFrom = period.range === 'all' ? null : period.from;
+  const period = parseReportRange(req, 'monthly');
+  const periodFrom = periodStart(period);
   // Shift model is built by the POS agent; $lookup on an empty collection is harmless.
   const shiftCollection = mongoose.models.Shift ? mongoose.models.Shift.collection.name : 'shifts';
 
@@ -116,7 +116,7 @@ const getSalesByShift = async (req, res) => {
         },
       },
       { $sort: { firstSale: -1 } },
-    ]),
+    ]).option(REPORT_AGG_OPTS),
     getReturnTotals(pharmacyId, periodFrom, period.to),
   ]);
 
@@ -153,9 +153,9 @@ const getSalesByShift = async (req, res) => {
 // @access  Private (reports:view)
 const getTaxSummary = async (req, res) => {
   const pharmacyId = toObjectId(req.pharmacyId);
-  const period = parseRange(req, 'monthly');
+  const period = parseReportRange(req, 'monthly');
   const { timeZone } = period;
-  const periodFrom = period.range === 'all' ? null : period.from;
+  const periodFrom = periodStart(period);
   let groupBy = req.query.groupBy;
   if (!['day', 'month'].includes(groupBy)) {
     groupBy = period.range === 'all' || period.to - period.from > 62 * DAY_MS ? 'month' : 'day';
@@ -211,7 +211,7 @@ const getTaxSummary = async (req, res) => {
           ],
         },
       },
-    ]),
+    ]).option(REPORT_AGG_OPTS),
     loadReturnLines(pharmacyId, periodFrom, period.to),
   ]);
 

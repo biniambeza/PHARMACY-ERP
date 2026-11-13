@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PackagePlus, X, Calendar, DollarSign, Layers, Hash, CheckCircle, AlertCircle, Sparkles, ScanBarcode } from 'lucide-react';
-import { getMedicines, lookupMedicine } from '../../api/medicineApi';
+import { lookupMedicine } from '../../api/medicineApi';
 import { formatMoney } from '../../utils/format';
 import { addStockBatch } from '../../api/stockApi';
 import { useTranslation, Trans } from 'react-i18next';
 import EthiopianDateHint from '../../components/common/EthiopianDateHint';
+import MedicinePicker from '../../components/common/MedicinePicker';
 
 // Mounted only while open, so every opening starts from a fresh form.
 const newLotNo = () => `LOT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
 const StockInModalBody = ({ onClose, onSuccess }) => {
   const { t } = useTranslation('stock');
-  const [medicines, setMedicines] = useState([]);
+  // The picked medicine (searched on the server, or found by barcode scan)
+  const [selectedMed, setSelectedMed] = useState(null);
   const [formData, setFormData] = useState(() => ({
     medicineId: '',
     batchNo: newLotNo(),
@@ -23,41 +25,25 @@ const StockInModalBody = ({ onClose, onSuccess }) => {
   const [scanCode, setScanCode] = useState('');
   const [scanMessage, setScanMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fetchingMeds, setFetchingMeds] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    getMedicines()
-      .then((res) => {
-        const medList = res.medicines || [];
-        setMedicines(medList);
-        if (medList.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            medicineId: medList[0]._id,
-            purchasePrice: medList[0].costPrice || '',
-          }));
-        }
-      })
-      .catch(() => setError(t('stockIn.loadFailed')))
-      .finally(() => setFetchingMeds(false));
-  }, [t]);
+  const handlePickMedicine = (med) => {
+    setSelectedMed(med);
+    setFormData((prev) => ({
+      ...prev,
+      medicineId: med?._id || '',
+      unitName: '',
+      purchasePrice: med?.costPrice ? med.costPrice : prev.purchasePrice,
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
-      if (name === 'medicineId') {
-        const selected = medicines.find((m) => m._id === value);
-        updated.unitName = '';
-        if (selected && selected.costPrice) {
-          updated.purchasePrice = selected.costPrice;
-        }
-      }
       if (name === 'unitName') {
         // Keep the cost consistent with the chosen unit (cost is per entered unit)
-        const selected = medicines.find((m) => m._id === prev.medicineId);
-        const factorOf = (u) => selected?.packUnits?.find((p) => p.name === u)?.factor || 1;
+        const factorOf = (u) => selectedMed?.packUnits?.find((p) => p.name === u)?.factor || 1;
         const cost = parseFloat(prev.purchasePrice);
         if (Number.isFinite(cost) && cost > 0) {
           updated.purchasePrice = Number(((cost / factorOf(prev.unitName)) * factorOf(value)).toFixed(4));
@@ -76,7 +62,7 @@ const StockInModalBody = ({ onClose, onSuccess }) => {
     try {
       const res = await lookupMedicine(code);
       const med = res.medicine;
-      if (!medicines.some((m) => m._id === med._id)) setMedicines((prev) => [...prev, med]);
+      setSelectedMed(med);
       const isPack = res.unit && res.unit.factor > 1;
       setFormData((prev) => ({
         ...prev,
@@ -99,10 +85,9 @@ const StockInModalBody = ({ onClose, onSuccess }) => {
     }));
   };
 
-  const selectedMedForUnits = medicines.find((m) => m._id === formData.medicineId);
-  const packUnits = selectedMedForUnits?.packUnits || [];
+  const packUnits = selectedMed?.packUnits || [];
   const unitFactor = packUnits.find((p) => p.name === formData.unitName)?.factor || 1;
-  const baseUnitName = selectedMedForUnits?.baseUnit || 'unit';
+  const baseUnitName = selectedMed?.baseUnit || 'unit';
   const qtyNum = parseInt(formData.quantity, 10) || 0;
   const costNum = parseFloat(formData.purchasePrice) || 0;
   const totalValuation = qtyNum * costNum;
@@ -144,8 +129,6 @@ const StockInModalBody = ({ onClose, onSuccess }) => {
       setError(err.response?.data?.message || t('stockIn.saveFailed'));
     }
   };
-
-  const selectedMed = medicines.find((m) => m._id === formData.medicineId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
@@ -205,30 +188,17 @@ const StockInModalBody = ({ onClose, onSuccess }) => {
 
           {/* Medicine Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label htmlFor="stockin-medicine" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               {t('stockIn.medicineLabel')} <span className="text-rose-500">*</span>
             </label>
-            {fetchingMeds ? (
-              <div className="py-2 text-xs text-slate-400">{t('stockIn.loadingCatalog')}</div>
-            ) : medicines.length === 0 ? (
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-xs text-amber-700 dark:text-amber-300">
-                {t('stockIn.noMedicines')}
-              </div>
-            ) : (
-              <select
-                name="medicineId"
-                value={formData.medicineId}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
-              >
-                {medicines.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.name} {m.dosageForm ? `(${m.dosageForm})` : ''} - {t('stockIn.retail', { price: formatMoney(m.price) })}
-                  </option>
-                ))}
-              </select>
-            )}
+            <MedicinePicker
+              id="stockin-medicine"
+              value={selectedMed}
+              onChange={handlePickMedicine}
+              placeholder={t('stockIn.medicineSearchPlaceholder')}
+              required
+              renderMeta={(m) => t('stockIn.retail', { price: formatMoney(m.price) })}
+            />
             {selectedMed && (
               <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-1 px-1">
                 <span>{t('stockIn.generic', { name: selectedMed.genericName || t('stockIn.standardFormulation') })}</span>
@@ -376,7 +346,7 @@ const StockInModalBody = ({ onClose, onSuccess }) => {
             </button>
             <button
               type="submit"
-              disabled={loading || medicines.length === 0}
+              disabled={loading}
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (

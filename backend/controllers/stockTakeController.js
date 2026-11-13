@@ -8,14 +8,16 @@
 // stock-ins that happened while the count was running are therefore preserved
 // (the count is assumed to have been taken at snapshot time). If applying the
 // delta would make a batch negative, approval fails with 409 and nothing is changed.
-// Each applied delta is recorded as a 'stock_take' StockMovement.
+// Each applied delta is recorded as a 'stock_take' StockMovement (and, for controlled
+// medicines, an 'adjust' controlled-register entry). Approval uses bulk writes so even a
+// 20,000-line count stays well inside the Atlas 60 s transaction limit.
 const mongoose = require('mongoose');
 const StockTake = require('../models/StockTake');
 const StockBatch = require('../models/StockBatch');
 const Medicine = require('../models/Medicine');
 const AppError = require('../utils/AppError');
-const { recordMovement } = require('../utils/stockMovement');
-const { recordControlledMovement } = require('../services/clinical');
+const StockMovement = require('../models/StockMovement');
+const ControlledEntry = require('../models/ControlledEntry');
 const { nextSequence, formatSequence } = require('../utils/sequence');
 const { audit } = require('../utils/audit');
 
@@ -247,6 +249,173 @@ const reopenStockTake = async (req, res) => {
   return res.status(200).json({ success: true, stockTake: serialize(st) });
 };
 
+// Batch status after its quantity changed (same rule as a single adjustment).
+const statusAfter = (status, quantity) => {
+  if (quantity === 0 && status === 'active') return 'depleted';
+  if (quantity > 0 && status === 'depleted') return 'active';
+  return status;
+};
+
+// Units of a batch that count towards a controlled-drug register balance
+// (same rule as services/clinical currentStock: active/expired batches with stock).
+const registerUnits = ({ status, quantity }) => (['active', 'expired'].includes(status) && quantity > 0 ? quantity : 0);
+
+// Applies every counted variance of a stock take inside the caller's transaction using a
+// constant number of round trips (a stock take can have up to MAX_LINES lines and an Atlas
+// transaction must finish within 60 s):
+//   1. one read of the affected batches (validates nothing goes negative, gives balances)
+//   2. one bulkWrite of conditional $inc updates (quantity >= needed), verified by modifiedCount
+//   3. one insertMany of StockMovements, and for controlled medicines one lookup, one balance
+//      aggregate and one insertMany of ControlledEntry rows
+// Sets line.appliedChange on every line (null = not counted, 0 = no variance).
+const applyStockTakeVariances = async (req, st, session) => {
+  const pharmacyId = new mongoose.Types.ObjectId(String(req.pharmacyId));
+  const userId = req.user?._id || null;
+
+  const changed = [];
+  const netByBatch = new Map();
+  for (const line of st.lines) {
+    if (line.countedQty === null || line.countedQty === undefined) {
+      line.appliedChange = null;
+    } else if (!line.variance) {
+      line.appliedChange = 0;
+    } else {
+      changed.push(line);
+      const key = String(line.batchId);
+      netByBatch.set(key, (netByBatch.get(key) || 0) + line.variance);
+    }
+  }
+  if (!changed.length) return;
+
+  // 1. Current state of every affected batch (read inside the transaction snapshot).
+  const batches = await StockBatch.find({ _id: { $in: [...netByBatch.keys()] }, pharmacyId })
+    .select('quantity status medicineId')
+    .session(session)
+    .lean();
+  const batchById = new Map(batches.map((b) => [String(b._id), b]));
+  for (const line of changed) {
+    const b = batchById.get(String(line.batchId));
+    if (!b || b.quantity + netByBatch.get(String(line.batchId)) < 0) {
+      throw new AppError(
+        `Batch ${line.batchNo} (${line.medicineName}) changed since the count started and the correction would make it negative. Reopen and recount it.`,
+        409
+      );
+    }
+  }
+
+  // 2. One bulkWrite; the filter still refuses to take a batch below zero.
+  const ops = [];
+  netByBatch.forEach((delta, key) => {
+    if (!delta) return;
+    const b = batchById.get(key);
+    const update = { $inc: { quantity: delta } };
+    const nextStatus = statusAfter(b.status, b.quantity + delta);
+    if (nextStatus !== b.status) update.$set = { status: nextStatus };
+    ops.push({
+      updateOne: {
+        filter: { _id: b._id, pharmacyId, quantity: { $gte: Math.max(0, -delta) } },
+        update,
+      },
+    });
+  });
+  if (ops.length) {
+    const result = await StockBatch.bulkWrite(ops, { session, ordered: true });
+    if (result.modifiedCount !== ops.length) {
+      throw new AppError(
+        'Stock changed while the stock take was being approved and a correction would make a batch negative. Reopen and recount, then approve again.',
+        409
+      );
+    }
+  }
+
+  // 3. Movement ledger + controlled register, built in line order with running balances.
+  const state = new Map(batches.map((b) => [String(b._id), { quantity: b.quantity, status: b.status }]));
+  const reason = (line) => `Stock take ${st.number}: counted ${line.countedQty}, system ${line.systemQty}`;
+  const movements = [];
+  const steps = []; // { line, batch, delta, registerChange }
+  for (const line of changed) {
+    const key = String(line.batchId);
+    const batch = batchById.get(key);
+    const before = state.get(key);
+    const delta = line.variance;
+    const after = { quantity: before.quantity + delta, status: statusAfter(before.status, before.quantity + delta) };
+    state.set(key, after);
+    // Same document recordMovement() writes (utils/stockMovement.js)
+    movements.push({
+      pharmacyId,
+      batchId: batch._id,
+      medicineId: batch.medicineId,
+      type: 'stock_take',
+      quantityChange: delta,
+      balanceAfter: after.quantity,
+      reason: reason(line),
+      userId: userId || undefined,
+      refId: st._id,
+      refModel: 'StockTake',
+    });
+    steps.push({ batch, delta, registerChange: registerUnits(after) - registerUnits(before) });
+    line.appliedChange = delta;
+  }
+  await StockMovement.insertMany(movements, { session });
+
+  const medIds = [...new Set(steps.map((s) => String(s.batch.medicineId)))];
+  const controlled = await Medicine.find({ _id: { $in: medIds }, pharmacyId, isControlled: true })
+    .select('_id')
+    .session(session)
+    .lean();
+  if (!controlled.length) return;
+  const controlledIds = new Set(controlled.map((m) => String(m._id)));
+
+  // Register balance after the whole stock take, per controlled medicine ...
+  const totals = await StockBatch.aggregate([
+    {
+      $match: {
+        pharmacyId,
+        medicineId: { $in: controlled.map((m) => m._id) },
+        status: { $in: ['active', 'expired'] },
+        quantity: { $gt: 0 },
+      },
+    },
+    { $group: { _id: '$medicineId', total: { $sum: '$quantity' } } },
+  ]).session(session);
+  const finalByMed = new Map(totals.map((r) => [String(r._id), r.total]));
+  // ... walked back to the balance before the first line, then forward line by line, so each
+  // entry carries the balance right after its own correction (as one-by-one recording would).
+  const running = new Map();
+  [...controlledIds].forEach((id) => {
+    const changeSum = steps
+      .filter((s) => String(s.batch.medicineId) === id)
+      .reduce((sum, s) => sum + s.registerChange, 0);
+    running.set(id, (finalByMed.get(id) || 0) - changeSum);
+  });
+  const now = new Date();
+  const entries = [];
+  steps.forEach(({ batch, delta, registerChange }) => {
+    const medId = String(batch.medicineId);
+    if (!controlledIds.has(medId)) return;
+    const balanceAfter = running.get(medId) + registerChange;
+    running.set(medId, balanceAfter);
+    // Same document recordControlledMovement() writes (services/clinical.js), entryType 'adjust'
+    entries.push({
+      pharmacyId,
+      medicineId: batch.medicineId,
+      batchId: batch._id,
+      saleId: null,
+      patientId: null,
+      prescriptionId: null,
+      quantityIn: delta > 0 ? delta : 0,
+      quantityOut: delta < 0 ? -delta : 0,
+      balanceAfter,
+      userId,
+      entryType: 'adjust',
+      refId: st._id,
+      notes: `Stock take ${st.number}`,
+      date: now,
+    });
+  });
+  if (entries.length) await ControlledEntry.insertMany(entries, { session });
+};
+
 // @route POST /api/stock-takes/:id/approve   (stock:take + stock:adjust)
 const approveStockTake = async (req, res) => {
   const session = await mongoose.startSession();
@@ -256,63 +425,7 @@ const approveStockTake = async (req, res) => {
       st = await findStockTake(req, { session });
       if (st.status !== 'submitted') throw new AppError('Only a submitted stock take can be approved', 409);
 
-      for (const line of st.lines) {
-        if (line.countedQty === null || line.countedQty === undefined || !line.variance) {
-          line.appliedChange = line.countedQty === null || line.countedQty === undefined ? null : 0;
-          continue;
-        }
-        const delta = line.variance;
-        // eslint-disable-next-line no-await-in-loop
-        const batch = await StockBatch.findOneAndUpdate(
-          { _id: line.batchId, pharmacyId: req.pharmacyId, quantity: { $gte: -delta } },
-          { $inc: { quantity: delta } },
-          { returnDocument: 'after', session }
-        );
-        if (!batch) {
-          throw new AppError(
-            `Batch ${line.batchNo} (${line.medicineName}) changed since the count started and the correction would make it negative. Reopen and recount it.`,
-            409
-          );
-        }
-        if (batch.quantity === 0 && batch.status === 'active') batch.status = 'depleted';
-        else if (batch.quantity > 0 && batch.status === 'depleted') batch.status = 'active';
-        if (batch.isModified('status')) {
-          // eslint-disable-next-line no-await-in-loop
-          await batch.save({ session });
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await recordMovement(
-          {
-            pharmacyId: req.pharmacyId,
-            batchId: batch._id,
-            medicineId: batch.medicineId,
-            type: 'stock_take',
-            quantityChange: delta,
-            balanceAfter: batch.quantity,
-            reason: `Stock take ${st.number}: counted ${line.countedQty}, system ${line.systemQty}`,
-            userId: req.user?._id,
-            refId: st._id,
-            refModel: 'StockTake',
-          },
-          { session }
-        );
-        // eslint-disable-next-line no-await-in-loop
-        await recordControlledMovement(
-          {
-            pharmacyId: req.pharmacyId,
-            medicineId: batch.medicineId,
-            batchId: batch._id,
-            entryType: 'adjust',
-            quantityIn: delta > 0 ? delta : 0,
-            quantityOut: delta < 0 ? -delta : 0,
-            userId: req.user?._id,
-            refId: st._id,
-            notes: `Stock take ${st.number}`,
-          },
-          { session }
-        );
-        line.appliedChange = delta;
-      }
+      await applyStockTakeVariances(req, st, session);
 
       st.status = 'approved';
       st.approvedBy = req.user?._id;

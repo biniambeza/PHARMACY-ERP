@@ -1,51 +1,44 @@
-import { useEffect, useMemo, useState } from 'react';
-import { X, Plus, Trash2, Search, Truck, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, Plus, Trash2, Truck, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { getStockBatches } from '../../api/stockApi';
 import { createTransfer, getTransferDestinations } from '../../api/transferApi';
 import { formatDate } from '../../utils/format';
+import MedicinePicker from '../common/MedicinePicker';
 
 const inputClass =
   'w-full px-3 py-2 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition';
 
-// Groups usable (active, non-expired, quantity > 0) batches by medicine.
-const groupByMedicine = (batches) => {
+// Usable (active, non-expired, quantity > 0) batches of one medicine, FEFO order.
+const usableStock = (medicine, batches) => {
   const now = Date.now();
-  const map = new Map();
-  for (const b of batches) {
-    const med = b.medicineId;
-    if (!med || !med._id) continue;
-    if (b.status !== 'active' || b.quantity <= 0 || new Date(b.expiryDate).getTime() <= now) continue;
-    if (!map.has(med._id)) map.set(med._id, { medicine: med, batches: [], total: 0 });
-    const entry = map.get(med._id);
-    entry.batches.push(b);
-    entry.total += b.quantity;
-  }
-  return [...map.values()].sort((a, b) => a.medicine.name.localeCompare(b.medicine.name));
+  const usable = batches.filter(
+    (b) => b.status === 'active' && b.quantity > 0 && new Date(b.expiryDate).getTime() > now
+  );
+  return { medicine, batches: usable, total: usable.reduce((sum, b) => sum + b.quantity, 0), loading: false };
 };
 
 // Mounted only while open, so every opening starts from fresh state.
 const CreateTransferModalBody = ({ onClose, onCreated }) => {
   const { t } = useTranslation('transfers');
   const [destinations, setDestinations] = useState([]);
-  const [stock, setStock] = useState([]);
+  // medicineId -> { medicine, batches, total, loading } for the medicines added as lines
+  const [stockById, setStockById] = useState(() => new Map());
   const [loading, setLoading] = useState(true);
   const [toPharmacyId, setToPharmacyId] = useState('');
   const [lines, setLines] = useState([]);
-  const [search, setSearch] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getTransferDestinations(), getStockBatches({ status: 'active' })])
-      .then(([d, s]) => {
+    getTransferDestinations()
+      .then((d) => {
         if (cancelled) return;
         setDestinations(d.branches || []);
         setToPharmacyId(d.branches?.[0]?._id || '');
-        setStock(groupByMedicine(s.batches || []));
       })
       .catch((err) => {
         if (!cancelled) setError(err.response?.data?.message || i18n.t('transfers:create.errors.load'));
@@ -58,24 +51,22 @@ const CreateTransferModalBody = ({ onClose, onCreated }) => {
     };
   }, []);
 
-  const stockById = useMemo(() => new Map(stock.map((s) => [s.medicine._id, s])), [stock]);
+  const setStockEntry = (id, entry) =>
+    setStockById((prev) => {
+      const next = new Map(prev);
+      next.set(id, entry);
+      return next;
+    });
 
-  const matches = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return [];
-    return stock
-      .filter(
-        (s) =>
-          s.medicine.name.toLowerCase().includes(q) ||
-          (s.medicine.genericName || '').toLowerCase().includes(q) ||
-          (s.medicine.barcode || '').toLowerCase() === q
-      )
-      .slice(0, 8);
-  }, [search, stock]);
-
-  const addLine = (entry) => {
-    setLines((prev) => [...prev, { key: `${entry.medicine._id}-${Date.now()}`, medicineId: entry.medicine._id, batchId: '', quantity: 1 }]);
-    setSearch('');
+  // Adds a line for the picked medicine and loads that medicine's batches (only its own stock).
+  const addLine = (medicine) => {
+    if (!medicine) return;
+    setLines((prev) => [...prev, { key: `${medicine._id}-${Date.now()}`, medicineId: medicine._id, batchId: '', quantity: 1 }]);
+    if (stockById.has(medicine._id)) return;
+    setStockEntry(medicine._id, { medicine, batches: [], total: 0, loading: true });
+    getStockBatches({ medicineId: medicine._id, status: 'active', limit: 2000 })
+      .then((res) => setStockEntry(medicine._id, usableStock(medicine, res.batches || [])))
+      .catch(() => setStockEntry(medicine._id, usableStock(medicine, [])));
   };
 
   const updateLine = (key, patch) => setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
@@ -83,6 +74,7 @@ const CreateTransferModalBody = ({ onClose, onCreated }) => {
 
   const lineError = (line) => {
     const entry = stockById.get(line.medicineId);
+    if (entry?.loading) return '';
     if (!entry) return t('create.errors.noStock');
     const qty = Number(line.quantity);
     if (!Number.isInteger(qty) || qty < 1) return t('create.errors.wholeQty');
@@ -95,6 +87,7 @@ const CreateTransferModalBody = ({ onClose, onCreated }) => {
     setError('');
     if (!toPharmacyId) return setError(t('create.errors.destination'));
     if (!lines.length) return setError(t('create.errors.noLines'));
+    if (lines.some((l) => stockById.get(l.medicineId)?.loading)) return setError(t('create.errors.stillLoading'));
     const bad = lines.find((l) => lineError(l));
     if (bad) return setError(lineError(bad));
     setSaving(true);
@@ -168,32 +161,14 @@ const CreateTransferModalBody = ({ onClose, onCreated }) => {
                 </label>
               </div>
 
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t('create.searchPlaceholder')}
-                  className={`${inputClass} pl-9`}
-                />
-                {matches.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-white dark:bg-[#1a2230] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden">
-                    {matches.map((m) => (
-                      <button
-                        key={m.medicine._id}
-                        type="button"
-                        onClick={() => addLine(m)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 text-left cursor-pointer"
-                      >
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          {m.medicine.name} {m.medicine.strength}
-                        </span>
-                        <span className="text-slate-500">{t('create.inStock', { count: m.total })}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <MedicinePicker
+                value={null}
+                keepValue={false}
+                onChange={addLine}
+                placeholder={t('create.searchPlaceholder')}
+                ariaLabel={t('create.searchPlaceholder')}
+                inputClassName={inputClass}
+              />
 
               {lines.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-6">{t('create.noLines')}</p>
@@ -206,7 +181,9 @@ const CreateTransferModalBody = ({ onClose, onCreated }) => {
                       <div key={line.key} className="grid grid-cols-12 gap-2 items-start p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
                         <div className="col-span-12 sm:col-span-4 text-xs">
                           <p className="font-semibold text-slate-800 dark:text-slate-200">{entry?.medicine.name}</p>
-                          <p className="text-[11px] text-slate-500">{t('create.usableUnits', { count: entry?.total || 0 })}</p>
+                          <p className="text-[11px] text-slate-500">
+                            {entry?.loading ? t('create.loadingStock') : t('create.usableUnits', { count: entry?.total || 0 })}
+                          </p>
                         </div>
                         <select
                           value={line.batchId}

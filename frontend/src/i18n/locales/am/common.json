@@ -1,28 +1,89 @@
 {
   "appName": "የመድኃኒት ቤት ኢአርፒ",
   "language": "ቋንቋ",
-  "languages": { "en": "English", "am": "አማርኛ", "om": "Afaan Oromoo" },
+  "languages": {
+    "en": "English",
+    "am": "አማርኛ",
+    "om": "Afaan Oromoo"
+  },
   "calendar": "የቀን መቁጠሪያ",
-  "calendars": { "gregorian": "ግሪጎሪያን (የፈረንጅ)", "ethiopian": "የኢትዮጵያ" },
+  "calendars": {
+    "gregorian": "ግሪጎሪያን (የፈረንጅ)",
+    "ethiopian": "የኢትዮጵያ"
+  },
   "buttons": {
-    "save": "አስቀምጥ", "cancel": "ተው", "delete": "አጥፋ", "edit": "አርትዕ", "add": "ጨምር",
-    "create": "ፍጠር", "update": "አዘምን", "close": "ዝጋ", "confirm": "አረጋግጥ",
-    "search": "ፈልግ", "filter": "አጣራ", "export": "ወደ ውጭ ላክ", "print": "አትም",
-    "refresh": "አድስ", "back": "ተመለስ", "next": "ቀጣይ", "previous": "ቀዳሚ",
-    "submit": "አስገባ", "view": "ተመልከት", "download": "አውርድ", "reset": "ዳግም አስጀምር",
-    "clear": "አጽዳ", "yes": "አዎ", "no": "አይ"
+    "save": "አስቀምጥ",
+    "cancel": "ተው",
+    "delete": "አጥፋ",
+    "edit": "አርትዕ",
+    "add": "ጨምር",
+    "create": "ፍጠር",
+    "update": "አዘምን",
+    "close": "ዝጋ",
+    "confirm": "አረጋግጥ",
+    "search": "ፈልግ",
+    "filter": "አጣራ",
+    "export": "ወደ ውጭ ላክ",
+    "print": "አትም",
+    "refresh": "አድስ",
+    "back": "ተመለስ",
+    "next": "ቀጣይ",
+    "previous": "ቀዳሚ",
+    "submit": "አስገባ",
+    "view": "ተመልከት",
+    "download": "አውርድ",
+    "reset": "ዳግም አስጀምር",
+    "clear": "አጽዳ",
+    "yes": "አዎ",
+    "no": "አይ"
   },
   "status": {
-    "active": "ንቁ", "inactive": "ንቁ ያልሆነ", "pending": "በመጠባበቅ ላይ", "completed": "ተጠናቋል",
-    "cancelled": "ተሰርዟል", "failed": "አልተሳካም", "refunded": "ገንዘብ ተመልሷል", "suspended": "ታግዷል",
-    "archived": "በማህደር ተቀምጧል", "draft": "ረቂቅ", "received": "ደርሷል", "partial": "ከፊል",
-    "expired": "ጊዜው ያለፈበት", "lowStock": "ዝቅተኛ ክምችት", "outOfStock": "ክምችት አልቋል",
-    "paid": "ተከፍሏል", "unpaid": "ያልተከፈለ"
+    "active": "ንቁ",
+    "inactive": "ንቁ ያልሆነ",
+    "pending": "በመጠባበቅ ላይ",
+    "completed": "ተጠናቋል",
+    "cancelled": "ተሰርዟል",
+    "failed": "አልተሳካም",
+    "refunded": "ገንዘብ ተመልሷል",
+    "suspended": "ታግዷል",
+    "archived": "በማህደር ተቀምጧል",
+    "draft": "ረቂቅ",
+    "received": "ደርሷል",
+    "partial": "ከፊል",
+    "expired": "ጊዜው ያለፈበት",
+    "lowStock": "ዝቅተኛ ክምችት",
+    "outOfStock": "ክምችት አልቋል",
+    "paid": "ተከፍሏል",
+    "unpaid": "ያልተከፈለ"
   },
   "labels": {
-    "actions": "ድርጊቶች", "loading": "በመጫን ላይ...", "noData": "ምንም መረጃ አልተገኘም", "error": "ስህተት",
-    "success": "ተሳክቷል", "total": "ጠቅላላ", "date": "ቀን", "amount": "መጠን",
-    "quantity": "ብዛት", "price": "ዋጋ", "theme": "ገጽታ", "logout": "ውጣ",
-    "profile": "መገለጫ", "somethingWentWrong": "የሆነ ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።"
+    "actions": "ድርጊቶች",
+    "loading": "በመጫን ላይ...",
+    "noData": "ምንም መረጃ አልተገኘም",
+    "error": "ስህተት",
+    "success": "ተሳክቷል",
+    "total": "ጠቅላላ",
+    "date": "ቀን",
+    "amount": "መጠን",
+    "quantity": "ብዛት",
+    "price": "ዋጋ",
+    "theme": "ገጽታ",
+    "logout": "ውጣ",
+    "profile": "መገለጫ",
+    "somethingWentWrong": "የሆነ ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።"
+  },
+  "medicinePicker": {
+    "placeholder": "መድኃኒቶችን ይፈልጉ...",
+    "searching": "በመፈለግ ላይ...",
+    "noResults": "ምንም መድኃኒት አልተገኘም",
+    "failed": "መድኃኒቶችን መፈለግ አልተቻለም",
+    "clear": "ምርጫውን አጽዳ",
+    "archived": "(በማህደር የተቀመጠ)",
+    "moreResults": "ከ{{total}} {{shown}} እየታዩ ነው። ለማጥበብ ተጨማሪ ይጻፉ።"
+  },
+  "pager": {
+    "label": "ገጾች",
+    "pageOf": "ገጽ {{page}} ከ {{pages}}",
+    "showing": "ከ {{total}} ውስጥ {{shown}} ይታያሉ"
   }
 }

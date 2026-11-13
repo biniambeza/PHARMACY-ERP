@@ -1,4 +1,5 @@
 const PurchaseOrder = require('../../models/PurchaseOrder');
+const Supplier = require('../../models/Supplier');
 const AppError = require('../../utils/AppError');
 const escapeRegex = require('../../utils/escapeRegex');
 const { parsePagination, isValidId } = require('./helpers');
@@ -7,7 +8,9 @@ const { parsePagination, isValidId } = require('./helpers');
 // @route   GET /api/procurement/orders
 // @access  Private (Pharmacist only)
 const getPurchaseOrders = async (req, res) => {
-  const { status, search } = req.query;
+  const { status } = req.query;
+  // ?q= is an alias of ?search=
+  const search = req.query.search || req.query.q;
   const query = { pharmacyId: req.pharmacyId };
 
   if (status) {
@@ -17,34 +20,39 @@ const getPurchaseOrders = async (req, res) => {
   }
 
   if (search) {
-    query.poNumber = { $regex: escapeRegex(String(search)), $options: 'i' };
+    const term = String(search).trim().slice(0, 100);
+    const pattern = escapeRegex(term);
+    // PO number, or the supplier's name
+    const supplierIds = await Supplier.find({
+      pharmacyId: req.pharmacyId,
+      name: { $regex: pattern, $options: 'i' },
+    }).distinct('_id');
+    query.$or = [{ poNumber: { $regex: pattern, $options: 'i' } }, { supplierId: { $in: supplierIds } }];
   }
 
   const pagination = parsePagination(req.query);
-  let findQuery = PurchaseOrder.find(query)
+  const findQuery = PurchaseOrder.find(query)
+    .select('-__v')
     .populate('supplierId', 'name contactPerson phone email')
     .populate('pharmacistId', 'name email')
     .populate('receipts.receivedBy', 'name')
-    .sort({ createdAt: -1 });
-  if (pagination) {
-    findQuery = findQuery.skip(pagination.skip).limit(pagination.limit);
-  }
+    .sort({ createdAt: -1, _id: -1 })
+    .skip(pagination.skip)
+    .limit(pagination.limit)
+    .lean();
 
   const [orders, total] = await Promise.all([findQuery, PurchaseOrder.countDocuments(query)]);
 
-  const response = {
+  return res.status(200).json({
     success: true,
     count: orders.length,
     total,
+    page: pagination.page,
+    limit: pagination.limit,
+    pages: Math.ceil(total / pagination.limit),
+    truncated: pagination.skip + orders.length < total,
     orders,
-  };
-  if (pagination) {
-    response.page = pagination.page;
-    response.limit = pagination.limit;
-    response.pages = Math.ceil(total / pagination.limit);
-  }
-
-  return res.status(200).json(response);
+  });
 };
 
 // @desc    Get single purchase order

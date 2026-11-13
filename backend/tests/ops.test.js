@@ -66,6 +66,34 @@ describe('health endpoints', () => {
     expect(res.body.commit).toBeNull();
   });
 
+  test('GET /api/health stays 200 when the database is down (liveness only)', async () => {
+    // readyState is a non-configurable getter backed by _readyState.
+    const conn = mongoose.connection;
+    const saved = conn._readyState;
+    let res;
+    try {
+      conn._readyState = 0;
+      res = await request(app).get('/api/health');
+    } finally {
+      conn._readyState = saved;
+    }
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ success: true, status: 'ok', db: 'down' });
+  });
+
+  test('JSON responses are compressed when large enough, exports are not', async () => {
+    const compression = require('compression');
+    const filter = jest.spyOn(compression, 'filter');
+    const res = await request(app).get('/api/health').set('Accept-Encoding', 'gzip');
+    expect(res.status).toBe(200);
+    // Small bodies (< 1 kB) are sent as-is; the middleware is mounted and consulted.
+    expect(res.headers['content-encoding']).toBeUndefined();
+    expect(filter).toHaveBeenCalled();
+    filter.mockClear();
+    await request(app).get('/api/export/whatever').set('Accept-Encoding', 'gzip');
+    expect(filter).not.toHaveBeenCalled();
+  });
+
   test('GET /api/health/ready pings the database', async () => {
     const res = await request(app).get('/api/health/ready');
     expect(res.status).toBe(200);

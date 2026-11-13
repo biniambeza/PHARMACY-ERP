@@ -3,7 +3,7 @@ const Medicine = require('../../models/Medicine');
 const StockBatch = require('../../models/StockBatch');
 const StockMovement = require('../../models/StockMovement');
 const AppError = require('../../utils/AppError');
-const { DAY_MS, toObjectId, round2, localMonthExpr, parseRange } = require('./helpers');
+const { DAY_MS, toObjectId, round2, localMonthExpr, parseReportRange, periodStart, REPORT_AGG_OPTS, REPORT_MAX_TIME_MS } = require('./helpers');
 const { rangeMeta } = require('./aggregates');
 
 // @desc    Slow-moving and dead stock: medicines in stock with no sales (dead)
@@ -54,7 +54,7 @@ const getSlowMovingStock = async (req, res) => {
       },
       { $addFields: { stock: { $first: '$stock' } } },
       { $match: { 'stock.qty': { $gt: 0 } } },
-    ]),
+    ]).option(REPORT_AGG_OPTS),
     Sale.aggregate([
       { $match: { pharmacyId, voided: { $ne: true } } },
       { $project: { createdAt: 1, items: { medicineId: 1, quantity: 1 } } },
@@ -66,7 +66,7 @@ const getSlowMovingStock = async (req, res) => {
           unitsInWindow: { $sum: { $cond: [{ $gte: ['$createdAt', cutoff] }, '$items.quantity', 0] } },
         },
       },
-    ]).option({ allowDiskUse: true }),
+    ]).option({ ...REPORT_AGG_OPTS, allowDiskUse: true }),
   ]);
 
   const salesMap = new Map(salesRows.map((r) => [String(r._id), r]));
@@ -126,9 +126,9 @@ const EXPIRE_MOVEMENTS = ['expire', 'adjust_expired'];
 // @access  Private (reports:view)
 const getExpiryLoss = async (req, res) => {
   const pharmacyId = toObjectId(req.pharmacyId);
-  const period = parseRange(req, 'yearly');
+  const period = parseReportRange(req, 'yearly');
   const { timeZone } = period;
-  const periodFrom = period.range === 'all' ? null : period.from;
+  const periodFrom = periodStart(period);
   const dateMatch = {};
   if (periodFrom) dateMatch.$gte = periodFrom;
   dateMatch.$lt = period.to;
@@ -199,8 +199,8 @@ const getExpiryLoss = async (req, res) => {
           ],
         },
       },
-    ]),
-    StockMovement.distinct('batchId', { pharmacyId, type: { $in: EXPIRE_MOVEMENTS } }),
+    ]).option(REPORT_AGG_OPTS),
+    StockMovement.distinct('batchId', { pharmacyId, type: { $in: EXPIRE_MOVEMENTS } }).maxTimeMS(REPORT_MAX_TIME_MS),
     StockBatch.aggregate([
       { $match: { pharmacyId, quantity: { $gt: 0 }, expiryDate: { $lt: new Date() }, status: { $in: ['active', 'expired'] } } },
       {
@@ -233,7 +233,7 @@ const getExpiryLoss = async (req, res) => {
           },
         },
       },
-    ]),
+    ]).option(REPORT_AGG_OPTS),
   ]);
 
   // Batches marked 'expired' without any expire movement (e.g. legacy data):
@@ -256,7 +256,7 @@ const getExpiryLoss = async (req, res) => {
         batches: { $sum: 1 },
       },
     },
-  ]);
+  ]).option(REPORT_AGG_OPTS);
 
   const months = new Map();
   [...(movementFacet[0]?.byMonth || []), ...statusOnly].forEach((r) => {

@@ -7,6 +7,7 @@
     "searchPlaceholder": "Lakkoofsa baachii, maqaa daldalaa ykn foormulaa hojii irra jiruun barbaadi...",
     "confirmDelete": "Baachii \"{{batchNo}}\" guutummaatti haquu barbaaduu kee mirkanaa'aa dhaa?",
     "deleteFailed": "Baachii haquun hin milkoofne",
+    "pageOf": "Fuula {{page}} / {{pages}}",
     "footerShowing": "Baachiiwwan kuusaa <b>{{total}}</b> keessaa <b>{{shown}}</b> agarsiisaa jira",
     "footerProtocol": "Pirootokoolii: Hordoffiin FEFO hojii irra jira"
   },
@@ -77,6 +78,7 @@
     "scanLabel": "Baarkoodii Iskaanii (filannoo)",
     "scanPlaceholder": "Baarkoodii / SKU iskaanii ykn barreessii Enter tuqi",
     "medicineLabel": "Meeshaa Qorichaa Filadhu",
+    "medicineSearchPlaceholder": "Qoricha maqaa, maqaa jeneerikii ykn baarkoodiin barbaadi...",
     "loadingCatalog": "Kaataalogii fe'aa jira...",
     "noMedicines": "Kaataalogii keessatti qorichi hin argamne. Maaloo dura oomisha galmeessi.",
     "retail": "Gatii tajaajilaa: {{price}}",

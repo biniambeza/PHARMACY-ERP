@@ -104,6 +104,8 @@
     "qtyPlaceholder": "Baay'ina",
     "costPlaceholder": "Gatii",
     "removeLine": "Oomisha haqi",
+    "medicineLabel": "Qoricha sarara {{line}}",
+    "medicinePlaceholder": "Qoricha barbaadi...",
     "notes": "Yaadannoo Bittaa fi Haalawwan Geessituu",
     "notesPlaceholder": "Fkn. Sansalatni qorraa barbaachisa, kaffaltiin nagahee guyyaa 30 keessatti...",
     "estimatedTotal": "Ida'ama Ajajaa Tilmaamame:",

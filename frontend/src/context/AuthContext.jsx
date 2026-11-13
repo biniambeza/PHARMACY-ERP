@@ -97,7 +97,8 @@ export const AuthProvider = ({ children }) => {
 
   const loginErrorMessage = (err, fallback) =>
     !err.response
-      ? 'Cannot reach the server. Make sure the backend is running and VITE_API_URL is correct.'
+      ? // English only: this context has no i18n. Deliberately generic (no build/env details).
+        'Cannot reach the server. Please check your connection and try again.'
       : err.response.data?.message || fallback;
 
   // Stores a successful login response ({ user, token, memberships }).

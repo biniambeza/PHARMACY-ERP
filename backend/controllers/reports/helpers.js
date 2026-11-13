@@ -156,7 +156,7 @@ const RANGES = ['today', '7d', 'monthly', '30d', 'yearly', 'custom', 'all'];
 //   yearly: the current local year to date (previous = same span last year);
 //   custom: from..to inclusive local days; all: everything (no previous).
 // Passing from/to without range implies custom.
-const parseRange = (req, defaultRange = '7d') => {
+const parseRange = (req, defaultRange = '7d', { maxYears = null } = {}) => {
   const timeZone = getClientTimezone(req);
   const q = req.query || {};
   let raw = q.range;
@@ -215,16 +215,71 @@ const parseRange = (req, defaultRange = '7d') => {
       break;
   }
 
+  // Heavy reports cap the window: 'all' becomes the last `maxYears` years and
+  // longer custom ranges are refused.
+  let capped = false;
+  if (maxYears) {
+    if (range === 'custom' && to.getTime() - from.getTime() > maxYears * 366 * DAY_MS) {
+      throw new AppError(`Reports can cover at most ${maxYears} years. Choose a shorter date range.`, 400);
+    }
+    if (range === 'all') {
+      from = localMidnight(y - maxYears, m, d + 1, timeZone);
+      label = `Last ${maxYears} years`;
+      capped = true;
+    }
+  }
+
   if (range !== 'all' && !prevFrom) {
     prevTo = from;
     prevFrom = new Date(from.getTime() - (to.getTime() - from.getTime()));
   }
 
-  return { range, label, from, to, prevFrom, prevTo, timeZone };
+  return { range, label, from, to, prevFrom, prevTo, timeZone, capped };
 };
+
+// ---------------------------------------------------------------------------
+// Request-path limits for heavy reports
+// ---------------------------------------------------------------------------
+
+// Server-side time limit for every report query (MongoDB aborts with MaxTimeMSExpired).
+const REPORT_MAX_TIME_MS = 20000;
+// Options for Model.aggregate(...).option(REPORT_AGG_OPTS)
+const REPORT_AGG_OPTS = Object.freeze({ maxTimeMS: REPORT_MAX_TIME_MS });
+// Longest window a heavy report may cover ('all' is clamped to it, custom ranges beyond it get a 400).
+const MAX_REPORT_YEARS = 3;
+
+// parseRange with the heavy-report cap applied.
+const parseReportRange = (req, defaultRange = '7d') => parseRange(req, defaultRange, { maxYears: MAX_REPORT_YEARS });
+
+// Start of the period for queries: null means "since the beginning" (uncapped 'all').
+const periodStart = (period) => (period.range === 'all' && !period.capped ? null : period.from);
+
+// MongoDB error code 50 = MaxTimeMSExpired (the server stopped the query).
+const isQueryTimeout = (err) =>
+  Boolean(err) &&
+  (err.code === 50 ||
+    err.codeName === 'MaxTimeMSExpired' ||
+    (err.cause && (err.cause.code === 50 || err.cause.codeName === 'MaxTimeMSExpired')));
+
+// Wraps a report handler: a query time-out becomes a friendly 503 instead of a 500.
+const withReportTimeout = (handler) =>
+  async function reportHandler(req, res, next) {
+    try {
+      return await handler(req, res, next);
+    } catch (err) {
+      if (isQueryTimeout(err)) {
+        throw new AppError(
+          'This report is taking too long to prepare. Try a shorter date range, or try again in a few minutes.',
+          503
+        );
+      }
+      throw err;
+    }
+  };
 
 module.exports = {
   DAY_MS,
+  getClientTimezone,
   OPEN_PO_STATUSES,
   toObjectId,
   round2,
@@ -235,4 +290,11 @@ module.exports = {
   localDayExpr,
   localMonthExpr,
   parseRange,
+  parseReportRange,
+  periodStart,
+  REPORT_MAX_TIME_MS,
+  REPORT_AGG_OPTS,
+  MAX_REPORT_YEARS,
+  isQueryTimeout,
+  withReportTimeout,
 };

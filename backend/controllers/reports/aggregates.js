@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const Sale = require('../../models/Sale');
 const Medicine = require('../../models/Medicine');
 const StockBatch = require('../../models/StockBatch');
-const { DAY_MS, round2, getLocalDateString, getLocalDayName, getLocalMonthDay, localDayExpr } = require('./helpers');
+const { DAY_MS, round2, getLocalDateString, getLocalDayName, getLocalMonthDay, localDayExpr, REPORT_AGG_OPTS, REPORT_MAX_TIME_MS, periodStart } = require('./helpers');
 
 // ---------------------------------------------------------------------------
 // Shared aggregation pieces
@@ -175,13 +175,13 @@ const loadReturnLines = async (pharmacyId, from, to) => {
     if (from) match.createdAt.$gte = from;
     if (to) match.createdAt.$lt = to;
   }
-  const returns = await Return.find(match)
+  const returns = await Return.find(match).maxTimeMS(REPORT_MAX_TIME_MS)
     .select('saleId createdAt refundTotal items')
     .lean();
   if (returns.length === 0) return { returns: [], lines: [] };
 
   const saleIds = [...new Set(returns.map((r) => String(r.saleId)))];
-  const sales = await Sale.find({ _id: { $in: saleIds }, pharmacyId })
+  const sales = await Sale.find({ _id: { $in: saleIds }, pharmacyId }).maxTimeMS(REPORT_MAX_TIME_MS)
     .select('voided items staffId pharmacistId shiftId taxLines insurance.schemeId')
     .lean();
   const saleById = new Map(sales.map((s) => [String(s._id), s]));
@@ -198,8 +198,8 @@ const loadReturnLines = async (pharmacyId, from, to) => {
     if (it.medicineId) medIds.add(String(it.medicineId));
   }));
   const [batches, meds] = await Promise.all([
-    batchIds.size ? StockBatch.find({ _id: { $in: [...batchIds] } }).select('purchasePrice').lean() : [],
-    medIds.size ? Medicine.find({ _id: { $in: [...medIds] } }).select('name category costPrice').lean() : [],
+    batchIds.size ? StockBatch.find({ _id: { $in: [...batchIds] } }).maxTimeMS(REPORT_MAX_TIME_MS).select('purchasePrice').lean() : [],
+    medIds.size ? Medicine.find({ _id: { $in: [...medIds] } }).maxTimeMS(REPORT_MAX_TIME_MS).select('name category costPrice').lean() : [],
   ]);
   const batchById = new Map(batches.map((b) => [String(b._id), b]));
   const medById = new Map(meds.map((m) => [String(m._id), m]));
@@ -328,7 +328,7 @@ const getSaleTotals = async (pharmacyId, from, to) => {
         ],
       },
     },
-  ]).option({ allowDiskUse: true });
+  ]).option({ ...REPORT_AGG_OPTS, allowDiskUse: true });
   const t = facet?.totals?.[0] || {};
   const c = facet?.cogs?.[0] || {};
   return {
@@ -415,7 +415,7 @@ const getDailySales = async (pharmacyId, from, timeZone, to = null) => {
         count: { $sum: 1 },
       },
     },
-  ]);
+  ]).option(REPORT_AGG_OPTS);
   return new Map(rows.map((r) => [r._id, r]));
 };
 
@@ -468,7 +468,7 @@ const getPaymentBreakdown = async (pharmacyId, from, to) => {
     { $unwind: '$pays' },
     { $group: { _id: { m: '$pays.method', s: '$_id' }, amount: { $sum: '$pays.amount' } } },
     { $group: { _id: '$_id.m', count: { $sum: 1 }, total: { $sum: '$amount' } } },
-  ]);
+  ]).option(REPORT_AGG_OPTS);
 
   const out = {
     cash: { count: 0, total: 0 },
@@ -521,7 +521,7 @@ const buildRangeTrend = (dailySales, from, to, timeZone) => {
 const rangeMeta = (r) => ({
   range: r.range,
   rangeLabel: r.label,
-  from: r.range === 'all' ? null : r.from,
+  from: periodStart(r),
   to: r.to,
   previous: r.prevFrom ? { from: r.prevFrom, to: r.prevTo } : null,
 });

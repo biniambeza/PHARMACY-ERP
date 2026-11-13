@@ -55,6 +55,7 @@
     "remove": "Balleessi",
     "saveDraft": "Akka wixineetti olkaa'i",
     "sendNow": "Amma ergi",
+    "loadingStock": "Kuusaa fe'aa jira...",
     "errors": {
       "load": "Dameelee fi kuusaa fe'uun hin danda'amne",
       "noStock": "Kuusaan fayyadamuu danda'amu hin jiru",
@@ -63,6 +64,7 @@
       "onlyAvailable_other": "Kan jiru {{count}} qofa",
       "destination": "Damee itti ergamu filadhu",
       "noLines": "Yoo xiqqaate qoricha tokko dabali",
+      "stillLoading": "Hanga kuusaan sararoota hundaa fe'amutti eegi",
       "save": "Dabarsa uumuun hin danda'amne"
     }
   },

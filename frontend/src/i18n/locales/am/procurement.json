@@ -104,6 +104,8 @@
     "qtyPlaceholder": "ብዛት",
     "costPlaceholder": "ወጪ",
     "removeLine": "ምርቱን አስወግድ",
+    "medicineLabel": "የመስመር {{line}} መድኃኒት",
+    "medicinePlaceholder": "መድኃኒት ይፈልጉ...",
     "notes": "የግዥ ማስታወሻዎች እና የርክክብ ውሎች",
     "notesPlaceholder": "ለምሳሌ፦ መደበኛ ቀዝቃዛ ሰንሰለት ያስፈልጋል፣ ደረሰኝ በ30 ቀናት ውስጥ ይከፈላል...",
     "estimatedTotal": "የሚገመት የትዕዛዝ ድምር፦",

@@ -1,7 +1,7 @@
 // Monthly automatic insurance claim batching. Owner: Insurance agent.
 //
 // For every pharmacy with insurance schemes, builds one DRAFT claim per scheme (autoClaim !== false,
-// claimCycle !== 'on_demand'; month edges in INSURANCE_CLAIM_TZ / JOBS_TZ when set)
+// claimCycle !== 'on_demand'; month edges in INSURANCE_CLAIM_TZ / JOBS_TZ, default Africa/Addis_Ababa)
 // from the unclaimed insurance sales of the previous calendar month. Claims are never submitted
 // automatically: staff review, refresh and submit them from the Claims tab.
 //
@@ -15,6 +15,7 @@ const Pharmacy = require('../models/Pharmacy');
 const InsuranceScheme = require('../models/InsuranceScheme');
 const svc = require('../services/insurance');
 const { audit } = require('../utils/audit');
+const { jobsTimeZone, validTimeZone } = require('./lock');
 
 const DEFAULT_INSURANCE_CLAIM_CRON = '0 2 1 * *';
 
@@ -23,17 +24,15 @@ const logError = (...args) => {
   if (!isTest()) console.error('[jobs:insurance-claims]', ...args);
 };
 
-// Time zone for the month edges: INSURANCE_CLAIM_TZ, else JOBS_TZ, else server local time.
+// Time zone for the month edges: INSURANCE_CLAIM_TZ, else JOBS_TZ, else Africa/Addis_Ababa
+// (the same default as the schedules in jobs/index.js).
 const claimTimeZone = () => {
-  const tz = (process.env.INSURANCE_CLAIM_TZ || process.env.JOBS_TZ || '').trim();
-  if (!tz) return null;
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: tz });
-    return tz;
-  } catch {
-    logError(`invalid time zone "${tz}", using server time`);
-    return null;
+  const tz = (process.env.INSURANCE_CLAIM_TZ || '').trim();
+  if (tz) {
+    if (validTimeZone(tz)) return tz;
+    logError(`invalid INSURANCE_CLAIM_TZ "${tz}", using JOBS_TZ / default`);
   }
+  return jobsTimeZone();
 };
 
 // Schemes billed "on demand" are only claimed manually.
@@ -116,4 +115,4 @@ const runInsuranceClaims = async ({ now = new Date() } = {}) => {
   return out;
 };
 
-module.exports = { runInsuranceClaims, runPharmacyInsuranceClaims, DEFAULT_INSURANCE_CLAIM_CRON };
+module.exports = { runInsuranceClaims, runPharmacyInsuranceClaims, claimTimeZone, DEFAULT_INSURANCE_CLAIM_CRON };

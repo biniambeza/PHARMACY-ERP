@@ -4,8 +4,13 @@
 //   downloadBlob(blob, filename)
 // `columns`: [{ key, header, format?: (value, row) => string|number, align?: 'left'|'right'|'center' }]
 // (`label` is accepted as an alias of `header`, and a column may be a plain key string.)
-import { jsPDF } from 'jspdf';
-import { autoTable } from 'jspdf-autotable';
+// jsPDF + autotable (~800 kB, chunk vendor-pdf) are loaded on demand by exportPDF only, so
+// pages that import this file (CSV export, downloadBlob) do not pull them into the initial load.
+const loadPdfLib = () =>
+  Promise.all([import('jspdf'), import('jspdf-autotable')]).then(([pdf, table]) => ({
+    jsPDF: pdf.jsPDF,
+    autoTable: table.autoTable,
+  }));
 
 const normalizeColumns = (columns, rows) => {
   const cols = columns && columns.length ? columns : Object.keys(rows?.[0] || {});
@@ -55,7 +60,26 @@ export const exportCSV = (rows = [], columns = [], filename = 'export') => {
 };
 
 // meta: { subtitle, pharmacy, period, generatedBy, summary: [[label, value], ...] }
-export const exportPDF = ({ title = 'Report', columns = [], rows = [], meta = {}, filename, orientation } = {}) => {
+// Async: resolves once the PDF is saved. Never rejects (callers fire and forget); a failure to
+// load the PDF library (e.g. offline before the chunk was cached) is logged and resolves false.
+export const exportPDF = async (options) => {
+  let lib;
+  try {
+    lib = await loadPdfLib();
+  } catch (err) {
+    console.error('PDF export failed: could not load the PDF library', err);
+    return false;
+  }
+  try {
+    buildPDF(lib, options);
+    return true;
+  } catch (err) {
+    console.error('PDF export failed', err);
+    return false;
+  }
+};
+
+const buildPDF = ({ jsPDF, autoTable }, { title = 'Report', columns = [], rows = [], meta = {}, filename, orientation } = {}) => {
   const cols = normalizeColumns(columns, rows);
   const doc = new jsPDF({ orientation: orientation || (cols.length > 6 ? 'landscape' : 'portrait'), unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();

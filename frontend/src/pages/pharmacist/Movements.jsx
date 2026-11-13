@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeftRight, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMovements } from '../../api/movementApi';
-import { getMedicines } from '../../api/medicineApi';
+import { getMedicineById } from '../../api/medicineApi';
 import { formatDateTime, formatDate } from '../../utils/format';
 import { toCSV, downloadCSV } from '../../components/catalog/csv';
 import { MOVEMENT_TYPE_LABELS } from '../../components/catalog/catalogUtils';
 import { inputCls, labelCls, cardCls, secondaryBtn, theadCls, errorBox } from '../../components/catalog/styles';
 import EthiopianDateHint from '../../components/common/EthiopianDateHint';
+import MedicinePicker from '../../components/common/MedicinePicker';
 
 const PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 500;
@@ -29,7 +30,8 @@ const Movements = () => {
   };
   const page = Math.max(1, parseInt(searchParams.get('page'), 10) || 1);
 
-  const [medicines, setMedicines] = useState([]);
+  // Medicines picked in the filter (or looked up for a ?medicineId= link), by id, for the picker label
+  const [knownMedicines, setKnownMedicines] = useState({});
   const [data, setData] = useState({ movements: [], total: 0, pages: 0 });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -46,11 +48,25 @@ const Movements = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryKey]);
 
+  const filterMedicine = filters.medicineId
+    ? knownMedicines[filters.medicineId] ||
+      data.movements.find((m) => m.medicineId?._id === filters.medicineId)?.medicineId ||
+      null
+    : null;
+  const needsMedicineLookup = Boolean(filters.medicineId) && !filterMedicine;
+
+  // A ?medicineId= link (e.g. from another page) with no movements on screen: fetch its name once.
   useEffect(() => {
-    getMedicines({ includeArchived: true })
-      .then((res) => setMedicines(res.medicines || []))
+    if (!needsMedicineLookup) return undefined;
+    let active = true;
+    const id = filters.medicineId;
+    getMedicineById(id)
+      .then((res) => active && res.medicine && setKnownMedicines((prev) => ({ ...prev, [id]: res.medicine })))
       .catch(() => {});
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [needsMedicineLookup, filters.medicineId]);
 
   useEffect(() => {
     let active = true;
@@ -140,13 +156,18 @@ const Movements = () => {
 
       <div className={`${cardCls} p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3`}>
         <div className="lg:col-span-2">
-          <label className={labelCls}>{t('filters.medicine')}</label>
-          <select className={inputCls} value={filters.medicineId} onChange={(e) => setFilter('medicineId', e.target.value)}>
-            <option value="">{t('filters.allMedicines')}</option>
-            {medicines.map((m) => (
-              <option key={m._id} value={m._id}>{m.name}{m.isArchived ? ` ${t('filters.archivedSuffix')}` : ''}</option>
-            ))}
-          </select>
+          <label htmlFor="movements-medicine" className={labelCls}>{t('filters.medicine')}</label>
+          <MedicinePicker
+            id="movements-medicine"
+            value={filterMedicine || (filters.medicineId ? { _id: filters.medicineId, name: '...' } : null)}
+            onChange={(med) => {
+              if (med) setKnownMedicines((prev) => ({ ...prev, [med._id]: med }));
+              setFilter('medicineId', med?._id || '');
+            }}
+            includeArchived
+            placeholder={t('filters.allMedicines')}
+            inputClassName={inputCls}
+          />
         </div>
         <div>
           <label className={labelCls}>{t('filters.type')}</label>

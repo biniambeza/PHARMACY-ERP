@@ -11,10 +11,12 @@ const Medicine = require('../models/Medicine');
 const PurchaseOrder = require('../models/PurchaseOrder');
 const Sale = require('../models/Sale');
 const User = require('../models/User');
+const DedupeMarker = require('../models/DedupeMarker');
 const { recordMovement } = require('../utils/stockMovement');
 const { audit } = require('../utils/audit');
 const notify = require('../services/notify');
 const { t, pharmacyLocale, localDate } = require('../i18n/messages');
+const { zonedDayKey, jobsTimeZone } = require('./lock');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 // Daily reminders use a window a bit shorter than a day so that a job running
@@ -267,6 +269,25 @@ const notifyOverduePOs = async (pharmacy, { now = new Date() } = {}) => {
 
 // ------------------------------------------------------------------ daily summary
 
+// Markers live a few days (TTL index), long enough to cover any re-run of the same day.
+const SUMMARY_MARKER_TTL_MS = 3 * DAY_MS;
+
+/**
+ * Claims the right to send the summary of `pharmacyId` for the local day of `now`
+ * (JOBS_TZ). Atomic: the marker _id is unique, so a second run / another instance
+ * gets a duplicate-key error and must not send. Returns true when claimed.
+ */
+const claimDailySummary = async (pharmacyId, now) => {
+  const _id = `daily-summary:${pharmacyId}:${zonedDayKey(now, jobsTimeZone())}`;
+  try {
+    await DedupeMarker.create({ _id, expiresAt: new Date(now.getTime() + SUMMARY_MARKER_TTL_MS) });
+    return true;
+  } catch (err) {
+    if (err && err.code === 11000) return false;
+    throw err;
+  }
+};
+
 const findOwners = async (pharmacy) => {
   const owners = await User.find({
     $or: [
@@ -309,6 +330,10 @@ const sendDailySummary = async (pharmacy, stats = {}, { now = new Date() } = {})
     t(loc, 'summary.overduePOs', { count: String(stats.overduePOs || 0) }),
   ];
   const text = lines.join('\n');
+
+  // Recorded BEFORE sending: at most one summary per pharmacy per local day, even if the
+  // job runs twice (catch-up + schedule, several instances, manual run-checks).
+  if (!(await claimDailySummary(pharmacy._id, now))) return { summarySent: false, alreadySent: true };
 
   // Email is the default channel for the summary; SMS only when enabled.
   let emailed = 0;
@@ -391,6 +416,7 @@ module.exports = {
   notifyLowStock,
   notifyOverduePOs,
   sendDailySummary,
+  claimDailySummary,
   runPharmacyChecks,
   runDailyChecks,
   findLowStock,

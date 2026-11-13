@@ -266,6 +266,68 @@ const xlsxSafe = (row) => {
   return out;
 };
 
+// Tracks whether the client went away (closed the tab / aborted the download) before
+// the response finished. `conn.gone` turns true on the response 'close' event when the
+// body was not fully written, or on the request's 'aborted' event.
+const watchClient = (req, res) => {
+  const conn = { gone: false };
+  const markGone = () => {
+    if (!res.writableFinished) conn.gone = true;
+  };
+  res.once('close', markGone);
+  if (req && typeof req.once === 'function') req.once('aborted', () => { conn.gone = true; });
+  return conn;
+};
+
+const closeCursor = async (cursor) => {
+  if (cursor && typeof cursor.close === 'function') {
+    try {
+      await cursor.close();
+    } catch {
+      // already exhausted / closed
+    }
+  }
+};
+
+// Resolves once the response can take more data ('drain') or the client is gone ('close').
+const waitForDrain = (res) =>
+  new Promise((resolve) => {
+    const done = () => {
+      res.off('drain', done);
+      res.off('close', done);
+      resolve();
+    };
+    res.on('drain', done);
+    res.on('close', done);
+  });
+
+// Streams a CSV (BOM + header row + one line per mapped row) from a cursor with
+// backpressure: when res.write() reports a full buffer we wait for 'drain' before
+// reading more documents. Stops early and closes the cursor when the client disconnects.
+const streamCsv = async (res, cursor, sheet, conn) => {
+  const write = async (chunk) => {
+    if (conn.gone) return;
+    if (!res.write(chunk)) await waitForDrain(res);
+  };
+  try {
+    await write('﻿' + sheet.columns.map((c) => csvCell(c.header)).join(',') + '\n');
+    for await (const doc of cursor) {
+      if (conn.gone) break;
+      const mapped = sheet.map(doc);
+      const rows = Array.isArray(mapped) ? mapped : [mapped];
+      let chunk = '';
+      rows.forEach((row) => {
+        chunk += sheet.columns.map((c) => csvCell(row[c.key])).join(',') + '\n';
+      });
+      // eslint-disable-next-line no-await-in-loop
+      await write(chunk);
+    }
+  } finally {
+    await closeCursor(cursor);
+  }
+  if (!conn.gone) res.end();
+};
+
 // @desc    Export an entity as an Excel workbook (default) or CSV
 // @route   GET /api/export/:entity?format=xlsx|csv&from&to
 // @access  Private (data:export)
@@ -295,19 +357,14 @@ const exportEntity = async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.setHeader('Cache-Control', 'no-store');
 
+  const conn = watchClient(req, res);
   try {
     if (format === 'csv') {
       // CSV holds the first sheet only
       const sheet = def.sheets[0];
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.write('﻿' + sheet.columns.map((c) => csvCell(c.header)).join(',') + '\n');
-      for await (const doc of sheet.cursor(pharmacyId, range, Model)) {
-        const mapped = sheet.map(doc);
-        (Array.isArray(mapped) ? mapped : [mapped]).forEach((row) => {
-          res.write(sheet.columns.map((c) => csvCell(row[c.key])).join(',') + '\n');
-        });
-      }
-      return res.end();
+      await streamCsv(res, sheet.cursor(pharmacyId, range, Model), sheet, conn);
+      return undefined;
     }
 
     res.setHeader('Content-Type', XLSX_TYPE);
@@ -315,16 +372,25 @@ const exportEntity = async (req, res) => {
     workbook.creator = 'Pharmacy ERP';
     workbook.created = new Date();
     for (const sheet of def.sheets) {
+      if (conn.gone) break;
       const ws = workbook.addWorksheet(sheet.name);
       ws.columns = sheet.columns;
       ws.getRow(1).font = { bold: true };
       ws.getRow(1).commit();
-      for await (const doc of sheet.cursor(pharmacyId, range, Model)) {
-        const mapped = sheet.map(doc);
-        (Array.isArray(mapped) ? mapped : [mapped]).forEach((row) => ws.addRow(xlsxSafe(row)).commit());
+      const cursor = sheet.cursor(pharmacyId, range, Model);
+      try {
+        for await (const doc of cursor) {
+          if (conn.gone) break;
+          const mapped = sheet.map(doc);
+          (Array.isArray(mapped) ? mapped : [mapped]).forEach((row) => ws.addRow(xlsxSafe(row)).commit());
+        }
+      } finally {
+        await closeCursor(cursor);
       }
+      if (conn.gone) break;
       ws.commit();
     }
+    if (conn.gone) return undefined;
     await workbook.commit();
     return undefined;
   } catch (err) {
@@ -335,4 +401,4 @@ const exportEntity = async (req, res) => {
   }
 };
 
-module.exports = { exportEntity, EXPORT_ENTITIES };
+module.exports = { exportEntity, EXPORT_ENTITIES, streamCsv, watchClient };

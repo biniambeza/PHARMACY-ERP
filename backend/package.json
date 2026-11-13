@@ -12,7 +12,8 @@
     "backup:verify": "node scripts/verifyRestore.js",
     "db:clone": "node scripts/cloneDatabase.js",
     "seed:demo": "node utils/seedPharmacyData.js",
-    "e2e:server": "node tests/e2e/server.js"
+    "e2e:server": "node tests/e2e/server.js",
+    "db:sync-indexes": "node scripts/syncIndexes.js"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,7 @@
     "@otplib/uri": "^13.6.0",
     "@sentry/node": "^11.12.0",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^18.0.5",
@@ -45,5 +47,8 @@
   },
   "overrides": {
     "uuid": "^11.1.1"
+  },
+  "engines": {
+    "node": ">=22 <25"
   }
 }

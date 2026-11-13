@@ -7,9 +7,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Least privilege: the jobs only check out code. Deploys use their own secrets (Vercel token,
+# Render deploy hook), not the GITHUB_TOKEN.
 permissions:
   contents: read
-  packages: write
+
+# CI runs: a newer push to the same feature branch / PR cancels the older run. Runs on main
+# are never cancelled (the deploy jobs also have their own non-cancelling groups below).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   # -----------------------------------------------------------
@@ -25,15 +32,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20.x
+      - name: Set up Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
       - name: Install backend dependencies
         run: npm ci
+
+      # Fails only on high/critical advisories in production dependencies; moderate/low are
+      # listed in the log but do not fail the job.
+      - name: Audit production dependencies (high and critical)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Cache MongoDB binaries (mongodb-memory-server)
         uses: actions/cache@v4
@@ -65,15 +77,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20.x
+      - name: Set up Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
         run: npm ci
+
+      # Fails only on high/critical advisories in production dependencies; moderate/low are
+      # listed in the log but do not fail the job.
+      - name: Audit production dependencies (high and critical)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Run linter
         run: npm run lint
@@ -81,6 +98,8 @@ jobs:
       - name: Build frontend production bundle
         run: npm run build
         env:
+          # Required: vite.config.js fails a production build without VITE_API_URL. CI has no
+          # real backend, so a same-origin placeholder is used when the secret is not set.
           VITE_API_URL: ${{ secrets.VITE_API_URL || '/api' }}
 
       - name: Upload production artifact
@@ -106,10 +125,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20.x
+      - name: Set up Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
@@ -167,16 +186,22 @@ jobs:
   # -----------------------------------------------------------
   deploy-frontend:
     name: Deploy Frontend (Vercel)
-    needs: [backend-ci, frontend-ci]
+    needs: [backend-ci, frontend-ci, e2e]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    # A deploy is never cancelled half-way; a newer one waits for the running one.
+    concurrency:
+      group: deploy-frontend-${{ github.ref }}
+      cancel-in-progress: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Deploy to Vercel
         if: env.HAS_VERCEL_TOKEN == 'true'
-        uses: amondnet/vercel-action@v25
+        # Third-party action pinned to a full commit SHA (= tag v25 / v25.2.0), so a moved tag
+        # cannot run new code with the Vercel token.
+        uses: amondnet/vercel-action@16e87c0a08142b0d0d33b76aeaf20823c381b9b9 # v25.2.0
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
@@ -198,9 +223,15 @@ jobs:
   # -----------------------------------------------------------
   deploy-backend:
     name: Deploy Backend (Render / Railway Webhook)
-    needs: [backend-ci, frontend-ci]
+    needs: [backend-ci, frontend-ci, e2e]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    # A deploy is never cancelled half-way; a newer one waits for the running one.
+    # Render Auto-Deploy must be OFF so this hook (sent only after CI passes) is the only
+    # deploy path (docs/OPERATIONS.md).
+    concurrency:
+      group: deploy-backend-${{ github.ref }}
+      cancel-in-progress: false
     steps:
       - name: Trigger Render Deploy Webhook
         if: env.HAS_RENDER_HOOK == 'true'

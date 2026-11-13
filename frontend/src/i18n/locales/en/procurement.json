@@ -104,6 +104,8 @@
     "qtyPlaceholder": "Qty",
     "costPlaceholder": "Cost",
     "removeLine": "Remove product",
+    "medicineLabel": "Medicine for line {{line}}",
+    "medicinePlaceholder": "Search medicine...",
     "notes": "Procurement Notes & Delivery Terms",
     "notesPlaceholder": "e.g. Standard cold-chain required, net 30 days invoice payment...",
     "estimatedTotal": "Estimated Order Total:",

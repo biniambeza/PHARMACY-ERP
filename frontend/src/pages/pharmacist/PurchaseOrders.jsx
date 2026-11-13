@@ -15,6 +15,9 @@ import { CardSkeleton } from '../../components/common/SkeletonLoader';
 import POMetrics from '../../components/procurement/POMetrics';
 import POTableRow from '../../components/procurement/POTableRow';
 import { logApiError } from '../../api/logApiError';
+import Pager from '../../components/common/Pager';
+
+const PAGE_SIZE = 100;
 
 const STATUS_FILTERS = [
   { value: '', labelKey: 'filters.all' },
@@ -31,6 +34,8 @@ const PurchaseOrders = () => {
   const [orders, setOrders] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageInfo, setPageInfo] = useState({ pages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
 
   // Modals state
@@ -43,18 +48,19 @@ const PurchaseOrders = () => {
 
   const loadOrders = useCallback(async () => {
     try {
-      const params = {};
+      const params = { page, limit: PAGE_SIZE };
       if (statusFilter) params.status = statusFilter;
       if (search) params.search = search;
 
       const data = await getPurchaseOrders(params);
       setOrders(data.orders || []);
+      setPageInfo({ pages: data.pages || 1, total: data.total ?? (data.orders || []).length });
     } catch (err) {
       logApiError('Failed to load purchase orders', err);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, search]);
+  }, [statusFilter, search, page]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -162,7 +168,7 @@ const PurchaseOrders = () => {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder={t('page.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
@@ -173,7 +179,7 @@ const PurchaseOrders = () => {
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.value || 'all'}
-                onClick={() => setStatusFilter(f.value)}
+                onClick={() => { setStatusFilter(f.value); setPage(1); }}
                 className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
                   statusFilter === f.value
                     ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
@@ -190,6 +196,7 @@ const PurchaseOrders = () => {
               onClick={() => {
                 setSearch('');
                 setStatusFilter('');
+                setPage(1);
               }}
               className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-medium cursor-pointer"
             >
@@ -270,6 +277,8 @@ const PurchaseOrders = () => {
           </div>
         )}
       </div>
+
+      <Pager page={page} pages={pageInfo.pages} total={pageInfo.total} shown={orders.length} onChange={setPage} disabled={loading} />
 
       {/* Create Purchase Order Modal */}
       <CreatePOModal

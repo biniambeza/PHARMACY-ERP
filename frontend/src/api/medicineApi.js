@@ -5,6 +5,16 @@ export const getMedicines = async (params = {}) => {
   return res.data;
 };
 
+// Server-side typeahead search with a light projection (GET /api/medicines?q=&fields=picker).
+// Returns { medicines, total, truncated }.
+export const searchMedicines = async (q, { limit = 20, includeArchived = false } = {}) => {
+  const params = { fields: 'picker', limit };
+  if (q) params.q = q;
+  if (includeArchived) params.includeArchived = true;
+  const res = await api.get('/medicines', { params });
+  return res.data;
+};
+
 export const getMedicineById = async (id) => {
   const res = await api.get(`/medicines/${id}`);
   return res.data;

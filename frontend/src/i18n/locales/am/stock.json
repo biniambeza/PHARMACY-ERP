@@ -7,6 +7,7 @@
     "searchPlaceholder": "በባች ቁጥር፣ በንግድ ስም ወይም በንቁ ቀመር ይፈልጉ...",
     "confirmDelete": "ባች \"{{batchNo}}\"ን እስከመጨረሻው መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?",
     "deleteFailed": "ባቹን መሰረዝ አልተሳካም",
+    "pageOf": "ገጽ {{page}} ከ{{pages}}",
     "footerShowing": "ከ<b>{{total}}</b> የክምችት ባችዎች <b>{{shown}}</b> እየታዩ ነው",
     "footerProtocol": "ፕሮቶኮል፦ የFEFO ተገዢነት ተፈጻሚ ነው"
   },
@@ -77,6 +78,7 @@
     "scanLabel": "ባርኮድ ይቃኙ (አማራጭ)",
     "scanPlaceholder": "ባርኮድ / SKU ይቃኙ ወይም ይጻፉ እና Enter ይጫኑ",
     "medicineLabel": "የመድኃኒት እቃ ይምረጡ",
+    "medicineSearchPlaceholder": "መድኃኒት በስም፣ በጀነሪክ ስም ወይም በባርኮድ ይፈልጉ...",
     "loadingCatalog": "ካታሎግ በመጫን ላይ...",
     "noMedicines": "በካታሎግ ውስጥ ምንም መድኃኒት አልተገኘም። እባክዎ መጀመሪያ ምርት ይመዝግቡ።",
     "retail": "ችርቻሮ፦ {{price}}",

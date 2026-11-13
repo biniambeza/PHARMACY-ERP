@@ -103,6 +103,31 @@ const deriveKey = (label) => {
   return Buffer.from(crypto.hkdfSync('sha256', Buffer.from(String(base)), Buffer.alloc(0), Buffer.from(label), 32));
 };
 
+/**
+ * Start-up check of the 2FA encryption key (called by server.js once MongoDB is up).
+ * Without TWO_FACTOR_ENCRYPTION_KEY the TOTP secrets are encrypted with a key derived
+ * from JWT_SECRET, so rotating JWT_SECRET would lock every 2FA user out.
+ * Returns { ok, level: 'ok' | 'warn' | 'fatal', message? }. 'fatal' = production and
+ * at least one user already has 2FA enabled.
+ */
+const checkEncryptionKeyConfig = async ({ env = process.env, countTwoFactorUsers } = {}) => {
+  if ((env.TWO_FACTOR_ENCRYPTION_KEY || '').trim()) return { ok: true, level: 'ok' };
+  const count = typeof countTwoFactorUsers === 'function' ? await countTwoFactorUsers() : 0;
+  const base =
+    'TWO_FACTOR_ENCRYPTION_KEY is not set: two-factor secrets are encrypted with a key derived from JWT_SECRET, ' +
+    'so rotating JWT_SECRET would lock out every user with 2FA enabled.';
+  if (env.NODE_ENV === 'production' && count > 0) {
+    return {
+      ok: false,
+      level: 'fatal',
+      message:
+        `${base} ${count} user(s) have 2FA enabled. Set TWO_FACTOR_ENCRYPTION_KEY to the CURRENT JWT_SECRET value ` +
+        '(keeps existing enrolments readable), then JWT_SECRET can be rotated independently. See docs/OPERATIONS.md.',
+    };
+  }
+  return { ok: false, level: 'warn', message: `${base} Set TWO_FACTOR_ENCRYPTION_KEY (see docs/OPERATIONS.md).` };
+};
+
 const challengeKey = () => {
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not configured');
   return crypto.createHmac('sha256', String(process.env.JWT_SECRET)).update('pharmacy-erp:2fa-challenge').digest('hex');
@@ -218,4 +243,5 @@ module.exports = {
   newChallengeId,
   signChallenge,
   verifyChallenge,
+  checkEncryptionKeyConfig,
 };

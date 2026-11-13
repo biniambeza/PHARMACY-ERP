@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Plus } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getStockBatches, getInventorySummary, deleteStockBatch } from '../../api/stockApi';
 import useAsync from '../../hooks/useAsync';
@@ -8,13 +8,42 @@ import StockAdjustModal from './StockAdjustModal';
 import StockKpiCards from '../../components/stock/StockKpiCards';
 import StockFilters from '../../components/stock/StockFilters';
 import StockBatchTable from '../../components/stock/StockBatchTable';
-import { getDaysUntilExpiry } from '../../components/stock/stockUtils';
 import { logApiError } from '../../api/logApiError';
+
+// Batches per page. The server filters, searches and pages (GET /api/stock), so the page
+// stays fast however many batches the pharmacy has.
+const PAGE_SIZE = 200;
+const EXPIRING_DAYS = 30;
+
+// Status pill -> GET /api/stock params
+const statusParams = (statusFilter) => {
+  if (statusFilter === 'active') return { status: 'active' };
+  if (statusFilter === 'expiring') return { status: 'active', expiringWithin: EXPIRING_DAYS };
+  if (statusFilter === 'depleted') return { status: 'depleted' };
+  return { includeEmpty: true }; // all
+};
 
 const Stock = () => {
   const { t } = useTranslation('stock');
-  const [statusFilter, setStatusFilter] = useState('active');
-  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilterState] = useState('active');
+  const [search, setSearchState] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+
+  const setStatusFilter = (value) => {
+    setStatusFilterState(value);
+    setPage(1);
+  };
+  const setSearch = (value) => {
+    setSearchState(value);
+    setPage(1);
+  };
+
+  // Search on the server, after the user pauses typing
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Modals state
   const [isStockInOpen, setIsStockInOpen] = useState(false);
@@ -24,27 +53,33 @@ const Stock = () => {
 
   const fetchStock = useCallback(async () => {
     try {
-      const params = {};
-      if (statusFilter && statusFilter !== 'expiring') {
-        params.status = statusFilter;
-      }
+      const params = { ...statusParams(statusFilter), page, limit: PAGE_SIZE };
+      if (debouncedSearch) params.q = debouncedSearch;
 
       const [batchRes, summaryRes] = await Promise.all([
         getStockBatches(params),
         getInventorySummary(),
       ]);
 
-      return { batches: batchRes.batches || [], summary: summaryRes.summary || null };
+      const batches = batchRes.batches || [];
+      return {
+        batches,
+        total: batchRes.total ?? batches.length,
+        pages: batchRes.pages || 1,
+        summary: summaryRes.summary || null,
+      };
     } catch (err) {
       logApiError('Failed to load stock data', err);
       throw err;
     }
-  }, [statusFilter]);
+  }, [statusFilter, debouncedSearch, page]);
   const { data, loading: fetching, reload: loadData } = useAsync(fetchStock);
   // The skeleton only shows for the first load; later refreshes keep the current rows on screen.
   const loading = fetching && !data;
   const batches = useMemo(() => data?.batches || [], [data]);
   const summary = data?.summary || null;
+  const total = data?.total ?? 0;
+  const pages = data?.pages || 1;
 
   const handleOpenAdjust = (batch) => {
     setSelectedBatch(batch);
@@ -67,21 +102,6 @@ const Stock = () => {
     }
   };
 
-  // Filter batches by search term & active expiry filter
-  const filteredBatches = useMemo(() => {
-    return batches.filter((b) => {
-      if (statusFilter === 'expiring') {
-        const days = getDaysUntilExpiry(b.expiryDate);
-        if (days === null || days > 30) return false;
-      }
-
-      const medName = b.medicineId?.name?.toLowerCase() || '';
-      const genericName = b.medicineId?.genericName?.toLowerCase() || '';
-      const batchNo = b.batchNo?.toLowerCase() || '';
-      const query = search.toLowerCase();
-      return medName.includes(query) || genericName.includes(query) || batchNo.includes(query);
-    });
-  }, [batches, search, statusFilter]);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -124,14 +144,38 @@ const Stock = () => {
       {/* Main Batches Table */}
       <StockBatchTable
         loading={loading}
-        batches={filteredBatches}
-        totalCount={batches.length}
+        batches={batches}
+        totalCount={total}
         hasFilter={!!(search || statusFilter)}
         onStockIn={() => setIsStockInOpen(true)}
         onAdjust={handleOpenAdjust}
         onDelete={handleDelete}
         deletingId={deletingId}
       />
+
+      {pages > 1 && (
+        <div className="flex items-center justify-end gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span>{t('page.pageOf', { page, pages })}</span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1 || fetching}
+            aria-label={t('common:buttons.previous')}
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(pages, p + 1))}
+            disabled={page >= pages || fetching}
+            aria-label={t('common:buttons.next')}
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Stock In Modal */}
       <StockInModal

@@ -1,28 +1,89 @@
 {
   "appName": "Pharmacy ERP",
   "language": "Language",
-  "languages": { "en": "English", "am": "አማርኛ", "om": "Afaan Oromoo" },
+  "languages": {
+    "en": "English",
+    "am": "አማርኛ",
+    "om": "Afaan Oromoo"
+  },
   "calendar": "Calendar",
-  "calendars": { "gregorian": "Gregorian", "ethiopian": "Ethiopian" },
+  "calendars": {
+    "gregorian": "Gregorian",
+    "ethiopian": "Ethiopian"
+  },
   "buttons": {
-    "save": "Save", "cancel": "Cancel", "delete": "Delete", "edit": "Edit", "add": "Add",
-    "create": "Create", "update": "Update", "close": "Close", "confirm": "Confirm",
-    "search": "Search", "filter": "Filter", "export": "Export", "print": "Print",
-    "refresh": "Refresh", "back": "Back", "next": "Next", "previous": "Previous",
-    "submit": "Submit", "view": "View", "download": "Download", "reset": "Reset",
-    "clear": "Clear", "yes": "Yes", "no": "No"
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "close": "Close",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "print": "Print",
+    "refresh": "Refresh",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "view": "View",
+    "download": "Download",
+    "reset": "Reset",
+    "clear": "Clear",
+    "yes": "Yes",
+    "no": "No"
   },
   "status": {
-    "active": "Active", "inactive": "Inactive", "pending": "Pending", "completed": "Completed",
-    "cancelled": "Cancelled", "failed": "Failed", "refunded": "Refunded", "suspended": "Suspended",
-    "archived": "Archived", "draft": "Draft", "received": "Received", "partial": "Partial",
-    "expired": "Expired", "lowStock": "Low stock", "outOfStock": "Out of stock",
-    "paid": "Paid", "unpaid": "Unpaid"
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "failed": "Failed",
+    "refunded": "Refunded",
+    "suspended": "Suspended",
+    "archived": "Archived",
+    "draft": "Draft",
+    "received": "Received",
+    "partial": "Partial",
+    "expired": "Expired",
+    "lowStock": "Low stock",
+    "outOfStock": "Out of stock",
+    "paid": "Paid",
+    "unpaid": "Unpaid"
   },
   "labels": {
-    "actions": "Actions", "loading": "Loading...", "noData": "No data found", "error": "Error",
-    "success": "Success", "total": "Total", "date": "Date", "amount": "Amount",
-    "quantity": "Quantity", "price": "Price", "theme": "Theme", "logout": "Log out",
-    "profile": "Profile", "somethingWentWrong": "Something went wrong. Please try again."
+    "actions": "Actions",
+    "loading": "Loading...",
+    "noData": "No data found",
+    "error": "Error",
+    "success": "Success",
+    "total": "Total",
+    "date": "Date",
+    "amount": "Amount",
+    "quantity": "Quantity",
+    "price": "Price",
+    "theme": "Theme",
+    "logout": "Log out",
+    "profile": "Profile",
+    "somethingWentWrong": "Something went wrong. Please try again."
+  },
+  "medicinePicker": {
+    "placeholder": "Search medicines...",
+    "searching": "Searching...",
+    "noResults": "No medicines found",
+    "failed": "Could not search medicines",
+    "clear": "Clear selection",
+    "archived": "(archived)",
+    "moreResults": "Showing {{shown}} of {{total}}. Type more to narrow down."
+  },
+  "pager": {
+    "label": "Pages",
+    "pageOf": "Page {{page}} of {{pages}}",
+    "showing": "Showing {{shown}} of {{total}}"
   }
 }

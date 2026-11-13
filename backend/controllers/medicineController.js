@@ -21,8 +21,15 @@ const {
   applyPriceRule,
 } = require('../services/catalog');
 
-const MAX_PAGE_LIMIT = 200;
+// Lists are always bounded: ?page= pages through (default 50 per page), without it the
+// first DEFAULT_UNPAGED_LIMIT matches are returned; ?limit= can raise either up to MAX_PAGE_LIMIT.
+const MAX_PAGE_LIMIT = 1000;
 const DEFAULT_PAGE_LIMIT = 50;
+const DEFAULT_UNPAGED_LIMIT = 200;
+
+// ?fields=picker: light projection for typeahead pickers (PO lines, stock-in, transfers, filters).
+const PICKER_FIELDS =
+  'name genericName strength dosageForm category baseUnit packUnits price costPrice barcode sku isArchived isControlled requiresPrescription minStockLevel';
 const MAX_BULK_PRICE_ITEMS = 5000;
 
 // Fields a pharmacist is allowed to set on a medicine. barcode, sku and
@@ -60,16 +67,15 @@ const parseMinMargin = (v) => {
   return n;
 };
 
-// Pagination is opt-in via `?page=`. Without it every match is returned
-// (backward compatible with callers that pass only `limit`).
+// Always returns a bounded window. `paged` is true when the caller passed ?page=.
 const parsePagination = (query) => {
-  if (query.page === undefined) return null;
-  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const paged = query.page !== undefined;
+  const page = paged ? Math.max(1, parseInt(query.page, 10) || 1) : 1;
   const limit = Math.min(
     MAX_PAGE_LIMIT,
-    Math.max(1, parseInt(query.limit, 10) || DEFAULT_PAGE_LIMIT)
+    Math.max(1, parseInt(query.limit, 10) || (paged ? DEFAULT_PAGE_LIMIT : DEFAULT_UNPAGED_LIMIT))
   );
-  return { page, limit, skip: (page - 1) * limit };
+  return { paged, page, limit, skip: (page - 1) * limit };
 };
 
 // Case-insensitive exact-name match, safe against regex injection.
@@ -91,7 +97,9 @@ const applyEditableFields = (target, body) => {
 // @route   GET /api/medicines
 // @access  medicine:view
 const getMedicines = async (req, res) => {
-  const { search, category, includeArchived } = req.query;
+  const { category, includeArchived } = req.query;
+  // ?q= is an alias of ?search=
+  const search = req.query.search || req.query.q;
   const query = { pharmacyId: req.pharmacyId };
 
   if (String(includeArchived) !== 'true') {
@@ -103,8 +111,8 @@ const getMedicines = async (req, res) => {
   }
 
   if (search) {
-    const pattern = escapeRegex(String(search));
-    const code = String(search).trim();
+    const code = String(search).trim().slice(0, 100);
+    const pattern = escapeRegex(code);
     query.$or = [
       { name: { $regex: pattern, $options: 'i' } },
       { genericName: { $regex: pattern, $options: 'i' } },
@@ -115,27 +123,28 @@ const getMedicines = async (req, res) => {
   }
 
   const pagination = parsePagination(req.query);
-  let findQuery = Medicine.find(query).sort({ name: 1 });
-  if (pagination) {
-    findQuery = findQuery.skip(pagination.skip).limit(pagination.limit);
-  }
+  const picker = req.query.fields === 'picker';
+  const findQuery = Medicine.find(query)
+    .select(picker ? PICKER_FIELDS : '-__v')
+    .sort({ name: 1, _id: 1 })
+    .skip(pagination.skip)
+    .limit(pagination.limit)
+    .lean();
 
   const [medicines, total] = await Promise.all([findQuery, Medicine.countDocuments(query)]);
 
-  const response = {
+  return res.status(200).json({
     success: true,
     count: medicines.length,
     total,
-    // Each medicine also carries computed marginPercent / marginWarning
-    medicines: medicines.map(withMargin),
-  };
-  if (pagination) {
-    response.page = pagination.page;
-    response.limit = pagination.limit;
-    response.pages = Math.ceil(total / pagination.limit);
-  }
-
-  return res.status(200).json(response);
+    page: pagination.page,
+    limit: pagination.limit,
+    pages: Math.ceil(total / pagination.limit),
+    // More matches exist than were returned (page through, or narrow with ?q=)
+    truncated: pagination.skip + medicines.length < total,
+    // Full rows also carry computed marginPercent / marginWarning
+    medicines: picker ? medicines : medicines.map(withMargin),
+  });
 };
 
 // @desc    Get single medicine by ID

@@ -3,6 +3,7 @@ const StockBatch = require('../models/StockBatch');
 const Medicine = require('../models/Medicine');
 const Sale = require('../models/Sale');
 const AppError = require('../utils/AppError');
+const escapeRegex = require('../utils/escapeRegex');
 const { recordMovement } = require('../utils/stockMovement');
 const { recordControlledReceipt, recordControlledMovement } = require('../services/clinical');
 
@@ -19,8 +20,23 @@ const sameDay = (a, b) => new Date(a).toISOString().slice(0, 10) === new Date(b)
 // @desc    Get all stock batches for logged-in pharmacy (FEFO ordered)
 // @route   GET /api/stock
 // @access  Private (Pharmacist only)
+// Query params (all optional):
+//   medicineId       only this medicine's batches
+//   status           active | depleted | expired | discarded
+//   q                medicine name / generic name / barcode, or batch number
+//   expiringWithin   days: only batches expiring within N days (including already expired)
+//   includeEmpty     'true' to include batches with quantity 0 (default: excluded,
+//                    except when status=depleted is asked for explicitly)
+//   page, limit      pagination (limit default 500, max 2000)
+// Response: { batches, count, total, page, limit, pages, truncated }
+const STOCK_LIST_DEFAULT_LIMIT = 500;
+const STOCK_LIST_MAX_LIMIT = 2000;
+const STOCK_BATCH_FIELDS = 'medicineId batchNo quantity initialQuantity expiryDate purchasePrice status createdAt updatedAt';
+const STOCK_MEDICINE_FIELDS = 'name genericName category dosageForm strength price minStockLevel barcode baseUnit packUnits';
+const BATCH_STATUSES = ['active', 'depleted', 'expired', 'discarded'];
+
 const getStockBatches = async (req, res) => {
-  const { medicineId, status } = req.query;
+  const { medicineId, status, q, expiringWithin } = req.query;
   const query = { pharmacyId: req.pharmacyId };
 
   if (medicineId) {
@@ -31,16 +47,61 @@ const getStockBatches = async (req, res) => {
   }
 
   if (typeof status === 'string' && status) {
+    if (!BATCH_STATUSES.includes(status)) throw new AppError(`status must be one of ${BATCH_STATUSES.join(', ')}`, 400);
     query.status = status;
   }
 
-  const batches = await StockBatch.find(query)
-    .populate('medicineId', 'name genericName category dosageForm strength price minStockLevel barcode baseUnit packUnits')
-    .sort({ expiryDate: 1 });
+  const includeEmpty = String(req.query.includeEmpty) === 'true' || query.status === 'depleted';
+  if (!includeEmpty) query.quantity = { $gt: 0 };
+
+  if (expiringWithin !== undefined && expiringWithin !== '') {
+    const days = Number(expiringWithin);
+    if (!Number.isInteger(days) || days < 0 || days > 3650) {
+      throw new AppError('expiringWithin must be a whole number of days (0-3650)', 400);
+    }
+    // Includes batches already past expiry that are still on the shelf (they need action too)
+    query.expiryDate = { $lte: new Date(Date.now() + days * 24 * 60 * 60 * 1000) };
+  }
+
+  if (typeof q === 'string' && q.trim()) {
+    const term = q.trim().slice(0, 100);
+    const pattern = escapeRegex(term);
+    const medIds = await Medicine.find({
+      pharmacyId: req.pharmacyId,
+      $or: [
+        { name: { $regex: pattern, $options: 'i' } },
+        { genericName: { $regex: pattern, $options: 'i' } },
+        { barcode: term },
+      ],
+    }).distinct('_id');
+    query.$or = [{ medicineId: { $in: medIds } }, { batchNo: { $regex: pattern, $options: 'i' } }];
+  }
+
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(
+    STOCK_LIST_MAX_LIMIT,
+    Math.max(1, parseInt(req.query.limit, 10) || STOCK_LIST_DEFAULT_LIMIT)
+  );
+
+  const [batches, total] = await Promise.all([
+    StockBatch.find(query)
+      .select(STOCK_BATCH_FIELDS)
+      .populate('medicineId', STOCK_MEDICINE_FIELDS)
+      .sort({ expiryDate: 1, _id: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    StockBatch.countDocuments(query),
+  ]);
 
   return res.status(200).json({
     success: true,
     count: batches.length,
+    total,
+    page,
+    limit,
+    pages: Math.ceil(total / limit),
+    truncated: (page - 1) * limit + batches.length < total,
     batches,
   });
 };
@@ -282,65 +343,121 @@ const adjustStock = async (req, res) => {
   });
 };
 
+// Lists in the summary response are trimmed to this many rows (counts are always complete).
+const SUMMARY_LIST_LIMIT = 50;
+
+// Medicines at or below their minimum stock level, counting only sellable stock
+// (active, unexpired batches). Same rule as the daily low-stock check
+// (jobs/dailyChecks.js findLowStock): archived medicines and medicines with
+// minStockLevel 0 (no minimum set) are never flagged. Sorted by stock, lowest first.
+const findLowStockMedicines = (pharmacyId, now = new Date()) =>
+  Medicine.aggregate([
+    { $match: { pharmacyId, isArchived: { $ne: true }, minStockLevel: { $gt: 0 } } },
+    { $project: { name: 1, minStockLevel: 1 } },
+    {
+      $lookup: {
+        from: StockBatch.collection.name,
+        let: { medId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$medicineId', '$$medId'] },
+              pharmacyId,
+              status: 'active',
+              quantity: { $gt: 0 },
+              expiryDate: { $gt: now },
+            },
+          },
+          { $group: { _id: null, qty: { $sum: '$quantity' } } },
+        ],
+        as: 'stock',
+      },
+    },
+    { $set: { currentStock: { $ifNull: [{ $first: '$stock.qty' }, 0] } } },
+    { $match: { $expr: { $lte: ['$currentStock', '$minStockLevel'] } } },
+    { $project: { name: 1, currentStock: 1, minStockLevel: 1 } },
+    { $sort: { currentStock: 1, name: 1 } },
+  ]);
+
 // @desc    Get inventory summary, low stock, and expiring items
 // @route   GET /api/stock/summary
 // @access  Private (Pharmacist only)
 const getInventorySummary = async (req, res) => {
+  const pharmacyId = new mongoose.Types.ObjectId(String(req.pharmacyId));
   const now = new Date();
   const thirtyDaysFromNow = new Date(now);
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-  const stockedBatches = await StockBatch.find({
-    pharmacyId: req.pharmacyId,
-    status: 'active',
-    quantity: { $gt: 0 },
-  }).populate('medicineId', 'name minStockLevel');
+  const batchList = (match) => [
+    { $match: match },
+    { $sort: { expiryDate: 1, _id: 1 } },
+    { $limit: SUMMARY_LIST_LIMIT },
+    {
+      $lookup: {
+        from: Medicine.collection.name,
+        localField: 'medicineId',
+        foreignField: '_id',
+        pipeline: [{ $project: { name: 1, minStockLevel: 1 } }],
+        as: 'medicineId',
+      },
+    },
+    { $set: { medicineId: { $first: '$medicineId' } } },
+    { $project: { medicineId: 1, batchNo: 1, quantity: 1, expiryDate: 1, purchasePrice: 1, status: 1 } },
+  ];
 
-  // Only non-expired batches count as sellable stock
-  const activeBatches = stockedBatches.filter((b) => new Date(b.expiryDate) > now);
-  const expiredActiveBatches = stockedBatches.filter((b) => new Date(b.expiryDate) <= now);
+  // One pass over the pharmacy's active batches with stock (index: pharmacyId, status, expiryDate).
+  const [[facet], lowStockMedicines] = await Promise.all([
+    StockBatch.aggregate([
+      { $match: { pharmacyId, status: 'active', quantity: { $gt: 0 } } },
+      {
+        $facet: {
+          sellable: [
+            { $match: { expiryDate: { $gt: now } } },
+            {
+              $group: {
+                _id: null,
+                batches: { $sum: 1 },
+                units: { $sum: '$quantity' },
+                value: { $sum: { $multiply: ['$quantity', { $ifNull: ['$purchasePrice', 0] }] } },
+              },
+            },
+          ],
+          expired: [
+            { $match: { expiryDate: { $lte: now } } },
+            { $group: { _id: null, batches: { $sum: 1 }, units: { $sum: '$quantity' } } },
+          ],
+          expiringSoon: batchList({ expiryDate: { $gt: now, $lte: thirtyDaysFromNow } }),
+          expiringSoonCount: [{ $match: { expiryDate: { $gt: now, $lte: thirtyDaysFromNow } } }, { $count: 'n' }],
+          expiredBatches: batchList({ expiryDate: { $lte: now } }),
+        },
+      },
+    ]),
+    findLowStockMedicines(pharmacyId, now),
+  ]);
 
-  const totalStockUnits = activeBatches.reduce((sum, b) => sum + b.quantity, 0);
-
-  const expiringSoonBatches = activeBatches.filter(
-    (b) => new Date(b.expiryDate) <= thirtyDaysFromNow
-  );
-
-  const stockByMedicine = new Map();
-  activeBatches.forEach((b) => {
-    const id = b.medicineId?._id?.toString();
-    if (!id) return;
-    stockByMedicine.set(id, (stockByMedicine.get(id) || 0) + b.quantity);
-  });
-
-  const medicines = await Medicine.find({ pharmacyId: req.pharmacyId }).select('name minStockLevel');
-  const lowStockMedicines = [];
-
-  medicines.forEach((med) => {
-    const medStock = stockByMedicine.get(med._id.toString()) || 0;
-    if (medStock <= med.minStockLevel) {
-      lowStockMedicines.push({
-        _id: med._id,
-        name: med.name,
-        currentStock: medStock,
-        minStockLevel: med.minStockLevel,
-      });
-    }
-  });
+  const sellable = facet.sellable[0] || { batches: 0, units: 0, value: 0 };
+  const expired = facet.expired[0] || { batches: 0, units: 0 };
+  const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
   return res.status(200).json({
     success: true,
     summary: {
-      totalBatches: activeBatches.length,
-      totalStockUnits,
-      expiringSoonCount: expiringSoonBatches.length,
-      expiringSoonBatches,
+      totalBatches: sellable.batches,
+      totalStockUnits: sellable.units,
+      // Names the Stock page reads (same figures)
+      activeBatchesCount: sellable.batches,
+      totalUnits: sellable.units,
+      totalValuation: round2(sellable.value),
+      expiringSoonCount: facet.expiringSoonCount[0]?.n || 0,
+      // Soonest-expiring first, at most SUMMARY_LIST_LIMIT (see the count for the full number)
+      expiringSoonBatches: facet.expiringSoon,
       lowStockCount: lowStockMedicines.length,
-      lowStockMedicines,
+      lowStockMedicines: lowStockMedicines.slice(0, SUMMARY_LIST_LIMIT),
       // Batches past expiry still marked active with stock: need to be written off
-      expiredCount: expiredActiveBatches.length,
-      expiredUnits: expiredActiveBatches.reduce((sum, b) => sum + b.quantity, 0),
-      expiredBatches: expiredActiveBatches,
+      expiredCount: expired.batches,
+      expiredUnits: expired.units,
+      expiredBatches: facet.expiredBatches,
+      listLimit: SUMMARY_LIST_LIMIT,
     },
   });
 };

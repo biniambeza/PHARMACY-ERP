@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const rawUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').trim();
+// The localhost fallback is for local development only: vite.config.js fails a production
+// build when VITE_API_URL is not set, so it can never reach a deployed bundle.
+const rawUrl = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000/api' : '/api')).trim();
 const cleanUrl = rawUrl.replace(/\/+$/, '');
 const baseURL = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 
