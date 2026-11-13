@@ -236,11 +236,19 @@ const saleSchema = new mongoose.Schema(
       ),
       default: undefined,
     },
-    // Offline POS: when the sale was made on the client (createdAt = sync time)
+    // Offline POS: when the sale was made on the client (bounded, see services/sales.js; createdAt is set to the same time)
     offlineCreatedAt: {
       type: Date,
       default: null,
     },
+    // Offline sync review flags (services/sales.js): the client's prices differed from the
+    // catalog at sync time, and/or the client clock was out of bounds ('future' | 'stale';
+    // the raw client time is then kept in offlineClientCreatedAt and createdAt = sync time).
+    offlinePriceAdjusted: { type: Boolean, default: undefined },
+    offlineTimeFlag: { type: String, enum: ['future', 'stale'], default: undefined },
+    offlineClientCreatedAt: { type: Date, default: undefined },
+    // The pharmacist acknowledged severe allergy / interaction warnings for this sale
+    clinicalAcknowledged: { type: Boolean, default: undefined },
     // Returns and voids
     returnStatus: {
       type: String,

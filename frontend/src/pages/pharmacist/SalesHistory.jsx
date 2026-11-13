@@ -21,6 +21,7 @@ import { MetricCardSkeleton } from '../../components/common/SkeletonLoader';
 import ReturnModal from '../../components/returns/ReturnModal';
 import VoidSaleModal from '../../components/returns/VoidSaleModal';
 import { useAuth } from '../../context/useAuth';
+import { logApiError } from '../../api/logApiError';
 
 const isToday = (d) => d && new Date(d).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
 
@@ -59,7 +60,7 @@ const SalesHistory = () => {
         loadedSales = salesResult.value.sales;
         setSales(loadedSales);
       } else if (salesResult.status === 'rejected') {
-        console.error('Failed to load sales list:', salesResult.reason);
+        logApiError('Failed to load sales list', salesResult.reason);
         setError(salesResult.reason?.response?.data?.message || t('errors.loadSales'));
       }
 
@@ -77,7 +78,7 @@ const SalesHistory = () => {
         });
       }
     } catch (err) {
-      console.error('Failed to load sales history:', err);
+      logApiError('Failed to load sales history', err);
       setError(t('errors.loadLedger'));
     } finally {
       setLoading(false);

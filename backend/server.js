@@ -12,6 +12,13 @@ if (missing.length) {
   process.exit(1);
 }
 
+// Tokens are HS256-signed with JWT_SECRET: a short secret can be brute-forced offline.
+const MIN_JWT_SECRET_LENGTH = 32;
+if (process.env.NODE_ENV === 'production' && process.env.JWT_SECRET.trim().length < MIN_JWT_SECRET_LENGTH) {
+  console.error(`JWT_SECRET must be at least ${MIN_JWT_SECRET_LENGTH} characters in production.`);
+  process.exit(1);
+}
+
 if (process.env.NODE_ENV === 'production' && !process.env.CLIENT_URL) {
   console.warn('Warning: CLIENT_URL is not set; browser requests from any origin will be rejected by CORS.');
 }

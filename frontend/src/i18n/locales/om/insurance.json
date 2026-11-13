@@ -60,7 +60,9 @@
     "paid": "Kan kaffalame",
     "saleTotal": "Waliigala gurgurtaa",
     "submittedAt": "Kan dhiyaate",
-    "autoClaim": "Gaaffii ji'aa ofumaan"
+    "autoClaim": "Gaaffii ji'aa ofumaan",
+    "adjustedTotal": "Erga gaaffii kaffaltii booda kan deebi'e",
+    "refundDueToInsurer": "Inshuraansiif kan deebi'u"
   },
   "types": {
     "cbhi": "CBHI (hawaasa irratti hundaa'e)",

@@ -24,6 +24,20 @@ export const ClinicalAck = ({ warnings, checked, onChange }) => {
 };
 
 /**
+ * Shown when the automatic allergy / interaction check failed: the pharmacist may confirm a
+ * manual check instead of retrying. Props: { checked, onChange(bool) }
+ */
+export const ClinicalOverrideAck = ({ checked, onChange }) => {
+  const { t } = useTranslation('pos');
+  return (
+    <label className="flex items-start gap-2 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-[11px] text-amber-800 dark:text-amber-300 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="mt-0.5" />
+      <span>{t('ack.override')}</span>
+    </label>
+  );
+};
+
+/**
  * Remaining blockers and the complete-sale button (F9).
  * Props: { blockers: string[], online, loading, disabled, total, onCheckout() }
  */

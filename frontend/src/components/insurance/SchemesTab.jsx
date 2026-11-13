@@ -5,6 +5,7 @@ import { getSchemes, deleteScheme } from '../../api/insuranceApi';
 import { formatMoney } from '../../utils/format';
 import SchemeFormModal from './SchemeFormModal';
 import { cardCls, btnPrimary, errMsg, pillCls, thCls, tdCls } from './insuranceUi';
+import { logApiError } from '../../api/logApiError';
 
 const copayLabel = (s, t) => {
   if (s.copayType === 'percent') return t('copay.percentShort', { value: s.copayValue });
@@ -23,7 +24,7 @@ const SchemesTab = () => {
       const res = await getSchemes();
       setSchemes(res.schemes || []);
     } catch (err) {
-      console.error('Failed to load schemes:', err);
+      logApiError('Failed to load schemes', err);
     } finally {
       setLoading(false);
     }

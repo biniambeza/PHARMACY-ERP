@@ -9,6 +9,7 @@ import CustomerStatementModal from '../../components/customers/CustomerStatement
 import CustomersTable from '../../components/customers/CustomersTable';
 import { ReceivablesSummary, AgingByCustomer } from '../../components/customers/ReceivablesSummary';
 import { inputCls, cardCls, btnPrimary, errMsg } from '../../components/customers/customerUi';
+import { logApiError } from '../../api/logApiError';
 
 const FILTERS = [
   ['', 'filters.all'],
@@ -42,7 +43,7 @@ const Customers = () => {
       setSummary(list.summary || { receivable: 0, withBalance: 0, active: 0 });
       setAging(ag);
     } catch (err) {
-      console.error('Failed to load customers:', err);
+      logApiError('Failed to load customers', err);
     } finally {
       setLoading(false);
     }

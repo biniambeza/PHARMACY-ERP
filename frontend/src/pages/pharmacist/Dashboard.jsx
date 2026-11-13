@@ -16,6 +16,7 @@ import ExpiryHealthCard from '../../components/dashboard/ExpiryHealthCard';
 import TopSuppliersCard from '../../components/dashboard/TopSuppliersCard';
 import AnomalyAlertsCard from '../../components/dashboard/AnomalyAlertsCard';
 import OnboardingChecklist from '../../components/onboarding/OnboardingChecklist';
+import { logApiError } from '../../api/logApiError';
 
 const PharmacistDashboard = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -32,7 +33,7 @@ const PharmacistDashboard = () => {
       const res = await getDashboardOverview(range);
       return res.success && res.overview ? res.overview : null;
     } catch (err) {
-      console.error('Failed to load real dashboard overview data:', err);
+      logApiError('Failed to load real dashboard overview data', err);
       throw err;
     }
   }, [range]);
@@ -119,7 +120,7 @@ const PharmacistDashboard = () => {
     try {
       await downloadExport('sales', { format: 'xlsx', range });
     } catch (err) {
-      console.error('Sales export failed:', err);
+      logApiError('Sales export failed', err);
     } finally {
       setExportingSales(false);
     }

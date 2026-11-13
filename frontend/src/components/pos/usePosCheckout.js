@@ -13,13 +13,15 @@ import { buildSalePayload, buildProvisionalSale } from './posCheckout';
 export const usePosCheckout = ({
   t, sale, pharmacyId, userId, online, hasControlled, needsRx, totals, effectivePayments, payStatus,
   blockers, shiftState, requireShiftUi, setMedicines, loadCatalogData, loadShift,
-  setError, setInfo, setShiftModal, setCompletedSale,
+  setError, setInfo, setShiftModal, setCompletedSale, clinicalAck = false,
 }) => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const { cart, customer, walkIn, patient, prescription, legacyRx, offlineIdRef, resetSale } = sale;
 
   const buildPayload = (offlineId) =>
-    buildSalePayload({ cart, customer, walkIn, patient, prescription, needsRx, legacyRx, totals, effectivePayments, offlineId });
+    buildSalePayload({
+      cart, customer, walkIn, patient, prescription, needsRx, legacyRx, totals, effectivePayments, offlineId, clinicalAck,
+    });
 
   const offlineEligible = () =>
     !hasControlled && effectivePayments.every((p) => p.method === 'cash' || p.amount <= 0);
@@ -87,6 +89,9 @@ export const usePosCheckout = ({
         } else {
           setError(t('errors.connectionLost'));
         }
+      } else if (err.response?.data?.code === 'CLINICAL_ACK_REQUIRED') {
+        // The server found allergy / interaction warnings that were not acknowledged
+        setError(t('blockers.reviewWarnings'));
       } else if (err.response?.data?.code === 'SHIFT_REQUIRED') {
         setShiftModal(true);
         setError(err.response.data.message);

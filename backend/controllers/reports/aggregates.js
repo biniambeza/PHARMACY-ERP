@@ -20,14 +20,92 @@ const saleMatch = (pharmacyId, from, to) => {
   return match;
 };
 
-// Unwinds sale items and adds:
+// Unwinds sale items and adds (no lookups):
+//   _lineNet:  item subtotal minus its share of the sale discount and minus its own tax when
+//              prices include tax (per-line revenue sums to grandTotal - tax). Legacy sales
+//              whose tax was typed in for the whole sale spread it by subtotal.
+//   _lineTax:  tax of the line (items.taxAmount; legacy: share of the sale tax)
+const lineAmountStages = () => [
+  {
+    $addFields: {
+      _itemTaxSum: { $sum: { $ifNull: ['$items.taxAmount', []] } },
+      _netBase: { $subtract: [{ $ifNull: ['$subtotal', 0] }, { $ifNull: ['$discount', 0] }] },
+    },
+  },
+  {
+    $addFields: {
+      _itemTaxOk: { $lte: [{ $abs: { $subtract: ['$_itemTaxSum', { $ifNull: ['$tax', 0] }] } }, 0.011] },
+      _inclusive: {
+        $and: [
+          { $gt: [{ $ifNull: ['$tax', 0] }, 0] },
+          { $lt: [{ $abs: { $subtract: [{ $ifNull: ['$grandTotal', 0] }, '$_netBase'] } }, 0.01] },
+          {
+            $gte: [
+              { $abs: { $subtract: [{ $ifNull: ['$grandTotal', 0] }, { $add: ['$_netBase', { $ifNull: ['$tax', 0] }] }] } },
+              0.01,
+            ],
+          },
+        ],
+      },
+      _discFactor: {
+        $cond: [
+          { $gt: [{ $ifNull: ['$subtotal', 0] }, 0] },
+          { $divide: [{ $ifNull: ['$discount', 0] }, '$subtotal'] },
+          0,
+        ],
+      },
+      _netFactor: {
+        $cond: [
+          { $gt: [{ $ifNull: ['$subtotal', 0] }, 0] },
+          {
+            $divide: [
+              { $subtract: [{ $ifNull: ['$grandTotal', 0] }, { $ifNull: ['$tax', 0] }] },
+              '$subtotal',
+            ],
+          },
+          1,
+        ],
+      },
+    },
+  },
+  { $unwind: '$items' },
+  {
+    $addFields: {
+      _lineTax: {
+        $cond: [
+          '$_itemTaxOk',
+          { $ifNull: ['$items.taxAmount', 0] },
+          {
+            $cond: [
+              { $gt: [{ $ifNull: ['$subtotal', 0] }, 0] },
+              { $divide: [{ $multiply: [{ $ifNull: ['$items.subtotal', 0] }, { $ifNull: ['$tax', 0] }] }, '$subtotal'] },
+              0,
+            ],
+          },
+        ],
+      },
+      _lineNet: {
+        $cond: [
+          '$_itemTaxOk',
+          {
+            $subtract: [
+              { $multiply: [{ $ifNull: ['$items.subtotal', 0] }, { $subtract: [1, '$_discFactor'] }] },
+              { $cond: ['$_inclusive', { $ifNull: ['$items.taxAmount', 0] }, 0] },
+            ],
+          },
+          { $multiply: [{ $ifNull: ['$items.subtotal', 0] }, '$_netFactor'] },
+        ],
+      },
+    },
+  },
+];
+
+// lineAmountStages() plus cost:
 //   _unitCost: items.costPrice (recorded at sale) || batch purchasePrice || medicine costPrice || 0
 //   _lineCost: quantity (base units) * _unitCost
-//   _lineNet:  item subtotal minus its share of the sale discount and of the tax
-//              (so per-line revenue sums to grandTotal - tax)
 //   _med:      [{ name, category, costPrice }]
 const itemCostStages = () => [
-  { $unwind: '$items' },
+  ...lineAmountStages(),
   {
     $lookup: {
       from: StockBatch.collection.name,
@@ -51,26 +129,9 @@ const itemCostStages = () => [
       _unitCost: {
         $ifNull: ['$items.costPrice', { $first: '$_batch.purchasePrice' }, { $first: '$_med.costPrice' }, 0],
       },
-      _netFactor: {
-        $cond: [
-          { $gt: [{ $ifNull: ['$subtotal', 0] }, 0] },
-          {
-            $divide: [
-              { $subtract: [{ $ifNull: ['$grandTotal', 0] }, { $ifNull: ['$tax', 0] }] },
-              '$subtotal',
-            ],
-          },
-          1,
-        ],
-      },
     },
   },
-  {
-    $addFields: {
-      _lineCost: { $multiply: [{ $ifNull: ['$items.quantity', 0] }, '$_unitCost'] },
-      _lineNet: { $multiply: [{ $ifNull: ['$items.subtotal', 0] }, '$_netFactor'] },
-    },
-  },
+  { $addFields: { _lineCost: { $multiply: [{ $ifNull: ['$items.quantity', 0] }, '$_unitCost'] } } },
 ];
 
 // Return model is optional (built by the Returns agent).
@@ -87,16 +148,26 @@ const EMPTY_RETURNS = () => ({
   refunds: 0,
   count: 0,
   restockedCost: 0,
+  returnedGross: 0,
+  returnedTax: 0,
+  returnedNet: 0,
+  insurerReturned: 0,
   byMedicine: new Map(),
   bySaleStaff: new Map(),
   bySaleShift: new Map(),
 });
 
-// Refunds of non-voided sales processed in [from, to). Restocked items give
-// their cost back (they are inventory again); discarded items stay a cost.
-const getReturnTotals = async (pharmacyId, from, to) => {
+const num = (v) => (v !== null && v !== undefined && Number.isFinite(Number(v)) ? Number(v) : null);
+
+// One row per returned item of non-voided sales processed in [from, to), with:
+//   gross   = value of the returned units as paid (after discount, incl. tax) - incl. the insurer share
+//   tax     = tax contained in gross;  net = gross - tax
+//   insurer = insurer share of gross (insurance sales); refund = patient refund
+// Returns since the per-line refund fix store these per item; older returns fall back to the
+// old proportional figures (refundAmount + insurer share, sale item tax * returned fraction).
+const loadReturnLines = async (pharmacyId, from, to) => {
   const Return = getReturnModel();
-  if (!Return) return EMPTY_RETURNS();
+  if (!Return) return { returns: [], lines: [] };
 
   const match = { pharmacyId };
   if (from || to) {
@@ -104,109 +175,132 @@ const getReturnTotals = async (pharmacyId, from, to) => {
     if (from) match.createdAt.$gte = from;
     if (to) match.createdAt.$lt = to;
   }
+  const returns = await Return.find(match)
+    .select('saleId createdAt refundTotal items')
+    .lean();
+  if (returns.length === 0) return { returns: [], lines: [] };
 
-  const [facet] = await Return.aggregate([
-    { $match: match },
-    {
-      $lookup: {
-        from: Sale.collection.name,
-        localField: 'saleId',
-        foreignField: '_id',
-        pipeline: [{ $project: { voided: 1, items: 1, staffId: 1, pharmacistId: 1, shiftId: 1 } }],
-        as: '_sale',
-      },
-    },
-    { $addFields: { _saleDoc: { $first: '$_sale' } } },
-    { $match: { '_saleDoc.voided': { $ne: true } } },
-    {
-      $facet: {
-        totals: [{ $group: { _id: null, refunds: { $sum: '$refundTotal' }, count: { $sum: 1 } } }],
-        bySaleStaff: [
-          {
-            $group: {
-              _id: { $ifNull: ['$_saleDoc.staffId', '$_saleDoc.pharmacistId'] },
-              refunds: { $sum: '$refundTotal' },
-              count: { $sum: 1 },
-            },
-          },
-        ],
-        bySaleShift: [
-          { $group: { _id: '$_saleDoc.shiftId', refunds: { $sum: '$refundTotal' }, count: { $sum: 1 } } },
-        ],
-        items: [
-          { $unwind: '$items' },
-          {
-            $addFields: {
-              _saleItem: {
-                $first: {
-                  $filter: {
-                    input: { $ifNull: ['$_saleDoc.items', []] },
-                    as: 'si',
-                    cond: { $eq: ['$$si._id', '$items.saleItemId'] },
-                  },
-                },
-              },
-            },
-          },
-          {
-            $lookup: {
-              from: StockBatch.collection.name,
-              localField: 'items.batchId',
-              foreignField: '_id',
-              pipeline: [{ $project: { purchasePrice: 1 } }],
-              as: '_batch',
-            },
-          },
-          {
-            $lookup: {
-              from: Medicine.collection.name,
-              localField: 'items.medicineId',
-              foreignField: '_id',
-              pipeline: [{ $project: { name: 1, category: 1, costPrice: 1 } }],
-              as: '_med',
-            },
-          },
-          {
-            $addFields: {
-              _unitCost: {
-                $ifNull: [
-                  '$_saleItem.costPrice',
-                  { $first: '$_batch.purchasePrice' },
-                  { $first: '$_med.costPrice' },
-                  0,
-                ],
-              },
-            },
-          },
-          {
-            $group: {
-              _id: '$items.medicineId',
-              name: { $first: { $ifNull: [{ $first: '$_med.name' }, '$items.name'] } },
-              category: { $first: { $ifNull: [{ $first: '$_med.category' }, 'Uncategorized'] } },
-              quantity: { $sum: '$items.quantity' },
-              refund: { $sum: '$items.refundAmount' },
-              restockedCost: {
-                $sum: {
-                  $cond: [{ $eq: ['$items.restocked', true] }, { $multiply: ['$items.quantity', '$_unitCost'] }, 0],
-                },
-              },
-            },
-          },
-        ],
-      },
-    },
+  const saleIds = [...new Set(returns.map((r) => String(r.saleId)))];
+  const sales = await Sale.find({ _id: { $in: saleIds }, pharmacyId })
+    .select('voided items staffId pharmacistId shiftId taxLines insurance.schemeId')
+    .lean();
+  const saleById = new Map(sales.map((s) => [String(s._id), s]));
+
+  const kept = returns.filter((r) => {
+    const s = saleById.get(String(r.saleId));
+    return !(s && s.voided);
+  });
+
+  const batchIds = new Set();
+  const medIds = new Set();
+  kept.forEach((r) => (r.items || []).forEach((it) => {
+    if (it.batchId) batchIds.add(String(it.batchId));
+    if (it.medicineId) medIds.add(String(it.medicineId));
+  }));
+  const [batches, meds] = await Promise.all([
+    batchIds.size ? StockBatch.find({ _id: { $in: [...batchIds] } }).select('purchasePrice').lean() : [],
+    medIds.size ? Medicine.find({ _id: { $in: [...medIds] } }).select('name category costPrice').lean() : [],
   ]);
+  const batchById = new Map(batches.map((b) => [String(b._id), b]));
+  const medById = new Map(meds.map((m) => [String(m._id), m]));
 
-  const totals = facet?.totals?.[0] || {};
-  const items = facet?.items || [];
-  return {
-    refunds: totals.refunds || 0,
-    count: totals.count || 0,
-    restockedCost: items.reduce((s, r) => s + (r.restockedCost || 0), 0),
-    byMedicine: new Map(items.map((r) => [String(r._id), r])),
-    bySaleStaff: new Map((facet?.bySaleStaff || []).map((r) => [String(r._id), r])),
-    bySaleShift: new Map((facet?.bySaleShift || []).map((r) => [String(r._id), r])),
+  const lines = [];
+  kept.forEach((r) => {
+    const sale = saleById.get(String(r.saleId)) || null;
+    const saleItems = new Map(((sale && sale.items) || []).map((i) => [String(i._id), i]));
+    const taxLine = (sale && Array.isArray(sale.taxLines) && sale.taxLines[0]) || null;
+    (r.items || []).forEach((it) => {
+      const si = saleItems.get(String(it.saleItemId)) || null;
+      const frac = si && si.quantity ? Math.min(1, (it.quantity || 0) / si.quantity) : 0;
+      const insurer = num(it.insurerAmount) ?? (sale && sale.insurance ? (Number(si?.insuranceAmount) || 0) * frac : 0);
+      const gross = num(it.grossAmount) ?? (Number(it.refundAmount) || 0) + insurer;
+      const tax = num(it.taxAmount) ?? (Number(si?.taxAmount) || 0) * frac;
+      const net = num(it.netAmount) ?? gross - tax;
+      const med = medById.get(String(it.medicineId));
+      const batch = batchById.get(String(it.batchId));
+      const unitCost = num(si?.costPrice) ?? num(batch?.purchasePrice) ?? num(med?.costPrice) ?? 0;
+      lines.push({
+        returnId: r._id,
+        createdAt: r.createdAt,
+        saleId: r.saleId,
+        staffId: sale ? sale.staffId || sale.pharmacistId : null,
+        shiftId: sale ? sale.shiftId || null : null,
+        medicineId: it.medicineId,
+        name: med?.name || it.name,
+        category: med?.category || 'Uncategorized',
+        quantity: it.quantity || 0,
+        restocked: it.restocked === true,
+        restockedCost: it.restocked === true ? (it.quantity || 0) * unitCost : 0,
+        refund: Number(it.refundAmount) || 0,
+        gross,
+        tax,
+        net,
+        insurer,
+        taxName: taxLine?.name || 'VAT',
+        taxRate: Number(taxLine?.rate) || 0,
+      });
+    });
+  });
+  return { returns: kept, lines };
+};
+
+// Returns of non-voided sales processed in [from, to). Restocked items give their cost back
+// (they are inventory again); discarded items stay a cost.
+//   refunds         = patient refunds (Return.refundTotal)
+//   returnedGross   = value taken back incl. tax and the insurer share (comes off revenue)
+//   returnedTax     = tax taken back;  returnedNet = returnedGross - returnedTax
+//   insurerReturned = insurer share taken back (comes off the claim)
+const getReturnTotals = async (pharmacyId, from, to) => {
+  const { returns, lines } = await loadReturnLines(pharmacyId, from, to);
+  if (returns.length === 0) return EMPTY_RETURNS();
+  const out = EMPTY_RETURNS();
+
+  const add = (map, key, ret, l) => {
+    const e = map.get(key) || { refunds: 0, gross: 0, tax: 0, net: 0, insurer: 0, count: 0, _ids: new Set() };
+    if (ret && !e._ids.has(String(ret._id))) {
+      e._ids.add(String(ret._id));
+      e.count += 1;
+      e.refunds += Number(ret.refundTotal) || 0;
+    }
+    if (l) {
+      e.gross += l.gross;
+      e.tax += l.tax;
+      e.net += l.net;
+      e.insurer += l.insurer;
+    }
+    map.set(key, e);
   };
+
+  const retById = new Map(returns.map((r) => [String(r._id), r]));
+  returns.forEach((r) => {
+    out.refunds += Number(r.refundTotal) || 0;
+    out.count += 1;
+  });
+  lines.forEach((l) => {
+    const ret = retById.get(String(l.returnId));
+    out.returnedGross += l.gross;
+    out.returnedTax += l.tax;
+    out.returnedNet += l.net;
+    out.insurerReturned += l.insurer;
+    out.restockedCost += l.restockedCost;
+    add(out.bySaleStaff, String(l.staffId), ret, l);
+    add(out.bySaleShift, String(l.shiftId), ret, l);
+
+    const key = String(l.medicineId);
+    const m = out.byMedicine.get(key) || {
+      _id: l.medicineId, name: l.name, category: l.category, quantity: 0, refund: 0, gross: 0, tax: 0, net: 0, insurer: 0, restockedCost: 0,
+    };
+    m.quantity += l.quantity;
+    m.refund += l.refund;
+    m.gross += l.gross;
+    m.tax += l.tax;
+    m.net += l.net;
+    m.insurer += l.insurer;
+    m.restockedCost += l.restockedCost;
+    out.byMedicine.set(key, m);
+  });
+  [out.bySaleStaff, out.bySaleShift].forEach((map) => map.forEach((e) => delete e._ids));
+  return out;
 };
 
 // Sales totals (non-voided) for [from, to): gross receipts, tax, discount,
@@ -248,9 +342,13 @@ const getSaleTotals = async (pharmacyId, from, to) => {
   };
 };
 
-// Full financial summary of a window, net of voids and returns.
-//   revenue     = sales receipts (incl. tax) - refunds
-//   netRevenue  = revenue - tax
+// Full financial summary of a window, net of voids and returns (by return date).
+// Sales count in full (patient + insurer share); returns take back their full value too.
+//   grossSales  = sales receipts incl. tax and insurer share
+//   refunds     = value of returned goods incl. tax and insurer share (returnedGross)
+//   revenue     = grossSales - refunds
+//   tax         = sales tax - tax on returned goods
+//   netRevenue  = revenue - tax (= sales net of tax - returns net of tax)
 //   cogs        = cost of items sold - cost of items restocked by returns
 //   grossProfit = netRevenue - cogs
 const getPeriodSummary = async (pharmacyId, from, to) => {
@@ -258,16 +356,24 @@ const getPeriodSummary = async (pharmacyId, from, to) => {
     getSaleTotals(pharmacyId, from, to),
     getReturnTotals(pharmacyId, from, to),
   ]);
-  const revenue = sales.grossSales - returns.refunds;
-  const netRevenue = revenue - sales.tax;
+  const revenue = sales.grossSales - returns.returnedGross;
+  const tax = sales.tax - returns.returnedTax;
+  const netRevenue = revenue - tax;
   const cogs = Math.max(0, sales.cogs - returns.restockedCost);
   const grossProfit = netRevenue - cogs;
   return {
     grossSales: round2(sales.grossSales),
-    refunds: round2(returns.refunds),
+    refunds: round2(returns.returnedGross),
+    refundsNet: round2(returns.returnedNet),
+    refundedTax: round2(returns.returnedTax),
+    // Paid back to patients (cash / card / store credit / credit reversal)
+    patientRefunds: round2(returns.refunds),
+    // Taken off insurance claims
+    insurerReturned: round2(returns.insurerReturned),
     returnCount: returns.count,
     revenue: round2(revenue),
-    tax: round2(sales.tax),
+    salesTax: round2(sales.tax),
+    tax: round2(tax),
     discount: round2(sales.discount),
     netRevenue: round2(netRevenue),
     cogs: round2(cogs),
@@ -423,7 +529,9 @@ const rangeMeta = (r) => ({
 module.exports = {
   saleMatch,
   itemCostStages,
+  lineAmountStages,
   getReturnTotals,
+  loadReturnLines,
   getPeriodSummary,
   buildComparison,
   formatGrowth,

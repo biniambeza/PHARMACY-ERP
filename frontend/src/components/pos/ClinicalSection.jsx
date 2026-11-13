@@ -16,7 +16,8 @@ import { inputCls, sectionCls, labelCls } from './posUtils';
  *   patient, onPatient(p|null)
  *   prescription (record), onPrescription(rx|null)
  *   legacyRx { number, prescriber, notes }, onLegacyRx(next)  (free-text Rx for Rx-only, non-controlled items)
- *   onWarnings({ interactions, allergyHits })
+ *   onWarnings({ key, status, interactions, allergyHits })  (see ClinicalWarnings; the check also
+ *     runs when the section itself is hidden, so the POS always knows its result)
  *   needsRx, hasControlled
  */
 const ClinicalSection = ({
@@ -45,7 +46,12 @@ const ClinicalSection = ({
     };
   }, [patientId, online]);
 
-  if (!canPatients && !needsRx) return null;
+  const warningsEl =
+    medicineIds.length > 0 && online ? (
+      <ClinicalWarnings patientId={patientId} medicineIds={medicineIds} onResult={onWarnings} compact />
+    ) : null;
+
+  if (!canPatients && !needsRx) return warningsEl;
 
   const rxItems = cart
     .filter((l) => l.medicine.requiresPrescription || l.medicine.isControlled)
@@ -80,9 +86,7 @@ const ClinicalSection = ({
         />
       )}
 
-      {medicineIds.length > 0 && online && (
-        <ClinicalWarnings patientId={patientId} medicineIds={medicineIds} onResult={onWarnings} compact />
-      )}
+      {warningsEl}
 
       {patient && (needsRx || hasControlled || rxList.length > 0) && (
         <div className="space-y-1.5">

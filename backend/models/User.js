@@ -64,6 +64,19 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Per-account brute-force protection (controllers/authController.js):
+    // failed password / 2FA attempts since the last success; after
+    // MAX_FAILED_LOGINS the account is locked until lockUntil.
+    failedLoginCount: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+      select: false,
+    },
     // Tenant access: one entry per pharmacy (branch) the user works in.
     // Users with role 'pharmacist' and no memberships who own a pharmacy
     // (Pharmacy.owner) are migrated lazily to an 'owner' membership
@@ -92,6 +105,10 @@ const userSchema = new mongoose.Schema(
       pendingCreatedAt: { type: Date, select: false, default: null },
       // Last accepted TOTP time step: a code can be used only once
       lastUsedStep: { type: Number, select: false, default: null },
+      // Current login challenge (jti of the challenge token) and its failed
+      // code attempts; the challenge is invalidated after too many failures.
+      challengeId: { type: String, select: false, default: null },
+      challengeFailures: { type: Number, select: false, default: 0 },
       recoveryCodes: {
         type: [
           new mongoose.Schema(
@@ -109,10 +126,22 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-const TWO_FACTOR_PRIVATE = ['secret', 'pendingSecret', 'pendingCreatedAt', 'lastUsedStep', 'recoveryCodes'];
+const TWO_FACTOR_PRIVATE = [
+  'secret',
+  'pendingSecret',
+  'pendingCreatedAt',
+  'lastUsedStep',
+  'recoveryCodes',
+  'challengeId',
+  'challengeFailures',
+];
 const stripTwoFactorSecrets = (doc, ret) => {
   if (ret && ret.twoFactor) {
     TWO_FACTOR_PRIVATE.forEach((k) => delete ret.twoFactor[k]);
+  }
+  if (ret) {
+    delete ret.failedLoginCount;
+    delete ret.lockUntil;
   }
   return ret;
 };

@@ -26,6 +26,9 @@ async function enableTwoFactor(P) {
     .set(auth(P.token))
     .send({ code: await codeFor(setup.body.secret) });
   expect(enable.status).toBe(200);
+  // Enabling 2FA revokes older sessions; continue with the fresh token
+  expect(typeof enable.body.token).toBe('string');
+  P.token = enable.body.token;
   await allowCodeReuse(P.user._id);
   return { secret: setup.body.secret, recoveryCodes: enable.body.recoveryCodes };
 }
@@ -75,6 +78,10 @@ describe('2FA setup and enable', () => {
     expect(raw.twoFactor.enabled).toBe(true);
     expect(raw.twoFactor.secret).not.toContain(setup.body.secret);
     expect(JSON.stringify(raw.twoFactor.recoveryCodes)).not.toContain(enable.body.recoveryCodes[0]);
+
+    // Enabling revokes older sessions (the old token) and returns a fresh token
+    expect((await request(app).get('/api/auth/me').set(auth(P.token))).status).toBe(401);
+    P.token = enable.body.token;
 
     const me = await request(app).get('/api/auth/me').set(auth(P.token));
     expect(me.status).toBe(200);

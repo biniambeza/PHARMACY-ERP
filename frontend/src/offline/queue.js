@@ -20,13 +20,21 @@ export const newOfflineId = () => {
   return `off-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 };
 
-// True for axios errors where the request never got a response (offline, DNS, timeout, CORS).
+// True for axios errors where the request never got a response (offline, DNS, timeout
+// (ECONNABORTED / ETIMEDOUT, see api/axios.js REQUEST_TIMEOUT_MS), CORS). A request cancelled
+// by the app itself (ERR_CANCELED) is not a network error.
+const NETWORK_CODES = ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'];
 export const isNetworkError = (err) =>
   Boolean(
     err &&
       !err.response &&
-      (err.request || err.code === 'ERR_NETWORK' || err.code === 'ECONNABORTED' || err.message === 'Network Error')
+      err.code !== 'ERR_CANCELED' &&
+      (err.request || NETWORK_CODES.includes(err.code) || err.message === 'Network Error' || /timeout/i.test(err.message || ''))
   );
+
+// Queue entries made by `userId` (entries without a user count as the current user's: they are
+// synced by whoever is signed in).
+export const isOwnEntry = (entry, userId) => !userId || !entry.userId || String(entry.userId) === String(userId);
 
 export const enqueueSale = async ({ offlineId, pharmacyId, userId, payload, summary }) => {
   const db = await getDb();
@@ -83,9 +91,7 @@ export const syncQueue = async ({ pharmacyId, userId }) => {
     let synced = 0;
     let failed = 0;
     const db = await getDb();
-    const pending = (await listQueue(pharmacyId)).filter(
-      (e) => e.status === 'pending' && (!userId || !e.userId || String(e.userId) === String(userId))
-    );
+    const pending = (await listQueue(pharmacyId)).filter((e) => e.status === 'pending' && isOwnEntry(e, userId));
     for (let i = 0; i < pending.length; i += SYNC_BATCH) {
       const batch = pending.slice(i, i + SYNC_BATCH);
       let res;

@@ -33,6 +33,20 @@ const claimPaymentSchema = new mongoose.Schema(
   { _id: true, timestamps: { createdAt: true, updatedAt: false } }
 );
 
+// Insurer share of a return made after the claim was submitted (the claim itself is frozen).
+const claimAdjustmentSchema = new mongoose.Schema(
+  {
+    returnId: { type: mongoose.Schema.Types.ObjectId, ref: 'Return', default: null },
+    returnNumber: { type: String, default: '', trim: true },
+    saleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Sale', required: true },
+    invoiceNumber: { type: String, default: '', trim: true },
+    amount: { type: Number, required: true, min: 0 },
+    date: { type: Date, required: true },
+    reason: { type: String, default: 'return', trim: true },
+  },
+  { _id: true }
+);
+
 const insuranceClaimSchema = new mongoose.Schema(
   {
     pharmacyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pharmacy', required: true, index: true },
@@ -48,6 +62,15 @@ const insuranceClaimSchema = new mongoose.Schema(
     submittedAt: { type: Date, default: null },
     submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     payments: { type: [claimPaymentSchema], default: [] },
+    // Returns after submission: totalAmount stays as submitted; the amount the insurer owes is
+    //   netAmount = totalAmount - adjustedTotal, balance = netAmount - paidAmount.
+    // outstanding = max(0, balance); refundDueToInsurer = max(0, -balance) (insurer overpaid).
+    // Kept in sync by services/insurance (syncClaimBalance).
+    adjustments: { type: [claimAdjustmentSchema], default: [] },
+    adjustedTotal: { type: Number, default: 0, min: 0 },
+    netAmount: { type: Number, min: 0 },
+    outstandingAmount: { type: Number, default: 0, min: 0 },
+    refundDueToInsurer: { type: Number, default: 0, min: 0 },
     rejectedAt: { type: Date, default: null },
     rejectionNotes: { type: String, default: '', trim: true, maxlength: 1000 },
     // Rejected claims: whether the sales were released back to the unclaimed pool
@@ -60,11 +83,40 @@ const insuranceClaimSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+
+// Amounts after returns: works on documents and lean objects (older claims lack the fields).
+const claimBalance = (claim) => {
+  const total = round2(claim?.totalAmount || 0);
+  const adjustedTotal = round2(claim?.adjustedTotal || 0);
+  const paidAmount = round2(claim?.paidAmount || 0);
+  const netAmount = round2(Math.max(0, total - adjustedTotal));
+  const balance = round2(netAmount - paidAmount);
+  return {
+    totalAmount: total,
+    adjustedTotal,
+    netAmount,
+    paidAmount,
+    balance,
+    outstanding: balance > 0 ? balance : 0,
+    refundDueToInsurer: balance < 0 ? round2(-balance) : 0,
+  };
+};
+
+insuranceClaimSchema.pre('validate', function syncBalance() {
+  const b = claimBalance(this);
+  this.adjustedTotal = b.adjustedTotal;
+  this.netAmount = b.netAmount;
+  this.outstandingAmount = b.outstanding;
+  this.refundDueToInsurer = b.refundDueToInsurer;
+});
+
 insuranceClaimSchema.index({ pharmacyId: 1, claimNumber: 1 }, { unique: true });
 insuranceClaimSchema.index({ pharmacyId: 1, schemeId: 1, createdAt: -1 });
 insuranceClaimSchema.index({ pharmacyId: 1, status: 1 });
 
 const InsuranceClaim = mongoose.model('InsuranceClaim', insuranceClaimSchema);
 InsuranceClaim.CLAIM_STATUSES = CLAIM_STATUSES;
+InsuranceClaim.claimBalance = claimBalance;
 
 module.exports = InsuranceClaim;

@@ -20,6 +20,7 @@ import PaymentModal from '../../components/payables/PaymentModal';
 import InvoicesTable from '../../components/payables/InvoicesTable';
 import BalancesTable from '../../components/payables/BalancesTable';
 import PaymentsTable from '../../components/payables/PaymentsTable';
+import { logApiError } from '../../api/logApiError';
 
 const Payables = () => {
   const { t } = useTranslation('payables');
@@ -57,7 +58,7 @@ const Payables = () => {
       setAging(ag);
       setSuppliers(sup.suppliers || []);
     } catch (err) {
-      console.error('Failed to load payables:', err);
+      logApiError('Failed to load payables', err);
     } finally {
       setLoading(false);
     }

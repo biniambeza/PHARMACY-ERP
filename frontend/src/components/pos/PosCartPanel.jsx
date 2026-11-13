@@ -4,12 +4,12 @@ import CartLines from './CartLines';
 import CustomerSection from './CustomerSection';
 import ClinicalSection from './ClinicalSection';
 import PaymentPanel from './PaymentPanel';
-import CheckoutFooter, { ClinicalAck } from './CheckoutFooter';
+import CheckoutFooter, { ClinicalAck, ClinicalOverrideAck } from './CheckoutFooter';
 import { cardCls } from './posUtils';
 
 // Right-hand column of the POS: cart lines, customer/clinical sections, payment and checkout.
 const PosCartPanel = ({
-  sale, online, canCredit, needsRx, hasControlled, severeWarnings, warningKey,
+  sale, online, canCredit, needsRx, hasControlled, severeWarnings, clinicalFailed, warningKey,
   totals, payStatus, allowedMethods, providers, insuranceLines, maxQtyOf, registerQtyInput,
   blockers, checkoutLoading, onCheckout, onHold, onClear,
 }) => {
@@ -62,6 +62,13 @@ const PosCartPanel = ({
               warnings={sale.warnings}
               checked={sale.ackKey === warningKey}
               onChange={(checked) => sale.setAckKey(checked ? warningKey : '')}
+            />
+          )}
+
+          {clinicalFailed && (
+            <ClinicalOverrideAck
+              checked={sale.ackKey === `override:${warningKey}`}
+              onChange={(checked) => sale.setAckKey(checked ? `override:${warningKey}` : '')}
             />
           )}
 

@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const pharmacyScope = require('../middleware/pharmacyScope');
+const { supportReadOnly } = require('../middleware/supportMode');
 const { requirePermission } = require('../middleware/permission');
 const {
   getCustomers,
@@ -16,7 +17,8 @@ const {
   getAging,
 } = require('../controllers/customerController');
 
-router.use(protect, pharmacyScope);
+// Platform admins: read-only support mode for one pharmacy (x-pharmacy-id)
+router.use(protect, pharmacyScope, supportReadOnly);
 
 const canView = requirePermission('customer:view');
 const canManage = requirePermission('customer:manage');

@@ -4,8 +4,16 @@ const rawUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').tri
 const cleanUrl = rawUrl.replace(/\/+$/, '');
 const baseURL = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 
+// Requests that get no answer within this time fail with ECONNABORTED (a network error for
+// offline/queue.js isNetworkError), so e.g. the POS falls back to saving the sale offline on a
+// half-open connection; the sale's offlineId makes the later retry idempotent.
+export const REQUEST_TIMEOUT_MS = 25000;
+// For known slow calls (file import / export, batch submissions): pass { timeout: LONG_REQUEST_TIMEOUT_MS }.
+export const LONG_REQUEST_TIMEOUT_MS = 120000;
+
 const api = axios.create({
   baseURL,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: {
     'Content-Type': 'application/json',
   },

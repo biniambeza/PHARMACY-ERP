@@ -22,6 +22,7 @@
   "checkFailed": "Could not check interactions",
   "warnings": {
     "checking": "Checking interactions...",
+    "retry": "Retry",
     "allergy": "Allergy: {{medicine}} — patient allergic to {{substance}}",
     "reaction": "Reaction: {{reaction}}",
     "disclaimer": "Warnings come from a starter list and your pharmacy rules; they are not a substitute for professional judgement."

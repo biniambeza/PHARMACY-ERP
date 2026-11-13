@@ -9,6 +9,10 @@
 //   customerId?, customer?: { name, phone }, patientId?, prescriptionId?,
 //   prescription?: { number, prescriber, notes }   (legacy free-text prescription)
 //   discount?, notes?, offlineId?,
+//   clinicalAck?: true when the pharmacist acknowledged severe allergy / interaction warnings
+//          (required when a patient is selected and services/clinical finds any; 409 CLINICAL_ACK_REQUIRED)
+//   items[].unitPrice?, clientTotal?  (offline sync only: the price per sold unit and the total
+//          the client charged; see "Offline sync rules" below)
 //   payments?: [{ method: cash|card|mobile_money|credit|insurance, amount, reference?, provider?, intentId?,
 //                 schemeId?, memberId?, memberNo? }]
 //          insurance: at most one line; its amount is ignored and computed server-side from the
@@ -20,6 +24,17 @@
 // Without `session` processSale opens its own session + transaction. With a session the
 // caller owns the transaction (processSale only runs the work inside it).
 // `offline: true` (offline sync) only allows cash/card payments (no insurance) and no controlled medicines.
+//
+// Offline sync rules (`offline: true`):
+//   - prices: the client's unit price is kept when it is >= the medicine's cost price, otherwise the
+//     current price is used. If the payments then don't cover the total, the difference is absorbed
+//     as a discount (the goods are already gone) and the sale is flagged offlinePriceAdjusted.
+//   - time: createdAtClient may be at most 5 minutes in the future and at most 7 days old; outside
+//     that the sale is accepted with createdAt = sync time and flagged (offlineTimeFlag). Otherwise
+//     createdAt (what reports use) = offlineCreatedAt = the client time.
+//   - shift: the seller's shift that was open at the client time, else the currently open one;
+//     an offline sale is accepted without a shift even when the pharmacy requires one.
+//   - the clinical acknowledgement gate is not applied (the sale already happened).
 //
 // Guarantees: everything is validated before the first write; stock is taken FEFO from
 // active, unexpired batches with atomic conditional decrements; a sale with an
@@ -36,13 +51,17 @@ const { nextSequence, formatSequence } = require('../utils/sequence');
 const { recordMovement } = require('../utils/stockMovement');
 const { computeTax, getTaxSettings } = require('./tax');
 const { assertCreditAllowed, applyCreditSale } = require('./credit');
-const { recordControlledDispenses, recordPrescriptionDispense } = require('./clinical');
+const { recordControlledDispenses, recordPrescriptionDispense, checkSaleClinical } = require('./clinical');
 const { resolveInsuranceForSale, computeInsuranceSplit } = require('./insurance');
 
 const PAYMENT_METHODS = ['cash', 'card', 'mobile_money', 'credit', 'insurance'];
 const OFFLINE_METHODS = ['cash', 'card'];
 const EPS = 0.005;
 const MAX_ITEMS = 200;
+// Interaction severities that need an explicit acknowledgement (same as the POS)
+const SEVERE_INTERACTIONS = ['major', 'contraindicated'];
+const OFFLINE_MAX_FUTURE_MS = 5 * 60 * 1000;
+const OFFLINE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 const cleanString = (v, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -83,10 +102,15 @@ const normalizePayload = (payload = {}, { offline = false } = {}) => {
     ) {
       throw new AppError('Invalid item data provided', 400);
     }
+    const unitPrice = item.unitPrice === undefined || item.unitPrice === null || item.unitPrice === ''
+      ? null
+      : Number(item.unitPrice);
     return {
       medicineId: String(item.medicineId),
       quantity: qty,
       unitName: cleanString(item.unitName, 50),
+      // Only used for offline sync (see the offline rules above)
+      clientUnitPrice: Number.isFinite(unitPrice) && unitPrice >= 0 ? round2(unitPrice) : null,
     };
   });
 
@@ -178,6 +202,12 @@ const normalizePayload = (payload = {}, { offline = false } = {}) => {
       notes: cleanString(payload.prescription?.notes, 500),
     },
     notes: cleanString(payload.notes, 1000),
+    clinicalAck: payload.clinicalAck === true,
+    clientTotal: (() => {
+      if (payload.clientTotal === undefined || payload.clientTotal === null || payload.clientTotal === '') return null;
+      const n = Number(payload.clientTotal);
+      return Number.isFinite(n) && n >= 0 ? round2(n) : null;
+    })(),
     offlineId: offlineId || null,
     offlineCreatedAt: (() => {
       if (!payload.createdAtClient) return null;
@@ -310,17 +340,58 @@ const resolveMobileMoney = async ({ pharmacyId, payments, session }) => {
   return intentsToConsume;
 };
 
+// ---------- Offline sync helpers ----------
+
+// Bounds the client time of an offline sale: { at, flag, raw }.
+//   at:   the time used for createdAt / offlineCreatedAt (null when the client sent none)
+//   flag: '' | 'future' (more than 5 minutes ahead) | 'stale' (older than 7 days); flagged sales use the sync time
+const boundOfflineTime = (raw, now = new Date()) => {
+  if (!raw) return { at: null, flag: '', raw: null };
+  const ms = raw.getTime();
+  if (ms > now.getTime() + OFFLINE_MAX_FUTURE_MS) return { at: now, flag: 'future', raw };
+  if (ms < now.getTime() - OFFLINE_MAX_AGE_MS) return { at: now, flag: 'stale', raw };
+  // Small clock skew ahead of the server: never record a sale in the future
+  return { at: ms > now.getTime() ? now : raw, flag: '', raw };
+};
+
+// Price of a line for an offline sale: the client's price when it is not below the
+// medicine's cost price (per base unit), otherwise the current price.
+const offlineUnit = (medicine, unit, clientUnitPrice) => {
+  if (clientUnitPrice === null || clientUnitPrice === undefined) return { unit, changed: false };
+  if (Math.abs(clientUnitPrice - unit.price) < EPS) return { unit, changed: false };
+  const cost = Number(medicine.costPrice) || 0;
+  const accepted = clientUnitPrice > 0 && clientUnitPrice / unit.factor >= cost - EPS;
+  return { unit: accepted ? { ...unit, price: clientUnitPrice } : unit, changed: true };
+};
+
 // ---------- Core ----------
 
 const runSale = async (ctx, input, session, { offline }) => {
   const { pharmacyId, user, membershipRole, pharmacy } = ctx;
   const now = new Date();
+  const clientTime = offline ? boundOfflineTime(input.offlineCreatedAt, now) : { at: null, flag: '', raw: null };
 
-  // Shift: sales are attached to the seller's open shift (required when the pharmacy says so)
-  const shift = await Shift.findOne({ pharmacyId, userId: user._id, status: 'open' })
-    .select('_id')
-    .session(session);
-  if (!shift && shiftRequired(pharmacy)) {
+  // Shift: sales are attached to the seller's open shift (required when the pharmacy says so).
+  // Offline sales go to the shift that was open when they were made, if there is one.
+  let shift = null;
+  if (offline && clientTime.at && !clientTime.flag) {
+    shift = await Shift.findOne({
+      pharmacyId,
+      userId: user._id,
+      openedAt: { $lte: clientTime.at },
+      $or: [{ status: 'open' }, { closedAt: { $gte: clientTime.at } }],
+    })
+      .sort({ openedAt: -1 })
+      .select('_id')
+      .session(session);
+  }
+  if (!shift) {
+    shift = await Shift.findOne({ pharmacyId, userId: user._id, status: 'open' })
+      .select('_id')
+      .session(session);
+  }
+  // Offline sales already happened (goods handed over): accepted without a shift.
+  if (!shift && shiftRequired(pharmacy) && !offline) {
     throw codedError('Open a shift before making sales', 400, 'SHIFT_REQUIRED');
   }
 
@@ -361,10 +432,38 @@ const runSale = async (ctx, input, session, { offline }) => {
     }
   }
 
+  // Allergy / interaction gate: with a patient, severe warnings must be acknowledged
+  // (the POS sends clinicalAck after the pharmacist confirmed). Not applied to offline sync.
+  let clinicalAcknowledged = false;
+  if (!offline && input.patientId) {
+    const { interactions, allergyHits } = await checkSaleClinical({
+      pharmacyId,
+      patientId: input.patientId,
+      medicineIds: uniqueIds,
+    });
+    const severe = allergyHits.length > 0 || interactions.some((i) => SEVERE_INTERACTIONS.includes(i.severity));
+    if (severe) {
+      if (!input.clinicalAck) {
+        throw codedError(
+          'This sale has allergy or major interaction warnings for the patient. Review and acknowledge them first.',
+          409,
+          'CLINICAL_ACK_REQUIRED'
+        );
+      }
+      clinicalAcknowledged = true;
+    }
+  }
+
   // Pricing per line (pack units: price per pack, stock in base units)
+  let offlinePriceAdjusted = false;
   const priced = input.lines.map((l) => {
     const medicine = medById.get(l.medicineId);
-    const unit = resolveUnit(medicine, l.unitName);
+    let unit = resolveUnit(medicine, l.unitName);
+    if (offline) {
+      const off = offlineUnit(medicine, unit, l.clientUnitPrice);
+      unit = off.unit;
+      if (off.changed) offlinePriceAdjusted = true;
+    }
     return {
       ...l,
       medicine,
@@ -384,13 +483,37 @@ const runSale = async (ctx, input, session, { offline }) => {
   }
 
   // Tax on the discounted line totals (discount spread proportionally)
-  const discountShares = splitAmount(input.discount, priced.map((l) => l.lineTotal));
-  const { taxLines, taxTotal, lineTaxes } = computeTax({
-    pharmacy,
-    lines: priced.map((l, i) => ({ medicine: l.medicine, lineTotal: round2(l.lineTotal - discountShares[i]) })),
-  });
   const { inclusive } = getTaxSettings(pharmacy);
-  const grandTotal = round2(Math.max(0, subtotal - input.discount + (inclusive ? 0 : taxTotal)));
+  const totalsFor = (discount) => {
+    const shares = splitAmount(discount, priced.map((l) => l.lineTotal));
+    const tax = computeTax({
+      pharmacy,
+      lines: priced.map((l, i) => ({ medicine: l.medicine, lineTotal: round2(l.lineTotal - shares[i]) })),
+    });
+    return {
+      ...tax,
+      discount,
+      discountShares: shares,
+      grandTotal: round2(Math.max(0, subtotal - discount + (inclusive ? 0 : tax.taxTotal))),
+    };
+  };
+  let totals = totalsFor(input.discount);
+
+  // Offline sync: the money was already collected. When the server total is higher than what
+  // the client charged (price or tax changes), the difference is absorbed as a discount.
+  if (offline && input.payments) {
+    const paid = round2(input.payments.reduce((s, p) => s + (p.method === 'insurance' ? 0 : p.amount), 0));
+    const target = input.clientTotal !== null ? Math.min(paid, input.clientTotal) : paid;
+    for (let i = 0; i < 4; i += 1) {
+      const short = round2(totals.grandTotal - target);
+      if (short <= EPS || totals.discount >= subtotal) break;
+      const slope = totals.grandTotal - totalsFor(Math.min(subtotal, totals.discount + 1)).grandTotal;
+      if (!(slope > 0)) break;
+      totals = totalsFor(Math.min(subtotal, round2(totals.discount + Math.ceil((short / slope) * 100) / 100)));
+      offlinePriceAdjusted = true;
+    }
+  }
+  const { discountShares, taxLines, taxTotal, lineTaxes, grandTotal } = totals;
 
   // Insurance: insurer share computed from the scheme rules (client amounts are never trusted)
   let insurance = null;
@@ -566,7 +689,7 @@ const runSale = async (ctx, input, session, { offline }) => {
     customer: customerSnapshot,
     items: saleItems,
     subtotal,
-    discount: input.discount,
+    discount: totals.discount,
     tax: taxTotal,
     taxLines,
     grandTotal,
@@ -587,8 +710,15 @@ const runSale = async (ctx, input, session, { offline }) => {
     amountTendered: settled.amountTendered === null ? undefined : settled.amountTendered,
     change: settled.change,
     notes: input.notes,
-    offlineCreatedAt: input.offlineCreatedAt,
+    offlineCreatedAt: offline ? clientTime.at : input.offlineCreatedAt,
   };
+  if (offline && clientTime.at) saleDoc.createdAt = clientTime.at; // reports group by createdAt
+  if (clientTime.flag) {
+    saleDoc.offlineTimeFlag = clientTime.flag;
+    saleDoc.offlineClientCreatedAt = clientTime.raw;
+  }
+  if (offlinePriceAdjusted) saleDoc.offlinePriceAdjusted = true;
+  if (clinicalAcknowledged) saleDoc.clinicalAcknowledged = true;
   if (input.offlineId) saleDoc.offlineId = input.offlineId;
   if (insurance) saleDoc.insurance = insurance;
   if (input.prescription.number || input.prescription.prescriber) {
@@ -699,6 +829,7 @@ module.exports = {
   settlePayments,
   resolveUnit,
   shiftRequired,
+  boundOfflineTime,
   PAYMENT_METHODS,
   OFFLINE_METHODS,
 };

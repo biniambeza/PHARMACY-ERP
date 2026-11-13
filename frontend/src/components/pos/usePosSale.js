@@ -1,9 +1,23 @@
 // State of the sale being rung up on the POS: cart lines, customer/patient, prescription,
 // clinical warnings, discount and payment rows, plus the cart actions.
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { cancelPaymentIntent } from '../../api/paymentApi';
 import { unitsOf, findUnit, baseQtyInCart, newPaymentRow } from './posUtils';
 
 const emptyRx = { number: '', prescriber: '', notes: '' };
+// Result of the allergy / interaction check (ClinicalWarnings onResult): `key` identifies the
+// patient + medicines it was made for; the POS only trusts status 'ok' for the current key.
+const emptyWarnings = { key: '', status: 'ok', interactions: [], allergyHits: [] };
+
+// A mobile money push request still waiting for the customer
+export const isPendingIntent = (row) => row.method === 'mobile_money' && Boolean(row.intentId) && row.intentStatus === 'pending';
+
+// Cancels pending push requests (fire-and-forget: the provider may already have finished it).
+export const cancelPendingIntents = (rows) => {
+  (rows || []).filter(isPendingIntent).forEach((row) => {
+    cancelPaymentIntent(row.intentId).catch(() => {});
+  });
+};
 const emptyWalkIn = { name: '', phone: '' };
 let lineSeq = 0;
 
@@ -15,11 +29,18 @@ export const usePosSale = ({ t, online, setError }) => {
   const [patient, setPatient] = useState(null);
   const [prescription, setPrescription] = useState(null);
   const [legacyRx, setLegacyRx] = useState(emptyRx);
-  const [warnings, setWarnings] = useState({ interactions: [], allergyHits: [] });
+  const [warnings, setWarnings] = useState(emptyWarnings);
   const [ackKey, setAckKey] = useState('');
   const [discount, setDiscount] = useState('');
   const [payments, setPayments] = useState(() => [newPaymentRow('cash')]);
   const offlineIdRef = useRef(null); // reused when a checkout is retried (idempotent)
+  const paymentsRef = useRef(payments);
+  useEffect(() => {
+    paymentsRef.current = payments;
+  }, [payments]);
+  // Leaving the POS cancels push requests that are still waiting
+  useEffect(() => () => cancelPendingIntents(paymentsRef.current), []);
+  const hasPendingIntent = payments.some(isPendingIntent);
 
   // ---------- Cart actions ----------
   const addToCart = useCallback(
@@ -88,6 +109,8 @@ export const usePosSale = ({ t, online, setError }) => {
   };
 
   const resetSale = useCallback(() => {
+    cancelPendingIntents(paymentsRef.current);
+    paymentsRef.current = [];
     setCart([]);
     setSelectedKey(null);
     setCustomer(null);
@@ -95,7 +118,7 @@ export const usePosSale = ({ t, online, setError }) => {
     setPatient(null);
     setPrescription(null);
     setLegacyRx(emptyRx);
-    setWarnings({ interactions: [], allergyHits: [] });
+    setWarnings(emptyWarnings);
     setAckKey('');
     setDiscount('');
     setPayments([newPaymentRow('cash')]);
@@ -119,7 +142,7 @@ export const usePosSale = ({ t, online, setError }) => {
   return {
     cart, selectedKey, setSelectedKey, customer, walkIn, setWalkIn, patient, setPatient,
     prescription, setPrescription, legacyRx, setLegacyRx, warnings, setWarnings, ackKey, setAckKey,
-    discount, setDiscount, payments, setPayments, offlineIdRef,
+    discount, setDiscount, payments, setPayments, offlineIdRef, hasPendingIntent,
     addToCart, setQty, setUnit, removeLine, changeCustomer, resetSale, snapshot, restore,
   };
 };

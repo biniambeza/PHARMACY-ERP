@@ -13,7 +13,8 @@ const ALLERGY_SEVERITIES = ['mild', 'moderate', 'severe', 'unknown'];
 const str = (v, max = 500) => (v === undefined || v === null ? '' : String(v).trim().slice(0, max));
 
 const assertId = (id, label = 'id') => {
-  if (!mongoose.isValidObjectId(String(id))) throw new AppError(`Invalid ${label}`, 400);
+  const ok = (typeof id === 'string' || id instanceof mongoose.Types.ObjectId) && mongoose.isValidObjectId(id);
+  if (!ok) throw new AppError(`Invalid ${label}`, 400);
 };
 
 // Builds the patient fields from the request body (only whitelisted fields).

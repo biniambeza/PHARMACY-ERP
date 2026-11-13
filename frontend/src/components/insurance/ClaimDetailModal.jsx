@@ -73,6 +73,12 @@ const ClaimDetailModal = ({ claimId, onClose, onChanged }) => {
         <div><div className="text-slate-400">{t('fields.period')}</div><div className="font-semibold">{formatDate(claim.periodFrom)} – {formatDate(claim.periodTo)}</div></div>
         <div><div className="text-slate-400">{t('fields.total')}</div><div className="font-mono font-bold">{formatMoney(claim.totalAmount)}</div></div>
         <div><div className="text-slate-400">{t('fields.outstanding')}</div><div className="font-mono font-bold text-amber-600">{formatMoney(claim.outstanding)}</div></div>
+        {claim.adjustedTotal > 0 && (
+          <div><div className="text-slate-400">{t('fields.adjustedTotal')}</div><div className="font-mono font-bold">{formatMoney(claim.adjustedTotal)}</div></div>
+        )}
+        {claim.refundDueToInsurer > 0 && (
+          <div><div className="text-slate-400">{t('fields.refundDueToInsurer')}</div><div className="font-mono font-bold text-rose-600">{formatMoney(claim.refundDueToInsurer)}</div></div>
+        )}
       </div>
       {claim.status === 'rejected' && (
         <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-700 dark:text-rose-300">

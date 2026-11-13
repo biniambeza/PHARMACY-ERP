@@ -9,6 +9,7 @@ import StockKpiCards from '../../components/stock/StockKpiCards';
 import StockFilters from '../../components/stock/StockFilters';
 import StockBatchTable from '../../components/stock/StockBatchTable';
 import { getDaysUntilExpiry } from '../../components/stock/stockUtils';
+import { logApiError } from '../../api/logApiError';
 
 const Stock = () => {
   const { t } = useTranslation('stock');
@@ -35,7 +36,7 @@ const Stock = () => {
 
       return { batches: batchRes.batches || [], summary: summaryRes.summary || null };
     } catch (err) {
-      console.error('Failed to load stock data:', err);
+      logApiError('Failed to load stock data', err);
       throw err;
     }
   }, [statusFilter]);

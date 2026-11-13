@@ -1,4 +1,4 @@
-import api from './axios';
+import api, { LONG_REQUEST_TIMEOUT_MS } from './axios';
 
 export const createSale = async (saleData) => {
   const res = await api.post('/sales', saleData);
@@ -22,7 +22,8 @@ export const getSalesSummary = async () => {
 
 // Offline sync: sales = [{ offlineId, payload, createdAtClient }] -> { summary, results: [{ offlineId, status, ... }] }
 export const syncSales = async (sales) => {
-  const res = await api.post('/sales/sync', { sales });
+  // A batch of up to 25 sales can take a while; a timeout just leaves them queued (idempotent retry)
+  const res = await api.post('/sales/sync', { sales }, { timeout: LONG_REQUEST_TIMEOUT_MS });
   return res.data;
 };
 

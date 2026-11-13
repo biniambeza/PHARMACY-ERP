@@ -11,6 +11,7 @@ import PriceHistoryModal from '../../components/catalog/PriceHistoryModal';
 import MedicineKpiCards from '../../components/inventory/MedicineKpiCards';
 import MedicineFilters from '../../components/inventory/MedicineFilters';
 import MedicineTable from '../../components/inventory/MedicineTable';
+import { logApiError } from '../../api/logApiError';
 
 const Medicines = () => {
   const { t } = useTranslation('medicines');
@@ -37,7 +38,7 @@ const Medicines = () => {
       const data = await getMedicines(params);
       setMedicines(data.medicines || []);
     } catch (err) {
-      console.error('Failed to load medicines:', err);
+      logApiError('Failed to load medicines', err);
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ const Medicines = () => {
       const data = await getCategories();
       return data.categories || [];
     } catch (err) {
-      console.error('Failed to load categories:', err);
+      logApiError('Failed to load categories', err);
       throw err;
     }
   }, []);

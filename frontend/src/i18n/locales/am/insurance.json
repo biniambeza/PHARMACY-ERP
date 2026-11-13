@@ -60,7 +60,9 @@
     "paid": "የተከፈለ",
     "saleTotal": "የሽያጭ ድምር",
     "submittedAt": "የቀረበበት",
-    "autoClaim": "ራስ-ሰር ወርሃዊ የይገባኛል ጥያቄ"
+    "autoClaim": "ራስ-ሰር ወርሃዊ የይገባኛል ጥያቄ",
+    "adjustedTotal": "ከይገባኛል ጥያቄ በኋላ የተመለሰ",
+    "refundDueToInsurer": "ለኢንሹራንስ የሚመለስ"
   },
   "types": {
     "cbhi": "የማህበረሰብ ጤና መድን (CBHI)",

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   HeartPulse, Plus, Search, Edit3, Archive, FileText, History, User, AlertTriangle, Bell, Paperclip, X,
 } from 'lucide-react';
@@ -37,11 +37,15 @@ const Patients = () => {
   const [viewRxId, setViewRxId] = useState(null);
   const [refills, setRefills] = useState([]);
   const [error, setError] = useState('');
+  // Id of the latest detail request: responses of older requests (another patient clicked
+  // meanwhile) are ignored so the panel never shows the wrong patient.
+  const detailRequest = useRef(0);
 
   const loadPatients = useCallback(async () => {
     try {
       const data = await getPatients({ search: search || undefined, limit: 100 });
       setPatients(data.patients || []);
+      setError('');
     } catch (err) {
       setError(errMsg(err, t('page.errors.loadList')));
     } finally {
@@ -60,17 +64,24 @@ const Patients = () => {
 
   const loadDetail = useCallback(async (id) => {
     if (!id) return;
+    detailRequest.current += 1;
+    const requestId = detailRequest.current;
     setDetailLoading(true);
     try {
-      setDetail(await getPatientHistory(id));
+      const data = await getPatientHistory(id);
+      if (requestId !== detailRequest.current) return;
+      setDetail(data);
+      setError('');
     } catch (err) {
-      setError(errMsg(err, t('page.errors.loadOne')));
+      if (requestId === detailRequest.current) setError(errMsg(err, t('page.errors.loadOne')));
     } finally {
-      setDetailLoading(false);
+      if (requestId === detailRequest.current) setDetailLoading(false);
     }
   }, [t]);
 
   const selectPatient = (id) => {
+    // Don't keep showing the previous patient while the new one loads
+    if (id !== selectedId) setDetail(null);
     setSelectedId(id);
     setShowRxForm(false);
     setTab('overview');
@@ -81,6 +92,8 @@ const Patients = () => {
     if (!window.confirm(t('page.confirmArchive', { name: p.name }))) return;
     try {
       await archivePatient(p._id);
+      detailRequest.current += 1; // drop any detail request still in flight
+      setDetailLoading(false);
       setSelectedId(null);
       setDetail(null);
       loadPatients();

@@ -1,9 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AuthContext } from './authContextObject';
+import { AuthContext, AUTH_LOGOUT_EVENT } from './authContextObject';
 import api, { ACTIVE_PHARMACY_KEY } from '../api/axios';
 import { roleCan } from '../config/permissions';
 
 const MEMBERSHIPS_KEY = 'memberships';
+const LOGOUT_TIMEOUT_MS = 4000;
+// Per-user POS data in localStorage (components/pos/posUtils.js): held carts and the cached shift,
+// keyed `${prefix}${pharmacyId}.${userId}`.
+const POS_USER_KEY_PREFIXES = ['pos.held.', 'pos.shift.'];
+
+// Removes the POS keys of this user (and keys saved without a user) on logout. Other users'
+// keys are left: they are only ever read by their owner.
+const clearUserPosData = (userId) => {
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key || !POS_USER_KEY_PREFIXES.some((p) => key.startsWith(p))) continue;
+      if ((userId && key.endsWith(`.${userId}`)) || key.endsWith('.none')) keys.push(key);
+    }
+    keys.forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // storage unavailable
+  }
+};
 
 const readJson = (key, fallback) => {
   try {
@@ -154,17 +174,54 @@ export const AuthProvider = ({ children }) => {
     setError('');
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem(MEMBERSHIPS_KEY);
-    localStorage.removeItem(ACTIVE_PHARMACY_KEY);
+  // Resets the in-memory session (storage is cleared by the caller / the other tab).
+  const resetSessionState = useCallback(() => {
     setUser(null);
     setToken(null);
     setMemberships([]);
     setActivePharmacyId(null);
     setError('');
+    try {
+      window.dispatchEvent(new Event(AUTH_LOGOUT_EVENT));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const logout = () => {
+    const currentToken = localStorage.getItem('token');
+    const currentUserId = user?._id || readJson('user', null)?._id || null;
+    // Revoke the token server-side (bumps tokenVersion). Fire-and-forget: the header is set
+    // explicitly because storage is cleared before the request interceptor runs.
+    if (currentToken) {
+      api
+        .post('/auth/logout', null, { timeout: LOGOUT_TIMEOUT_MS, headers: { Authorization: `Bearer ${currentToken}` } })
+        .catch(() => {});
+    }
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem(MEMBERSHIPS_KEY);
+    localStorage.removeItem(ACTIVE_PHARMACY_KEY);
+    clearUserPosData(currentUserId);
+    resetSessionState();
   };
+
+  // Logout (or a session end) in another tab logs this tab out too.
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.storageArea && e.storageArea !== localStorage) return;
+      const tokenGone = (e.key === 'token' || e.key === null) && !localStorage.getItem('token');
+      if (tokenGone && token) {
+        resetSessionState();
+        if (window.location.pathname !== '/login') window.location.assign('/login');
+      } else if (e.key === 'token' && e.newValue && token && e.newValue !== token) {
+        // Another account signed in in another tab: reload so this tab uses one consistent session.
+        window.location.reload();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [token, resetSessionState]);
 
   const clearError = () => setError('');
 

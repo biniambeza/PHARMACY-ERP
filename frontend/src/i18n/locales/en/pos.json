@@ -37,7 +37,8 @@
     "text": "I have reviewed the {{what}} warnings and confirm this sale is clinically appropriate.",
     "allergy": "allergy",
     "and": " and ",
-    "major": "major interaction"
+    "major": "major interaction",
+    "override": "The automatic allergy/interaction check is unavailable. I have checked this patient's allergies and the interactions of these medicines myself."
   },
   "creditHint": "Select a customer account to sell on credit.",
   "checkout": {
@@ -52,6 +53,8 @@
     "controlledNeeds": "Controlled medicines need a patient and a prescription",
     "rxRequired": "Enter the prescription number and prescriber (or select a prescription)",
     "reviewWarnings": "Review and confirm the clinical warnings",
+    "clinicalChecking": "Checking allergies and interactions…",
+    "clinicalFailed": "The allergy/interaction check failed: retry it or confirm a manual check",
     "onlyCashExcess": "Only cash can exceed the total",
     "notCovered": "Payments do not cover the total",
     "methodUnavailable": "{{method}} is not available now",
@@ -159,6 +162,9 @@
     "customerPhone": "Customer phone",
     "request": "Request payment",
     "waiting": "Waiting for customer confirmation…",
+    "cancelRequest": "Cancel request",
+    "cancelFailed": "Could not cancel the request",
+    "confirmCancelPending": "A mobile money request is still waiting for the customer. Cancel it and continue?",
     "confirmed": "Confirmed {{reference}}",
     "intentFailed": "failed",
     "intentCancelled": "cancelled",
@@ -201,7 +207,9 @@
     "discard": "Discard",
     "confirmDiscard": "Discard this offline sale? It will not be recorded.",
     "syncFailed": "Sync failed",
-    "notProcessed": "Not processed"
+    "notProcessed": "Not processed",
+    "others_one": "{{count}} sale of another user is waiting on this device",
+    "others_other": "{{count}} sales of other users are waiting on this device"
   },
   "insurance": {
     "selectScheme": "Select insurance scheme…",

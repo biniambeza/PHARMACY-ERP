@@ -5,6 +5,7 @@ import { getMembers, getSchemes, deleteMember } from '../../api/insuranceApi';
 import { formatDate } from '../../utils/format';
 import MemberFormModal from './MemberFormModal';
 import { cardCls, inputCls, btnPrimary, errMsg, pillCls, thCls, tdCls } from './insuranceUi';
+import { logApiError } from '../../api/logApiError';
 
 const PAGE_SIZE = 50;
 
@@ -38,7 +39,7 @@ const MembersTab = () => {
       const res = await getMembers(params);
       setData({ members: res.members || [], total: res.total || 0 });
     } catch (err) {
-      console.error('Failed to load members:', err);
+      logApiError('Failed to load members', err);
     } finally {
       setLoading(false);
     }

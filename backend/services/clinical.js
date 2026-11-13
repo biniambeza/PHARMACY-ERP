@@ -156,8 +156,12 @@ const checkSaleClinical = async ({ pharmacyId, patientId, medicineIds }) => {
   // Allergy hits for the selected patient
   const allergyHits = [];
   if (patientId) {
-    if (!mongoose.isValidObjectId(String(patientId))) throw new AppError('Invalid patient id', 400);
-    const patient = await Patient.findOne({ _id: patientId, pharmacyId }).select('allergies').lean();
+    // patientId may come straight from a request body: only a plain id string / ObjectId is
+    // accepted and it is cast before it reaches the filter (no operator objects or arrays).
+    const rawId = patientId instanceof mongoose.Types.ObjectId ? patientId.toString() : patientId;
+    if (typeof rawId !== 'string' || !mongoose.isValidObjectId(rawId)) throw new AppError('Invalid patient id', 400);
+    const patientObjectId = new mongoose.Types.ObjectId(rawId);
+    const patient = await Patient.findOne({ _id: patientObjectId, pharmacyId }).select('allergies').lean();
     if (!patient) throw new AppError('Patient not found', 404);
     const { allergyGroups } = loadBuiltIn();
     (patient.allergies || []).forEach((allergy) => {

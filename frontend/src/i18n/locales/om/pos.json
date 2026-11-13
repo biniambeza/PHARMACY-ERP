@@ -37,7 +37,8 @@
     "text": "Akeekkachiisa {{what}} ilaaleen gurgurtaan kun kilinikaan sirrii ta'uu isaa mirkaneessa.",
     "allergy": "alarjii",
     "and": " fi ",
-    "major": "walitti dhufeenya qorichaa cimaa"
+    "major": "walitti dhufeenya qorichaa cimaa",
+    "override": "Qorannoon alarjii/walqunnamtii ofumaan hin argamu. Alarjii dhukkubsataa kanaa fi walqunnamtii qorichoota kanaa ani mataan koo qoreera."
   },
   "creditHint": "Liqiin gurguruuf herrega maamilaa filadhu.",
   "checkout": {
@@ -52,6 +53,8 @@
     "controlledNeeds": "Qorichoonni to'atamoon dhukkubsataa fi ajaja qorichaa barbaadu",
     "rxRequired": "Lakkoofsa ajajaa fi ajajaa galchi (ykn ajaja filadhu)",
     "reviewWarnings": "Akeekkachiisota kilinikaa ilaaliitii mirkaneessi",
+    "clinicalChecking": "Alarjii fi walqunnamtii qorachaa jira…",
+    "clinicalFailed": "Qorannoon alarjii/walqunnamtii hin milkoofne: irra deebi'ii yaali ykn harkaan qorachuu kee mirkaneessi",
     "onlyCashExcess": "Waliigala caalaa kaffaluun maallaqa callaa qofaan danda'ama",
     "notCovered": "Kaffaltiin waliigala hin uwwisu",
     "methodUnavailable": "{{method}} amma hin argamu",
@@ -159,6 +162,9 @@
     "customerPhone": "Bilbila maamilaa",
     "request": "Kaffaltii gaafadhu",
     "waiting": "Mirkaneessa maamilaa eegaa jira…",
+    "cancelRequest": "Gaaffii haqi",
+    "cancelFailed": "Gaaffii haquun hin danda'amne",
+    "confirmCancelPending": "Gaaffiin maallaqa moobaayilaa ammallee maamila eegaa jira. Haqiitii itti fufi?",
     "confirmed": "Mirkanaa'e {{reference}}",
     "intentFailed": "hin milkoofne",
     "intentCancelled": "haqame",
@@ -201,7 +207,9 @@
     "discard": "Gatii",
     "confirmDiscard": "Gurgurtaa toora alaa kana gatuu barbaaddaa? Hin galmaa'u.",
     "syncFailed": "Walsimsiisni hin milkoofne",
-    "notProcessed": "Hin adeemsifamne"
+    "notProcessed": "Hin adeemsifamne",
+    "others_one": "Gurgurtaan fayyadamaa biraa {{count}} meeshaa kana irratti eegaa jira",
+    "others_other": "Gurgurtaawwan fayyadamtoota biroo {{count}} meeshaa kana irratti eegaa jiru"
   },
   "insurance": {
     "selectScheme": "Karoora inshuraansii filadhu…",

@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Pharmacy = require('../models/Pharmacy');
 const PasswordResetToken = require('../models/PasswordResetToken');
@@ -43,9 +44,72 @@ const changeUserPassword = async (user, currentPassword, newPassword) => {
   user.tokenVersion = (user.tokenVersion || 0) + 1;
 };
 
+// ------------------------------------------------- per-account brute force
+//
+// Every wrong password and every wrong 2FA code counts as a failed attempt on
+// the account. After MAX_FAILED_LOGINS failures the account is locked for
+// LOCK_MS. While locked, login answers exactly like a wrong password (401
+// 'Invalid email or password'), even when the password is right, so the
+// response never reveals whether the email exists or is locked. The counter
+// is reset only by a COMPLETE sign-in (password, plus the 2FA step if enabled).
+const MAX_FAILED_LOGINS = 5;
+const LOCK_MS = 15 * 60 * 1000;
+// Code attempts allowed per 2FA challenge before it is invalidated.
+const MAX_CHALLENGE_ATTEMPTS = 5;
+const INVALID_LOGIN = { success: false, message: 'Invalid email or password' };
+const LOCK_FIELDS = '+failedLoginCount +lockUntil';
+
+// bcrypt hash compared against when the account does not exist (or is
+// locked), so the response takes about as long as a real password check.
+let dummyHashPromise = null;
+const dummyHash = () => {
+  if (!dummyHashPromise) dummyHashPromise = bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
+  return dummyHashPromise;
+};
+const burnPasswordCheck = async (password) => {
+  await bcrypt.compare(String(password), await dummyHash());
+  return false;
+};
+
+const isLocked = (user) => Boolean(user && user.lockUntil && new Date(user.lockUntil).getTime() > Date.now());
+
+// Records one failed attempt; locks the account when the limit is reached
+// (and drops any pending 2FA challenge). Returns true when this attempt
+// locked the account.
+const registerFailedLogin = async (req, user) => {
+  const updated = await User.findOneAndUpdate(
+    { _id: user._id },
+    { $inc: { failedLoginCount: 1 } },
+    { returnDocument: 'after' }
+  )
+    .select('+failedLoginCount')
+    .lean();
+  if (!updated || (updated.failedLoginCount || 0) < MAX_FAILED_LOGINS) return false;
+
+  const locked = await User.updateOne(
+    { _id: user._id, failedLoginCount: { $gte: MAX_FAILED_LOGINS } },
+    { $set: { lockUntil: new Date(Date.now() + LOCK_MS), failedLoginCount: 0, 'twoFactor.challengeId': null } }
+  );
+  if (locked.modifiedCount !== 1) return false;
+  await audit(req, {
+    action: 'auth.account_locked',
+    entity: 'User',
+    entityId: user._id,
+    userId: user._id,
+    userName: user.name,
+    meta: { minutes: LOCK_MS / 60000 },
+  });
+  return true;
+};
+
+const clearFailedLogins = async (user) => {
+  if (!user.failedLoginCount && !user.lockUntil) return;
+  await User.updateOne({ _id: user._id }, { $set: { failedLoginCount: 0, lockUntil: null } });
+};
+
 // @desc    Login user & get token
 // @route   POST /api/auth/login
-// @access  Public (rate limited)
+// @access  Public (rate limited per IP; per-account lock after 5 failures)
 const login = async (req, res) => {
   const { email, password } = req.body || {};
 
@@ -56,29 +120,38 @@ const login = async (req, res) => {
     });
   }
 
-  const user = await User.findOne({ email: email.trim().toLowerCase() });
+  const user = await User.findOne({ email: email.trim().toLowerCase() }).select(LOCK_FIELDS);
 
-  if (!user || !(await user.matchPassword(password))) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid email or password',
-    });
+  if (!user || isLocked(user)) {
+    await burnPasswordCheck(password);
+    return res.status(401).json(INVALID_LOGIN);
+  }
+  if (!(await user.matchPassword(password))) {
+    await registerFailedLogin(req, user);
+    return res.status(401).json(INVALID_LOGIN);
   }
 
   const access = await checkTenantAccess(user);
   if (access.blocked) return res.status(403).json(access.blocked);
 
   // Two-factor login: the password was right, but no session token is issued
-  // until the second step (POST /auth/login/2fa) succeeds.
+  // until the second step (POST /auth/login/2fa) succeeds. Only the user's
+  // latest challenge is valid (its id is stored on the user).
   if (user.twoFactor && user.twoFactor.enabled) {
+    const challengeId = twoFactor.newChallengeId();
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { 'twoFactor.challengeId': challengeId, 'twoFactor.challengeFailures': 0 } }
+    );
     return res.status(200).json({
       success: true,
       twoFactorRequired: true,
-      challengeToken: twoFactor.signChallenge(user),
+      challengeToken: twoFactor.signChallenge(user, challengeId),
       message: 'Enter the code from your authenticator app',
     });
   }
 
+  await clearFailedLogins(user);
   return res.status(200).json(await loginResponse(user, access.pharmacies));
 };
 
@@ -200,17 +273,46 @@ const requirePassword = async (user, password) => {
 //          body { challengeToken, code } or { challengeToken, recoveryCode }
 // @route   POST /api/auth/login/2fa
 // @access  Public (rate limited)
+const CHALLENGE_EXPIRED = {
+  success: false,
+  code: 'TWO_FACTOR_CHALLENGE_EXPIRED',
+  message: 'Your sign-in attempt expired. Please sign in again.',
+};
+
 const loginTwoFactor = async (req, res) => {
   const { challengeToken, code, recoveryCode } = req.body || {};
   const decoded = twoFactor.verifyChallenge(challengeToken);
-  if (!decoded) {
-    throw new AppError('Your sign-in attempt expired. Please sign in again.', 401);
+  if (!decoded || typeof decoded.jti !== 'string' || !mongoose.isValidObjectId(decoded.sub)) {
+    return res.status(401).json(CHALLENGE_EXPIRED);
   }
 
-  const user = await User.findById(decoded.sub).select(TWO_FACTOR_FIELDS);
-  if (!user || !user.twoFactor || !user.twoFactor.enabled || (user.tokenVersion || 0) !== decoded.v) {
-    throw new AppError('Your sign-in attempt expired. Please sign in again.', 401);
+  const user = await User.findById(decoded.sub).select(`${TWO_FACTOR_FIELDS} ${LOCK_FIELDS}`);
+  if (
+    !user ||
+    !user.twoFactor ||
+    !user.twoFactor.enabled ||
+    (user.tokenVersion || 0) !== decoded.v ||
+    isLocked(user)
+  ) {
+    return res.status(401).json(CHALLENGE_EXPIRED);
   }
+
+  // Reserve one attempt on this challenge atomically (this also stops
+  // parallel guessing beyond the limit). Fails when the challenge was
+  // replaced by a newer login, already used, or has no attempts left.
+  const reserved = await User.findOneAndUpdate(
+    {
+      _id: user._id,
+      'twoFactor.enabled': true,
+      'twoFactor.challengeId': decoded.jti,
+      'twoFactor.challengeFailures': { $lt: MAX_CHALLENGE_ATTEMPTS },
+    },
+    { $inc: { 'twoFactor.challengeFailures': 1 } },
+    { returnDocument: 'after' }
+  )
+    .select('+twoFactor.challengeFailures')
+    .lean();
+  if (!reserved) return res.status(401).json(CHALLENGE_EXPIRED);
 
   const method = await verifySecondFactor(user, { code, recoveryCode });
   if (!method) {
@@ -222,12 +324,35 @@ const loginTwoFactor = async (req, res) => {
       userName: user.name,
       meta: { method: recoveryCode ? 'recovery' : 'totp' },
     });
+    const locked = await registerFailedLogin(req, user);
+    const attemptsUsed = (reserved.twoFactor && reserved.twoFactor.challengeFailures) || 0;
+    if (locked || attemptsUsed >= MAX_CHALLENGE_ATTEMPTS) {
+      // The user must sign in again with the password
+      await User.updateOne(
+        { _id: user._id, 'twoFactor.challengeId': decoded.jti },
+        { $set: { 'twoFactor.challengeId': null } }
+      );
+      return res.status(401).json({ ...CHALLENGE_EXPIRED, message: 'Too many invalid codes. Please sign in again.' });
+    }
     return res.status(401).json({
       success: false,
       code: 'INVALID_2FA_CODE',
       message: recoveryCode ? 'Invalid or already used recovery code' : 'Invalid verification code',
     });
   }
+
+  // Success: the challenge is single-use and the failure counters are reset
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        'twoFactor.challengeId': null,
+        'twoFactor.challengeFailures': 0,
+        failedLoginCount: 0,
+        lockUntil: null,
+      },
+    }
+  );
 
   const access = await checkTenantAccess(user);
   if (access.blocked) return res.status(403).json(access.blocked);
@@ -315,6 +440,8 @@ const twoFactorEnable = async (req, res) => {
     lastUsedStep: step,
     recoveryCodes: records,
   });
+  // Signs out every other session; the caller continues with the new token.
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
 
   await audit(req, { action: 'auth.2fa_enabled', entity: 'User', entityId: user._id });
@@ -322,6 +449,7 @@ const twoFactorEnable = async (req, res) => {
   return res.status(200).json({
     success: true,
     enabled: true,
+    token: generateToken(user._id, user.role, user.tokenVersion),
     recoveryCodes: codes,
     message: 'Two-factor login is now enabled. Save your recovery codes somewhere safe.',
   });
@@ -342,10 +470,20 @@ const twoFactorDisable = async (req, res) => {
     throw new AppError(recoveryCode ? 'Invalid or already used recovery code' : 'Invalid verification code', 400);
   }
 
-  await User.updateOne({ _id: user._id }, { $set: { twoFactor: { enabled: false, enabledAt: null } } });
+  // Also signs out every other session; the caller continues with the new token.
+  const updated = await User.findOneAndUpdate(
+    { _id: user._id },
+    { $set: { twoFactor: { enabled: false, enabledAt: null } }, $inc: { tokenVersion: 1 } },
+    { returnDocument: 'after' }
+  ).lean();
   await audit(req, { action: 'auth.2fa_disabled', entity: 'User', entityId: user._id, meta: { method } });
 
-  return res.status(200).json({ success: true, enabled: false, message: 'Two-factor login has been turned off.' });
+  return res.status(200).json({
+    success: true,
+    enabled: false,
+    token: generateToken(user._id, user.role, updated.tokenVersion),
+    message: 'Two-factor login has been turned off.',
+  });
 };
 
 // @desc    Replace the recovery codes. body { password, code }
@@ -378,6 +516,15 @@ const getMe = async (req, res) => {
     user: req.user,
     memberships: await describeMemberships(req.user, req.userPharmacies),
   });
+};
+
+// @desc    Sign out: revokes every token issued to the user so far (on all
+//          devices) by bumping tokenVersion.
+// @route   POST /api/auth/logout
+// @access  Private
+const logout = async (req, res) => {
+  await User.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 } });
+  return res.status(200).json({ success: true });
 };
 
 // @desc    Change own password (any role). Revokes all other sessions.
@@ -653,6 +800,10 @@ const adminResetTwoFactor = async (req, res) => {
 
 module.exports = {
   login,
+  logout,
+  MAX_FAILED_LOGINS,
+  LOCK_MS,
+  MAX_CHALLENGE_ATTEMPTS,
   loginTwoFactor,
   twoFactorStatus,
   twoFactorSetup,

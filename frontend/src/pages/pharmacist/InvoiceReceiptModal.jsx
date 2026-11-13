@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Printer, X, Receipt, FileDown, Settings2 } from 'lucide-react';
 import { getMyPharmacy } from '../../api/pharmacyApi';
+import { AUTH_LOGOUT_EVENT } from '../../context/authContextObject';
 import { formatMoney } from '../../utils/format';
 import { exportPDF } from '../../utils/export';
 import {
@@ -46,6 +47,12 @@ const loadPharmacy = () => {
 export const invalidateReceiptPharmacy = () => {
   pharmacyCache = null;
 };
+
+// Logout (AuthContext dispatches AUTH_LOGOUT_EVENT): the next user must not see this
+// pharmacy's cached profile.
+if (typeof window !== 'undefined') {
+  window.addEventListener(AUTH_LOGOUT_EVENT, invalidateReceiptPharmacy);
+}
 
 const isServerId = (id) => typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
 

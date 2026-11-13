@@ -18,6 +18,7 @@ import SupplierModal from './SupplierModal';
 import MetricCard from '../../components/common/MetricCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
+import { logApiError } from '../../api/logApiError';
 
 const Suppliers = () => {
   const { t } = useTranslation('suppliers');
@@ -41,7 +42,7 @@ const Suppliers = () => {
       const data = await getSuppliers(params);
       setSuppliers(data.suppliers || []);
     } catch (err) {
-      console.error('Failed to load suppliers:', err);
+      logApiError('Failed to load suppliers', err);
     } finally {
       setLoading(false);
     }

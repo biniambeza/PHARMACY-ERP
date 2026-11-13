@@ -122,7 +122,8 @@ const getFinancialAnalytics = async (req, res) => {
   const medicineRows = byMedicineRows.map((row) => {
     const ret = returns.byMedicine.get(String(row._id));
     const unitsSold = (row.unitsSold || 0) - (ret?.quantity || 0);
-    const revenue = (row.revenue || 0) - (ret?.refund || 0);
+    // row.revenue is net of tax: take returns off net of tax too
+    const revenue = (row.revenue || 0) - (ret?.net || 0);
     const cogs = (row.cogs || 0) - (ret?.restockedCost || 0);
     return {
       id: String(row._id),
@@ -217,9 +218,10 @@ const getProfitReport = async (req, res) => {
     const e = byMed.get(id) || {
       id, name: ret.name, category: ret.category, unitsSold: 0, orders: 0, revenue: 0, cogs: 0, returnedUnits: 0, refunds: 0,
     };
+    // Revenue here is net of tax (and includes any insurer share): returns come off the same way
     e.returnedUnits += ret.quantity || 0;
-    e.refunds += ret.refund || 0;
-    e.revenue -= ret.refund || 0;
+    e.refunds += ret.net || 0;
+    e.revenue -= ret.net || 0;
     e.cogs -= ret.restockedCost || 0;
     byMed.set(id, e);
   });

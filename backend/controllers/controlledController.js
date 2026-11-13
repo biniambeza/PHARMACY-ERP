@@ -36,8 +36,8 @@ const getRegister = async (req, res) => {
 
   const medQuery = { pharmacyId: req.pharmacyId };
   if (medicineId) {
-    if (!mongoose.isValidObjectId(String(medicineId))) throw new AppError('Invalid medicine id', 400);
-    medQuery._id = medicineId;
+    if (typeof medicineId !== 'string' || !mongoose.isValidObjectId(medicineId)) throw new AppError('Invalid medicine id', 400);
+    medQuery._id = new mongoose.Types.ObjectId(medicineId);
   } else {
     // Controlled medicines plus any medicine that has register history (e.g. flag removed later)
     const withEntries = await ControlledEntry.distinct('medicineId', { pharmacyId: req.pharmacyId });

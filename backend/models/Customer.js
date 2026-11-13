@@ -34,6 +34,8 @@ const customerSchema = new mongoose.Schema(
     },
     // Amount the customer currently owes the pharmacy. Only changed through
     // services/credit.js and the customer payment flow (atomic $inc).
+    // Negative = store credit (e.g. a return refunded as 'store_credit'); the next
+    // credit sales use it up first (services/credit.applyCreditSale).
     balance: {
       type: Number,
       default: 0,

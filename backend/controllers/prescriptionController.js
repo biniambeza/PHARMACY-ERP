@@ -157,8 +157,12 @@ const getPrescription = async (req, res) => {
 const createPrescription = async (req, res) => {
   const body = req.body || {};
   if (!body.patientId) throw new AppError('Patient is required', 400);
-  assertId(body.patientId, 'patient id');
-  const patient = await Patient.findOne({ _id: body.patientId, pharmacyId: req.pharmacyId }).select('_id').lean();
+  // Explicit string check + cast: a body value must never reach the filter as an object/operator
+  if (typeof body.patientId !== 'string' || !mongoose.isValidObjectId(body.patientId)) {
+    throw new AppError('Invalid patient id', 400);
+  }
+  const patientId = new mongoose.Types.ObjectId(body.patientId);
+  const patient = await Patient.findOne({ _id: patientId, pharmacyId: req.pharmacyId }).select('_id').lean();
   if (!patient) throw new AppError('Patient not found', 404);
   const header = pickHeader(body);
   const items = await parseItems(body.items, req.pharmacyId);

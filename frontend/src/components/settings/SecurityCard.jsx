@@ -151,7 +151,7 @@ const SecurityCard = ({ className = '' }) => {
       setSetup(null);
       resetForm();
       setStep('codes');
-      updateSession({ user: { twoFactorEnabled: true } });
+      updateSession({ token: res.token, user: { twoFactorEnabled: true } }); // server revokes old tokens
       await loadStatus();
     });
   };
@@ -163,10 +163,10 @@ const SecurityCard = ({ className = '' }) => {
       return setError(useRecovery ? t('enterRecoveryCode') : t('enterSixDigits'));
     }
     return run(async () => {
-      await disableTwoFactor(
+      const res = await disableTwoFactor(
         useRecovery ? { password, recoveryCode: recoveryCode.trim() } : { password, code }
       );
-      updateSession({ user: { twoFactorEnabled: false } });
+      updateSession({ token: res.token, user: { twoFactorEnabled: false } }); // server revokes old tokens
       go('idle');
       setSuccess(t('disabledSuccess'));
       await loadStatus();

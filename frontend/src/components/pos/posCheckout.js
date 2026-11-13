@@ -10,7 +10,7 @@ export const SEVERE = ['major', 'contraindicated'];
  */
 export const computeBlockers = ({
   t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
-  warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
+  clinicalStatus = 'ok', warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
 }) => {
   const list = [];
   if (cart.length === 0) return list;
@@ -23,6 +23,10 @@ export const computeBlockers = ({
   if (needsRx && !prescription && !(legacyRx.number.trim() && legacyRx.prescriber.trim())) {
     list.push(t('blockers.rxRequired'));
   }
+  // Allergy / interaction check of the current cart: still running, failed (retry or confirm a
+  // manual check), or severe warnings not yet acknowledged.
+  if (clinicalStatus === 'checking') list.push(t('blockers.clinicalChecking'));
+  else if (clinicalStatus === 'failed') list.push(t('blockers.clinicalFailed'));
   if (!warningsAcked) list.push(t('blockers.reviewWarnings'));
   if (!payStatus.covered) list.push(payStatus.invalidExcess ? t('blockers.onlyCashExcess') : t('blockers.notCovered'));
   effectivePayments.forEach((p) => {
@@ -43,9 +47,12 @@ export const computeBlockers = ({
 
 // Body for POST /api/sales
 export const buildSalePayload = ({
-  cart, customer, walkIn, patient, prescription, needsRx, legacyRx, totals, effectivePayments, offlineId,
+  cart, customer, walkIn, patient, prescription, needsRx, legacyRx, totals, effectivePayments, offlineId, clinicalAck = false,
 }) => ({
-  items: cart.map((l) => ({ medicineId: l.medicineId, quantity: l.quantity, unitName: l.unit.name })),
+  // unitPrice / clientTotal are only used by the server for offline sync (prices on the device)
+  items: cart.map((l) => ({ medicineId: l.medicineId, quantity: l.quantity, unitName: l.unit.name, unitPrice: l.unit.price })),
+  clientTotal: totals.grandTotal,
+  ...(clinicalAck ? { clinicalAck: true } : {}),
   customerId: customer?._id || undefined,
   customer: customer ? undefined : { name: walkIn.name.trim() || undefined, phone: walkIn.phone.trim() || undefined },
   patientId: patient?._id || undefined,

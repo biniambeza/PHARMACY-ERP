@@ -5,7 +5,9 @@ const Pharmacy = require('../models/Pharmacy');
 // How Foundation handles admins:
 //  - pharmacyScope: for admins it only sets req.pharmacyId from the
 //    `x-pharmacy-id` header (or ?pharmacyId=), no req.pharmacy / membershipRole.
-//  - requirePermission / requireAnyPermission let admins through.
+//  - requirePermission / requireAnyPermission let admins through for reads
+//    only (GET/HEAD/OPTIONS); writes need an explicit opt-in (allow rule here,
+//    or allowAdminWrite from middleware/permission.js).
 //  - Most legacy tenant routers add authorize('pharmacist'), which keeps
 //    admins out completely.
 //
@@ -42,7 +44,8 @@ const supportMode = ({ allow = [] } = {}) => async (req, res, next) => {
   if (req.user.role !== 'admin') return next();
 
   const method = req.method.toUpperCase();
-  if (!READ_METHODS.includes(method) && !allow.some((rule) => matchesRule(req, rule))) {
+  const allowedWrite = !READ_METHODS.includes(method) && allow.some((rule) => matchesRule(req, rule));
+  if (!READ_METHODS.includes(method) && !allowedWrite) {
     return res.status(403).json({
       success: false,
       code: 'SUPPORT_READ_ONLY',
@@ -66,6 +69,8 @@ const supportMode = ({ allow = [] } = {}) => async (req, res, next) => {
   req.pharmacy = pharmacy;
   req.membershipRole = 'owner';
   req.supportMode = true;
+  // Lets requirePermission accept this explicitly allowed admin write
+  if (allowedWrite) req.adminWriteAllowed = true;
   res.set('x-support-mode', 'read-only');
   return next();
 };

@@ -1,7 +1,8 @@
 // React hook: online/offline state + the offline sale queue, with background sync on the
-// 'online' event and on an interval.
+// 'online' event and on an interval. Mounted once by OfflineSyncProvider (pharmacy layout), so
+// queued sales sync from any page; components read it with useOfflineSyncContext().
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { listQueue, syncQueue, QUEUE_EVENT } from './queue';
+import { listQueue, syncQueue, isOwnEntry, QUEUE_EVENT } from './queue';
 
 const SYNC_INTERVAL_MS = 30000;
 
@@ -20,6 +21,13 @@ export const useOnlineStatus = () => {
   return online;
 };
 
+/**
+ * Returns { online, queue, pending, failed, othersPending, othersFailed, syncing, lastResult, syncNow, refresh }.
+ *   pending / failed: entries of the signed-in user (only these are synced: the server
+ *     attributes synced sales to the signed-in user)
+ *   othersPending / othersFailed: entries other users left on this device
+ *   onSynced(result): called after a sync that created at least one sale
+ */
 export const useOfflineSync = ({ pharmacyId, userId, onSynced } = {}) => {
   const online = useOnlineStatus();
   const [queue, setQueue] = useState([]);
@@ -36,7 +44,7 @@ export const useOfflineSync = ({ pharmacyId, userId, onSynced } = {}) => {
   }, [pharmacyId]);
 
   const syncNow = useCallback(async () => {
-    if (!pharmacyId) return null;
+    if (!pharmacyId || !userId) return null;
     setSyncing(true);
     try {
       const result = await syncQueue({ pharmacyId, userId });
@@ -74,8 +82,19 @@ export const useOfflineSync = ({ pharmacyId, userId, onSynced } = {}) => {
     };
   }, [online, syncNow]);
 
-  const pending = queue.filter((e) => e.status === 'pending');
-  const failed = queue.filter((e) => e.status === 'failed');
+  const mine = queue.filter((e) => isOwnEntry(e, userId));
+  const others = queue.filter((e) => !isOwnEntry(e, userId));
 
-  return { online, queue, pending, failed, syncing, lastResult, syncNow, refresh };
+  return {
+    online,
+    queue,
+    pending: mine.filter((e) => e.status === 'pending'),
+    failed: mine.filter((e) => e.status === 'failed'),
+    othersPending: others.filter((e) => e.status === 'pending'),
+    othersFailed: others.filter((e) => e.status === 'failed'),
+    syncing,
+    lastResult,
+    syncNow,
+    refresh,
+  };
 };

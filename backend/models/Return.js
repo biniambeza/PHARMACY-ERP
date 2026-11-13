@@ -15,7 +15,20 @@ const returnItemSchema = new mongoose.Schema(
     batchNo: { type: String, default: '', trim: true },
     quantity: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true, min: 0 },
+    // Patient refund for this line (grossAmount - insurerAmount)
     refundAmount: { type: Number, required: true, min: 0 },
+    // Per-line amounts of what was actually paid for the returned quantity (set since the
+    // per-line refund fix; older returns lack them and reports fall back to proportions):
+    //   grossAmount    = line subtotal - its share of the sale discount + tax when prices exclude tax
+    //   discountAmount = share of the sale-level discount
+    //   taxAmount      = tax contained in grossAmount
+    //   netAmount      = grossAmount - taxAmount (revenue net of tax)
+    //   insurerAmount  = insurer share of grossAmount (insurance sales; comes off the claim)
+    grossAmount: { type: Number, min: 0 },
+    discountAmount: { type: Number, min: 0 },
+    taxAmount: { type: Number, min: 0 },
+    netAmount: { type: Number, min: 0 },
+    insurerAmount: { type: Number, min: 0 },
     // What the user asked for
     disposition: { type: String, enum: DISPOSITIONS, default: 'restock' },
     // Whether stock was actually put back (false for discard, expired or missing batch)
@@ -47,6 +60,25 @@ const returnSchema = new mongoose.Schema(
     creditReversed: { type: Number, default: 0, min: 0 },
     // Part of refundTotal paid back to the customer via refundMethod (refundTotal - creditReversed)
     refundDue: { type: Number, default: 0, min: 0 },
+    // Sums of the per-item amounts (absent on older returns)
+    grossTotal: { type: Number, min: 0 },
+    taxTotal: { type: Number, min: 0 },
+    netTotal: { type: Number, min: 0 },
+    insurerTotal: { type: Number, min: 0 },
+    // refundMethod 'store_credit': amount credited to the customer's account (services/credit)
+    storeCredited: { type: Number, default: 0, min: 0 },
+    // Insurer share taken off an already submitted/paid claim (services/insurance)
+    claimAdjustment: {
+      type: new mongoose.Schema(
+        {
+          claimId: { type: mongoose.Schema.Types.ObjectId, ref: 'InsuranceClaim', required: true },
+          claimNumber: { type: String, default: '' },
+          amount: { type: Number, required: true, min: 0 },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
     processedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true }

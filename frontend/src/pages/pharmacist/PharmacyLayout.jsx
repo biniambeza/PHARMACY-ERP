@@ -13,9 +13,18 @@ import PharmacyTopBar from '../../components/layout/PharmacyTopBar';
 import AnnouncementBanner from '../../components/announcements/AnnouncementBanner';
 import TwoFactorNudge from '../../components/settings/TwoFactorNudge';
 import LocaleSync from '../../i18n/LocaleSync';
+import OfflineSyncProvider from '../../offline/OfflineSyncProvider';
+import { useOfflineSyncContext } from '../../offline/offlineSyncContext';
+import { logApiError } from '../../api/logApiError';
 
-const PharmacyLayout = () => {
+const PharmacyLayoutContent = () => {
   const { user, logout, can, membershipRole } = useAuth();
+  const offlineSync = useOfflineSyncContext();
+  // Unsynced offline sales of this user stay on the device: warn before logging out.
+  const guardedLogout = async () => {
+    if (offlineSync && !(await offlineSync.confirmUnsynced('logout'))) return;
+    logout();
+  };
   const roleLabel = ROLE_LABELS[membershipRole] || 'Staff';
   const visibleGroups = navGroups
     .map((group) => ({ ...group, items: group.items.filter((item) => !item.perm || can(item.perm)) }))
@@ -43,7 +52,7 @@ const PharmacyLayout = () => {
         const res = await getMyPharmacy();
         setPharmacy(res.pharmacy);
       } catch (err) {
-        console.error('Failed to load pharmacy profile:', err);
+        logApiError('Failed to load pharmacy profile', err);
       }
     };
     fetchPharmacy();
@@ -90,7 +99,7 @@ const PharmacyLayout = () => {
           collapsed={sidebarCollapsed}
           isDark={isDark}
           onToggleTheme={toggleTheme}
-          onLogout={logout}
+          onLogout={guardedLogout}
         />
       </aside>
 
@@ -122,5 +131,12 @@ const PharmacyLayout = () => {
     </div>
   );
 };
+
+// The offline sale sync runs for every pharmacy page (not only the POS).
+const PharmacyLayout = () => (
+  <OfflineSyncProvider>
+    <PharmacyLayoutContent />
+  </OfflineSyncProvider>
+);
 
 export default PharmacyLayout;

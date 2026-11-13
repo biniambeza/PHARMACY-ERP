@@ -22,6 +22,7 @@
   "checkFailed": "መስተጋብሮችን መፈተሽ አልተቻለም",
   "warnings": {
     "checking": "መስተጋብሮችን በመፈተሽ ላይ...",
+    "retry": "እንደገና ሞክር",
     "allergy": "አለርጂ: {{medicine}} — ታካሚው ለ{{substance}} አለርጂ አለበት",
     "reaction": "ምላሽ: {{reaction}}",
     "disclaimer": "ማስጠንቀቂያዎቹ ከመነሻ ዝርዝር እና ከመድኃኒት ቤትዎ ደንቦች የመጡ ናቸው፤ የሙያዊ ውሳኔን አይተኩም።"

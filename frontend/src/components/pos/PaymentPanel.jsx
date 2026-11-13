@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, Loader2, CheckCircle2, XCircle, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { createPaymentIntent, getPaymentIntent } from '../../api/paymentApi';
+import { createPaymentIntent, getPaymentIntent, cancelPaymentIntent } from '../../api/paymentApi';
 import { formatMoney } from '../../utils/format';
 import { inputCls, round2, errMsg, newPaymentRow } from './posUtils';
 import InsurancePaymentFields from './InsurancePaymentFields';
+import { isPendingIntent, cancelPendingIntents } from './usePosSale';
 
 // Mobile money row: manual reference, or a push request that waits for confirmation (#26).
 const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
@@ -51,12 +52,24 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
     }
   };
 
+  const cancelRequest = async () => {
+    setBusy(true);
+    try {
+      await cancelPaymentIntent(row.intentId);
+      onPatch({ intentStatus: 'cancelled', error: '' });
+    } catch (err) {
+      onPatch({ error: errMsg(err, t('payment.cancelFailed')) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="col-span-full grid grid-cols-2 gap-1.5">
       {providers.length > 1 && (
         <select
           value={provider}
-          disabled={Boolean(row.intentId)}
+          disabled={Boolean(row.intentId) && !['failed', 'cancelled'].includes(row.intentStatus)}
           onChange={(e) => onPatch({ provider: e.target.value, intentId: null, intentStatus: null, reference: '' })}
           className={`${inputCls} cursor-pointer`}
         >
@@ -71,7 +84,7 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
         <>
           <input
             value={row.phone}
-            disabled={Boolean(row.intentId)}
+            disabled={Boolean(row.intentId) && !['failed', 'cancelled'].includes(row.intentStatus)}
             onChange={(e) => onPatch({ phone: e.target.value })}
             placeholder={t('payment.customerPhone')}
             className={`${inputCls} font-mono`}
@@ -88,7 +101,17 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
               </button>
             ) : null}
             {row.intentStatus === 'pending' && (
-              <span className="inline-flex items-center gap-1 text-amber-600"><Loader2 className="w-3 h-3 animate-spin" /> {t('payment.waiting')}</span>
+              <>
+                <span className="inline-flex items-center gap-1 text-amber-600"><Loader2 className="w-3 h-3 animate-spin" /> {t('payment.waiting')}</span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={cancelRequest}
+                  className="font-semibold text-rose-600 hover:text-rose-500 disabled:opacity-50 cursor-pointer"
+                >
+                  {t('payment.cancelRequest')}
+                </button>
+              </>
             )}
             {row.intentStatus === 'confirmed' && (
               <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 className="w-3 h-3" /> {t('payment.confirmed', { reference: row.reference })}</span>
@@ -127,7 +150,25 @@ const PaymentPanel = ({
 }) => {
   const { t } = useTranslation('pos');
   const patch = (id, changes) => onPayments((rows) => rows.map((r) => (r.id === id ? { ...r, ...changes } : r)));
-  const remove = (id) => onPayments((rows) => rows.filter((r) => r.id !== id));
+  // A row that is removed or switched to another method must not leave a push request open
+  const remove = (id) => {
+    cancelPendingIntents(payments.filter((r) => r.id === id));
+    onPayments((rows) => rows.filter((r) => r.id !== id));
+  };
+  const changeMethod = (row, method) => {
+    if (isPendingIntent(row)) cancelPendingIntents([row]);
+    patch(row.id, {
+      method,
+      reference: '',
+      intentId: null,
+      intentStatus: null,
+      error: '',
+      schemeId: '',
+      member: null,
+      preview: null,
+      ...(method === 'insurance' || row.method === 'insurance' ? { amount: '' } : {}),
+    });
+  };
   const add = () => {
     const method = allowedMethods.find((m) => !payments.some((p) => p.method === m)) || 'cash';
     onPayments((rows) => [...rows, newPaymentRow(method, status.remaining > 0 ? round2(status.remaining) : '')]);
@@ -185,19 +226,7 @@ const PaymentPanel = ({
           <div key={row.id} className="grid grid-cols-[1fr_1fr_auto_auto] gap-1.5 items-center">
             <select
               value={row.method}
-              onChange={(e) =>
-                patch(row.id, {
-                  method: e.target.value,
-                  reference: '',
-                  intentId: null,
-                  intentStatus: null,
-                  error: '',
-                  schemeId: '',
-                  member: null,
-                  preview: null,
-                  ...(e.target.value === 'insurance' || row.method === 'insurance' ? { amount: '' } : {}),
-                })
-              }
+              onChange={(e) => changeMethod(row, e.target.value)}
               className={`${inputCls} cursor-pointer`}
             >
               {allowedMethods
@@ -211,7 +240,7 @@ const PaymentPanel = ({
               min="0"
               step="0.01"
               value={row.amount}
-              disabled={row.method === 'insurance' || (row.method === 'mobile_money' && Boolean(row.intentId) && row.intentStatus !== 'failed')}
+              disabled={row.method === 'insurance' || (row.method === 'mobile_money' && Boolean(row.intentId) && !['failed', 'cancelled'].includes(row.intentStatus))}
               onChange={(e) => patch(row.id, { amount: e.target.value })}
               placeholder="0.00"
               className={`${inputCls} font-mono`}

@@ -91,6 +91,35 @@ const lineFromItem = ({ item, discountShare, rate, inclusive, fraction = 1, line
   };
 };
 
+const hasNum = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
+
+// Credit note line from the amounts stored on the return item (returns since the per-line
+// refund fix): lineTotal = what was paid for the returned units, so the credit note total
+// equals Return.refundTotal + Return.insurerTotal.
+const lineFromReturnItem = ({ item, ri, rate, inclusive, lineNo }) => {
+  const lineTotal = round2(ri.grossAmount);
+  const taxAmount = round2(ri.taxAmount || 0);
+  const discount = round2(ri.discountAmount || 0);
+  const taxableAmount = round2(lineTotal - taxAmount);
+  const gross = round2((inclusive ? lineTotal : taxableAmount) + discount);
+  const lineRate = taxAmount > 0 ? rate : 0;
+  return {
+    lineNo,
+    medicineId: item.medicineId ? String(item.medicineId) : '',
+    description: str(item.name),
+    quantity: Number(ri.quantity) || 0,
+    unit: str(item.unitName) || 'unit',
+    unitPrice: round2(item.unitPrice),
+    grossAmount: gross,
+    discount,
+    taxableAmount,
+    taxCategory: lineRate > 0 ? 'standard' : 'exempt',
+    taxRate: lineRate,
+    taxAmount,
+    lineTotal,
+  };
+};
+
 const summarize = (lines) => {
   const byRate = new Map();
   lines.forEach((l) => {
@@ -150,6 +179,11 @@ const buildCreditNotePayload = ({ pharmacy, sale, ret, original = null, customer
     const idx = items.findIndex((si) => String(si._id) === String(ri.saleItemId));
     if (idx < 0) return;
     const item = items[idx];
+    if (hasNum(ri.grossAmount)) {
+      lines.push(lineFromReturnItem({ item, ri, rate, inclusive, lineNo: lines.length + 1 }));
+      return;
+    }
+    // Older returns without stored amounts: returned share of the sale line
     const fraction = Number(item.quantity) > 0 ? Math.min(1, Number(ri.quantity) / Number(item.quantity)) : 0;
     lines.push(lineFromItem({ item, discountShare: discounts[idx], rate, inclusive, fraction, lineNo: lines.length + 1 }));
   });
@@ -179,7 +213,13 @@ const buildCreditNotePayload = ({ pharmacy, sale, ret, original = null, customer
       taxTotal: sum(lines, 'taxAmount'),
       grandTotal: sum(lines, 'lineTotal'),
     },
+    // grandTotal = refundTotal (patient) + insurerShare (taken off the insurance claim)
     refundTotal: round2(ret.refundTotal),
+    insurerShare: round2(
+      hasNum(ret.insurerTotal)
+        ? ret.insurerTotal
+        : (ret.items || []).reduce((s2, ri) => s2 + (Number(ri.insurerAmount) || 0), 0)
+    ),
     payment: { method: str(ret.refundMethod) || 'cash' },
   };
 };

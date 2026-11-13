@@ -94,8 +94,12 @@ const createInvoice = async (req, res) => {
 
   let purchaseOrderId = null;
   if (body.purchaseOrderId) {
-    assertId(body.purchaseOrderId, 'purchase order id');
-    const po = await PurchaseOrder.findOne({ _id: body.purchaseOrderId, pharmacyId: req.pharmacyId });
+    // Explicit string check + cast: a body value must never reach the filter as an object/operator
+    if (typeof body.purchaseOrderId !== 'string' || !mongoose.isValidObjectId(body.purchaseOrderId)) {
+      throw new AppError('Invalid purchase order id', 400);
+    }
+    const poId = new mongoose.Types.ObjectId(body.purchaseOrderId);
+    const po = await PurchaseOrder.findOne({ _id: poId, pharmacyId: req.pharmacyId });
     if (!po) throw new AppError('Purchase order not found', 404);
     if (String(po.supplierId) !== String(supplier._id)) {
       throw new AppError('Purchase order belongs to a different supplier', 400);

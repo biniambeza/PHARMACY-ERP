@@ -6,6 +6,7 @@ import { formatMoney, formatDate } from '../../utils/format';
 import BuildClaimModal from './BuildClaimModal';
 import ClaimDetailModal from './ClaimDetailModal';
 import { cardCls, inputCls, btnPrimary, CLAIM_STATUSES, claimStatusCls, pillCls, thCls, tdCls } from './insuranceUi';
+import { logApiError } from '../../api/logApiError';
 
 const ClaimsTab = () => {
   const { t } = useTranslation('insurance');
@@ -36,7 +37,7 @@ const ClaimsTab = () => {
       const res = await getClaims(params);
       setClaims(res.claims || []);
     } catch (err) {
-      console.error('Failed to load claims:', err);
+      logApiError('Failed to load claims', err);
     } finally {
       setLoading(false);
     }

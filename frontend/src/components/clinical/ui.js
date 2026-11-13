@@ -57,3 +57,8 @@ export const readFileAsDataUrl = (file) =>
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+
+// Key of an interaction / allergy check: `${patientId}|${sorted unique medicine ids}`.
+// ClinicalWarnings reports results with it; the POS compares it with the current cart.
+export const clinicalCheckKey = (patientId, medicineIds) =>
+  `${patientId || ''}|${[...new Set((medicineIds || []).map(String))].sort().join(',')}`;

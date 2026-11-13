@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/useAuth';
 import { lookupMedicine } from '../../api/medicineApi';
-import { useOfflineSync } from '../../offline/useOfflineSync';
+import { useOfflineSyncContext } from '../../offline/offlineSyncContext';
+import { clinicalCheckKey } from '../../components/clinical/ui';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
 import ProductSearch from '../../components/pos/ProductSearch';
 import QuickPick from '../../components/pos/QuickPick';
@@ -44,18 +45,27 @@ const POS = () => {
     shiftState, setShiftState, loadCatalogData, loadShift,
   } = usePosData({ pharmacyId, userId, setError, setShiftModal });
 
-  const { online, pending, failed, syncing, syncNow } = useOfflineSync({
-    pharmacyId,
-    userId,
-    onSynced: () => {
-      setInfo(t('info.synced'));
-      loadCatalogData();
-    },
-  });
+  // Offline queue + sync run in the pharmacy layout (OfflineSyncProvider) for every page
+  const { online, pending, failed, othersPending, othersFailed, syncing, syncNow, subscribeSynced } = useOfflineSyncContext();
+  const loadCatalogRef = useRef(loadCatalogData);
+  useEffect(() => {
+    loadCatalogRef.current = loadCatalogData;
+  }, [loadCatalogData]);
+  useEffect(
+    () =>
+      subscribeSynced(() => {
+        setInfo(t('info.synced'));
+        loadCatalogRef.current();
+      }),
+    [subscribeSynced, t]
+  );
 
   // ---------- Sale state ----------
   const sale = usePosSale({ t, online, setError });
-  const { cart, selectedKey, customer, walkIn, patient, prescription, legacyRx, warnings, ackKey, payments, addToCart, resetSale } = sale;
+  const {
+    cart, selectedKey, customer, walkIn, patient, prescription, legacyRx, warnings, ackKey, payments, addToCart, resetSale,
+    hasPendingIntent,
+  } = sale;
 
   // ---------- Derived ----------
   const { medById, quickPicks, availableOf, maxQtyOf, totals, effectivePayments, payStatus, insuranceLines } = usePosDerived({
@@ -75,10 +85,21 @@ const POS = () => {
     [online, canCredit, customer, canInsurance]
   );
 
-  const warningKey = `${patient?._id || ''}|${[...new Set(cart.map((l) => l.medicineId))].sort().join(',')}`;
+  // Allergy / interaction check: only a finished ('ok') result for exactly this patient + cart
+  // counts. While it runs, after it failed (unless a manual check is confirmed) or with
+  // unacknowledged severe warnings the sale is blocked. Offline the check cannot run.
+  const warningKey = clinicalCheckKey(patient?._id, cart.map((l) => l.medicineId));
+  // Same rule as ClinicalWarnings: one medicine without a patient has nothing to check
+  const cartMedicineCount = new Set(cart.map((l) => l.medicineId)).size;
+  const clinicalActive = online && (cartMedicineCount > 1 || (cartMedicineCount > 0 && Boolean(patient?._id)));
+  const clinicalStatus = !clinicalActive ? 'ok' : warnings.key === warningKey ? warnings.status : 'checking';
   const severeWarnings =
-    warnings.allergyHits.length > 0 || warnings.interactions.some((i) => SEVERE.includes(i.severity));
+    clinicalActive &&
+    clinicalStatus === 'ok' &&
+    (warnings.allergyHits.length > 0 || warnings.interactions.some((i) => SEVERE.includes(i.severity)));
   const warningsAcked = !severeWarnings || ackKey === warningKey;
+  const clinicalOverride = clinicalStatus === 'failed' && ackKey === `override:${warningKey}`;
+  const clinicalAck = (severeWarnings && warningsAcked) || clinicalOverride;
   // Same rule as the server: opt-in per pharmacy (missing = not required).
   const requireShiftUi = pharmacy?.settings?.requireShift === true || shiftState.requireShift;
 
@@ -86,11 +107,12 @@ const POS = () => {
     () =>
       computeBlockers({
         t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
-        warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
+        clinicalStatus: clinicalOverride ? 'ok' : clinicalStatus, warningsAcked, payStatus, effectivePayments,
+        allowedMethods, customer,
       }),
     [
       t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
-      warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
+      clinicalStatus, clinicalOverride, warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
     ]
   );
 
@@ -126,6 +148,9 @@ const POS = () => {
   // ---------- Held sales ----------
   const { held, hold, take, remove: deleteHeld } = useHeldSales({ pharmacyId, userId });
 
+  // A mobile money push request still waiting is cancelled when the sale is put aside
+  const confirmCancelPending = () => !hasPendingIntent || window.confirm(t('payment.confirmCancelPending'));
+
   const holdCurrent = (label) => {
     if (cart.length === 0) return;
     hold(sale.snapshot(label, totals.grandTotal));
@@ -135,6 +160,7 @@ const POS = () => {
   };
 
   const resumeHeld = (entry) => {
+    if (!confirmCancelPending()) return;
     take(entry.id, cart.length > 0 ? sale.snapshot(t('held.autoLabel', { time: new Date().toLocaleTimeString() }), totals.grandTotal) : null);
     resetSale();
     sale.restore(entry, medById);
@@ -145,11 +171,12 @@ const POS = () => {
   const { checkoutLoading, handleCheckout } = usePosCheckout({
     t, sale, pharmacyId, userId, online, hasControlled, needsRx, totals, effectivePayments, payStatus,
     blockers, shiftState, requireShiftUi, setMedicines, loadCatalogData, loadShift,
-    setError, setInfo, setShiftModal, setCompletedSale,
+    setError, setInfo, setShiftModal, setCompletedSale, clinicalAck,
   });
 
   const clearWithConfirm = () => {
-    if (cart.length > 0 && window.confirm(t('cart.confirmClear'))) resetSale();
+    if (cart.length === 0) return;
+    if (window.confirm(hasPendingIntent ? t('payment.confirmCancelPending') : t('cart.confirmClear'))) resetSale();
   };
 
   usePosShortcuts({
@@ -178,7 +205,15 @@ const POS = () => {
         onOpenHeld={() => setHeldOpen(true)}
       />
 
-      <OfflinePanel online={online} pending={pending} failed={failed} syncing={syncing} onSync={syncNow} catalogSavedAt={catalogSavedAt} />
+      <OfflinePanel
+        online={online}
+        pending={pending}
+        failed={failed}
+        othersCount={othersPending.length + othersFailed.length}
+        syncing={syncing}
+        onSync={syncNow}
+        catalogSavedAt={catalogSavedAt}
+      />
 
       <PosNotice tone="error" message={error} onClose={() => setError('')} />
       <PosNotice tone="info" message={info} onClose={() => setInfo('')} />
@@ -205,6 +240,7 @@ const POS = () => {
           needsRx={needsRx}
           hasControlled={hasControlled}
           severeWarnings={severeWarnings}
+          clinicalFailed={clinicalStatus === 'failed'}
           warningKey={warningKey}
           totals={totals}
           payStatus={payStatus}
@@ -216,7 +252,9 @@ const POS = () => {
           blockers={blockers}
           checkoutLoading={checkoutLoading}
           onCheckout={handleCheckout}
-          onHold={() => setHoldOpen(true)}
+          onHold={() => {
+            if (confirmCancelPending()) setHoldOpen(true);
+          }}
           onClear={clearWithConfirm}
         />
       </div>

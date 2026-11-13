@@ -14,6 +14,7 @@ import ReceivePOModal from './ReceivePOModal';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
 import POMetrics from '../../components/procurement/POMetrics';
 import POTableRow from '../../components/procurement/POTableRow';
+import { logApiError } from '../../api/logApiError';
 
 const STATUS_FILTERS = [
   { value: '', labelKey: 'filters.all' },
@@ -49,7 +50,7 @@ const PurchaseOrders = () => {
       const data = await getPurchaseOrders(params);
       setOrders(data.orders || []);
     } catch (err) {
-      console.error('Failed to load purchase orders:', err);
+      logApiError('Failed to load purchase orders', err);
     } finally {
       setLoading(false);
     }

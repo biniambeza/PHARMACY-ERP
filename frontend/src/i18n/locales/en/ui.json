@@ -8,6 +8,18 @@
     "switchBranch": "Switch branch",
     "branch": "Branch"
   },
+  "unsynced": {
+    "title": "Sales not yet synced",
+    "logout_one": "{{count}} sale not yet synced — logging out will keep it on this device until you log in again.",
+    "logout_other": "{{count}} sales not yet synced — logging out will keep them on this device until you log in again.",
+    "switchBranch_one": "{{count}} sale not yet synced — switching branch will keep it on this device until you switch back to this branch.",
+    "switchBranch_other": "{{count}} sales not yet synced — switching branch will keep them on this device until you switch back to this branch.",
+    "others_one": "{{count}} more sale of another user is also waiting on this device.",
+    "others_other": "{{count}} more sales of other users are also waiting on this device.",
+    "syncNow": "Sync now",
+    "cancel": "Cancel",
+    "continue": "Continue"
+  },
   "notificationBell": {
     "title": "Notifications",
     "ariaUnread": "Notifications ({{n}} unread)",

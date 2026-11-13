@@ -415,7 +415,7 @@ const getClaims = async (req, res) => {
   const nById = new Map(counts.map((c) => [String(c._id), c.n]));
   res.json({
     success: true,
-    claims: claims.map((c) => ({ ...c, saleCount: nById.get(String(c._id)) || 0, outstanding: round2(c.totalAmount - (c.paidAmount || 0)) })),
+    claims: claims.map((c) => ({ ...c, saleCount: nById.get(String(c._id)) || 0, outstanding: InsuranceClaim.claimBalance(c).outstanding, refundDueToInsurer: InsuranceClaim.claimBalance(c).refundDueToInsurer })),
     total,
     page,
     limit,
@@ -451,7 +451,7 @@ const claimResponse = async (req, claim) => {
     .select('name type code payer')
     .lean();
   const obj = typeof claim.toObject === 'function' ? claim.toObject() : claim;
-  return { ...obj, outstanding: round2(obj.totalAmount - (obj.paidAmount || 0)), scheme };
+  return { ...obj, outstanding: InsuranceClaim.claimBalance(obj).outstanding, refundDueToInsurer: InsuranceClaim.claimBalance(obj).refundDueToInsurer, scheme };
 };
 
 // @route POST /api/insurance/claims   { schemeId, from, to, notes? }
@@ -508,11 +508,22 @@ const submitClaim = claimAction('submit', (req, session) =>
   svc.submitClaim({ pharmacyId: req.pharmacyId, id: req.params.id, userId: req.user._id }, { session }));
 
 // @route POST /api/insurance/claims/:id/payments   { amount, date?, reference?, note? }
-const recordClaimPayment = claimAction('payment', (req, session) =>
-  svc.recordClaimPayment(
-    { pharmacyId: req.pharmacyId, id: req.params.id, ...(req.body || {}), userId: req.user._id },
+// Only whitelisted body fields: pharmacyId / id must never come from the client.
+const recordClaimPayment = claimAction('payment', (req, session) => {
+  const { amount, date, reference, note } = req.body || {};
+  return svc.recordClaimPayment(
+    {
+      pharmacyId: req.pharmacyId,
+      id: req.params.id,
+      amount,
+      date: typeof date === 'string' || typeof date === 'number' ? date : undefined,
+      reference: typeof reference === 'string' ? reference : undefined,
+      note: typeof note === 'string' ? note : undefined,
+      userId: req.user._id,
+    },
     { session }
-  ));
+  );
+});
 
 // @route POST /api/insurance/claims/:id/reject   { notes, releaseSales? }
 const rejectClaim = claimAction('reject', (req, session) =>

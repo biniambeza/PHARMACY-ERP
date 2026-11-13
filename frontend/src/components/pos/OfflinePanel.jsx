@@ -10,14 +10,16 @@ const QUEUE_ERRORS = { 'Sync failed': 'offline.syncFailed', 'Not processed': 'of
 
 /**
  * Offline banner + pending-sync counter + review list of failed offline sales (#27).
- * Props: { online, pending, failed, syncing, onSync, catalogSavedAt }
+ * Props: { online, pending, failed, othersCount, syncing, onSync, catalogSavedAt }
+ *   pending / failed: the signed-in user's queued sales; othersCount: sales other users left on
+ *   this device (synced when they sign in again).
  */
-const OfflinePanel = ({ online, pending, failed, syncing, onSync, catalogSavedAt }) => {
+const OfflinePanel = ({ online, pending, failed, othersCount = 0, syncing, onSync, catalogSavedAt }) => {
   const { t } = useTranslation('pos');
   const [reviewOpen, setReviewOpen] = useState(false);
   const total = pending.length + failed.length;
 
-  if (online && total === 0) return null;
+  if (online && total === 0 && othersCount === 0) return null;
 
   return (
     <>
@@ -30,6 +32,9 @@ const OfflinePanel = ({ online, pending, failed, syncing, onSync, catalogSavedAt
           </span>
         </div>
       )}
+      {total === 0 && othersCount > 0 && (
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 px-1">{t('offline.others', { count: othersCount })}</p>
+      )}
       {total > 0 && (
         <div className="p-2.5 rounded-xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 text-sky-800 dark:text-sky-200 text-xs flex flex-wrap items-center gap-2">
           <CloudUpload className="w-4 h-4" />
@@ -40,6 +45,7 @@ const OfflinePanel = ({ online, pending, failed, syncing, onSync, catalogSavedAt
                 , <b className="text-rose-600">{t('offline.failed', { count: failed.length })}</b>
               </>
             )}
+            {othersCount > 0 && <span className="opacity-75"> · {t('offline.others', { count: othersCount })}</span>}
           </span>
           <div className="ml-auto flex items-center gap-2">
             {failed.length > 0 && (

@@ -163,7 +163,7 @@ const claimableForSales = async (pharmacyId, sales, { session } = {}) => {
   const result = new Map();
   if (sales.length === 0) return result;
   const returns = await Return.find({ pharmacyId, saleId: { $in: sales.map((s) => s._id) } })
-    .select('saleId items.saleItemId items.quantity')
+    .select('saleId items.saleItemId items.quantity items.insurerAmount')
     .session(session || null)
     .lean();
   const bySale = new Map();
@@ -180,6 +180,11 @@ const claimableForSales = async (pharmacyId, sales, { session } = {}) => {
     (bySale.get(String(sale._id)) || []).forEach((ri) => {
       const si = itemById.get(String(ri.saleItemId));
       if (!si || !si.quantity) return;
+      // Returns since the per-line refund fix store the exact insurer share
+      if (Number.isFinite(Number(ri.insurerAmount)) && ri.insurerAmount !== null) {
+        returned += Number(ri.insurerAmount);
+        return;
+      }
       returned += ((Number(si.insuranceAmount) || 0) * Math.min(ri.quantity, si.quantity)) / si.quantity;
     });
     returned = round2(Math.min(insurer, returned));
@@ -416,7 +421,7 @@ const recordClaimPayment = async ({ pharmacyId, id, amount, date, reference, not
   }
   const value = round2(amount);
   if (!Number.isFinite(Number(amount)) || value <= 0) throw new AppError('Payment amount must be a positive number', 400);
-  const outstanding = round2(claim.totalAmount - claim.paidAmount);
+  const { outstanding } = InsuranceClaim.claimBalance(claim);
   if (value > outstanding + EPS) {
     throw new AppError(`Payment (${value.toFixed(2)}) exceeds the outstanding amount (${outstanding.toFixed(2)})`, 400);
   }
@@ -431,10 +436,44 @@ const recordClaimPayment = async ({ pharmacyId, id, amount, date, reference, not
     recordedBy: userId,
   });
   claim.paidAmount = round2(claim.paidAmount + value);
-  const fullyPaid = claim.totalAmount - claim.paidAmount <= EPS;
+  const fullyPaid = InsuranceClaim.claimBalance(claim).balance <= EPS;
   claim.status = fullyPaid ? 'paid' : 'partially_paid';
   await claim.save({ session });
   if (fullyPaid) await markSalesInsurancePaid(claim, { session });
+  return claim;
+};
+
+// Claims whose amounts are frozen: returns are booked as adjustments instead of a refresh.
+const ADJUSTABLE_STATUSES = ['submitted', 'partially_paid', 'paid'];
+
+// Records the insurer share of a return on the (submitted / paid) claim the sale is on.
+// Returns the updated claim, or null when the sale is on no such claim (unclaimed or draft
+// sales are netted automatically by claimableForSales / refreshDraftClaim).
+// A paid claim ends up with balance < 0: refundDueToInsurer is what the pharmacy owes back.
+const recordClaimAdjustment = async (
+  { pharmacyId, claimId, saleId, invoiceNumber = '', returnId = null, returnNumber = '', amount, date = new Date() },
+  { session }
+) => {
+  const value = round2(amount);
+  if (!claimId || !(value > 0)) return null;
+  const claim = await InsuranceClaim.findOne({ _id: claimId, pharmacyId }).session(session || null);
+  if (!claim || !ADJUSTABLE_STATUSES.includes(claim.status)) return null;
+  claim.adjustments.push({
+    returnId,
+    returnNumber,
+    saleId,
+    invoiceNumber,
+    amount: value,
+    date,
+    reason: 'return',
+  });
+  claim.adjustedTotal = round2((claim.adjustedTotal || 0) + value);
+  const { balance } = InsuranceClaim.claimBalance(claim);
+  // A partly paid claim whose remainder was returned is now settled
+  const settled = claim.status === 'partially_paid' && balance <= EPS;
+  if (settled) claim.status = 'paid';
+  await claim.save({ session });
+  if (settled) await markSalesInsurancePaid(claim, { session });
   return claim;
 };
 
@@ -504,6 +543,7 @@ const receivablesSummary = async ({ pharmacyId, now = new Date() }) => {
         draft: 0,
         submitted: 0,
         outstanding: 0,
+        refundDueToInsurer: 0,
         aging: emptyAging(),
       },
     ])
@@ -528,13 +568,24 @@ const receivablesSummary = async ({ pharmacyId, now = new Date() }) => {
     row.aging[b] = round2(row.aging[b] + c.amount);
   });
 
-  const claims = await InsuranceClaim.find({ pharmacyId, status: { $in: ['draft', 'submitted', 'partially_paid'] } })
-    .select('schemeId status totalAmount paidAmount submittedAt periodTo createdAt')
+  const claims = await InsuranceClaim.find({
+    pharmacyId,
+    $or: [
+      { status: { $in: ['draft', 'submitted', 'partially_paid'] } },
+      { status: 'paid', refundDueToInsurer: { $gt: 0 } },
+    ],
+  })
+    .select('schemeId status totalAmount adjustedTotal paidAmount submittedAt periodTo createdAt')
     .lean();
   claims.forEach((c) => {
     const row = rows.get(String(c.schemeId));
     if (!row) return;
-    const open = round2(c.totalAmount - (c.paidAmount || 0));
+    const bal = InsuranceClaim.claimBalance(c);
+    if (bal.refundDueToInsurer > 0) {
+      // Returns after the insurer paid: money owed back to the insurer (not a receivable)
+      row.refundDueToInsurer = round2((row.refundDueToInsurer || 0) + bal.refundDueToInsurer);
+    }
+    const open = bal.outstanding;
     if (open <= EPS) return;
     if (c.status === 'draft') row.draft = round2(row.draft + open);
     else row.submitted = round2(row.submitted + open);
@@ -549,12 +600,13 @@ const receivablesSummary = async ({ pharmacyId, now = new Date() }) => {
       acc.draft = round2(acc.draft + r.draft);
       acc.submitted = round2(acc.submitted + r.submitted);
       acc.outstanding = round2(acc.outstanding + r.outstanding);
+      acc.refundDueToInsurer = round2(acc.refundDueToInsurer + (r.refundDueToInsurer || 0));
       BUCKETS.forEach((b) => {
         acc.aging[b] = round2(acc.aging[b] + r.aging[b]);
       });
       return acc;
     },
-    { unclaimed: 0, draft: 0, submitted: 0, outstanding: 0, aging: emptyAging() }
+    { unclaimed: 0, draft: 0, submitted: 0, outstanding: 0, refundDueToInsurer: 0, aging: emptyAging() }
   );
   return { schemes: list, totals, buckets: BUCKETS };
 };
@@ -605,9 +657,19 @@ const claimWorkbook = async ({ claim, scheme, pharmacy }) => {
   });
   const totalRow = ws.addRow(['', '', '', '', 'Total', '', '', '', claim.totalAmount]);
   totalRow.font = { bold: true };
-  if (claim.paidAmount > 0) {
+  const bal = InsuranceClaim.claimBalance(claim);
+  (claim.adjustments || []).forEach((a) => {
+    ws.addRow(['', fmtDate(a.date), a.invoiceNumber, '', `Return ${a.returnNumber || ''}`.trim(), '', '', '', -a.amount]);
+  });
+  if (bal.adjustedTotal > 0) {
+    ws.addRow(['', '', '', '', 'Net claimed', '', '', '', bal.netAmount]).font = { bold: true };
+  }
+  if (claim.paidAmount > 0 || bal.adjustedTotal > 0) {
     ws.addRow(['', '', '', '', 'Paid', '', '', '', claim.paidAmount]).font = { bold: true };
-    ws.addRow(['', '', '', '', 'Outstanding', '', '', '', round2(claim.totalAmount - claim.paidAmount)]).font = { bold: true };
+    ws.addRow(['', '', '', '', 'Outstanding', '', '', '', bal.outstanding]).font = { bold: true };
+    if (bal.refundDueToInsurer > 0) {
+      ws.addRow(['', '', '', '', 'Refund due to insurer', '', '', '', bal.refundDueToInsurer]).font = { bold: true };
+    }
   }
   [5, 12, 18, 16, 28, 12, 14, 12, 12].forEach((w, i) => {
     ws.getColumn(i + 1).width = w;
@@ -635,6 +697,9 @@ module.exports = {
   refreshDraftClaim,
   submitClaim,
   recordClaimPayment,
+  recordClaimAdjustment,
+  ADJUSTABLE_STATUSES,
+  claimBalance: InsuranceClaim.claimBalance,
   rejectClaim,
   deleteDraftClaim,
   receivablesSummary,

@@ -178,18 +178,22 @@ const generateRecoveryCodes = (count = RECOVERY_CODE_COUNT) => {
 
 // ---------------------------------------------------------- challenge token
 
-const signChallenge = (user) =>
+// Random id for a login challenge (JWT `jti`). The latest id is stored on the
+// user so a challenge can be invalidated server-side (too many wrong codes).
+const newChallengeId = () => crypto.randomBytes(16).toString('hex');
+
+const signChallenge = (user, challengeId) =>
   jwt.sign(
     { sub: String(user._id), purpose: CHALLENGE_PURPOSE, v: user.tokenVersion || 0 },
     challengeKey(),
-    { expiresIn: CHALLENGE_TTL }
+    { expiresIn: CHALLENGE_TTL, algorithm: 'HS256', ...(challengeId ? { jwtid: String(challengeId) } : {}) }
   );
 
 // Returns the decoded payload or null.
 const verifyChallenge = (token) => {
   if (!token || typeof token !== 'string' || token.length > 2000) return null;
   try {
-    const decoded = jwt.verify(token, challengeKey());
+    const decoded = jwt.verify(token, challengeKey(), { algorithms: ['HS256'] });
     return decoded && decoded.purpose === CHALLENGE_PURPOSE && decoded.sub ? decoded : null;
   } catch {
     return null;
@@ -211,6 +215,7 @@ module.exports = {
   normaliseRecoveryCode,
   hashRecoveryCode,
   generateRecoveryCodes,
+  newChallengeId,
   signChallenge,
   verifyChallenge,
 };

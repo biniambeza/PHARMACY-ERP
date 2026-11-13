@@ -5,6 +5,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const pharmacyScope = require('../middleware/pharmacyScope');
+const { supportReadOnly } = require('../middleware/supportMode');
 const { requirePermission } = require('../middleware/permission');
 const {
   getNotifications,
@@ -15,7 +16,8 @@ const {
   getExpiryOverview,
 } = require('../controllers/notificationController');
 
-router.use(protect, pharmacyScope);
+// Platform admins: read-only support mode for one pharmacy (x-pharmacy-id)
+router.use(protect, pharmacyScope, supportReadOnly);
 
 router.get('/', requirePermission('notifications:view'), getNotifications);
 router.get('/unread-count', requirePermission('notifications:view'), getUnreadCount);

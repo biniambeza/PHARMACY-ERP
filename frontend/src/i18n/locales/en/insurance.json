@@ -60,7 +60,9 @@
     "paid": "Paid",
     "saleTotal": "Sale total",
     "submittedAt": "Submitted",
-    "autoClaim": "Automatic monthly claim"
+    "autoClaim": "Automatic monthly claim",
+    "adjustedTotal": "Returned after claim",
+    "refundDueToInsurer": "Owed back to insurer"
   },
   "types": {
     "cbhi": "CBHI (community-based)",

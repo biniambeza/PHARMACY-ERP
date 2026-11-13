@@ -8,6 +8,11 @@ const escapeRegex = require('../utils/escapeRegex');
 const { nextSequence, formatSequence } = require('../utils/sequence');
 const { recordMovement } = require('../utils/stockMovement');
 const { audit } = require('../utils/audit');
+const { salePricesIncludeTax, splitAmount } = require('../services/einvoice/payload');
+const { recordClaimAdjustment, ADJUSTABLE_STATUSES } = require('../services/insurance');
+
+const EPS = 0.005;
+const getCreditService = () => require('../services/credit');
 
 const toMoney = (n) => Number(Number(n || 0).toFixed(2));
 const cleanString = (v, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -51,6 +56,41 @@ const creditPortion = (sale) => {
   return sale.paymentMethod === 'credit' ? toMoney(sale.grandTotal) : 0;
 };
 
+// What was actually paid per sale item (sums to sale.grandTotal):
+//   gross    = item subtotal - its share of the sale discount + its tax when prices exclude tax
+//   tax      = item taxAmount (legacy sales with a typed-in sale tax: spread by subtotal)
+//   discount = share of the sale-level discount
+//   insurer  = items[].insuranceAmount (insurance sales)
+// Returns Map saleItemId -> { gross, tax, discount, insurer }.
+const saleLineAmounts = (sale) => {
+  const items = Array.isArray(sale.items) ? sale.items : [];
+  const subtotals = items.map((i) => Number(i.subtotal) || 0);
+  const discounts = splitAmount(Number(sale.discount) || 0, subtotals);
+  let taxes = items.map((i) => toMoney(i.taxAmount));
+  const saleTax = toMoney(sale.tax);
+  if (Math.abs(taxes.reduce((s, t) => s + t, 0) - saleTax) > 0.011) taxes = splitAmount(saleTax, subtotals);
+  const inclusive = salePricesIncludeTax(sale);
+  let gross = items.map((i, idx) => toMoney(subtotals[idx] - discounts[idx] + (inclusive ? 0 : taxes[idx])));
+  // Anything that does not add up to the grand total (legacy data) is spread by line value
+  const diff = toMoney((Number(sale.grandTotal) || 0) - gross.reduce((s, g) => s + g, 0));
+  if (Math.abs(diff) > 0.011) {
+    const extra = splitAmount(Math.abs(diff), gross.map((g) => Math.max(0, g)));
+    gross = gross.map((g, idx) => toMoney(Math.max(0, g + Math.sign(diff) * extra[idx])));
+  }
+  const map = new Map();
+  items.forEach((i, idx) => {
+    map.set(String(i._id), {
+      gross: gross[idx],
+      tax: Math.min(taxes[idx], gross[idx]),
+      discount: discounts[idx],
+      insurer: sale.insurance ? Math.min(toMoney(i.insuranceAmount), gross[idx]) : 0,
+    });
+  });
+  return map;
+};
+
+const isNum = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
+
 // Puts `quantity` back into the batch the sale item came from.
 // Returns { restocked, balanceAfter, note }.
 const restockBatch = async ({ pharmacyId, batchId, quantity, now, session }) => {
@@ -74,10 +114,15 @@ const restockBatch = async ({ pharmacyId, batchId, quantity, now, session }) => 
   return { restocked: true, balanceAfter: updated.quantity, note: '' };
 };
 
-// Sums already-returned quantities per sale item (excluding nothing; called inside the txn).
-const returnedQuantities = async (pharmacyId, saleId, session) => {
-  const previous = await Return.find({ pharmacyId, saleId }).session(session);
+// Sums what previous returns of the sale already took back, per sale item (called inside the txn):
+// quantity and the gross / tax / discount / insurer amounts. Older returns without stored
+// per-item amounts are estimated the way they were refunded (proportionally).
+const returnedQuantities = async (pharmacyId, sale, lineAmounts, session) => {
+  const previous = await Return.find({ pharmacyId, saleId: sale._id }).session(session);
+  const saleItems = new Map((sale.items || []).map((i) => [String(i._id), i]));
+  const legacyFactor = sale.subtotal > 0 ? sale.grandTotal / sale.subtotal : 0;
   const map = new Map();
+  const amounts = new Map();
   let refunded = 0;
   let creditReversed = 0;
   for (const r of previous) {
@@ -86,9 +131,21 @@ const returnedQuantities = async (pharmacyId, saleId, session) => {
     for (const it of r.items) {
       const key = String(it.saleItemId);
       map.set(key, (map.get(key) || 0) + it.quantity);
+      const si = saleItems.get(key);
+      const line = lineAmounts.get(key);
+      const frac = si && si.quantity ? Math.min(1, it.quantity / si.quantity) : 0;
+      const prev = amounts.get(key) || { gross: 0, tax: 0, discount: 0, insurer: 0 };
+      const insurer = isNum(it.insurerAmount) ? Number(it.insurerAmount) : line ? line.insurer * frac : 0;
+      prev.insurer += insurer;
+      prev.gross += isNum(it.grossAmount)
+        ? Number(it.grossAmount)
+        : Math.max((it.refundAmount || 0) + insurer, si ? it.quantity * si.unitPrice * legacyFactor : 0);
+      prev.tax += isNum(it.taxAmount) ? Number(it.taxAmount) : line ? line.tax * frac : 0;
+      prev.discount += isNum(it.discountAmount) ? Number(it.discountAmount) : line ? line.discount * frac : 0;
+      amounts.set(key, prev);
     }
   }
-  return { map, refunded: toMoney(refunded), creditReversed: toMoney(creditReversed) };
+  return { map, amounts, refunded: toMoney(refunded), creditReversed: toMoney(creditReversed) };
 };
 
 // @desc    Return some or all items of a sale
@@ -122,6 +179,7 @@ const createReturn = async (req, res) => {
     let created;
     let saleAfter;
     let creditNote = null;
+    let claimAfter = null;
 
     await session.withTransaction(async () => {
       const now = new Date();
@@ -136,9 +194,18 @@ const createReturn = async (req, res) => {
       if (!sale) throw new AppError('Sale not found', 404);
       if (sale.voided) throw new AppError('This sale has been voided and cannot be returned', 400);
       if (sale.returnStatus === 'full') throw new AppError('This sale has already been fully returned', 400);
+      if (refundMethod === 'store_credit' && !sale.customerId) {
+        throw new AppError('Store credit needs a customer account on the sale; choose another refund method', 400);
+      }
+      claimAfter = null;
 
-      const { map: alreadyReturned, refunded, creditReversed: prevCreditReversed } =
-        await returnedQuantities(req.pharmacyId, sale._id, session);
+      const lineAmounts = saleLineAmounts(sale);
+      const {
+        map: alreadyReturned,
+        amounts: alreadyAmounts,
+        refunded,
+        creditReversed: prevCreditReversed,
+      } = await returnedQuantities(req.pharmacyId, sale, lineAmounts, session);
       const saleItems = new Map(sale.items.map((i) => [String(i._id), i]));
 
       // Validate quantities per sale item (across dispositions)
@@ -158,12 +225,33 @@ const createReturn = async (req, res) => {
         }
       }
 
-      // Refunds are proportional to what was actually paid (discount/tax included).
-      const factor = sale.subtotal > 0 ? sale.grandTotal / sale.subtotal : 0;
-      // Insurance sales: the insurer's share of returned items is never refunded to
-      // the patient; it comes off the insurance claim instead (services/insurance).
-      const insurerShareOf = (si, qty) =>
-        sale.insurance && si.quantity ? ((Number(si.insuranceAmount) || 0) * qty) / si.quantity : 0;
+      // Refunds follow what each line actually paid (its discount share, its own tax), capped
+      // per line at what is left of it; the last units of a line take exactly the remainder.
+      // Insurance sales: the insurer's share of returned items is never refunded to the
+      // patient; it comes off the insurance claim instead (services/insurance).
+      const ZERO = { gross: 0, tax: 0, discount: 0, insurer: 0 };
+      const running = new Map();
+      const takeLine = (si, qty) => {
+        const key = String(si._id);
+        const line = lineAmounts.get(key) || ZERO;
+        const run = running.get(key) || { qty: alreadyReturned.get(key) || 0, ...(alreadyAmounts.get(key) || ZERO) };
+        const last = run.qty + qty >= si.quantity;
+        const part = (field) => {
+          const left = toMoney(Math.max(0, line[field] - run[field]));
+          return last ? left : Math.min(left, toMoney((line[field] * qty) / si.quantity));
+        };
+        const out = { gross: part('gross'), tax: part('tax'), discount: part('discount'), insurer: part('insurer') };
+        out.tax = Math.min(out.tax, out.gross);
+        out.insurer = Math.min(out.insurer, out.gross);
+        running.set(key, {
+          qty: run.qty + qty,
+          gross: run.gross + out.gross,
+          tax: run.tax + out.tax,
+          discount: run.discount + out.discount,
+          insurer: run.insurer + out.insurer,
+        });
+        return out;
+      };
       const returnItems = [];
       const movements = [];
       for (const r of requested.values()) {
@@ -195,6 +283,7 @@ const createReturn = async (req, res) => {
         } else {
           note = 'discarded';
         }
+        const amt = takeLine(si, r.quantity);
         returnItems.push({
           saleItemId: si._id,
           medicineId: si.medicineId,
@@ -203,7 +292,12 @@ const createReturn = async (req, res) => {
           batchNo: si.batchNo,
           quantity: r.quantity,
           unitPrice: si.unitPrice,
-          refundAmount: toMoney(Math.max(0, r.quantity * si.unitPrice * factor - insurerShareOf(si, r.quantity))),
+          refundAmount: toMoney(Math.max(0, amt.gross - amt.insurer)),
+          grossAmount: amt.gross,
+          discountAmount: amt.discount,
+          taxAmount: amt.tax,
+          netAmount: toMoney(Math.max(0, amt.gross - amt.tax)),
+          insurerAmount: amt.insurer,
           disposition: r.disposition,
           restocked,
           note,
@@ -223,8 +317,22 @@ const createReturn = async (req, res) => {
       const patientPaid = toMoney(Math.max(0, sale.grandTotal - insurerTotal));
       const remainingRefundable = toMoney(Math.max(0, patientPaid - refunded));
       let refundTotal = toMoney(returnItems.reduce((s, i) => s + i.refundAmount, 0));
-      // On the final return, refund exactly what is left (absorbs rounding)
-      if (isFull || refundTotal > remainingRefundable) refundTotal = remainingRefundable;
+      // Safety net for sales with older returns (estimated amounts): never refund more than
+      // the patient has left; the excess comes off the last lines.
+      if (refundTotal > remainingRefundable + EPS) {
+        let excess = toMoney(refundTotal - remainingRefundable);
+        for (let i = returnItems.length - 1; i >= 0 && excess > 0; i -= 1) {
+          const cut = Math.min(excess, returnItems[i].refundAmount);
+          returnItems[i].refundAmount = toMoney(returnItems[i].refundAmount - cut);
+          excess = toMoney(excess - cut);
+        }
+        refundTotal = remainingRefundable;
+      }
+      const sumOf = (k) => toMoney(returnItems.reduce((s, i) => s + (i[k] || 0), 0));
+      const grossTotal = sumOf('grossAmount');
+      const taxTotal = sumOf('taxAmount');
+      const netTotal = sumOf('netAmount');
+      const insurerTotalReturned = sumOf('insurerAmount');
 
       const returnId = new mongoose.Types.ObjectId();
 
@@ -255,6 +363,47 @@ const createReturn = async (req, res) => {
       const seq = await nextSequence(req.pharmacyId, 'return', { session });
       const returnNumber = formatSequence('RET', seq, now);
 
+      // Store credit: whatever is not taken off the customer's credit balance is credited
+      // to the customer's account instead of being paid out.
+      let storeCredited = 0;
+      const refundDue = toMoney(Math.max(0, refundTotal - creditReversed));
+      if (refundMethod === 'store_credit' && refundDue > 0) {
+        const result = await getCreditService().issueStoreCredit(
+          {
+            pharmacyId: req.pharmacyId,
+            customerId: sale.customerId,
+            amount: refundDue,
+            refId: returnId,
+            saleId: sale._id,
+            note: `Store credit from return ${returnNumber}`,
+          },
+          { session }
+        );
+        storeCredited = toMoney(result?.credited || 0);
+      }
+
+      // Insurer share of a sale on a submitted / paid claim: booked as a claim adjustment
+      // (draft and unclaimed sales are netted automatically when the claim is built/submitted).
+      let claimAdjustment;
+      if (sale.insurance?.claimId && insurerTotalReturned > 0) {
+        claimAfter = await recordClaimAdjustment(
+          {
+            pharmacyId: req.pharmacyId,
+            claimId: sale.insurance.claimId,
+            saleId: sale._id,
+            invoiceNumber: sale.invoiceNumber,
+            returnId,
+            returnNumber,
+            amount: insurerTotalReturned,
+            date: now,
+          },
+          { session }
+        );
+        if (claimAfter) {
+          claimAdjustment = { claimId: claimAfter._id, claimNumber: claimAfter.claimNumber, amount: insurerTotalReturned };
+        }
+      }
+
       [created] = await Return.create(
         [
           {
@@ -270,7 +419,13 @@ const createReturn = async (req, res) => {
             refundMethod,
             refundTotal,
             creditReversed,
-            refundDue: toMoney(Math.max(0, refundTotal - creditReversed)),
+            refundDue,
+            grossTotal,
+            taxTotal,
+            netTotal,
+            insurerTotal: insurerTotalReturned,
+            storeCredited,
+            claimAdjustment,
             processedBy: req.user._id,
           },
         ],
@@ -306,6 +461,18 @@ const createReturn = async (req, res) => {
       message: `Return ${created.returnNumber} recorded`,
       return: created,
       sale: saleAfter,
+      ...(claimAfter
+        ? {
+            claim: {
+              _id: claimAfter._id,
+              claimNumber: claimAfter.claimNumber,
+              status: claimAfter.status,
+              adjustedTotal: claimAfter.adjustedTotal,
+              outstanding: claimAfter.outstandingAmount,
+              refundDueToInsurer: claimAfter.refundDueToInsurer,
+            },
+          }
+        : {}),
       ...(creditNote === 'credit service unavailable' ? { warning: 'Customer credit balance was not adjusted' } : {}),
     });
   } finally {
@@ -353,6 +520,49 @@ const voidSale = async (req, res) => {
           .session(session);
         if (shift && shift.status === 'closed') {
           throw new AppError('Shift already closed', 400);
+        }
+      }
+
+      // Insurance sale already billed to the insurer: the claim is frozen, so use a return
+      // (its insurer share is booked as a claim adjustment).
+      if (sale.insurance?.claimId) {
+        const InsuranceClaim = require('../models/InsuranceClaim');
+        const claim = await InsuranceClaim.findOne({ _id: sale.insurance.claimId, pharmacyId: req.pharmacyId })
+          .select('status claimNumber')
+          .session(session);
+        if (claim && ADJUSTABLE_STATUSES.includes(claim.status)) {
+          throw new AppError(
+            `This sale is on insurance claim ${claim.claimNumber} (${claim.status.replace('_', ' ')}) and cannot be voided; use a return instead`,
+            400
+          );
+        }
+      }
+
+      // Fiscalised sale: a void cannot take back an invoice the tax authority has (or may
+      // have) recorded; that needs a return (credit note). Unsubmitted records are closed as
+      // not_required so they are never submitted.
+      const FiscalInvoice = require('../models/FiscalInvoice');
+      const fiscal = await FiscalInvoice.findOne({ pharmacyId: req.pharmacyId, saleId: sale._id, type: 'invoice' })
+        .select('status lockedAt')
+        .session(session);
+      if (fiscal && fiscal.status !== 'not_required') {
+        if (['accepted', 'submitted'].includes(fiscal.status)) {
+          throw new AppError(
+            `This sale's fiscal invoice was already ${fiscal.status} by the tax authority, so it cannot be voided; use a return (credit note) instead`,
+            400
+          );
+        }
+        const closed = await FiscalInvoice.updateOne(
+          {
+            _id: fiscal._id,
+            status: { $in: ['pending', 'failed', 'rejected'] },
+            $or: [{ lockedAt: null }, { lockedAt: { $lt: new Date(now.getTime() - 2 * 60 * 1000) } }],
+          },
+          { $set: { status: 'not_required', lastError: 'Sale voided', lockedAt: null } },
+          { session }
+        );
+        if (closed.matchedCount !== 1) {
+          throw new AppError('This sale is being submitted for e-invoicing right now; try again in a moment', 409);
         }
       }
 

@@ -18,6 +18,7 @@ import SupportView from './SupportView';
 import ResetPasswordModal from './ResetPasswordModal';
 import PlatformMetrics from './PlatformMetrics';
 import AnnouncementsManager from './AnnouncementsManager';
+import { logApiError } from '../../api/logApiError';
 
 const TABS = ['pharmacies', 'metrics', 'announcements'];
 
@@ -53,7 +54,7 @@ const AdminDashboard = () => {
       ]);
       return { pharmacies: pharmacyData.pharmacies || [], stats: statsData.stats || {} };
     } catch (err) {
-      console.error('Failed to load admin platform metrics:', err);
+      logApiError('Failed to load admin platform metrics', err);
       throw err;
     }
   }, []);

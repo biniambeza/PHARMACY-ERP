@@ -7,6 +7,7 @@ import BusinessInfoCard from '../../components/settings/BusinessInfoCard';
 import AccountCard from '../../components/settings/AccountCard';
 import SecurityCard from '../../components/settings/SecurityCard';
 import PharmacySettingsForm from '../../components/settings/PharmacySettingsForm';
+import { logApiError } from '../../api/logApiError';
 
 const Settings = () => {
   const { t } = useTranslation('settings');
@@ -22,7 +23,7 @@ const Settings = () => {
         const res = await getMyPharmacy();
         setPharmacy(res.pharmacy);
       } catch (err) {
-        console.error('Failed to load pharmacy profile:', err);
+        logApiError('Failed to load pharmacy profile', err);
       } finally {
         setLoading(false);
       }

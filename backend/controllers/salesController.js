@@ -114,6 +114,9 @@ const syncOfflineSales = async (req, res) => {
         saleId: sale._id,
         invoiceNumber: sale.invoiceNumber,
         grandTotal: sale.grandTotal,
+        // Review flags (services/sales.js offline rules)
+        ...(sale.offlinePriceAdjusted ? { priceAdjusted: true } : {}),
+        ...(sale.offlineTimeFlag ? { timeFlag: sale.offlineTimeFlag } : {}),
       });
     } catch (err) {
       if (!err || !err.isOperational) {
@@ -134,7 +137,14 @@ const syncOfflineSales = async (req, res) => {
   );
 
   if (summary.created > 0 || summary.failed > 0) {
-    await audit(req, { action: 'sale.offline_sync', entity: 'Sale', meta: summary });
+    const flagged = results
+      .filter((r) => r.status === 'created' && (r.priceAdjusted || r.timeFlag))
+      .map((r) => ({ invoiceNumber: r.invoiceNumber, priceAdjusted: Boolean(r.priceAdjusted), timeFlag: r.timeFlag || '' }));
+    await audit(req, {
+      action: 'sale.offline_sync',
+      entity: 'Sale',
+      meta: flagged.length ? { ...summary, flagged } : summary,
+    });
   }
 
   return res.status(200).json({ success: true, summary, results });

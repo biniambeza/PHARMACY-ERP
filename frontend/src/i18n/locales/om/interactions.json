@@ -22,6 +22,7 @@
   "checkFailed": "Walqunnamtii qorachuun hin danda'amne",
   "warnings": {
     "checking": "Walqunnamtii qorachaa jira...",
+    "retry": "Irra deebi'ii yaali",
     "allergy": "Alarjii: {{medicine}} — dhukkubsataan {{substance}}f alarjii qaba",
     "reaction": "Deebii qaamaa: {{reaction}}",
     "disclaimer": "Akeekkachiisni tarree jalqabaa fi seerota faarmaasii keessan irraa dhufa; murtee ogummaa bakka hin bu'u."

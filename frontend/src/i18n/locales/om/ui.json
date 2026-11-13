@@ -8,6 +8,18 @@
     "switchBranch": "Damee jijjiiri",
     "branch": "Damee"
   },
+  "unsynced": {
+    "title": "Gurgurtaa ammallee hin walsimne",
+    "logout_one": "Gurgurtaan {{count}} ammallee hin walsimne — ba'uun hanga irra deebitee seentutti meeshaa kana irratti tursiisa.",
+    "logout_other": "Gurgurtaawwan {{count}} ammallee hin walsimne — ba'uun hanga irra deebitee seentutti meeshaa kana irratti tursiisa.",
+    "switchBranch_one": "Gurgurtaan {{count}} ammallee hin walsimne — damee jijjiiruun hanga gara damee kanaatti deebitutti meeshaa kana irratti tursiisa.",
+    "switchBranch_other": "Gurgurtaawwan {{count}} ammallee hin walsimne — damee jijjiiruun hanga gara damee kanaatti deebitutti meeshaa kana irratti tursiisa.",
+    "others_one": "Gurgurtaan fayyadamaa biraa {{count}} dabalataa meeshaa kana irratti eegaa jira.",
+    "others_other": "Gurgurtaawwan fayyadamtoota biroo {{count}} dabalataa meeshaa kana irratti eegaa jiru.",
+    "syncNow": "Amma walsimsiisi",
+    "cancel": "Haqi",
+    "continue": "Itti fufi"
+  },
   "notificationBell": {
     "title": "Beeksisa",
     "ariaUnread": "Beeksisa ({{n}} kan hin dubbifamne)",

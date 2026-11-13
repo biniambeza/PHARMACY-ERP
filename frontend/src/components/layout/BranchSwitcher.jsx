@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Building2, Check, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { ROLE_LABELS } from '../../config/permissions';
+import { useOfflineSyncContext } from '../../offline/offlineSyncContext';
 
 // Lets a user who works in several branches pick the active one.
 // Hidden when the user has a single branch.
 const BranchSwitcher = () => {
   const { t } = useTranslation(['ui', 'staff', 'common']);
   const { pharmacies, activePharmacyId, switchPharmacy } = useAuth();
+  const offlineSync = useOfflineSyncContext();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -62,9 +64,12 @@ const BranchSwitcher = () => {
                   role="option"
                   aria-selected={isActive}
                   disabled={blocked}
-                  onClick={() => {
+                  onClick={async () => {
                     setOpen(false);
-                    if (!isActive) switchPharmacy(m.pharmacyId);
+                    if (isActive) return;
+                    // Unsynced offline sales of this branch only sync while it is the active one
+                    if (offlineSync && !(await offlineSync.confirmUnsynced('switchBranch'))) return;
+                    switchPharmacy(m.pharmacyId);
                   }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs transition ${
                     blocked
