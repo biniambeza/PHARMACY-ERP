@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, Loader2, CheckCircle2, XCircle, Send } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { createPaymentIntent, getPaymentIntent } from '../../api/paymentApi';
 import { formatMoney } from '../../utils/format';
-import { inputCls, round2, METHOD_LABELS, errMsg, newPaymentRow } from './posUtils';
+import { inputCls, round2, errMsg, newPaymentRow } from './posUtils';
 
 // Mobile money row: manual reference, or a push request that waits for confirmation (#26).
 const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
+  const { t } = useTranslation('pos');
   const provider = row.provider || defaultProvider || 'manual';
   const meta = providers.find((p) => p.name === provider);
   const push = meta && meta.flow === 'push';
@@ -42,7 +44,7 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
       const { intent } = await createPaymentIntent({ amount: Number(row.amount), provider, phone: row.phone });
       onPatch({ intentId: intent._id, intentStatus: intent.status, reference: intent.reference || '', provider });
     } catch (err) {
-      onPatch({ error: errMsg(err, 'Payment request failed') });
+      onPatch({ error: errMsg(err, t('payment.requestFailed')) });
     } finally {
       setBusy(false);
     }
@@ -59,7 +61,7 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
         >
           {providers.map((p) => (
             <option key={p.name} value={p.name} disabled={!p.configured}>
-              {p.label}{p.configured ? '' : ' (not configured)'}
+              {p.label}{p.configured ? '' : t('payment.notConfigured')}
             </option>
           ))}
         </select>
@@ -70,7 +72,7 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
             value={row.phone}
             disabled={Boolean(row.intentId)}
             onChange={(e) => onPatch({ phone: e.target.value })}
-            placeholder="Customer phone"
+            placeholder={t('payment.customerPhone')}
             className={`${inputCls} font-mono`}
           />
           <div className="col-span-2 flex items-center gap-2 text-[11px]">
@@ -81,17 +83,17 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
                 onClick={request}
                 className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold disabled:opacity-50 cursor-pointer"
               >
-                {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />} Request payment
+                {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />} {t('payment.request')}
               </button>
             ) : null}
             {row.intentStatus === 'pending' && (
-              <span className="inline-flex items-center gap-1 text-amber-600"><Loader2 className="w-3 h-3 animate-spin" /> Waiting for customer confirmation…</span>
+              <span className="inline-flex items-center gap-1 text-amber-600"><Loader2 className="w-3 h-3 animate-spin" /> {t('payment.waiting')}</span>
             )}
             {row.intentStatus === 'confirmed' && (
-              <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 className="w-3 h-3" /> Confirmed {row.reference}</span>
+              <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 className="w-3 h-3" /> {t('payment.confirmed', { reference: row.reference })}</span>
             )}
             {(row.intentStatus === 'failed' || row.intentStatus === 'cancelled') && (
-              <span className="inline-flex items-center gap-1 text-rose-600"><XCircle className="w-3 h-3" /> {row.intentStatus}</span>
+              <span className="inline-flex items-center gap-1 text-rose-600"><XCircle className="w-3 h-3" /> {row.intentStatus === 'failed' ? t('payment.intentFailed') : t('payment.intentCancelled')}</span>
             )}
           </div>
         </>
@@ -99,7 +101,7 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
         <input
           value={row.reference}
           onChange={(e) => onPatch({ reference: e.target.value, provider: 'manual' })}
-          placeholder="Transaction reference *"
+          placeholder={t('payment.mobileRef')}
           className={`${inputCls} font-mono ${providers.length > 1 ? '' : 'col-span-2'}`}
         />
       )}
@@ -121,6 +123,7 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
 const PaymentPanel = ({
   totals, discount, onDiscount, payments, onPayments, status, allowedMethods, providers, defaultProvider,
 }) => {
+  const { t } = useTranslation('pos');
   const patch = (id, changes) => onPayments((rows) => rows.map((r) => (r.id === id ? { ...r, ...changes } : r)));
   const remove = (id) => onPayments((rows) => rows.filter((r) => r.id !== id));
   const add = () => {
@@ -141,7 +144,7 @@ const PaymentPanel = ({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="text-[11px] font-medium text-slate-600 dark:text-slate-400 block mb-1">
-            Discount{totals.maxDiscount.pct < 100 ? ` (max ${totals.maxDiscount.pct}%)` : ''}
+            {totals.maxDiscount.pct < 100 ? t('payment.discountMax', { pct: totals.maxDiscount.pct }) : t('payment.discount')}
           </label>
           <input
             type="number"
@@ -153,17 +156,17 @@ const PaymentPanel = ({
             className={`${inputCls} font-mono`}
           />
           {Number(discount) > totals.discount + 0.005 && (
-            <p className="text-[10px] text-amber-600 mt-0.5">Capped at {formatMoney(totals.discount)}</p>
+            <p className="text-[10px] text-amber-600 mt-0.5">{t('payment.capped', { amount: formatMoney(totals.discount) })}</p>
           )}
         </div>
         <div className="bg-slate-50/90 dark:bg-slate-900/80 p-2.5 rounded-xl border border-slate-200/80 dark:border-slate-800 text-[11px] space-y-0.5">
-          <div className="flex justify-between text-slate-500"><span>Subtotal</span><span className="font-mono">{formatMoney(totals.subtotal)}</span></div>
+          <div className="flex justify-between text-slate-500"><span>{t('payment.subtotal')}</span><span className="font-mono">{formatMoney(totals.subtotal)}</span></div>
           {totals.discount > 0 && (
-            <div className="flex justify-between text-emerald-600"><span>Discount</span><span className="font-mono">-{formatMoney(totals.discount)}</span></div>
+            <div className="flex justify-between text-emerald-600"><span>{t('payment.discount')}</span><span className="font-mono">-{formatMoney(totals.discount)}</span></div>
           )}
           {totals.taxEnabled && (
             <div className="flex justify-between text-slate-500">
-              <span>{totals.taxName} {totals.taxRate}%{totals.inclusive ? ' (incl.)' : ''}</span>
+              <span>{totals.taxName} {totals.taxRate}%{totals.inclusive ? t('payment.taxIncl') : ''}</span>
               <span className="font-mono">{totals.inclusive ? '' : '+'}{formatMoney(totals.tax)}</span>
             </div>
           )}
@@ -171,7 +174,7 @@ const PaymentPanel = ({
       </div>
 
       <div className="flex justify-between items-center px-1">
-        <span className="text-sm font-bold text-slate-900 dark:text-white">Total</span>
+        <span className="text-sm font-bold text-slate-900 dark:text-white">{t('payment.total')}</span>
         <span className="text-xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">{formatMoney(totals.grandTotal)}</span>
       </div>
 
@@ -184,7 +187,7 @@ const PaymentPanel = ({
               className={`${inputCls} cursor-pointer`}
             >
               {allowedMethods.map((m) => (
-                <option key={m} value={m}>{METHOD_LABELS[m]}</option>
+                <option key={m} value={m}>{t(`methods.${m}`)}</option>
               ))}
             </select>
             <input
@@ -198,17 +201,17 @@ const PaymentPanel = ({
               className={`${inputCls} font-mono`}
               data-pos-payment-amount="true"
             />
-            <button type="button" onClick={() => exact(row.id)} className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" title="Fill the remaining amount">
-              Exact
+            <button type="button" onClick={() => exact(row.id)} className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" title={t('payment.exactTitle')}>
+              {t('payment.exact')}
             </button>
-            <button type="button" onClick={() => remove(row.id)} disabled={payments.length <= 1} className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer">
+            <button type="button" onClick={() => remove(row.id)} disabled={payments.length <= 1} aria-label={t('payment.removeRow')} className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
             {row.method === 'card' && (
               <input
                 value={row.reference}
                 onChange={(e) => patch(row.id, { reference: e.target.value })}
-                placeholder="Card slip / approval no. (optional)"
+                placeholder={t('payment.cardRef')}
                 className={`${inputCls} col-span-full font-mono`}
               />
             )}
@@ -224,7 +227,7 @@ const PaymentPanel = ({
         ))}
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" onClick={add} className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-500 cursor-pointer">
-            <Plus className="w-3 h-3" /> Split payment
+            <Plus className="w-3 h-3" /> {t('payment.split')}
           </button>
           {cashRow &&
             cashQuick.map((v) => (
@@ -242,13 +245,13 @@ const PaymentPanel = ({
 
       <div className="flex justify-between text-xs px-1">
         {status.remaining > 0.005 ? (
-          <span className="text-rose-600 font-semibold">Remaining: {formatMoney(status.remaining)}</span>
+          <span className="text-rose-600 font-semibold">{t('payment.remaining', { amount: formatMoney(status.remaining) })}</span>
         ) : status.invalidExcess ? (
-          <span className="text-rose-600 font-semibold">Only cash can exceed the total</span>
+          <span className="text-rose-600 font-semibold">{t('payment.onlyCashExcess')}</span>
         ) : (
-          <span className="text-emerald-600 font-semibold">Paid in full</span>
+          <span className="text-emerald-600 font-semibold">{t('payment.paidInFull')}</span>
         )}
-        {status.change > 0 && <span className="font-bold text-slate-900 dark:text-white">Change: {formatMoney(status.change)}</span>}
+        {status.change > 0 && <span className="font-bold text-slate-900 dark:text-white">{t('payment.change', { amount: formatMoney(status.change) })}</span>}
       </div>
     </div>
   );

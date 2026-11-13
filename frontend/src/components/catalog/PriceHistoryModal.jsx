@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { History } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import CatalogModal from './CatalogModal';
 import { getPriceHistory } from '../../api/medicineApi';
 import { formatMoney, formatDateTime } from '../../utils/format';
 import { theadCls, thCls, errorBox } from './styles';
 
-const FIELD_LABELS = { price: 'Selling price', costPrice: 'Cost price', packPrice: 'Pack price' };
-
 const PriceHistoryModal = ({ medicine, onClose }) => {
+  const { t } = useTranslation('medicines');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -16,31 +16,31 @@ const PriceHistoryModal = ({ medicine, onClose }) => {
     let active = true;
     getPriceHistory(medicine._id)
       .then((res) => active && setHistory(res.history || []))
-      .catch((err) => active && setError(err.response?.data?.message || 'Failed to load price history'))
+      .catch((err) => active && setError(err.response?.data?.message || t('history.errLoad')))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [medicine._id]);
+  }, [medicine._id, t]);
 
   return (
-    <CatalogModal title="Price History" subtitle={medicine.name} icon={History} onClose={onClose}>
+    <CatalogModal title={t('history.title')} subtitle={medicine.name} icon={History} onClose={onClose}>
       {error && <div className={`${errorBox} mb-4`}>{error}</div>}
       {loading ? (
-        <p className="text-xs text-slate-500">Loading...</p>
+        <p className="text-xs text-slate-500">{t('common:labels.loading')}</p>
       ) : history.length === 0 ? (
-        <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">No price changes recorded yet.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 py-6 text-center">{t('history.empty')}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead className={theadCls}>
               <tr>
-                <th className={thCls}>Date</th>
-                <th className={thCls}>Field</th>
-                <th className={thCls}>Old</th>
-                <th className={thCls}>New</th>
-                <th className={thCls}>By</th>
-                <th className={thCls}>Reason</th>
+                <th className={thCls}>{t('common:labels.date')}</th>
+                <th className={thCls}>{t('history.colField')}</th>
+                <th className={thCls}>{t('history.colOld')}</th>
+                <th className={thCls}>{t('history.colNew')}</th>
+                <th className={thCls}>{t('history.colBy')}</th>
+                <th className={thCls}>{t('history.colReason')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
@@ -48,7 +48,7 @@ const PriceHistoryModal = ({ medicine, onClose }) => {
                 <tr key={h._id}>
                   <td className="py-2 px-4 whitespace-nowrap">{formatDateTime(h.createdAt)}</td>
                   <td className="py-2 px-4">
-                    {FIELD_LABELS[h.field] || h.field}
+                    {t(`history.fields.${h.field}`, { defaultValue: h.field })}
                     {h.unitName ? ` (${h.unitName})` : ''}
                     {h.source !== 'edit' && (
                       <span className="ml-1 text-[10px] uppercase text-slate-400">{h.source}</span>

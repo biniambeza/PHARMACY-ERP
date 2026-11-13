@@ -3,8 +3,10 @@ import { PackagePlus, X, Calendar, DollarSign, Layers, Hash, CheckCircle, AlertC
 import { getMedicines, lookupMedicine } from '../../api/medicineApi';
 import { formatMoney } from '../../utils/format';
 import { addStockBatch } from '../../api/stockApi';
+import { useTranslation, Trans } from 'react-i18next';
 
 const StockInModal = ({ isOpen, onClose, onSuccess }) => {
+  const { t } = useTranslation('stock');
   const [medicines, setMedicines] = useState([]);
   const [formData, setFormData] = useState({
     medicineId: '',
@@ -36,7 +38,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
             }));
           }
         } catch (err) {
-          setError('Failed to load medicines catalog');
+          setError(t('stockIn.loadFailed'));
         } finally {
           setFetchingMeds(false);
         }
@@ -54,7 +56,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
       setScanCode('');
       setScanMessage('');
     }
-  }, [isOpen]);
+  }, [isOpen, t]);
 
   if (!isOpen) return null;
 
@@ -99,10 +101,10 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
         unitName: isPack ? res.unit.name : '',
         purchasePrice: med.costPrice ? Number((med.costPrice * (isPack ? res.unit.factor : 1)).toFixed(4)) : prev.purchasePrice,
       }));
-      setScanMessage(`${med.name}${isPack ? ` (${res.unit.name} of ${res.unit.factor})` : ''}`);
+      setScanMessage(isPack ? t('stockIn.scanPack', { name: med.name, unit: res.unit.name, factor: res.unit.factor }) : med.name);
       setScanCode('');
     } catch (err) {
-      setScanMessage(err.response?.data?.message || 'No medicine found for this code');
+      setScanMessage(err.response?.data?.message || t('stockIn.scanNotFound'));
     }
   };
 
@@ -127,16 +129,16 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
     setError('');
 
     if (!formData.medicineId) {
-      return setError('Please select a medication formulation.');
+      return setError(t('stockIn.errSelectMedicine'));
     }
     if (!formData.batchNo.trim()) {
-      return setError('Please specify a batch/lot identification number.');
+      return setError(t('stockIn.errBatchNo'));
     }
     if (qtyNum <= 0) {
-      return setError('Initial stock quantity must be at least 1.');
+      return setError(t('stockIn.errQuantity'));
     }
     if (!formData.expiryDate) {
-      return setError('Expiry date is mandatory for FEFO inventory compliance.');
+      return setError(t('stockIn.errExpiry'));
     }
 
     setLoading(true);
@@ -156,7 +158,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to record stock entry');
+      setError(err.response?.data?.message || t('stockIn.saveFailed'));
     }
   };
 
@@ -173,15 +175,16 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                Receive Direct Stock In
+                {t('stockIn.title')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Register batch lot numbers with expiration tracking under FEFO protocol
+                {t('stockIn.subtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -199,7 +202,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
           {/* Barcode scan */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Scan Barcode (optional)
+              {t('stockIn.scanLabel')}
             </label>
             <div className="relative">
               <ScanBarcode className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -208,7 +211,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
                 value={scanCode}
                 onChange={(e) => setScanCode(e.target.value)}
                 onKeyDown={handleScan}
-                placeholder="Scan or type a barcode / SKU and press Enter"
+                placeholder={t('stockIn.scanPlaceholder')}
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
             </div>
@@ -220,13 +223,13 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
           {/* Medicine Selector */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Select Medicine Item <span className="text-rose-500">*</span>
+              {t('stockIn.medicineLabel')} <span className="text-rose-500">*</span>
             </label>
             {fetchingMeds ? (
-              <div className="py-2 text-xs text-slate-400">Loading catalog...</div>
+              <div className="py-2 text-xs text-slate-400">{t('stockIn.loadingCatalog')}</div>
             ) : medicines.length === 0 ? (
               <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-xs text-amber-700 dark:text-amber-300">
-                No medicines found in catalog. Please register a product first.
+                {t('stockIn.noMedicines')}
               </div>
             ) : (
               <select
@@ -238,15 +241,15 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
               >
                 {medicines.map((m) => (
                   <option key={m._id} value={m._id}>
-                    {m.name} {m.dosageForm ? `(${m.dosageForm})` : ''} - Retail: {formatMoney(m.price)}
+                    {m.name} {m.dosageForm ? `(${m.dosageForm})` : ''} - {t('stockIn.retail', { price: formatMoney(m.price) })}
                   </option>
                 ))}
               </select>
             )}
             {selectedMed && (
               <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-1 px-1">
-                <span>Generic: {selectedMed.genericName || 'Standard formulation'}</span>
-                <span>Category: {selectedMed.category}</span>
+                <span>{t('stockIn.generic', { name: selectedMed.genericName || t('stockIn.standardFormulation') })}</span>
+                <span>{t('stockIn.category', { category: selectedMed.category })}</span>
               </div>
             )}
           </div>
@@ -255,14 +258,14 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Batch / Lot Number <span className="text-rose-500">*</span>
+                {t('stockIn.batchLabel')} <span className="text-rose-500">*</span>
               </label>
               <button
                 type="button"
                 onClick={handleGenerateBatchNo}
                 className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
               >
-                <Sparkles className="w-3 h-3" /> Auto-Generate
+                <Sparkles className="w-3 h-3" /> {t('stockIn.autoGenerate')}
               </button>
             </div>
             <div className="relative">
@@ -272,7 +275,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
                 name="batchNo"
                 value={formData.batchNo}
                 onChange={handleChange}
-                placeholder="e.g. LOT-2026-4892"
+                placeholder={t('stockIn.batchPlaceholder')}
                 required
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
@@ -283,7 +286,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
             {/* Units Received */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Quantity Received <span className="text-rose-500">*</span>
+                {t('stockIn.quantityLabel')} <span className="text-rose-500">*</span>
               </label>
               {packUnits.length > 0 && (
                 <select
@@ -292,7 +295,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
                   onChange={handleChange}
                   className="w-full mb-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
                 >
-                  <option value="">{baseUnitName} (base unit)</option>
+                  <option value="">{t('stockIn.baseUnit', { unit: baseUnitName })}</option>
                   {packUnits.map((p) => (
                     <option key={p.name} value={p.name}>
                       {p.name} ({p.factor} {baseUnitName})
@@ -307,7 +310,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
                   name="quantity"
                   value={formData.quantity}
                   onChange={handleChange}
-                  placeholder="e.g. 100"
+                  placeholder={t('stockIn.quantityPlaceholder')}
                   min="1"
                   required
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
@@ -318,7 +321,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
             {/* Expiration Date */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Expiry Date <span className="text-rose-500">*</span>
+                {t('stockIn.expiryLabel')} <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -337,7 +340,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
           {/* Unit Cost Price */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Purchase Cost Per {formData.unitName || baseUnitName} (Optional)
+              {t('stockIn.costLabel', { unit: formData.unitName || baseUnitName })}
             </label>
             <div className="relative">
               <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -356,14 +359,19 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
 
           {unitFactor > 1 && qtyNum > 0 && (
             <p className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-              Stock will be recorded as <strong>{qtyNum * unitFactor}</strong> {baseUnitName} ({qtyNum} {formData.unitName} x {unitFactor}).
+              <Trans
+                t={t}
+                i18nKey="stockIn.conversion"
+                values={{ total: qtyNum * unitFactor, base: baseUnitName, qty: qtyNum, unit: formData.unitName, factor: unitFactor }}
+                components={{ b: <strong /> }}
+              />
             </p>
           )}
 
           {/* Valuation calculation preview */}
           {qtyNum > 0 && costNum > 0 && (
             <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 flex items-center justify-between text-xs">
-              <span className="text-slate-600 dark:text-slate-300">Total Batch Valuation:</span>
+              <span className="text-slate-600 dark:text-slate-300">{t('stockIn.totalValuation')}</span>
               <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-sm">
                 {formatMoney(totalValuation)}
               </span>
@@ -378,7 +386,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
               disabled={loading}
               className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </button>
             <button
               type="submit"
@@ -386,11 +394,11 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
-                <span>Registering Batch...</span>
+                <span>{t('stockIn.saving')}</span>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span>Confirm Stock In</span>
+                  <span>{t('stockIn.confirm')}</span>
                 </>
               )}
             </button>

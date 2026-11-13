@@ -1,18 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  ShoppingCart, FileText, AlertCircle, X, CheckCircle2, Clock, PauseCircle, PlayCircle, Keyboard, Info, Wifi, WifiOff,
-} from 'lucide-react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { getMyPharmacy } from '../../api/pharmacyApi';
 import { lookupMedicine } from '../../api/medicineApi';
-import { createSale, getPosCatalog, getTopItems } from '../../api/salesApi';
-import { getCurrentShift } from '../../api/shiftApi';
-import { getPaymentProviders } from '../../api/paymentApi';
-import { saveCatalog, loadCatalog, decrementCachedStock } from '../../offline/catalogCache';
+import { createSale } from '../../api/salesApi';
+import { decrementCachedStock } from '../../offline/catalogCache';
 import { enqueueSale, newOfflineId, isNetworkError } from '../../offline/queue';
 import { useOfflineSync } from '../../offline/useOfflineSync';
-import { formatMoney, formatDateTime } from '../../utils/format';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
 import ProductSearch from '../../components/pos/ProductSearch';
 import QuickPick from '../../components/pos/QuickPick';
@@ -23,29 +16,28 @@ import PaymentPanel from '../../components/pos/PaymentPanel';
 import OpenShiftModal from '../../components/pos/OpenShiftModal';
 import HeldSalesModal, { HoldSaleModal } from '../../components/pos/HeldSalesModal';
 import OfflinePanel from '../../components/pos/OfflinePanel';
+import PosHeader from '../../components/pos/PosHeader';
+import CartHeader from '../../components/pos/CartHeader';
+import PosNotice from '../../components/pos/PosNotice';
+import CheckoutFooter, { ClinicalAck } from '../../components/pos/CheckoutFooter';
+import { usePosData } from '../../components/pos/usePosData';
+import { useHeldSales } from '../../components/pos/useHeldSales';
+import { usePosDerived } from '../../components/pos/usePosDerived';
 import { useBarcodeScanner, usePosShortcuts } from '../../components/pos/usePosKeyboard';
 import {
-  cardCls, round2, unitsOf, findUnit, matchCode, baseQtyInCart, computeTotals, paymentStatus, newPaymentRow,
-  loadHeld, saveHeld, cacheShift, loadCachedShift, errMsg,
+  cardCls, unitsOf, findUnit, matchCode, baseQtyInCart, newPaymentRow, cacheShift, errMsg,
 } from '../../components/pos/posUtils';
+import { SEVERE, computeBlockers, buildSalePayload, buildProvisionalSale } from '../../components/pos/posCheckout';
 
-const SEVERE = ['major', 'contraindicated'];
 const emptyRx = { number: '', prescriber: '', notes: '' };
 const emptyWalkIn = { name: '', phone: '' };
 let lineSeq = 0;
 
 const POS = () => {
+  const { t } = useTranslation('pos');
   const { user, activePharmacyId, can } = useAuth();
   const userId = user?._id;
   const pharmacyId = activePharmacyId || 'default';
-
-  // ---------- Catalog / settings ----------
-  const [pharmacy, setPharmacy] = useState(null);
-  const [medicines, setMedicines] = useState([]);
-  const [catalogSavedAt, setCatalogSavedAt] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [topIds, setTopIds] = useState([]);
-  const [providers, setProviders] = useState({ default: 'manual', providers: [{ name: 'manual', label: 'Manual', flow: 'manual', configured: true }] });
 
   // ---------- Sale state ----------
   const [cart, setCart] = useState([]);
@@ -61,120 +53,37 @@ const POS = () => {
   const [payments, setPayments] = useState(() => [newPaymentRow('cash')]);
 
   // ---------- UI state ----------
-  const [shiftState, setShiftState] = useState({ loaded: false, shift: null, requireShift: false });
   const [shiftModal, setShiftModal] = useState(false);
   const [holdOpen, setHoldOpen] = useState(false);
   const [heldOpen, setHeldOpen] = useState(false);
-  const [held, setHeld] = useState(() => loadHeld(pharmacyId, userId));
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [completedSale, setCompletedSale] = useState(null);
-  const [showHelp, setShowHelp] = useState(false);
 
   const searchRef = useRef(null);
   const qtyInputs = useRef(new Map());
   const offlineIdRef = useRef(null); // reused when a checkout is retried (idempotent)
-  const promptedShift = useRef(false);
 
-  // ---------- Loading ----------
-  const loadCatalogData = useCallback(async () => {
-    const isOnline = navigator.onLine !== false;
-    if (isOnline) {
-      try {
-        const [cat, ph] = await Promise.all([getPosCatalog(), getMyPharmacy()]);
-        setMedicines(cat.medicines || []);
-        setPharmacy(ph.pharmacy || null);
-        setCatalogSavedAt(cat.generatedAt || new Date().toISOString());
-        saveCatalog(pharmacyId, { medicines: cat.medicines || [], pharmacy: ph.pharmacy || null });
-        return;
-      } catch (err) {
-        if (!isNetworkError(err)) setError(errMsg(err, 'Failed to load the catalog'));
-      }
-    }
-    const cached = await loadCatalog(pharmacyId);
-    if (cached) {
-      setMedicines(cached.medicines || []);
-      setPharmacy(cached.pharmacy || null);
-      setCatalogSavedAt(cached.savedAt);
-    } else if (!isOnline) {
-      setError('You are offline and no catalog is cached on this device yet.');
-    }
-  }, [pharmacyId]);
-
-  const loadShift = useCallback(async () => {
-    try {
-      const data = await getCurrentShift();
-      const next = { loaded: true, shift: data.shift || null, requireShift: Boolean(data.requireShift) };
-      setShiftState(next);
-      cacheShift(pharmacyId, userId, next);
-      if (!data.shift && !promptedShift.current) {
-        promptedShift.current = true;
-        setShiftModal(true);
-      }
-    } catch {
-      const cached = loadCachedShift(pharmacyId, userId);
-      setShiftState(cached ? { ...cached, loaded: true } : { loaded: true, shift: null, requireShift: false });
-    }
-  }, [pharmacyId, userId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const t = setTimeout(loadShift, 0);
-    (async () => {
-      await loadCatalogData();
-      if (!cancelled) setLoading(false);
-    })();
-    if (navigator.onLine !== false) {
-      getTopItems({ days: 30, limit: 12 })
-        .then((d) => !cancelled && setTopIds((d.items || []).map((i) => String(i.medicineId))))
-        .catch(() => {});
-      getPaymentProviders()
-        .then((d) => !cancelled && d.providers && setProviders({ default: d.default, providers: d.providers }))
-        .catch(() => {});
-    }
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [loadCatalogData, loadShift]);
+  // ---------- Catalog / settings / shift ----------
+  const {
+    pharmacy, medicines, setMedicines, catalogSavedAt, loading, topIds, providers,
+    shiftState, setShiftState, loadCatalogData, loadShift,
+  } = usePosData({ pharmacyId, userId, setError, setShiftModal });
 
   const { online, pending, failed, syncing, syncNow } = useOfflineSync({
     pharmacyId,
     userId,
     onSynced: () => {
-      setInfo('Offline sales synced.');
+      setInfo(t('info.synced'));
       loadCatalogData();
     },
   });
 
   // ---------- Derived ----------
-  const medById = useMemo(() => new Map(medicines.map((m) => [String(m._id), m])), [medicines]);
-  const quickPicks = useMemo(() => topIds.map((id) => medById.get(id)).filter(Boolean), [topIds, medById]);
-  const availableOf = useCallback(
-    (med) => Math.max(0, (Number(med.stock) || 0) - baseQtyInCart(cart, String(med._id))),
-    [cart]
-  );
-  const maxQtyOf = useCallback(
-    (line) => {
-      const stock = Number(line.medicine.stock) || 0;
-      return Math.max(1, Math.floor((stock - baseQtyInCart(cart, line.medicineId, line.key)) / line.unit.factor));
-    },
-    [cart]
-  );
-
-  const totals = useMemo(() => computeTotals(cart, discount, pharmacy), [cart, discount, pharmacy]);
-
-  // A single payment row left empty means "pay the exact total with it"
-  const effectivePayments = useMemo(
-    () =>
-      payments.map((p) => ({
-        ...p,
-        amount: payments.length === 1 && p.amount === '' ? totals.grandTotal : round2(Number(p.amount) || 0),
-      })),
-    [payments, totals.grandTotal]
-  );
-  const payStatus = useMemo(() => paymentStatus(effectivePayments, totals.grandTotal), [effectivePayments, totals.grandTotal]);
+  const { medById, quickPicks, availableOf, maxQtyOf, totals, effectivePayments, payStatus } = usePosDerived({
+    medicines, topIds, cart, discount, pharmacy, payments,
+  });
 
   const needsRx = cart.some((l) => l.medicine.requiresPrescription);
   const hasControlled = cart.some((l) => l.medicine.isControlled);
@@ -190,33 +99,17 @@ const POS = () => {
   const warningsAcked = !severeWarnings || ackKey === warningKey;
   const requireShiftUi = pharmacy?.settings?.requireShift !== false || shiftState.requireShift;
 
-  const blockers = useMemo(() => {
-    const list = [];
-    if (cart.length === 0) return list;
-    if (shiftState.loaded && !shiftState.shift && requireShiftUi) list.push('Open a shift to start selling');
-    if (hasControlled) {
-      if (!online) list.push('Controlled medicines cannot be sold offline');
-      else if (!can('controlled:dispense')) list.push('Only a pharmacist or owner can dispense controlled medicines');
-      else if (!patient || !prescription) list.push('Controlled medicines need a patient and a prescription');
-    }
-    if (needsRx && !prescription && !(legacyRx.number.trim() && legacyRx.prescriber.trim())) {
-      list.push('Enter the prescription number and prescriber (or select a prescription)');
-    }
-    if (!warningsAcked) list.push('Review and confirm the clinical warnings');
-    if (!payStatus.covered) list.push(payStatus.invalidExcess ? 'Only cash can exceed the total' : 'Payments do not cover the total');
-    effectivePayments.forEach((p) => {
-      if (!allowedMethods.includes(p.method)) list.push(`${p.method.replace('_', ' ')} is not available now`);
-      if (p.method === 'credit' && !customer) list.push('Select a customer for credit');
-      if (p.method === 'mobile_money' && p.amount > 0) {
-        if (p.intentId && p.intentStatus !== 'confirmed') list.push('Waiting for mobile money confirmation');
-        if (!p.intentId && !p.reference.trim()) list.push('Enter the mobile money transaction reference');
-      }
-    });
-    return [...new Set(list)];
-  }, [
-    cart.length, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
-    warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
-  ]);
+  const blockers = useMemo(
+    () =>
+      computeBlockers({
+        t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
+        warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
+      }),
+    [
+      t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
+      warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
+    ]
+  );
 
   // ---------- Cart actions ----------
   const addToCart = useCallback(
@@ -225,12 +118,12 @@ const POS = () => {
       const unit = unitArg || unitsOf(med)[0];
       const id = String(med._id);
       if (med.isControlled && !online) {
-        setError(`"${med.name}" is a controlled medicine and cannot be sold offline`);
+        setError(t('errors.controlledOffline', { name: med.name }));
         return;
       }
       const available = (Number(med.stock) || 0) - baseQtyInCart(cart, id);
       if (available < unit.factor) {
-        setError(`Not enough stock for "${med.name}" (${Math.max(0, available)} ${med.baseUnit || 'unit'} left)`);
+        setError(t('errors.notEnoughStock', { name: med.name, available: Math.max(0, available), unit: med.baseUnit || t('unit') }));
         return;
       }
       const existing = cart.find((l) => l.medicineId === id && l.unit.name === unit.name);
@@ -247,7 +140,7 @@ const POS = () => {
         { key, medicineId: id, name: med.name, medicine: med, unit, quantity: 1, taxExempt: Boolean(med.taxExempt) },
       ]);
     },
-    [online, cart]
+    [online, cart, t]
   );
 
   const setQty = (key, value) => {
@@ -270,7 +163,7 @@ const POS = () => {
     const stock = Number(line.medicine.stock) || 0;
     const max = Math.floor((stock - baseQtyInCart(cart, line.medicineId, line.key)) / unit.factor);
     if (max < 1) {
-      setError(`Not enough stock for 1 ${unit.name} of "${line.name}"`);
+      setError(t('errors.notEnoughForUnit', { unit: unit.name, name: line.name }));
       return;
     }
     setCart((prev) => prev.map((l) => (l.key === key ? { ...l, unit, quantity: Math.min(l.quantity, max) } : l)));
@@ -302,7 +195,7 @@ const POS = () => {
         return true;
       }
       if (navigator.onLine === false) {
-        setError(`No medicine with code ${code} in the offline catalog`);
+        setError(t('errors.codeNotOffline', { code }));
         return false;
       }
       try {
@@ -312,21 +205,20 @@ const POS = () => {
         addToCart(med, findUnit(med, unit?.name));
         return true;
       } catch (err) {
-        if (err.response?.status === 404) setError(`No medicine found for code ${code}`);
-        else setError(errMsg(err, 'Barcode lookup failed'));
+        if (err.response?.status === 404) setError(t('errors.codeNotFound', { code }));
+        else setError(errMsg(err, t('errors.lookupFailed')));
         return false;
       }
     },
-    [medicines, medById, addToCart]
+    [medicines, medById, addToCart, t]
   );
 
   useBarcodeScanner(handleCode);
 
   // ---------- Held sales ----------
+  const { held, hold, take, remove: deleteHeld } = useHeldSales({ pharmacyId, userId });
   const snapshot = (label) => ({
-    id: newOfflineId(),
     label,
-    createdAt: new Date().toISOString(),
     cart,
     customer,
     walkIn,
@@ -339,19 +231,14 @@ const POS = () => {
 
   const holdCurrent = (label) => {
     if (cart.length === 0) return;
-    const next = [snapshot(label), ...held];
-    setHeld(next);
-    saveHeld(pharmacyId, userId, next);
+    hold(snapshot(label));
     resetSale();
     setHoldOpen(false);
-    setInfo(`Sale held as “${label}”.`);
+    setInfo(t('info.held', { label }));
   };
 
   const resumeHeld = (entry) => {
-    let next = held.filter((h) => h.id !== entry.id);
-    if (cart.length > 0) next = [snapshot(`Auto-held ${new Date().toLocaleTimeString()}`), ...next];
-    setHeld(next);
-    saveHeld(pharmacyId, userId, next);
+    take(entry.id, cart.length > 0 ? snapshot(t('held.autoLabel', { time: new Date().toLocaleTimeString() })) : null);
     resetSale();
     // Refresh stock info from the current catalog
     setCart(entry.cart.map((l) => ({ ...l, medicine: medById.get(l.medicineId) || l.medicine })));
@@ -364,66 +251,12 @@ const POS = () => {
     setHeldOpen(false);
   };
 
-  const deleteHeld = (id) => {
-    const next = held.filter((h) => h.id !== id);
-    setHeld(next);
-    saveHeld(pharmacyId, userId, next);
-  };
-
   // ---------- Checkout ----------
-  const buildPayload = (offlineId) => ({
-    items: cart.map((l) => ({ medicineId: l.medicineId, quantity: l.quantity, unitName: l.unit.name })),
-    customerId: customer?._id || undefined,
-    customer: customer ? undefined : { name: walkIn.name.trim() || undefined, phone: walkIn.phone.trim() || undefined },
-    patientId: patient?._id || undefined,
-    prescriptionId: prescription?._id || undefined,
-    ...(needsRx && !prescription
-      ? { prescription: { number: legacyRx.number.trim(), prescriber: legacyRx.prescriber.trim(), notes: legacyRx.notes.trim() } }
-      : {}),
-    discount: totals.discount,
-    payments: effectivePayments
-      .filter((p) => p.amount > 0)
-      .map((p) => ({
-        method: p.method,
-        amount: p.amount,
-        reference: p.reference?.trim() || undefined,
-        provider: p.method === 'mobile_money' ? p.provider || 'manual' : undefined,
-        intentId: p.intentId || undefined,
-      })),
-    offlineId,
-  });
+  const buildPayload = (offlineId) =>
+    buildSalePayload({ cart, customer, walkIn, patient, prescription, needsRx, legacyRx, totals, effectivePayments, offlineId });
 
   const offlineEligible = () =>
     !hasControlled && effectivePayments.every((p) => p.method === 'cash' || p.amount <= 0);
-
-  // Provisional receipt for a sale saved offline
-  const provisionalSale = (offlineId, payload) => ({
-    _id: offlineId,
-    invoiceNumber: `OFFLINE-${offlineId.slice(0, 8).toUpperCase()}`,
-    createdAt: new Date().toISOString(),
-    customer: { name: walkIn.name.trim() || 'Walk-in Customer', phone: walkIn.phone.trim() },
-    items: cart.map((l) => ({
-      _id: l.key,
-      name: l.name,
-      quantity: l.quantity * l.unit.factor,
-      unitName: l.unit.name,
-      unitFactor: l.unit.factor,
-      unitPrice: round2(l.unit.price / l.unit.factor),
-      subtotal: round2(l.unit.price * l.quantity),
-      batchNo: '-',
-    })),
-    subtotal: totals.subtotal,
-    discount: totals.discount,
-    tax: totals.tax,
-    taxLines: totals.tax > 0 ? [{ name: totals.taxName, rate: totals.taxRate, amount: totals.tax }] : [],
-    grandTotal: totals.grandTotal,
-    payments: [{ method: 'cash', amount: totals.grandTotal }],
-    amountPaid: totals.grandTotal,
-    change: payStatus.change,
-    balanceDue: 0,
-    notes: 'Saved offline – pending sync',
-    offlinePending: payload.offlineId,
-  });
 
   const saveOffline = async (offlineId, payload) => {
     await enqueueSale({
@@ -444,9 +277,9 @@ const POS = () => {
         return used ? { ...m, stock: Math.max(0, (Number(m.stock) || 0) - used) } : m;
       })
     );
-    setCompletedSale(provisionalSale(offlineId, payload));
+    setCompletedSale(buildProvisionalSale({ t, offlineId, payload, cart, walkIn, totals, payStatus }));
     resetSale();
-    setInfo('Sale saved offline. It will be synced automatically.');
+    setInfo(t('info.savedOffline'));
   };
 
   const handleCheckout = async () => {
@@ -467,7 +300,7 @@ const POS = () => {
 
     if (!online) {
       if (!offlineEligible()) {
-        setError('Offline sales must be paid in cash and cannot include controlled medicines');
+        setError(t('errors.offlineRules'));
         return;
       }
       await saveOffline(offlineId, payload);
@@ -486,13 +319,13 @@ const POS = () => {
         if (offlineEligible()) {
           await saveOffline(offlineId, payload);
         } else {
-          setError('Connection lost. The sale may not have been recorded – check Sales History, then press Complete again (it will not be charged twice).');
+          setError(t('errors.connectionLost'));
         }
       } else if (err.response?.data?.code === 'SHIFT_REQUIRED') {
         setShiftModal(true);
         setError(err.response.data.message);
       } else {
-        setError(errMsg(err, 'Checkout failed'));
+        setError(errMsg(err, t('errors.checkoutFailed')));
       }
     } finally {
       setCheckoutLoading(false);
@@ -500,7 +333,7 @@ const POS = () => {
   };
 
   const clearWithConfirm = () => {
-    if (cart.length > 0 && window.confirm('Clear the current sale?')) resetSale();
+    if (cart.length > 0 && window.confirm(t('cart.confirmClear'))) resetSale();
   };
 
   usePosShortcuts({
@@ -518,104 +351,21 @@ const POS = () => {
     else qtyInputs.current.delete(key);
   }, []);
 
-  const shift = shiftState.shift;
-
   return (
     <div className="space-y-4 animate-fade-in max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800">
-        <div>
-          <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-            Dispensary Terminal
-          </span>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">Point of Sale</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {shift ? (
-            <Link
-              to="/pharmacy/shifts"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60"
-              title="Shift details"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              {shift.shiftNumber} · since {formatDateTime(shift.openedAt)}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShiftModal(true)}
-              disabled={!online}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 cursor-pointer disabled:opacity-60"
-            >
-              <Clock className="w-3.5 h-3.5" /> No open shift – open
-            </button>
-          )}
-          <span
-            className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border ${
-              online
-                ? 'text-slate-500 border-slate-200 dark:border-slate-700'
-                : 'text-amber-700 bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-            }`}
-          >
-            {online ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-            {online ? 'Online' : 'Offline'}
-            {pending.length > 0 && <span className="ml-1 px-1.5 rounded-full bg-sky-600 text-white">{pending.length}</span>}
-          </span>
-          <button
-            type="button"
-            onClick={() => setHeldOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl cursor-pointer"
-          >
-            <PlayCircle className="w-3.5 h-3.5" /> Held ({held.length})
-          </button>
-          <Link
-            to="/pharmacy/sales"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl"
-          >
-            <FileText className="w-3.5 h-3.5" /> Sales History
-          </Link>
-          <button
-            type="button"
-            onClick={() => setShowHelp((v) => !v)}
-            className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 cursor-pointer"
-            title="Keyboard shortcuts"
-          >
-            <Keyboard className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {showHelp && (
-        <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-300 flex flex-wrap gap-x-5 gap-y-1">
-          <span><kbd className="font-mono font-bold">F2</kbd> search</span>
-          <span><kbd className="font-mono font-bold">↑ ↓ Enter</kbd> pick result</span>
-          <span><kbd className="font-mono font-bold">F4</kbd> quantity of selected line</span>
-          <span><kbd className="font-mono font-bold">F9</kbd> complete sale</span>
-          <span><kbd className="font-mono font-bold">Esc</kbd> clear sale</span>
-          <span>Scan a barcode anywhere to add the item</span>
-        </div>
-      )}
+      <PosHeader
+        shift={shiftState.shift}
+        online={online}
+        pendingCount={pending.length}
+        heldCount={held.length}
+        onOpenShift={() => setShiftModal(true)}
+        onOpenHeld={() => setHeldOpen(true)}
+      />
 
       <OfflinePanel online={online} pending={pending} failed={failed} syncing={syncing} onSync={syncNow} catalogSavedAt={catalogSavedAt} />
 
-      {error && (
-        <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-          <button type="button" onClick={() => setError('')} className="p-1 cursor-pointer"><X className="w-4 h-4" /></button>
-        </div>
-      )}
-      {info && (
-        <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 shrink-0" />
-            <span>{info}</span>
-          </div>
-          <button type="button" onClick={() => setInfo('')} className="p-1 cursor-pointer"><X className="w-4 h-4" /></button>
-        </div>
-      )}
+      <PosNotice tone="error" message={error} onClose={() => setError('')} />
+      <PosNotice tone="info" message={info} onClose={() => setInfo('')} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left: search + quick pick */}
@@ -633,27 +383,7 @@ const POS = () => {
 
         {/* Right: cart + checkout */}
         <div className={`lg:col-span-5 ${cardCls} p-4 space-y-3`}>
-          <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80 dark:border-slate-800">
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Current sale</h2>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
-                {cart.length} line(s)
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              {cart.length > 0 && (
-                <button type="button" onClick={() => setHoldOpen(true)} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 cursor-pointer">
-                  <PauseCircle className="w-3.5 h-3.5" /> Hold
-                </button>
-              )}
-              {cart.length > 0 && (
-                <button type="button" onClick={clearWithConfirm} className="text-xs text-rose-500 hover:text-rose-700 font-semibold cursor-pointer">
-                  Clear
-                </button>
-              )}
-            </div>
-          </div>
+          <CartHeader count={cart.length} onHold={() => setHoldOpen(true)} onClear={clearWithConfirm} />
 
           <div className="max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
             <CartLines
@@ -696,24 +426,15 @@ const POS = () => {
               />
 
               {severeWarnings && (
-                <label className="flex items-start gap-2 p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 text-[11px] text-rose-700 dark:text-rose-300 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={ackKey === warningKey}
-                    onChange={(e) => setAckKey(e.target.checked ? warningKey : '')}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    I have reviewed the {warnings.allergyHits.length > 0 ? 'allergy' : ''}
-                    {warnings.allergyHits.length > 0 && warnings.interactions.length > 0 ? ' and ' : ''}
-                    {warnings.interactions.some((i) => SEVERE.includes(i.severity)) ? 'major interaction' : ''} warnings and
-                    confirm this sale is clinically appropriate.
-                  </span>
-                </label>
+                <ClinicalAck
+                  warnings={warnings}
+                  checked={ackKey === warningKey}
+                  onChange={(checked) => setAckKey(checked ? warningKey : '')}
+                />
               )}
 
               {canCredit && !customer && online && (
-                <p className="text-[11px] text-slate-400">Select a customer account to sell on credit.</p>
+                <p className="text-[11px] text-slate-400">{t('creditHint')}</p>
               )}
 
               <PaymentPanel
@@ -730,31 +451,14 @@ const POS = () => {
             </>
           )}
 
-          {blockers.length > 0 && (
-            <ul className="text-[11px] text-amber-700 dark:text-amber-400 space-y-0.5">
-              {blockers.map((b) => (
-                <li key={b}>• {b}</li>
-              ))}
-            </ul>
-          )}
-
-          <button
-            type="button"
-            onClick={handleCheckout}
+          <CheckoutFooter
+            blockers={blockers}
+            online={online}
+            loading={checkoutLoading}
             disabled={checkoutLoading || cart.length === 0}
-            className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer flex items-center justify-center gap-2"
-          >
-            {checkoutLoading ? (
-              'Processing sale…'
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                <span>
-                  {online ? 'Complete sale' : 'Save offline sale'} ({formatMoney(totals.grandTotal)}) · F9
-                </span>
-              </>
-            )}
-          </button>
+            total={totals.grandTotal}
+            onCheckout={handleCheckout}
+          />
         </div>
       </div>
 
@@ -767,14 +471,14 @@ const POS = () => {
           setShiftState(next);
           cacheShift(pharmacyId, userId, next);
           setShiftModal(false);
-          setInfo(`Shift ${s.shiftNumber} opened.`);
+          setInfo(t('info.shiftOpened', { number: s.shiftNumber }));
         }}
       />
       <HoldSaleModal
         open={holdOpen}
         onClose={() => setHoldOpen(false)}
         onHold={holdCurrent}
-        suggestion={walkIn.name || customer?.name || `Sale ${new Date().toLocaleTimeString()}`}
+        suggestion={walkIn.name || customer?.name || t('held.suggestion', { time: new Date().toLocaleTimeString() })}
       />
       <HeldSalesModal open={heldOpen} onClose={() => setHeldOpen(false)} held={held} onResume={resumeHeld} onDelete={deleteHeld} />
 

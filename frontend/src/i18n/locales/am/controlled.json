@@ -1,0 +1,46 @@
+{
+  "badge": "ተገዢነት",
+  "title": "ቁጥጥር የሚደረግባቸው መድኃኒቶች መዝገብ",
+  "subtitle": "ቁጥጥር የሚደረግባቸው መድኃኒቶች እያንዳንዱ ስርጭት እና ገቢ ከቀሪ ሚዛን ጋር",
+  "printRegister": "መዝገብ አትም",
+  "entryTypes": { "dispense": "የተሰጠ", "receive": "የገባ", "return": "የተመለሰ", "adjust": "ማስተካከያ" },
+  "filters": {
+    "medicine": "መድኃኒት",
+    "all": "ሁሉም ቁጥጥር የሚደረግባቸው መድኃኒቶች",
+    "option": "{{name}} {{strength}} (ክምችት {{stock}})",
+    "from": "ከ",
+    "to": "እስከ",
+    "apply": "ተግብር"
+  },
+  "empty": {
+    "title": "ቁጥጥር የሚደረግባቸው መድኃኒቶች የሉም",
+    "hint": "እዚህ ለመከታተል በመድኃኒት ካታሎግ ውስጥ መድኃኒቶችን ቁጥጥር የሚደረግባቸው ብለው ምልክት ያድርጉ።"
+  },
+  "scheduleTag": "ሰንጠረዥ {{schedule}}",
+  "stats": { "opening": "መክፈቻ", "closing": "መዝጊያ", "stockNow": "የአሁኑ ክምችት {{stock}}" },
+  "cols": {
+    "date": "ቀን", "type": "ዓይነት", "patient": "ታካሚ", "prescriber": "አዛዥ", "rxNo": "ማዘዣ ቁ.",
+    "batch": "ባች", "invoice": "ደረሰኝ", "in": "ገቢ", "out": "ወጪ", "balance": "ሚዛን", "by": "በ"
+  },
+  "opening": "የመክፈቻ ሚዛን",
+  "closing": "የመዝጊያ ሚዛን",
+  "noMovements": "በዚህ ጊዜ ውስጥ ምንም እንቅስቃሴ የለም",
+  "truncated": "የመጀመሪያዎቹ 5000 መዝገቦች ብቻ ይታያሉ፤ የቀን ክልሉን ያጥብቡ።",
+  "errors": { "load": "መዝገቡን መጫን አልተቻለም", "popups": "መዝገቡን ለማተም ብቅ-ባይ መስኮቶችን ይፍቀዱ።" },
+  "print": {
+    "form": "ቅርጽ:",
+    "schedule": "ሰንጠረዥ:",
+    "unit": "መለኪያ:",
+    "pharmacist": "ፋርማሲስት",
+    "signature": "ፊርማ",
+    "license": "ፈቃድ:",
+    "period": "ጊዜ:",
+    "start": "መጀመሪያ",
+    "today": "ዛሬ",
+    "printed": "የታተመው:",
+    "noMedicines": "ቁጥጥር የሚደረግባቸው መድኃኒቶች የሉም።",
+    "responsible": "ኃላፊ ፋርማሲስት:",
+    "signatureLine": "ፊርማ:",
+    "dateLine": "ቀን:"
+  }
+}

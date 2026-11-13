@@ -1,0 +1,82 @@
+{
+  "badge": "Vendor Directory",
+  "title": "Pharmaceutical Suppliers Directory",
+  "subtitle": "Manage medicine distributors, verified manufacturers, and supply contract contacts",
+  "addSupplier": "Add Supplier",
+  "addFirst": "Add First Supplier",
+  "confirmDelete": "Are you sure you want to delete supplier \"{{name}}\"?",
+  "errors": { "delete": "Failed to delete supplier" },
+  "metrics": {
+    "total": { "title": "Total Registered Vendors", "sub": "Active & historical suppliers", "badge": "Directory" },
+    "active": { "title": "Active Contract Vendors", "sub": "Available for procurement" },
+    "inactive": {
+      "title": "Inactive / Suspended",
+      "sub": "Suspended trade accounts",
+      "underReview": "Under Review",
+      "zero": "Zero Suspensions"
+    }
+  },
+  "searchPlaceholder": "Search by vendor name, contact person, phone, or email...",
+  "filters": { "all": "All Vendors", "active": "Active Only" },
+  "empty": {
+    "noMatch": "No matching vendors found",
+    "none": "No suppliers registered",
+    "noMatchHint": "Try modifying your search query or filter tags",
+    "noneHint": "Add authorized pharmaceutical distributors to begin issuing purchase orders"
+  },
+  "columns": {
+    "vendor": "Vendor Company",
+    "contact": "Account Representative",
+    "phone": "Telephone",
+    "email": "Email Address",
+    "address": "Warehouse Address",
+    "outstanding": "Outstanding",
+    "status": "Status"
+  },
+  "notSpecified": "Not specified",
+  "na": "N/A",
+  "openInPayables": "Open in payables",
+  "overdueAmount": "{{amount}} overdue",
+  "terms_one": "{{count}}-day terms",
+  "terms_other": "{{count}}-day terms",
+  "editSupplier": "Edit supplier",
+  "deleteSupplier": "Delete supplier",
+  "footer": {
+    "showing_one": "Showing <strong>{{count}}</strong> registered distributor",
+    "showing_other": "Showing <strong>{{count}}</strong> registered distributors",
+    "directoryId": "Directory ID: SUP-DIR-{{n}}"
+  },
+  "modal": {
+    "editTitle": "Edit Supplier Profile",
+    "createTitle": "Register New Supplier",
+    "editSubtitle": "Update pharmaceutical vendor contacts and supply terms",
+    "createSubtitle": "Add an authorized medicine wholesaler or manufacturer to directory",
+    "fields": {
+      "name": "Company / Vendor Name",
+      "contact": "Account Manager / Contact",
+      "status": "Vendor Status",
+      "phone": "Phone Number",
+      "email": "Email Address",
+      "terms": "Payment Terms (days)",
+      "address": "Warehouse / Office Address",
+      "notes": "Procurement Notes & Contract Notes"
+    },
+    "placeholders": {
+      "name": "e.g. Novartis Distribution Ltd.",
+      "contact": "e.g. Dr. Robert Vance",
+      "address": "Suite 400, Industrial Park Ave",
+      "notes": "Payment terms, lead time, minimum order requirements..."
+    },
+    "statusActive": "Active Vendor",
+    "statusInactive": "Inactive / Suspended",
+    "termsHint": "Supplier invoices are due this many days after the invoice date (0 = on receipt).",
+    "saving": "Saving Supplier...",
+    "saveChanges": "Save Changes",
+    "register": "Register Supplier",
+    "errors": {
+      "nameRequired": "Supplier or company name is required.",
+      "terms": "Payment terms must be a whole number of days between 0 and 365.",
+      "save": "Failed to save supplier details"
+    }
+  }
+}

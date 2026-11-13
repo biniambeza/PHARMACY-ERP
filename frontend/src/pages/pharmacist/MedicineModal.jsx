@@ -1,109 +1,26 @@
 import { useState, useEffect } from 'react';
-import { Pill, X, AlertCircle, CheckCircle, ShieldAlert, ShieldCheck, Wand2, Lock } from 'lucide-react';
+import { Pill, X, AlertCircle, CheckCircle, Wand2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { createMedicine, updateMedicine, generateBarcode } from '../../api/medicineApi';
 import { useAuth } from '../../context/AuthContext';
 import PackUnitsEditor from '../../components/catalog/PackUnitsEditor';
-import MarginBadge from '../../components/catalog/MarginBadge';
 import { marginWarningFor, validatePackUnits } from '../../components/catalog/catalogUtils';
-import { formatMoney } from '../../utils/format';
-
-const DEFAULT_CATEGORIES = [
-  'Antibiotics',
-  'Analgesics',
-  'Antipyretics',
-  'Cardiovascular',
-  'Respiratory',
-  'Gastrointestinal',
-  'Dermatology',
-  'Vitamins & Supplements',
-  'Antidiabetics',
-  'Antihistamines',
-  'Neurology',
-  'Ophthalmology',
-];
-
-// Must match the backend enum (models/Medicine.js DOSAGE_FORMS)
-const DOSAGE_FORMS = [
-  'Tablet',
-  'Capsule',
-  'Syrup',
-  'Suspension',
-  'Injection',
-  'Ointment',
-  'Cream',
-  'Gel',
-  'Inhaler',
-  'Drops',
-  'Other',
-];
-
-const inputCls =
-  'w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition disabled:opacity-60';
-const labelCls = 'block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1';
-const sectionCls = 'pt-4 border-t border-slate-100 dark:border-slate-800/80';
-const sectionTitle = 'text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3';
-
-const emptyForm = () => ({
-  name: '',
-  genericName: '',
-  category: DEFAULT_CATEGORIES[0],
-  dosageForm: 'Tablet',
-  strength: '',
-  price: '',
-  costPrice: '',
-  minStockLevel: 10,
-  requiresPrescription: false,
-  barcode: '',
-  sku: '',
-  baseUnit: 'unit',
-  minMarginPercent: '',
-  taxExempt: false,
-  isControlled: false,
-  controlledSchedule: '',
-  leadTimeDays: 7,
-  reorderSafetyDays: 7,
-  priceChangeReason: '',
-});
-
-const formFromMedicine = (m) => ({
-  name: m.name || '',
-  genericName: m.genericName || '',
-  category: m.category || '',
-  dosageForm: m.dosageForm || 'Tablet',
-  strength: m.strength || '',
-  price: m.price ?? '',
-  costPrice: m.costPrice ?? '',
-  minStockLevel: m.minStockLevel ?? 10,
-  requiresPrescription: !!m.requiresPrescription,
-  barcode: m.barcode || '',
-  sku: m.sku || '',
-  baseUnit: m.baseUnit || 'unit',
-  minMarginPercent: m.minMarginPercent ?? '',
-  taxExempt: !!m.taxExempt,
-  isControlled: !!m.isControlled,
-  controlledSchedule: m.controlledSchedule || '',
-  leadTimeDays: m.leadTimeDays ?? 7,
-  reorderSafetyDays: m.reorderSafetyDays ?? 7,
-  priceChangeReason: '',
-});
-
-const packsFromMedicine = (m) =>
-  (m?.packUnits || []).map((p) => ({
-    _id: p._id,
-    name: p.name,
-    factor: p.factor,
-    price: p.price ?? '',
-    barcode: p.barcode || '',
-  }));
-
-const Toggle = ({ name, checked, onChange }) => (
-  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-    <input type="checkbox" name={name} checked={checked} onChange={onChange} className="sr-only peer" />
-    <div className="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
-  </label>
-);
+import MedicinePricingSection from '../../components/inventory/MedicinePricingSection';
+import MedicineRegulatorySection from '../../components/inventory/MedicineRegulatorySection';
+import {
+  DEFAULT_CATEGORIES,
+  DOSAGE_FORMS,
+  inputCls,
+  labelCls,
+  sectionCls,
+  sectionTitle,
+  emptyForm,
+  formFromMedicine,
+  packsFromMedicine,
+} from '../../components/inventory/medicineForm';
 
 const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
+  const { t } = useTranslation('medicines');
   const { can } = useAuth();
   const [formData, setFormData] = useState(emptyForm);
   const [packUnits, setPackUnits] = useState([]);
@@ -165,7 +82,7 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
       setFormData((prev) => ({ ...prev, barcode: res.barcode }));
       onSuccess();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to generate barcode');
+      setError(err.response?.data?.message || t('modal.errGenerateBarcode'));
     } finally {
       setGenerating(false);
     }
@@ -176,15 +93,15 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
     setError('');
 
     if (!formData.name.trim()) {
-      return setError('Medicine brand name is required.');
+      return setError(t('modal.errNameRequired'));
     }
     if (priceNum <= 0) {
-      return setError('Retail price must be greater than zero.');
+      return setError(t('modal.errPriceRequired'));
     }
-    const packError = validatePackUnits(packUnits, formData.baseUnit);
+    const packError = validatePackUnits(packUnits, formData.baseUnit, t);
     if (packError) return setError(packError);
     if (formData.minMarginPercent !== '' && !(Number(formData.minMarginPercent) >= 0 && Number(formData.minMarginPercent) < 100)) {
-      return setError('Minimum margin must be between 0 and 99.99%.');
+      return setError(t('modal.errMinMargin'));
     }
 
     setLoading(true);
@@ -221,7 +138,7 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
       onClose();
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to save medicine');
+      setError(err.response?.data?.message || t('modal.errSave'));
     }
     return undefined;
   };
@@ -237,17 +154,16 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                {medicine ? 'Edit Medicine Profile' : 'Register New Medicine'}
+                {medicine ? t('modal.editTitle') : t('modal.createTitle')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {medicine
-                  ? 'Update formulation, barcodes, pack units, regulatory flags and pricing'
-                  : 'Add a prescription or over-the-counter medicine to the catalog'}
+                {medicine ? t('modal.editSubtitle') : t('modal.createSubtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -265,14 +181,14 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>
-                Brand / Product Name <span className="text-rose-500">*</span>
+                {t('modal.brandName')} <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="e.g. Amoxil 500"
+                placeholder={t('modal.brandPlaceholder')}
                 required
                 className={inputCls}
               />
@@ -280,17 +196,17 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
 
             <div>
               <label className={labelCls}>
-                Generic Name / Active Substance <span className="text-emerald-600 dark:text-emerald-400">(recommended)</span>
+                {t('modal.genericName')} <span className="text-emerald-600 dark:text-emerald-400">{t('modal.recommended')}</span>
               </label>
               <input
                 type="text"
                 name="genericName"
                 value={formData.genericName}
                 onChange={handleChange}
-                placeholder="e.g. Amoxicillin"
+                placeholder={t('modal.genericPlaceholder')}
                 className={`${inputCls} border-emerald-300/80 dark:border-emerald-800/80`}
               />
-              <p className="text-[10px] text-slate-400 mt-1">Used for drug interaction and allergy checks.</p>
+              <p className="text-[10px] text-slate-400 mt-1">{t('modal.genericHint')}</p>
             </div>
           </div>
 
@@ -298,14 +214,14 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Category <span className="text-rose-500">*</span>
+                  {t('modal.category')} <span className="text-rose-500">*</span>
                 </label>
                 <button
                   type="button"
                   onClick={() => setCustomCategory(!customCategory)}
                   className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium cursor-pointer"
                 >
-                  {customCategory ? 'Select Existing' : '+ Custom'}
+                  {customCategory ? t('modal.selectExisting') : t('modal.customCategory')}
                 </button>
               </div>
               {customCategory ? (
@@ -314,7 +230,7 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  placeholder="Enter custom category"
+                  placeholder={t('modal.customCategoryPlaceholder')}
                   required
                   className={inputCls}
                 />
@@ -330,7 +246,7 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
             </div>
 
             <div>
-              <label className={labelCls}>Dosage Form</label>
+              <label className={labelCls}>{t('modal.dosageForm')}</label>
               <select name="dosageForm" value={formData.dosageForm} onChange={handleChange} className={`${inputCls} cursor-pointer`}>
                 {DOSAGE_FORMS.map((form) => (
                   <option key={form} value={form}>
@@ -341,13 +257,13 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
             </div>
 
             <div>
-              <label className={labelCls}>Strength / Concentration</label>
+              <label className={labelCls}>{t('modal.strength')}</label>
               <input
                 type="text"
                 name="strength"
                 value={formData.strength}
                 onChange={handleChange}
-                placeholder="e.g. 500mg, 10mg/ml"
+                placeholder={t('modal.strengthPlaceholder')}
                 className={inputCls}
               />
             </div>
@@ -355,11 +271,11 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
 
           {/* Codes */}
           <div className={sectionCls}>
-            <p className={sectionTitle}>Barcode & SKU</p>
+            <p className={sectionTitle}>{t('modal.codesTitle')}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Barcode</label>
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">{t('modal.barcode')}</label>
                   {medicine && !medicine.barcode && !formData.barcode && (
                     <button
                       type="button"
@@ -367,7 +283,7 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
                       disabled={generating}
                       className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium cursor-pointer inline-flex items-center gap-1 disabled:opacity-50"
                     >
-                      <Wand2 className="w-3 h-3" /> Generate internal barcode
+                      <Wand2 className="w-3 h-3" /> {t('modal.generateBarcode')}
                     </button>
                   )}
                 </div>
@@ -376,146 +292,48 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
                   name="barcode"
                   value={formData.barcode}
                   onChange={handleChange}
-                  placeholder="Scan or type the product barcode"
+                  placeholder={t('modal.barcodePlaceholder')}
                   className={`${inputCls} font-mono`}
                 />
               </div>
               <div>
-                <label className={labelCls}>SKU / Item Code</label>
+                <label className={labelCls}>{t('modal.sku')}</label>
                 <input
                   type="text"
                   name="sku"
                   value={formData.sku}
                   onChange={handleChange}
-                  placeholder="Optional internal code"
+                  placeholder={t('modal.skuPlaceholder')}
                   className={`${inputCls} font-mono`}
                 />
               </div>
             </div>
           </div>
 
-          {/* Pricing */}
-          <div className={sectionCls}>
-            <div className="flex items-center justify-between mb-3">
-              <p className={`${sectionTitle} mb-0`}>Pricing (per {formData.baseUnit || 'unit'})</p>
-              {pricesLocked && (
-                <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                  <Lock className="w-3 h-3" /> You can't change prices (price:manage)
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label className={labelCls}>Cost Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  name="costPrice"
-                  value={formData.costPrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  disabled={pricesLocked}
-                  className={`${inputCls} font-mono`}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>
-                  Retail Price <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  required
-                  disabled={pricesLocked}
-                  className={`${inputCls} font-mono`}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Min Margin %</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="99.99"
-                  name="minMarginPercent"
-                  value={formData.minMarginPercent}
-                  onChange={handleChange}
-                  placeholder="e.g. 20"
-                  className={`${inputCls} font-mono`}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Min Stock Alert Level</label>
-                <input
-                  type="number"
-                  min="0"
-                  name="minStockLevel"
-                  value={formData.minStockLevel}
-                  onChange={handleChange}
-                  placeholder="10"
-                  className={`${inputCls} font-mono`}
-                />
-              </div>
-            </div>
-
-            {priceNum > 0 && costNum > 0 && (
-              <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className="text-slate-500 dark:text-slate-400">Estimated Gross Margin:</span>
-                <div className="flex items-center gap-3">
-                  <MarginBadge warning={warning} />
-                  <span className="font-mono text-slate-700 dark:text-slate-300">
-                    Margin:{' '}
-                    <strong className={marginAmt >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}>
-                      {formatMoney(marginAmt)}
-                    </strong>
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full font-mono text-[11px] font-bold ${
-                      warning
-                        ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
-                        : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                    }`}
-                  >
-                    {marginPct}%
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {priceChanged && !pricesLocked && (
-              <div className="mt-3">
-                <label className={labelCls}>Reason for price change (saved in price history)</label>
-                <input
-                  type="text"
-                  name="priceChangeReason"
-                  value={formData.priceChangeReason}
-                  onChange={handleChange}
-                  maxLength={300}
-                  placeholder="e.g. Supplier price increase"
-                  className={inputCls}
-                />
-              </div>
-            )}
-          </div>
+          <MedicinePricingSection
+            formData={formData}
+            onChange={handleChange}
+            pricesLocked={pricesLocked}
+            priceNum={priceNum}
+            costNum={costNum}
+            marginAmt={marginAmt}
+            marginPct={marginPct}
+            warning={warning}
+            priceChanged={priceChanged}
+          />
 
           {/* Units */}
           <div className={sectionCls}>
-            <p className={sectionTitle}>Units & Pack Sizes</p>
+            <p className={sectionTitle}>{t('modal.unitsTitle')}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
               <div>
-                <label className={labelCls}>Base Unit (stock is kept in this unit)</label>
+                <label className={labelCls}>{t('modal.baseUnit')}</label>
                 <input
                   type="text"
                   name="baseUnit"
                   value={formData.baseUnit}
                   onChange={handleChange}
-                  placeholder="e.g. tablet"
+                  placeholder={t('modal.baseUnitPlaceholder')}
                   className={inputCls}
                 />
               </div>
@@ -531,76 +349,20 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
 
           {/* Purchasing */}
           <div className={sectionCls}>
-            <p className={sectionTitle}>Purchasing</p>
+            <p className={sectionTitle}>{t('modal.purchasingTitle')}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className={labelCls}>Supplier Lead Time (days)</label>
+                <label className={labelCls}>{t('modal.leadTime')}</label>
                 <input type="number" min="0" name="leadTimeDays" value={formData.leadTimeDays} onChange={handleChange} className={`${inputCls} font-mono`} />
               </div>
               <div>
-                <label className={labelCls}>Safety Stock (days)</label>
+                <label className={labelCls}>{t('modal.safetyStock')}</label>
                 <input type="number" min="0" name="reorderSafetyDays" value={formData.reorderSafetyDays} onChange={handleChange} className={`${inputCls} font-mono`} />
               </div>
             </div>
           </div>
 
-          {/* Regulatory */}
-          <div className={`${sectionCls} space-y-3`}>
-            <p className={sectionTitle}>Regulatory & Tax</p>
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                    formData.requiresPrescription
-                      ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
-                      : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                  }`}
-                >
-                  {formData.requiresPrescription ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-white">Prescription Required (Rx Only)</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    POS staff must verify a prescription before dispensing
-                  </p>
-                </div>
-              </div>
-              <Toggle name="requiresPrescription" checked={formData.requiresPrescription} onChange={handleChange} />
-            </div>
-
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold text-slate-800 dark:text-white">Controlled Substance</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    Movements are written to the controlled substances register; sales need a patient and prescription
-                  </p>
-                </div>
-                <Toggle name="isControlled" checked={formData.isControlled} onChange={handleChange} />
-              </div>
-              {formData.isControlled && (
-                <div className="mt-3 max-w-xs">
-                  <label className={labelCls}>Schedule</label>
-                  <input
-                    type="text"
-                    name="controlledSchedule"
-                    value={formData.controlledSchedule}
-                    onChange={handleChange}
-                    placeholder="e.g. Schedule II / Narcotic"
-                    className={inputCls}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold text-slate-800 dark:text-white">Tax Exempt</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">No VAT is charged on this medicine</p>
-              </div>
-              <Toggle name="taxExempt" checked={formData.taxExempt} onChange={handleChange} />
-            </div>
-          </div>
+          <MedicineRegulatorySection formData={formData} onChange={handleChange} />
 
           {/* Form Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/80">
@@ -610,7 +372,7 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
               disabled={loading}
               className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </button>
             <button
               type="submit"
@@ -618,11 +380,11 @@ const MedicineModal = ({ isOpen, onClose, onSuccess, medicine }) => {
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
-                <span>Saving...</span>
+                <span>{t('modal.saving')}</span>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span>{medicine ? 'Save Changes' : 'Register Medicine'}</span>
+                  <span>{medicine ? t('modal.saveChanges') : t('modal.register')}</span>
                 </>
               )}
             </button>

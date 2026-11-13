@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Pill, Info, CheckCircle2 } from 'lucide-react';
@@ -8,6 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useTranslation('auth');
   const { login, loading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -22,7 +24,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
     if (!email || !password) {
-      setError('Please fill in all fields');
+      setError(t('fillAllFields'));
       return;
     }
     const res = await login(email, password);
@@ -53,10 +55,10 @@ const Login = () => {
             <Pill className="w-6 h-6 rotate-45" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Welcome back
+            {t('welcomeBack')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Sign in to your pharmacy workspace
+            {t('signInSubtitle')}
           </p>
         </div>
 
@@ -64,13 +66,13 @@ const Login = () => {
         {passwordReset && !error && (
           <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs animate-fade-in">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
-            <span className="flex-1">Your password has been reset. Sign in with your new password.</span>
+            <span className="flex-1">{t('passwordResetSuccess')}</span>
           </div>
         )}
         {sessionExpired && !passwordReset && !error && (
           <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-xs animate-fade-in">
             <Info className="w-4 h-4 shrink-0 text-amber-500" />
-            <span className="flex-1">Your session has expired. Please sign in again.</span>
+            <span className="flex-1">{t('sessionExpired')}</span>
           </div>
         )}
 
@@ -86,7 +88,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Email
+              {t('emailLabel')}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -107,13 +109,13 @@ const Login = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Password
+                {t('password')}
               </label>
               <Link
                 to="/forgot-password"
                 className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
               >
-                Forgot password?
+                {t('forgotPassword')}
               </Link>
             </div>
             <div className="relative">
@@ -125,7 +127,7 @@ const Login = () => {
                   setPassword(e.target.value);
                   if (error) setError('');
                 }}
-                placeholder="Enter password"
+                placeholder={t('enterPassword')}
                 required
                 className="w-full pl-10 pr-10 py-2.5 bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
@@ -133,7 +135,7 @@ const Login = () => {
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('hidePassword') : t('showPassword')}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -148,11 +150,11 @@ const Login = () => {
             {loading ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Signing in...</span>
+                <span>{t('signingIn')}</span>
               </>
             ) : (
               <>
-                <span>Sign In</span>
+                <span>{t('signInButton')}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -160,21 +162,21 @@ const Login = () => {
 
           {/* Quick Demo Fill */}
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-            <span>Demo accounts:</span>
+            <span>{t('demoAccounts')}</span>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => handleDemoFill('biniambeza@gmail.com', '123456')}
                 className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition cursor-pointer"
               >
-                Pharmacist
+                {t('demoPharmacist')}
               </button>
               <button
                 type="button"
                 onClick={() => handleDemoFill('admin@pharmacy.com', 'admin123456')}
                 className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition cursor-pointer"
               >
-                Admin
+                {t('demoAdmin')}
               </button>
             </div>
           </div>

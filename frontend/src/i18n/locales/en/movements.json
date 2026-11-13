@@ -1,0 +1,63 @@
+{
+  "badge": "Inventory Ledger",
+  "title": "Stock Movements",
+  "subtitle": "Every stock change: sales, receipts, adjustments, returns, transfers and stock takes",
+  "exportCsv": "Export CSV",
+  "exporting": "Exporting...",
+  "exportFailed": "Export failed",
+  "loadFailed": "Failed to load movements",
+  "empty": "No movements found",
+  "emptyHint": "Try different filters",
+  "pagination_one": "{{count}} movement, page {{page}} of {{pages}}",
+  "pagination_other": "{{count}} movements, page {{page}} of {{pages}}",
+  "filters": {
+    "medicine": "Medicine",
+    "allMedicines": "All medicines",
+    "archivedSuffix": "(archived)",
+    "type": "Type",
+    "allTypes": "All types",
+    "from": "From",
+    "to": "To",
+    "batchChip": "Batch {{batch}}",
+    "clearBatch": "Clear batch filter"
+  },
+  "table": {
+    "date": "Date",
+    "type": "Type",
+    "medicine": "Medicine",
+    "batch": "Batch",
+    "change": "Change",
+    "balance": "Balance",
+    "user": "User",
+    "reasonRef": "Reason / Ref",
+    "exp": "exp {{date}}"
+  },
+  "csv": {
+    "date": "Date",
+    "type": "Type",
+    "medicine": "Medicine",
+    "batch": "Batch",
+    "expiry": "Expiry",
+    "change": "Change",
+    "balanceAfter": "Balance after",
+    "user": "User",
+    "reason": "Reason",
+    "reference": "Reference"
+  },
+  "types": {
+    "sale": "Sale",
+    "purchase_receive": "PO receive",
+    "stock_in": "Stock in",
+    "adjust_damaged": "Damaged",
+    "adjust_expired": "Expired write-off",
+    "correction": "Correction",
+    "delete": "Batch deleted",
+    "return": "Return",
+    "void": "Void",
+    "transfer_out": "Transfer out",
+    "transfer_in": "Transfer in",
+    "stock_take": "Stock take",
+    "expire": "Expired",
+    "unit_conversion": "Unit conversion"
+  }
+}

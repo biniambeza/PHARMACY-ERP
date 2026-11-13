@@ -9,12 +9,17 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getSuppliers } from '../../api/supplierApi';
 import { getMedicines } from '../../api/medicineApi';
 import { createPurchaseOrder } from '../../api/procurementApi';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, getDefaultCurrency } from '../../utils/format';
+
+// Sentinel so the load error is translated at render time (keeps the effect deps unchanged).
+const LOAD_FAILED = '__loadFailed__';
 
 const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
+  const { t } = useTranslation('procurement');
   const [suppliers, setSuppliers] = useState([]);
   const [medicines, setMedicines] = useState([]);
   const [supplierId, setSupplierId] = useState('');
@@ -54,7 +59,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
             ]);
           }
         } catch (err) {
-          setError('Failed to load active suppliers and medication catalog.');
+          setError(LOAD_FAILED);
         } finally {
           setFetchingData(false);
         }
@@ -115,18 +120,18 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
     setError('');
 
     if (!supplierId) {
-      return setError('Please select a verified vendor/supplier.');
+      return setError(t('create.errors.selectSupplier'));
     }
 
     if (items.length === 0) {
-      return setError('Purchase order must contain at least one item line.');
+      return setError(t('create.errors.noItems'));
     }
 
     const hasInvalidItem = items.some(
       (it) => !it.medicineId || Number(it.quantityOrdered) <= 0 || Number(it.unitCost) <= 0
     );
     if (hasInvalidItem) {
-      return setError('Please check all product line quantities and unit purchase costs.');
+      return setError(t('create.errors.invalidLines'));
     }
 
     setLoading(true);
@@ -149,7 +154,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to generate purchase order');
+      setError(err.response?.data?.message || t('create.errors.createFailed'));
     }
   };
 
@@ -164,15 +169,16 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                Draft Purchase Order
+                {t('create.title')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Initiate supplier procurement requisition for pharmaceutical inventory replenishment
+                {t('create.subtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -182,7 +188,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
         {error && (
           <div className="p-3 mb-5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
-            <span>{error}</span>
+            <span>{error === LOAD_FAILED ? t('create.errors.loadFailed') : error}</span>
           </div>
         )}
 
@@ -191,13 +197,13 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Select Pharmaceutical Vendor <span className="text-rose-500">*</span>
+                {t('create.vendor')} <span className="text-rose-500">*</span>
               </label>
               {fetchingData ? (
-                <div className="py-2 text-xs text-slate-400">Loading vendors...</div>
+                <div className="py-2 text-xs text-slate-400">{t('create.loadingVendors')}</div>
               ) : suppliers.length === 0 ? (
                 <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl text-xs text-amber-700 dark:text-amber-300">
-                  No active suppliers available. Add suppliers first.
+                  {t('create.noSuppliers')}
                 </div>
               ) : (
                 <div className="relative">
@@ -220,7 +226,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Expected Delivery Date
+                {t('create.expectedDelivery')}
               </label>
               <div className="relative">
                 <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -238,14 +244,14 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
           <div className="pt-2">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Order Line Items <span className="text-rose-500">*</span>
+                {t('create.lineItems')} <span className="text-rose-500">*</span>
               </label>
               <button
                 type="button"
                 onClick={handleAddItem}
                 className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-semibold flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Product Line
+                <Plus className="w-3.5 h-3.5" /> {t('create.addLine')}
               </button>
             </div>
 
@@ -268,7 +274,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                       >
                         {medicines.map((m) => (
                           <option key={m._id} value={m._id}>
-                            {m.name} ({m.dosageForm || 'Unit'})
+                            {m.name} ({m.dosageForm || t('create.unit')})
                           </option>
                         ))}
                       </select>
@@ -279,7 +285,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                       <input
                         type="number"
                         min="1"
-                        placeholder="Qty"
+                        placeholder={t('create.qtyPlaceholder')}
                         value={item.quantityOrdered}
                         onChange={(e) => handleItemChange(idx, 'quantityOrdered', e.target.value)}
                         required
@@ -289,23 +295,23 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
 
                     {/* Unit Cost */}
                     <div className="w-full sm:w-32 relative">
-                      <span className="absolute left-2.5 top-1.5 text-xs text-slate-400 font-mono">$</span>
+                      <span className="absolute left-2.5 top-1.5 text-[10px] text-slate-400 font-mono">{getDefaultCurrency()}</span>
                       <input
                         type="number"
                         step="0.01"
                         min="0.01"
-                        placeholder="Cost"
+                        placeholder={t('create.costPlaceholder')}
                         value={item.unitCost}
                         onChange={(e) => handleItemChange(idx, 'unitCost', e.target.value)}
                         required
-                        className="w-full pl-6 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+                        className="w-full pl-10 pr-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                       />
                     </div>
 
                     {/* Subtotal */}
                     <div className="w-full sm:w-28 text-right sm:text-right">
                       <span className="text-xs font-mono font-bold text-slate-900 dark:text-white">
-                        ${lineTotal.toFixed(2)}
+                        {formatMoney(lineTotal)}
                       </span>
                     </div>
 
@@ -314,7 +320,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                       type="button"
                       onClick={() => handleRemoveItem(idx)}
                       disabled={items.length <= 1}
-                      title="Remove product"
+                      title={t('create.removeLine')}
                       className="p-1.5 text-slate-400 hover:text-rose-500 disabled:opacity-30 disabled:cursor-not-allowed transition rounded-lg"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -328,13 +334,13 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
           {/* Notes */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Procurement Notes & Delivery Terms
+              {t('create.notes')}
             </label>
             <textarea
               rows="2"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Standard cold-chain required, net 30 days invoice payment..."
+              placeholder={t('create.notesPlaceholder')}
               className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
             />
           </div>
@@ -342,11 +348,11 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
           {/* Requisition Total Summary Banner */}
           <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between text-xs">
             <span className="text-slate-600 dark:text-slate-300 font-medium">
-              Estimated Order Total:
+              {t('create.estimatedTotal')}
             </span>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-slate-400 font-mono">
-                ({items.length} product lines)
+                ({t('create.productLines', { count: items.length })})
               </span>
               <span className="font-mono font-bold text-base text-emerald-600 dark:text-emerald-400">
                 {formatMoney(calculatedTotal)}
@@ -362,7 +368,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
               disabled={loading}
               className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </button>
             <button
               type="button"
@@ -370,7 +376,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
               disabled={loading || suppliers.length === 0 || medicines.length === 0}
               className="px-4 py-2 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 disabled:opacity-50 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
-              Save as Draft
+              {t('create.saveDraft')}
             </button>
             <button
               type="submit"
@@ -378,11 +384,11 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
-                <span>Generating Order...</span>
+                <span>{t('create.generating')}</span>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span>Issue Purchase Order</span>
+                  <span>{t('create.issue')}</span>
                 </>
               )}
             </button>

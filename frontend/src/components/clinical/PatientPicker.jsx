@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, X, UserPlus, User, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getPatients } from '../../api/clinicalApi';
 import { useAuth } from '../../context/AuthContext';
 import PatientFormModal from './PatientFormModal';
@@ -16,6 +17,7 @@ import { inputCls, severityCls, patientAge } from './ui';
  * Needs the `patient:view` permission (search uses GET /api/patients).
  */
 const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, placeholder }) => {
+  const { t } = useTranslation('patients');
   const { can } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -27,7 +29,7 @@ const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, 
   useEffect(() => {
     if (!open) return undefined;
     let cancelled = false;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const data = await getPatients({ search: query || undefined, limit: 10 });
@@ -40,7 +42,7 @@ const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, 
     }, 250);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [query, open]);
 
@@ -68,14 +70,14 @@ const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, 
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{value.name}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                {[age !== null && age !== undefined ? `${age} yrs` : null, value.sex !== 'unknown' ? value.sex : null, value.phone]
+                {[age !== null && age !== undefined ? t('picker.ageYears', { age }) : null, value.sex !== 'unknown' ? t(`sex.${value.sex}`, { defaultValue: value.sex }) : null, value.phone]
                   .filter(Boolean)
-                  .join(' · ') || 'No details'}
+                  .join(' · ') || t('picker.noDetails')}
               </p>
             </div>
           </div>
           {!disabled && (
-            <button type="button" onClick={() => onChange?.(null)} className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer" title="Clear patient">
+            <button type="button" onClick={() => onChange?.(null)} className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer" title={t('picker.clear')}>
               <X className="w-4 h-4" />
             </button>
           )}
@@ -108,7 +110,7 @@ const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, 
               setQuery(e.target.value);
               setOpen(true);
             }}
-            placeholder={placeholder || 'Search patient by name or phone...'}
+            placeholder={placeholder || t('picker.searchPlaceholder')}
             className={`${inputCls} pl-9`}
           />
         </div>
@@ -117,7 +119,7 @@ const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, 
             type="button"
             disabled={disabled}
             onClick={() => setCreating(true)}
-            title="New patient"
+            title={t('picker.newPatient')}
             className="px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-emerald-600 cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
@@ -127,8 +129,8 @@ const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, 
 
       {open && (
         <div className="absolute z-40 mt-1 w-full max-h-64 overflow-y-auto bg-white dark:bg-[#1b2230] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl">
-          {loading && <p className="p-3 text-[11px] text-slate-400">Searching...</p>}
-          {!loading && results.length === 0 && <p className="p-3 text-[11px] text-slate-400">No patients found.</p>}
+          {loading && <p className="p-3 text-[11px] text-slate-400">{t('picker.searching')}</p>}
+          {!loading && results.length === 0 && <p className="p-3 text-[11px] text-slate-400">{t('picker.noResults')}</p>}
           {!loading &&
             results.map((p) => (
               <button
@@ -141,7 +143,7 @@ const PatientPicker = ({ value, onChange, allowCreate = true, disabled = false, 
                 <span className="text-[11px] text-slate-500 ml-2">{p.phone}</span>
                 {p.allergies?.length > 0 && (
                   <span className="ml-2 text-[10px] font-semibold text-rose-600 dark:text-rose-400">
-                    {p.allergies.length} allerg{p.allergies.length === 1 ? 'y' : 'ies'}
+                    {t('picker.allergyCount', { count: p.allergies.length })}
                   </span>
                 )}
               </button>

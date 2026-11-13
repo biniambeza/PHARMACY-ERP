@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Simple modal shell used by the POS / Shifts screens. Esc closes it.
 const PosModal = ({ open, title, icon: Icon, onClose, children, footer, wide = false }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
@@ -28,7 +30,7 @@ const PosModal = ({ open, title, icon: Icon, onClose, children, footer, wide = f
             {Icon && <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>
           </div>
-          <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg cursor-pointer" aria-label="Close">
+          <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg cursor-pointer" aria-label={t('buttons.close')}>
             <X className="w-4 h-4" />
           </button>
         </div>

@@ -1,0 +1,70 @@
+{
+  "badge": "Accounts Payable",
+  "title": "Supplier Payables",
+  "subtitle": "Supplier invoices, due dates and payments",
+  "recordInvoice": "Record Invoice",
+  "totalPayable": "Total payable",
+  "overdueAmount": "{{amount}} overdue",
+  "aging": "Aging (days past due)",
+  "notYetDue": "Not yet due",
+  "bucketDays": "{{range}} days",
+  "tabs": { "invoices": "Invoices", "balances": "Supplier balances", "payments": "Payments" },
+  "allSuppliers": "All suppliers",
+  "filters": { "unpaid": "Unpaid", "overdue": "Overdue", "paid": "Paid", "all": "All" },
+  "confirmDeleteInvoice": "Delete invoice {{invoiceNo}}?",
+  "deleteInvoice": "Delete invoice",
+  "pay": "Pay",
+  "poRef": "PO {{poNumber}}",
+  "saving": "Saving...",
+  "days_one": "{{count}} day",
+  "days_other": "{{count}} days",
+  "errors": {
+    "deleteInvoice": "Failed to delete invoice",
+    "positiveAmount": "Enter a positive amount."
+  },
+  "empty": {
+    "invoices": "No invoices match this filter.",
+    "balances": "Nothing owed to suppliers.",
+    "payments": "No supplier payments yet."
+  },
+  "columns": {
+    "invoice": "Invoice", "supplier": "Supplier", "date": "Date", "due": "Due", "amount": "Amount",
+    "paid": "Paid", "balance": "Balance", "status": "Status", "terms": "Terms", "openInvoices": "Open invoices",
+    "nextDue": "Next due", "overdue": "Overdue", "outstanding": "Outstanding", "payment": "Payment",
+    "method": "Method", "appliedTo": "Applied to"
+  },
+  "invoiceStatus": { "open": "open", "partial": "partial", "paid": "paid", "overdue": "overdue" },
+  "methods": {
+    "bank_transfer": "Bank transfer", "cash": "Cash", "cheque": "Cheque",
+    "mobile_money": "Mobile money", "card": "Card", "other": "Other"
+  },
+  "fields": {
+    "supplier": "Supplier", "invoiceNo": "Invoice number", "amount": "Amount", "invoiceDate": "Invoice date",
+    "dueDate": "Due date", "notes": "Notes", "method": "Method", "reference": "Reference",
+    "paymentDate": "Payment date", "note": "Note"
+  },
+  "invoiceModal": {
+    "title": "Record Supplier Invoice",
+    "subtitle": "A bill received from a supplier",
+    "selectSupplier": "Select supplier...",
+    "dueHint": "Leave empty to use the supplier terms.",
+    "dueHintWithTerms_one": "Leave empty to use the supplier terms ({{count}} day).",
+    "dueHintWithTerms_other": "Leave empty to use the supplier terms ({{count}} days).",
+    "submit": "Save Invoice",
+    "errors": {
+      "supplier": "Choose a supplier.",
+      "invoiceNo": "Invoice number is required.",
+      "save": "Failed to save invoice"
+    }
+  },
+  "paymentModal": {
+    "title": "Pay Supplier",
+    "subtitle": "{{supplier}} - outstanding {{outstanding}}",
+    "subtitleInvoice": "{{supplier}} - invoice {{invoiceNo}} - outstanding {{outstanding}}",
+    "referencePlaceholder": "Transfer / cheque no.",
+    "allocationInvoice": "Applied to this invoice first; any remainder goes to the oldest due invoices.",
+    "allocationOldest": "Applied to the oldest due invoices first.",
+    "submit": "Record Payment",
+    "errors": { "save": "Failed to record payment" }
+  }
+}

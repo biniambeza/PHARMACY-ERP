@@ -1,0 +1,63 @@
+{
+  "badge": "Galmee Faarmaasii",
+  "title": "Galmee Gurgurtaa fi Nagahee",
+  "subtitle": "Daldala galmaa'e sakatta'i, galii guyyaa ilaali, fi nagahee gurgurtaa irra deebi'ii maxxansi",
+  "openPos": "Teerminaala Gurgurtaa Bani",
+  "goToPos": "Gara Teerminaala Gurgurtaa Deemi",
+  "dismiss": "Cufi",
+  "retryLoading": "Irra Deebi'ii Fe'i",
+  "errors": {
+    "loadSales": "Daldala gurgurtaa fe'uun hin milkoofne",
+    "loadLedger": "Galmee faarmaasii fe'uun hin danda'amne. Maaloo walqunnamtii neetworkii keessanii mirkaneessaa."
+  },
+  "metrics": {
+    "todayRevenue": "Galii Har'aa",
+    "todayRevenueSub": "Gurgurtaa har'aa",
+    "todayBadge": "Har'a",
+    "todayOrders": "Ajaja Har'aa",
+    "todayOrdersSub": "Daldala kaffaltii har'aa",
+    "ordersBadge": "Ajajoota",
+    "totalRevenue": "Galii Waliigalaa",
+    "totalRevenueSub": "Herrega waliigalaa walitti qabame",
+    "grossBadge": "Waliigala",
+    "totalInvoices": "Nagahee Waliigalaa",
+    "totalInvoicesSub": "Nagahee galmaa'an hunda",
+    "receiptsBadge": "Nagahee"
+  },
+  "searchPlaceholder": "Lakkoofsa nagahee, maqaa maamilaa ykn bilbilaan barbaadi...",
+  "clearSearch": "Barbaacha Qulqulleessi",
+  "refreshTitle": "Galmee gurgurtaa haaromsi",
+  "loading": "Galmeen gurgurtaa fe'amaa jira...",
+  "empty": {
+    "noMatchTitle": "Nagaheen walsimu hin argamne",
+    "noneTitle": "Hanga ammaatti gurgurtaan hin galmoofne",
+    "noMatchText": "Nagahee barbaaddu argachuuf jechoota barbaachaa jijjiiri.",
+    "noneText": "Gurgurtaa jalqabaa galmeessuuf teerminaala kaffaltii fayyadami."
+  },
+  "table": {
+    "invoiceNo": "Lakk. Nagahee",
+    "dateTime": "Guyyaa fi Sa'aatii",
+    "customer": "Maamila",
+    "itemsSold": "Meeshaalee Gurguraman",
+    "payment": "Kaffaltii",
+    "grandTotal": "Ida'ama Waliigalaa"
+  },
+  "voided": "Haqameera",
+  "returned": "Deebi'eera",
+  "partReturned": "Gartokkeen deebi'eera",
+  "na": "Hin jiru",
+  "walkIn": "Maamila Darbaa",
+  "itemCount_one": "Meeshaa {{count}}",
+  "itemCount_other": "Meeshaalee {{count}}",
+  "viewReceipt": "Nagahee Ilaali",
+  "return": "Deebisi",
+  "returnTitle": "Gurgurtaa kana irraa meeshaalee deebisi",
+  "void": "Haqi",
+  "voidTitle": "Gurgurtaa kana haqi (guyyuma sana qofa)",
+  "notices": {
+    "returnRecorded": "Deebiin {{number}} galmaa'eera. Maallaqa deebi'u {{refund}}",
+    "returnCreditSplit": "({{credit}} herrega liqii irraa hir'ateera, {{due}} kan kaffalamu).",
+    "voidCredit": "{{amount}} herrega liqii irraa hir'ateera.",
+    "refundDue": "Maallaqa deebi'u: {{amount}}."
+  }
+}

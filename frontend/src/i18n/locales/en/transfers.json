@@ -1,0 +1,79 @@
+{
+  "badge": "Multi-branch",
+  "title": "Branch Transfers",
+  "subtitle": "Move stock between branches of your organization and compare branch performance",
+  "newTransfer": "New Transfer",
+  "tabs": { "outgoing": "Outgoing", "incoming": "Incoming", "overview": "Branches overview" },
+  "allStatuses": "All statuses",
+  "status": { "draft": "Draft", "in_transit": "In transit", "received": "Received", "cancelled": "Cancelled" },
+  "errors": { "load": "Failed to load transfers", "action": "Action failed" },
+  "empty": {
+    "outgoing": "No outgoing transfers",
+    "incoming": "No incoming transfers",
+    "outgoingHint": "Create a transfer to send stock to another branch.",
+    "incomingHint": "Transfers sent to this branch appear here."
+  },
+  "columns": {
+    "number": "Number", "toBranch": "To branch", "fromBranch": "From branch", "units": "Units",
+    "value": "Value (cost)", "status": "Status", "date": "Date"
+  },
+  "confirm": {
+    "send": "Send {{number}}? Stock will be deducted from this branch.",
+    "receive": "Receive {{number}} into this branch?",
+    "reject": "Reject {{number}}? Stock goes back to the sending branch. Reason (optional):",
+    "cancel": "Cancel {{number}}? Reason (optional):",
+    "cancelInTransit": "Cancel {{number}}? Stock returns to this branch. Reason (optional):"
+  },
+  "actions": { "send": "Send", "receive": "Receive", "reject": "Reject", "cancel": "Cancel" },
+  "lines": { "medicine": "Medicine", "batch": "Batch", "expiry": "Expiry", "qty": "Qty", "unitCost": "Unit cost", "auto": "auto" },
+  "details": {
+    "from": "From: {{name}}",
+    "to": "To: {{name}}",
+    "createdBy": "Created by {{name}}",
+    "received": "Received {{date}}",
+    "receivedBy": "Received {{date}} by {{name}}",
+    "cancelled": "Cancelled {{date}}",
+    "cancelledBy": "Cancelled {{date}} by {{name}}"
+  },
+  "create": {
+    "title": "New Stock Transfer",
+    "subtitle": "Send stock from this branch to another branch of your organization",
+    "loading": "Loading branches and stock...",
+    "noDestinations": "There is no other active branch in your organization. The owner can create a branch from the Staff page.",
+    "destination": "Destination branch",
+    "notes": "Notes",
+    "optional": "Optional",
+    "searchPlaceholder": "Search medicines in stock to add...",
+    "inStock_one": "{{count}} in stock",
+    "inStock_other": "{{count}} in stock",
+    "noLines": "No medicines added yet.",
+    "usableUnits_one": "{{count}} usable unit",
+    "usableUnits_other": "{{count}} usable units",
+    "autoBatch": "Auto (first expiry first)",
+    "batchOption_one": "{{batchNo}} | exp {{expiry}} | {{count}} unit",
+    "batchOption_other": "{{batchNo}} | exp {{expiry}} | {{count}} units",
+    "remove": "Remove",
+    "saveDraft": "Save as draft",
+    "sendNow": "Send now",
+    "errors": {
+      "load": "Failed to load branches and stock",
+      "noStock": "No usable stock",
+      "wholeQty": "Enter a whole quantity",
+      "onlyAvailable_one": "Only {{count}} available",
+      "onlyAvailable_other": "Only {{count}} available",
+      "destination": "Choose a destination branch",
+      "noLines": "Add at least one medicine",
+      "save": "Failed to create transfer"
+    }
+  },
+  "overview": {
+    "from": "From",
+    "to": "To",
+    "organization": "Organization:",
+    "chartTitle": "Sales and stock value by branch",
+    "sales": "Sales",
+    "stockValueCost": "Stock value (cost)",
+    "columns": { "branch": "Branch", "transactions": "Transactions", "stockValue": "Stock value", "units": "Units" },
+    "errors": { "load": "Failed to load the consolidated report" }
+  }
+}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeftRight, Download, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getMovements } from '../../api/movementApi';
 import { getMedicines } from '../../api/medicineApi';
@@ -12,10 +13,11 @@ const PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 500;
 const EXPORT_MAX_PAGES = 40; // 20,000 rows
 
-const typeLabel = (t) => MOVEMENT_TYPE_LABELS[t] || t;
 
 // Stock movement ledger (#15): every stock change with date, type, change, balance, user and reason.
 const Movements = () => {
+  const { t } = useTranslation('movements');
+  const typeLabel = (type) => t(`types.${type}`, { defaultValue: MOVEMENT_TYPE_LABELS[type] || type });
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = {
     medicineId: searchParams.get('medicineId') || '',
@@ -57,12 +59,12 @@ const Movements = () => {
         setData(res);
         setError('');
       })
-      .catch((err) => active && setError(err.response?.data?.message || 'Failed to load movements'))
+      .catch((err) => active && setError(err.response?.data?.message || t('loadFailed')))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [buildParams, page]);
+  }, [buildParams, page, t]);
 
   const setFilter = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -102,12 +104,15 @@ const Movements = () => {
         if (p >= res.pages) break;
       }
       const csv = toCSV(
-        ['Date', 'Type', 'Medicine', 'Batch', 'Expiry', 'Change', 'Balance after', 'User', 'Reason', 'Reference'],
+        [
+          t('csv.date'), t('csv.type'), t('csv.medicine'), t('csv.batch'), t('csv.expiry'),
+          t('csv.change'), t('csv.balanceAfter'), t('csv.user'), t('csv.reason'), t('csv.reference'),
+        ],
         rows
       );
       downloadCSV(`stock-movements-${new Date().toISOString().slice(0, 10)}.csv`, csv);
     } catch (err) {
-      setError(err.response?.data?.message || 'Export failed');
+      setError(err.response?.data?.message || t('exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -120,50 +125,50 @@ const Movements = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800/60 uppercase tracking-wider">
-            Inventory Ledger
+            {t('badge')}
           </span>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">Stock Movements</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">{t('title')}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Every stock change: sales, receipts, adjustments, returns, transfers and stock takes
+            {t('subtitle')}
           </p>
         </div>
         <button type="button" className={secondaryBtn} onClick={handleExport} disabled={exporting || !data.total}>
-          <Download className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Export CSV'}
+          <Download className="w-4 h-4" /> {exporting ? t('exporting') : t('exportCsv')}
         </button>
       </div>
 
       <div className={`${cardCls} p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3`}>
         <div className="lg:col-span-2">
-          <label className={labelCls}>Medicine</label>
+          <label className={labelCls}>{t('filters.medicine')}</label>
           <select className={inputCls} value={filters.medicineId} onChange={(e) => setFilter('medicineId', e.target.value)}>
-            <option value="">All medicines</option>
+            <option value="">{t('filters.allMedicines')}</option>
             {medicines.map((m) => (
-              <option key={m._id} value={m._id}>{m.name}{m.isArchived ? ' (archived)' : ''}</option>
+              <option key={m._id} value={m._id}>{m.name}{m.isArchived ? ` ${t('filters.archivedSuffix')}` : ''}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className={labelCls}>Type</label>
+          <label className={labelCls}>{t('filters.type')}</label>
           <select className={inputCls} value={filters.type} onChange={(e) => setFilter('type', e.target.value)}>
-            <option value="">All types</option>
-            {Object.entries(MOVEMENT_TYPE_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
+            <option value="">{t('filters.allTypes')}</option>
+            {Object.keys(MOVEMENT_TYPE_LABELS).map((k) => (
+              <option key={k} value={k}>{typeLabel(k)}</option>
             ))}
           </select>
         </div>
         <div>
-          <label className={labelCls}>From</label>
+          <label className={labelCls}>{t('filters.from')}</label>
           <input type="date" className={inputCls} value={filters.from} onChange={(e) => setFilter('from', e.target.value)} />
         </div>
         <div>
-          <label className={labelCls}>To</label>
+          <label className={labelCls}>{t('filters.to')}</label>
           <input type="date" className={inputCls} value={filters.to} onChange={(e) => setFilter('to', e.target.value)} />
         </div>
         {filters.batchId && (
           <div className="sm:col-span-2 lg:col-span-5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60">
-              Batch {batchLabel || filters.batchId.slice(-6)}
-              <button type="button" aria-label="Clear batch filter" onClick={() => setFilter('batchId', '')} className="cursor-pointer">
+              {t('filters.batchChip', { batch: batchLabel || filters.batchId.slice(-6) })}
+              <button type="button" aria-label={t('filters.clearBatch')} onClick={() => setFilter('batchId', '')} className="cursor-pointer">
                 <X className="w-3 h-3" />
               </button>
             </span>
@@ -176,25 +181,25 @@ const Movements = () => {
       <div className={`${cardCls} overflow-hidden`}>
         <div className="overflow-x-auto">
           {loading ? (
-            <p className="p-8 text-xs text-slate-500">Loading...</p>
+            <p className="p-8 text-xs text-slate-500">{t('common:labels.loading')}</p>
           ) : data.movements.length === 0 ? (
             <div className="py-16 text-center">
               <ArrowLeftRight className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-              <p className="text-sm font-bold text-slate-900 dark:text-white">No movements found</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Try different filters</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{t('empty')}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('emptyHint')}</p>
             </div>
           ) : (
             <table className="w-full text-left text-xs">
               <thead className={theadCls}>
                 <tr>
-                  <th className="py-3 px-5">Date</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Medicine</th>
-                  <th className="py-3 px-4">Batch</th>
-                  <th className="py-3 px-4 text-right">Change</th>
-                  <th className="py-3 px-4 text-right">Balance</th>
-                  <th className="py-3 px-4">User</th>
-                  <th className="py-3 px-5">Reason / Ref</th>
+                  <th className="py-3 px-5">{t('table.date')}</th>
+                  <th className="py-3 px-4">{t('table.type')}</th>
+                  <th className="py-3 px-4">{t('table.medicine')}</th>
+                  <th className="py-3 px-4">{t('table.batch')}</th>
+                  <th className="py-3 px-4 text-right">{t('table.change')}</th>
+                  <th className="py-3 px-4 text-right">{t('table.balance')}</th>
+                  <th className="py-3 px-4">{t('table.user')}</th>
+                  <th className="py-3 px-5">{t('table.reasonRef')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
@@ -224,7 +229,7 @@ const Movements = () => {
                         {m.batchId?.batchNo || '-'}
                       </button>
                       {m.batchId?.expiryDate && (
-                        <span className="block text-[10px] text-slate-400">exp {formatDate(m.batchId.expiryDate)}</span>
+                        <span className="block text-[10px] text-slate-400">{t('table.exp', { date: formatDate(m.batchId.expiryDate) })}</span>
                       )}
                     </td>
                     <td
@@ -248,7 +253,7 @@ const Movements = () => {
         {data.total > 0 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400">
             <span>
-              {data.total} movement(s), page {page} of {data.pages || 1}
+              {t('pagination', { count: data.total, page, pages: data.pages || 1 })}
             </span>
             <div className="flex items-center gap-2">
               <button type="button" className={secondaryBtn} disabled={page <= 1} onClick={() => setPage(page - 1)}>

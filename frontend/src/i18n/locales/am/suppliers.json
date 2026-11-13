@@ -1,0 +1,82 @@
+{
+  "badge": "የአቅራቢዎች ማውጫ",
+  "title": "የመድኃኒት አቅራቢዎች ማውጫ",
+  "subtitle": "የመድኃኒት አከፋፋዮችን፣ የተረጋገጡ አምራቾችን እና የአቅርቦት ውል አድራሻዎችን ያስተዳድሩ",
+  "addSupplier": "አቅራቢ ጨምር",
+  "addFirst": "የመጀመሪያ አቅራቢ ጨምር",
+  "confirmDelete": "አቅራቢ \"{{name}}\"ን መሰረዝ እርግጠኛ ነዎት?",
+  "errors": { "delete": "አቅራቢውን መሰረዝ አልተቻለም" },
+  "metrics": {
+    "total": { "title": "ጠቅላላ የተመዘገቡ አቅራቢዎች", "sub": "ንቁ እና የቀድሞ አቅራቢዎች", "badge": "ማውጫ" },
+    "active": { "title": "ንቁ የውል አቅራቢዎች", "sub": "ለግዢ የሚገኙ" },
+    "inactive": {
+      "title": "ንቁ ያልሆኑ / የታገዱ",
+      "sub": "የታገዱ የንግድ መለያዎች",
+      "underReview": "በግምገማ ላይ",
+      "zero": "ምንም እገዳ የለም"
+    }
+  },
+  "searchPlaceholder": "በአቅራቢ ስም፣ በተጠሪ ሰው፣ በስልክ ወይም በኢሜይል ይፈልጉ...",
+  "filters": { "all": "ሁሉም አቅራቢዎች", "active": "ንቁ ብቻ" },
+  "empty": {
+    "noMatch": "የሚዛመድ አቅራቢ አልተገኘም",
+    "none": "ምንም አቅራቢ አልተመዘገበም",
+    "noMatchHint": "የፍለጋ ቃሉን ወይም ማጣሪያውን ይቀይሩ",
+    "noneHint": "የግዢ ትዕዛዞችን ለመስጠት ፈቃድ ያላቸውን የመድኃኒት አከፋፋዮች ይጨምሩ"
+  },
+  "columns": {
+    "vendor": "አቅራቢ ድርጅት",
+    "contact": "የሂሳብ ተወካይ",
+    "phone": "ስልክ",
+    "email": "ኢሜይል አድራሻ",
+    "address": "የመጋዘን አድራሻ",
+    "outstanding": "ያልተከፈለ",
+    "status": "ሁኔታ"
+  },
+  "notSpecified": "አልተገለጸም",
+  "na": "የለም",
+  "openInPayables": "በሚከፈሉ ሂሳቦች ውስጥ ክፈት",
+  "overdueAmount": "{{amount}} ጊዜው ያለፈበት",
+  "terms_one": "የ{{count}} ቀን የክፍያ ውል",
+  "terms_other": "የ{{count}} ቀናት የክፍያ ውል",
+  "editSupplier": "አቅራቢ አርትዕ",
+  "deleteSupplier": "አቅራቢ ሰርዝ",
+  "footer": {
+    "showing_one": "<strong>{{count}}</strong> የተመዘገበ አከፋፋይ በማሳየት ላይ",
+    "showing_other": "<strong>{{count}}</strong> የተመዘገቡ አከፋፋዮች በማሳየት ላይ",
+    "directoryId": "የማውጫ መለያ: SUP-DIR-{{n}}"
+  },
+  "modal": {
+    "editTitle": "የአቅራቢ መገለጫ አርትዕ",
+    "createTitle": "አዲስ አቅራቢ መዝግብ",
+    "editSubtitle": "የመድኃኒት አቅራቢ አድራሻዎችን እና የአቅርቦት ውሎችን ያዘምኑ",
+    "createSubtitle": "ፈቃድ ያለው የመድኃኒት ጅምላ አከፋፋይ ወይም አምራች ወደ ማውጫው ይጨምሩ",
+    "fields": {
+      "name": "የድርጅት / የአቅራቢ ስም",
+      "contact": "የሂሳብ አስተዳዳሪ / ተጠሪ",
+      "status": "የአቅራቢ ሁኔታ",
+      "phone": "ስልክ ቁጥር",
+      "email": "ኢሜይል አድራሻ",
+      "terms": "የክፍያ ውል (ቀናት)",
+      "address": "የመጋዘን / የቢሮ አድራሻ",
+      "notes": "የግዢ እና የውል ማስታወሻዎች"
+    },
+    "placeholders": {
+      "name": "ለምሳሌ፦ Novartis Distribution Ltd.",
+      "contact": "ለምሳሌ፦ ዶ/ር አበበ ከበደ",
+      "address": "ቢሮ 400፣ የኢንዱስትሪ ፓርክ መንገድ",
+      "notes": "የክፍያ ውል፣ የማድረሻ ጊዜ፣ ዝቅተኛ የትዕዛዝ መጠን..."
+    },
+    "statusActive": "ንቁ አቅራቢ",
+    "statusInactive": "ንቁ ያልሆነ / የታገደ",
+    "termsHint": "የአቅራቢ ደረሰኞች ከደረሰኙ ቀን በኋላ በዚህ ያህል ቀናት ውስጥ ይከፈላሉ (0 = ሲደርስ)።",
+    "saving": "አቅራቢውን በማስቀመጥ ላይ...",
+    "saveChanges": "ለውጦችን አስቀምጥ",
+    "register": "አቅራቢ መዝግብ",
+    "errors": {
+      "nameRequired": "የአቅራቢ ወይም የድርጅት ስም ያስፈልጋል።",
+      "terms": "የክፍያ ውል ከ0 እስከ 365 ያለ ሙሉ የቀናት ቁጥር መሆን አለበት።",
+      "save": "የአቅራቢውን መረጃ ማስቀመጥ አልተቻለም"
+    }
+  }
+}

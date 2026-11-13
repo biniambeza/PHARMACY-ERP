@@ -1,0 +1,90 @@
+{
+  "errors": {
+    "load": "Deebii fe'uun hin milkoofne"
+  },
+  "page": {
+    "badge": "Deebii fi Maallaqa Deebisuu",
+    "title": "Deebii Gurgurtaa",
+    "subtitle": "Deebii raawwataman ilaali fi yaadannoo liqii irra deebi'ii maxxansi. Deebii haaraa fuula Seenaa Gurgurtaa irraa jalqabi.",
+    "salesHistory": "Seenaa Gurgurtaa",
+    "searchPlaceholder": "Lakk. deebii, lakk. nagahee ykn maamilaan barbaadi...",
+    "loading": "Deebiin fe'amaa jira...",
+    "noMatch": "Deebiin walsimu hin jiru",
+    "none": "Hanga ammaatti deebiin hin galmoofne",
+    "discarded": "gatame",
+    "pagination_one": "Fuula {{page}} kan {{pages}} · deebii {{count}}",
+    "pagination_other": "Fuula {{page}} kan {{pages}} · deebii {{count}}"
+  },
+  "table": {
+    "returnNo": "Lakk. Deebii",
+    "invoice": "Nagahee",
+    "items": "Meeshaalee",
+    "reason": "Sababa",
+    "processedBy": "Kan raawwate",
+    "refund": "Maallaqa deebi'u"
+  },
+  "methods": {
+    "cash": "Maallaqa callaa",
+    "card": "Kaardii",
+    "mobile_money": "Maallaqa moobaayilaa",
+    "credit": "Herrega liqii",
+    "store_credit": "Liqii suuqii"
+  },
+  "reasons": {
+    "changedMind": "Maamilli yaada jijjiirate",
+    "wrongItem": "Meeshaan dogoggoraa kenname",
+    "damaged": "Miidhame / hir'ina qaba",
+    "expired": "Oomisha yeroon itti darbe",
+    "adverse": "Dhiibbaa cinaa",
+    "other": "Kan biroo..."
+  },
+  "creditNote": {
+    "title": "Yaadannoo liqii",
+    "pharmacy": "Faarmaasii",
+    "heading": "Yaadannoo Liqii / Nagahee Maallaqa Deebi'e",
+    "number": "Lakk. yaadannoo liqii",
+    "originalInvoice": "Nagahee jalqabaa",
+    "customer": "Maamila",
+    "item": "Meeshaa",
+    "qty": "Baay'ina",
+    "batch": "Baachii {{batch}}",
+    "restocked": "kuusaatti deebi'e",
+    "notRestocked": "kuusaatti hin deebine",
+    "totalRefund": "Maallaqa deebi'u waliigalaa",
+    "creditReversed": "Herrega liqii irraa hir'ate",
+    "refundedVia": "Karaa {{method}} deebi'e",
+    "signature": "Mallattoo maamilaa:"
+  },
+  "modal": {
+    "title": "Meeshaalee deebisi",
+    "loading": "Sararoonni gurgurtaa fe'amaa jiru...",
+    "itemBatch": "Meeshaa / baachii",
+    "sold": "Gurgurame",
+    "left": "Hafe",
+    "returnQty": "Baay'ina deebi'u",
+    "disposition": "Akkaataa itti fayyadamaa",
+    "restock": "Kuusaatti deebisi",
+    "discard": "Gati",
+    "refundMethod": "Mala maallaqa deebisuu",
+    "describeReason": "Sababa ibsi",
+    "restockNote": "Meeshaaleen kuusaatti deebi'an baachii wal fakkaatutti deebi'u. Baachiiwwan yeroon itti darbe fi meeshaaleen gataman kuusaatti hin deebi'an.",
+    "creditSaleNote": "Gurgurtaa liqii kanaaf, maallaqni deebi'u jalqaba liqii maamilli qabu hir'isa; kan hafe qofa mala deebisuutiin kaffalama.",
+    "estimatedRefund": "Maallaqa deebi'u tilmaamame:",
+    "submit": "Deebii raawwadhu",
+    "errors": {
+      "loadPrevious": "Deebii duraanii gurgurtaa kanaa fe'uun hin danda'amne",
+      "reason": "Maaloo sababa kenni",
+      "selectItem": "Deebisuuf yoo xiqqaate baay'ina meeshaa tokkoo filadhu",
+      "failed": "Deebii raawwachuun hin milkoofne"
+    }
+  },
+  "void": {
+    "title": "Gurgurtaa haqi",
+    "description": "Haquun gurgurtaa guutuu haqa, meeshaa hunda baachii isaatti deebisa. Kun deebi'ee hin sirreeffamu.",
+    "placeholder": "fkn. Meeshaan dogoggoraa iskaanii godhame",
+    "errors": {
+      "reason": "Maaloo sababa gurgurtaa kana haqxuuf kenni",
+      "failed": "Gurgurtaa haquun hin milkoofne"
+    }
+  }
+}

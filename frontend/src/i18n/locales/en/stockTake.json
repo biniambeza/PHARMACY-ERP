@@ -1,0 +1,82 @@
+{
+  "allStock": "All stock",
+  "status": {
+    "draft": "draft",
+    "counting": "counting",
+    "submitted": "submitted",
+    "approved": "approved",
+    "cancelled": "cancelled"
+  },
+  "list": {
+    "badge": "Physical Inventory",
+    "title": "Stock Take",
+    "subtitle": "Snapshot stock, count each batch, review variances and apply corrections",
+    "scope": "Scope",
+    "notes": "Notes",
+    "notesPlaceholder": "e.g. Month-end count, shelf A-C",
+    "start": "Start count",
+    "starting": "Starting...",
+    "empty": "No stock takes yet",
+    "emptyHint": "Start a count above",
+    "loadFailed": "Failed to load stock takes",
+    "startFailed": "Failed to start stock take"
+  },
+  "detail": {
+    "loadFailed": "Failed to load stock take",
+    "actionFailed": "Action failed",
+    "countsInvalid": "Counts must be whole numbers of 0 or more.",
+    "saved_one": "Saved {{count}} count",
+    "saved_other": "Saved {{count}} counts",
+    "confirmSubmit_one": "{{count}} line is not counted and will be left unchanged. Submit anyway?",
+    "confirmSubmit_other": "{{count}} lines are not counted and will be left unchanged. Submit anyway?",
+    "submitted": "Submitted for approval",
+    "confirmApprove_one": "Approve and apply {{count}} stock correction? This cannot be undone.",
+    "confirmApprove_other": "Approve and apply {{count}} stock corrections? This cannot be undone.",
+    "approvedNotice": "Approved: stock corrected",
+    "confirmCancel": "Cancel this stock take? Counts will be kept for reference but not applied.",
+    "reopened": "Reopened for counting",
+    "categoryScope": "Category: {{category}}",
+    "startedAt": "started {{date}}",
+    "approvedAt": "approved {{date}}",
+    "by": "by {{name}}",
+    "varianceCsv": "Variance CSV",
+    "reopen": "Reopen",
+    "approve": "Approve & apply",
+    "searchPlaceholder": "Search medicine or batch...",
+    "varianceOnly": "Show variances only",
+    "expiredSuffix": "(expired)",
+    "countedAria": "Counted quantity for {{name}} batch {{batch}}",
+    "noLines": "No lines match.",
+    "footnote": "On approval each variance (counted - system qty at start) is applied to the batch's current quantity, so sales made during the count are kept. Uncounted lines are left unchanged."
+  },
+  "summary": {
+    "counted": "Counted",
+    "varianceLines": "Lines with variance",
+    "netVarianceUnits": "Net variance (units)",
+    "shortageValue": "Shortage value",
+    "netVarianceValue": "Net variance value"
+  },
+  "table": {
+    "medicine": "Medicine",
+    "batch": "Batch",
+    "expiry": "Expiry",
+    "systemQty": "System qty",
+    "variance": "Variance",
+    "value": "Value",
+    "number": "Number",
+    "status": "Status",
+    "started": "Started",
+    "by": "By"
+  },
+  "csv": {
+    "medicine": "Medicine",
+    "category": "Category",
+    "batch": "Batch",
+    "expiry": "Expiry",
+    "systemQty": "System qty",
+    "counted": "Counted",
+    "variance": "Variance",
+    "unitCost": "Unit cost",
+    "varianceValue": "Variance value"
+  }
+}

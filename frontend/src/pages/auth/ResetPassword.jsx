@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Lock, Eye, EyeOff, ArrowRight, ArrowLeft, AlertCircle, KeyRound } from 'lucide-react';
 import { resetPasswordWithToken } from '../../api/authApi';
 
@@ -17,16 +18,17 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useTranslation('auth');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (password.length < MIN_LENGTH) {
-      setError(`Password must be at least ${MIN_LENGTH} characters long`);
+      setError(t('passwordMinLength', { min: MIN_LENGTH }));
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match');
+      setError(t('passwordsDontMatch'));
       return;
     }
     setLoading(true);
@@ -34,7 +36,7 @@ const ResetPassword = () => {
       await resetPasswordWithToken(token, password);
       navigate('/login?reset=success', { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not reset the password. Please try again.');
+      setError(err.response?.data?.message || t('resetFailed'));
     } finally {
       setLoading(false);
     }
@@ -44,10 +46,10 @@ const ResetPassword = () => {
     password.length === 0
       ? null
       : password.length < MIN_LENGTH
-        ? { label: 'Too short', color: 'bg-rose-500', width: 'w-1/4' }
+        ? { label: t('strength.tooShort'), color: 'bg-rose-500', width: 'w-1/4' }
         : /[A-Z]/.test(password) && /\d/.test(password) && password.length >= 12
-          ? { label: 'Strong', color: 'bg-emerald-500', width: 'w-full' }
-          : { label: 'Okay', color: 'bg-amber-500', width: 'w-2/3' };
+          ? { label: t('strength.strong'), color: 'bg-emerald-500', width: 'w-full' }
+          : { label: t('strength.okay'), color: 'bg-amber-500', width: 'w-2/3' };
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-6 bg-slate-50 dark:bg-[#0b0f17] font-sans selection:bg-emerald-500 selection:text-white overflow-hidden">
@@ -59,9 +61,9 @@ const ResetPassword = () => {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/25 mb-3.5">
             <KeyRound className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Choose a new password</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{t('chooseNewPassword')}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            You will be signed out of all devices after the reset.
+            {t('signedOutNotice')}
           </p>
         </div>
 
@@ -69,13 +71,13 @@ const ResetPassword = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-              <span className="flex-1">This reset link is invalid. Please request a new one.</span>
+              <span className="flex-1">{t('invalidResetLink')}</span>
             </div>
             <Link
               to="/forgot-password"
               className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2"
             >
-              Request a new link
+              {t('requestNewLink')}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -90,7 +92,7 @@ const ResetPassword = () => {
                     <>
                       {' '}
                       <Link to="/forgot-password" className="font-semibold underline">
-                        Request a new link
+                        {t('requestNewLink')}
                       </Link>
                     </>
                   )}
@@ -101,7 +103,7 @@ const ResetPassword = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="reset-password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  New password
+                  {t('newPassword')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -113,7 +115,7 @@ const ResetPassword = () => {
                       setPassword(e.target.value);
                       if (error) setError('');
                     }}
-                    placeholder={`At least ${MIN_LENGTH} characters`}
+                    placeholder={t('atLeastChars', { min: MIN_LENGTH })}
                     autoComplete="new-password"
                     required
                     className={inputClass}
@@ -122,7 +124,7 @@ const ResetPassword = () => {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -139,7 +141,7 @@ const ResetPassword = () => {
 
               <div>
                 <label htmlFor="reset-confirm" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Confirm password
+                  {t('confirmPassword')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -151,7 +153,7 @@ const ResetPassword = () => {
                       setConfirm(e.target.value);
                       if (error) setError('');
                     }}
-                    placeholder="Repeat the new password"
+                    placeholder={t('repeatNewPassword')}
                     autoComplete="new-password"
                     required
                     className={inputClass}
@@ -167,11 +169,11 @@ const ResetPassword = () => {
                 {loading ? (
                   <>
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Saving...</span>
+                    <span>{t('saving')}</span>
                   </>
                 ) : (
                   <>
-                    <span>Reset password</span>
+                    <span>{t('resetPassword')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -186,7 +188,7 @@ const ResetPassword = () => {
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to sign in
+            {t('backToLogin')}
           </Link>
         </div>
       </div>

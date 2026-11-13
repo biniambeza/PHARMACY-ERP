@@ -1,0 +1,79 @@
+{
+  "badge": "ባለብዙ ቅርንጫፍ",
+  "title": "የቅርንጫፍ ዝውውሮች",
+  "subtitle": "በድርጅትዎ ቅርንጫፎች መካከል ክምችት ያንቀሳቅሱ እና የቅርንጫፎችን አፈጻጸም ያወዳድሩ",
+  "newTransfer": "አዲስ ዝውውር",
+  "tabs": { "outgoing": "ወጪ", "incoming": "ገቢ", "overview": "የቅርንጫፎች አጠቃላይ እይታ" },
+  "allStatuses": "ሁሉም ሁኔታዎች",
+  "status": { "draft": "ረቂቅ", "in_transit": "በጉዞ ላይ", "received": "ደርሷል", "cancelled": "ተሰርዟል" },
+  "errors": { "load": "ዝውውሮችን መጫን አልተቻለም", "action": "ድርጊቱ አልተሳካም" },
+  "empty": {
+    "outgoing": "ምንም ወጪ ዝውውር የለም",
+    "incoming": "ምንም ገቢ ዝውውር የለም",
+    "outgoingHint": "ክምችት ወደ ሌላ ቅርንጫፍ ለመላክ ዝውውር ይፍጠሩ።",
+    "incomingHint": "ወደዚህ ቅርንጫፍ የተላኩ ዝውውሮች እዚህ ይታያሉ።"
+  },
+  "columns": {
+    "number": "ቁጥር", "toBranch": "ወደ ቅርንጫፍ", "fromBranch": "ከቅርንጫፍ", "units": "ብዛት",
+    "value": "ዋጋ (ወጪ)", "status": "ሁኔታ", "date": "ቀን"
+  },
+  "confirm": {
+    "send": "{{number}} ይላክ? ክምችት ከዚህ ቅርንጫፍ ይቀነሳል።",
+    "receive": "{{number}} ወደዚህ ቅርንጫፍ ይቀበል?",
+    "reject": "{{number}} ውድቅ ይደረግ? ክምችቱ ወደ ላኪው ቅርንጫፍ ይመለሳል። ምክንያት (አማራጭ)፦",
+    "cancel": "{{number}} ይሰረዝ? ምክንያት (አማራጭ)፦",
+    "cancelInTransit": "{{number}} ይሰረዝ? ክምችቱ ወደዚህ ቅርንጫፍ ይመለሳል። ምክንያት (አማራጭ)፦"
+  },
+  "actions": { "send": "ላክ", "receive": "ተቀበል", "reject": "ውድቅ አድርግ", "cancel": "ሰርዝ" },
+  "lines": { "medicine": "መድኃኒት", "batch": "ባች", "expiry": "የሚያበቃበት", "qty": "ብዛት", "unitCost": "የአንዱ ወጪ", "auto": "ራስ-ሰር" },
+  "details": {
+    "from": "ከ፦ {{name}}",
+    "to": "ወደ፦ {{name}}",
+    "createdBy": "የፈጠረው {{name}}",
+    "received": "የደረሰው {{date}}",
+    "receivedBy": "{{date}} በ{{name}} ተቀብሏል",
+    "cancelled": "የተሰረዘው {{date}}",
+    "cancelledBy": "{{date}} በ{{name}} ተሰርዟል"
+  },
+  "create": {
+    "title": "አዲስ የክምችት ዝውውር",
+    "subtitle": "ከዚህ ቅርንጫፍ ወደ ሌላ የድርጅትዎ ቅርንጫፍ ክምችት ይላኩ",
+    "loading": "ቅርንጫፎችን እና ክምችትን በመጫን ላይ...",
+    "noDestinations": "በድርጅትዎ ውስጥ ሌላ ንቁ ቅርንጫፍ የለም። ባለቤቱ ከሰራተኞች ገጽ ቅርንጫፍ መፍጠር ይችላል።",
+    "destination": "መድረሻ ቅርንጫፍ",
+    "notes": "ማስታወሻዎች",
+    "optional": "አማራጭ",
+    "searchPlaceholder": "ለመጨመር በክምችት ያሉ መድኃኒቶችን ይፈልጉ...",
+    "inStock_one": "{{count}} በክምችት",
+    "inStock_other": "{{count}} በክምችት",
+    "noLines": "እስካሁን ምንም መድኃኒት አልተጨመረም።",
+    "usableUnits_one": "{{count}} ጥቅም ላይ የሚውል ክፍል",
+    "usableUnits_other": "{{count}} ጥቅም ላይ የሚውሉ ክፍሎች",
+    "autoBatch": "ራስ-ሰር (መጀመሪያ የሚያበቃው መጀመሪያ)",
+    "batchOption_one": "{{batchNo}} | ያበቃል {{expiry}} | {{count}} ክፍል",
+    "batchOption_other": "{{batchNo}} | ያበቃል {{expiry}} | {{count}} ክፍሎች",
+    "remove": "አስወግድ",
+    "saveDraft": "እንደ ረቂቅ አስቀምጥ",
+    "sendNow": "አሁን ላክ",
+    "errors": {
+      "load": "ቅርንጫፎችን እና ክምችትን መጫን አልተቻለም",
+      "noStock": "ጥቅም ላይ የሚውል ክምችት የለም",
+      "wholeQty": "ሙሉ ቁጥር ብዛት ያስገቡ",
+      "onlyAvailable_one": "የሚገኘው {{count}} ብቻ ነው",
+      "onlyAvailable_other": "የሚገኙት {{count}} ብቻ ናቸው",
+      "destination": "መድረሻ ቅርንጫፍ ይምረጡ",
+      "noLines": "ቢያንስ አንድ መድኃኒት ይጨምሩ",
+      "save": "ዝውውሩን መፍጠር አልተቻለም"
+    }
+  },
+  "overview": {
+    "from": "ከ",
+    "to": "እስከ",
+    "organization": "ድርጅት፦",
+    "chartTitle": "ሽያጭ እና የክምችት ዋጋ በቅርንጫፍ",
+    "sales": "ሽያጭ",
+    "stockValueCost": "የክምችት ዋጋ (ወጪ)",
+    "columns": { "branch": "ቅርንጫፍ", "transactions": "ግብይቶች", "stockValue": "የክምችት ዋጋ", "units": "ብዛት" },
+    "errors": { "load": "የተጠቃለለውን ሪፖርት መጫን አልተቻለም" }
+  }
+}

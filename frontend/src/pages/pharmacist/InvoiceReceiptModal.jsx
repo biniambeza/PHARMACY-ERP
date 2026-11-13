@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Printer, X, Receipt, FileDown } from 'lucide-react';
 import { getMyPharmacy } from '../../api/pharmacyApi';
 import { formatMoney } from '../../utils/format';
@@ -33,8 +34,8 @@ export const invalidateReceiptPharmacy = () => {
   pharmacyCache = null;
 };
 
-const METHOD_LABELS = { cash: 'Cash', card: 'Card', mobile_money: 'Mobile money', credit: 'Credit', store_credit: 'Store credit' };
-const methodLabel = (m) => METHOD_LABELS[m] || String(m || '').replace(/_/g, ' ');
+const METHOD_KEYS = ['cash', 'card', 'mobile_money', 'credit', 'store_credit'];
+const methodLabel = (t, m) => (METHOD_KEYS.includes(m) ? t(`methods.${m}`) : String(m || '').replace(/_/g, ' '));
 
 // Self-contained receipt styles: used for the on-screen preview and the print iframe.
 const RECEIPT_CSS = `
@@ -64,6 +65,7 @@ const pageCss = (width) =>
     : `@page { size: ${width} auto; margin: 2mm; } html, body { width: ${width}; }`;
 
 const ReceiptBody = ({ sale, pharmacy, width }) => {
+  const { t } = useTranslation('receipt');
   const settings = pharmacy?.settings || {};
   const currency = settings.currency;
   const money = (v) => formatMoney(Number(v) || 0, currency);
@@ -72,7 +74,7 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
   const taxLines = sale.taxLines?.length
     ? sale.taxLines
     : Number(sale.tax) > 0
-      ? [{ name: settings.tax?.name || 'Tax', rate: null, amount: sale.tax }]
+      ? [{ name: settings.tax?.name || t('tax'), rate: null, amount: sale.tax }]
       : [];
   const payments = sale.payments?.length
     ? sale.payments.filter((p) => p.status !== 'failed')
@@ -84,40 +86,40 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
       ? Number(sale.change) || 0
       : Math.max(0, paid - (Number(sale.grandTotal) || 0) - (Number(sale.balanceDue) || 0));
   const staffName = sale.staffId?.name || sale.pharmacistId?.name;
-  const customerName = sale.customerId?.name || sale.customer?.name || 'Walk-in Customer';
+  const customerName = sale.customerId?.name || sale.customer?.name || t('walkIn');
   const customerPhone = sale.customerId?.phone || sale.customer?.phone;
-  const returnLabel = sale.returnStatus === 'full' ? 'RETURNED' : sale.returnStatus === 'partial' ? 'PARTIALLY RETURNED' : null;
+  const returnLabel = sale.returnStatus === 'full' ? t('returned') : sale.returnStatus === 'partial' ? t('partiallyReturned') : null;
 
   return (
     <div className={`rcpt w${width}`}>
       <div className="c">
-        <div className="b lg">{pharmacy?.name || 'Pharmacy'}</div>
+        <div className="b lg">{pharmacy?.name || t('pharmacy')}</div>
         {pharmacy?.address && <div className="sm">{pharmacy.address}</div>}
-        {pharmacy?.phone && <div className="sm">Tel: {pharmacy.phone}</div>}
-        {pharmacy?.licenseNo && <div className="sm">License: {pharmacy.licenseNo}</div>}
-        {settings.tax?.registrationNo && <div className="sm">TIN/VAT No: {settings.tax.registrationNo}</div>}
-        <div className="b" style={{ marginTop: 4 }}>{taxLines.length ? 'TAX INVOICE / RECEIPT' : 'RECEIPT'}</div>
-        {sale.voided && <div className="badge void">VOIDED</div>}
+        {pharmacy?.phone && <div className="sm">{t('tel', { value: pharmacy.phone })}</div>}
+        {pharmacy?.licenseNo && <div className="sm">{t('license', { value: pharmacy.licenseNo })}</div>}
+        {settings.tax?.registrationNo && <div className="sm">{t('tinVatNo', { value: settings.tax.registrationNo })}</div>}
+        <div className="b" style={{ marginTop: 4 }}>{taxLines.length ? t('taxInvoiceHeading') : t('receiptHeading')}</div>
+        {sale.voided && <div className="badge void">{t('voided')}</div>}
         {!sale.voided && returnLabel && <div className="badge">{returnLabel}</div>}
       </div>
 
       <div className="sep" />
-      <div className="row"><span>Invoice:</span><span className="b">{sale.invoiceNumber}</span></div>
-      <div className="row"><span>Date:</span><span>{new Date(sale.createdAt).toLocaleString()}</span></div>
-      {staffName && <div className="row"><span>Served by:</span><span>{staffName}</span></div>}
-      <div className="row"><span>Customer:</span><span>{customerName}</span></div>
-      {customerPhone && <div className="row"><span>Phone:</span><span>{customerPhone}</span></div>}
-      {sale.prescription?.number && <div className="row"><span>Rx no:</span><span>{sale.prescription.number}</span></div>}
-      {sale.voided && sale.voidReason && <div className="row"><span>Void reason:</span><span>{sale.voidReason}</span></div>}
+      <div className="row"><span>{t('invoiceLabel')}</span><span className="b">{sale.invoiceNumber}</span></div>
+      <div className="row"><span>{t('dateLabel')}</span><span>{new Date(sale.createdAt).toLocaleString()}</span></div>
+      {staffName && <div className="row"><span>{t('servedBy')}</span><span>{staffName}</span></div>}
+      <div className="row"><span>{t('customerLabel')}</span><span>{customerName}</span></div>
+      {customerPhone && <div className="row"><span>{t('phoneLabel')}</span><span>{customerPhone}</span></div>}
+      {sale.prescription?.number && <div className="row"><span>{t('rxNo')}</span><span>{sale.prescription.number}</span></div>}
+      {sale.voided && sale.voidReason && <div className="row"><span>{t('voidReason')}</span><span>{sale.voidReason}</span></div>}
 
       <div className="sep" />
       <table>
         <thead>
           <tr>
-            <th>Item</th>
-            <th className="r">Qty</th>
-            {!narrow && <th className="r">Price</th>}
-            <th className="r">Total</th>
+            <th>{t('item')}</th>
+            <th className="r">{t('qty')}</th>
+            {!narrow && <th className="r">{t('price')}</th>}
+            <th className="r">{t('total')}</th>
           </tr>
         </thead>
         <tbody>
@@ -129,7 +131,7 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
                 <td>
                   {item.name}
                   <div className="sm muted">
-                    {narrow ? `${qty} x ${money(Number(item.unitPrice) * factor)}` : `Batch ${item.batchNo}`}
+                    {narrow ? `${qty} x ${money(Number(item.unitPrice) * factor)}` : t('batchNo', { batch: item.batchNo })}
                   </div>
                 </td>
                 <td className="r">{qty}</td>
@@ -142,41 +144,41 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
       </table>
 
       <div className="sep" />
-      <div className="row"><span>Subtotal</span><span>{money(sale.subtotal)}</span></div>
-      {Number(sale.discount) > 0 && <div className="row"><span>Discount</span><span>-{money(sale.discount)}</span></div>}
-      {taxLines.map((t, i) => (
+      <div className="row"><span>{t('subtotal')}</span><span>{money(sale.subtotal)}</span></div>
+      {Number(sale.discount) > 0 && <div className="row"><span>{t('discount')}</span><span>-{money(sale.discount)}</span></div>}
+      {taxLines.map((tl, i) => (
         <div className="row" key={i}>
           <span>
-            {t.name}
-            {t.rate !== null && t.rate !== undefined ? ` ${t.rate}%` : ''}
-            {inclusive ? ' (incl.)' : ''}
+            {tl.name}
+            {tl.rate !== null && tl.rate !== undefined ? ` ${tl.rate}%` : ''}
+            {inclusive ? t('incl') : ''}
           </span>
-          <span>{inclusive ? '' : '+'}{money(t.amount)}</span>
+          <span>{inclusive ? '' : '+'}{money(tl.amount)}</span>
         </div>
       ))}
-      <div className="row b lg" style={{ marginTop: 4 }}><span>TOTAL</span><span>{money(sale.grandTotal)}</span></div>
+      <div className="row b lg" style={{ marginTop: 4 }}><span>{t('totalUpper')}</span><span>{money(sale.grandTotal)}</span></div>
 
       <div className="sep" />
       {payments.map((p, i) => (
         <div className="row" key={p._id || i}>
           <span>
-            {methodLabel(p.method)}
+            {methodLabel(t, p.method)}
             {p.reference ? ` (${p.reference})` : ''}
-            {p.status === 'pending' ? ' - pending' : ''}
-            {p.status === 'refunded' ? ' - refunded' : ''}
+            {p.status === 'pending' ? t('pendingSuffix') : ''}
+            {p.status === 'refunded' ? t('refundedSuffix') : ''}
           </span>
           <span>{money(p.amount)}</span>
         </div>
       ))}
       {change > 0 && Number(sale.amountTendered) > 0 && (
-        <div className="row"><span>Cash tendered</span><span>{money(sale.amountTendered)}</span></div>
+        <div className="row"><span>{t('cashTendered')}</span><span>{money(sale.amountTendered)}</span></div>
       )}
-      {change > 0 && <div className="row"><span>Change</span><span>{money(change)}</span></div>}
+      {change > 0 && <div className="row"><span>{t('change')}</span><span>{money(change)}</span></div>}
       {Number(sale.balanceDue) > 0 && (
         <>
-          <div className="row b"><span>Balance due (credit)</span><span>{money(sale.balanceDue)}</span></div>
+          <div className="row b"><span>{t('balanceDueCredit')}</span><span>{money(sale.balanceDue)}</span></div>
           {sale.customerId?.balance !== undefined && (
-            <div className="row sm"><span>Account balance</span><span>{money(sale.customerId.balance)}</span></div>
+            <div className="row sm"><span>{t('accountBalance')}</span><span>{money(sale.customerId.balance)}</span></div>
           )}
         </>
       )}
@@ -186,7 +188,7 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
         {settings.receiptFooter ? (
           settings.receiptFooter.split('\n').map((line, i) => <div key={i}>{line}</div>)
         ) : (
-          <div>Thank you! Please keep this receipt.</div>
+          <div>{t('thankYou')}</div>
         )}
       </div>
     </div>
@@ -194,6 +196,7 @@ const ReceiptBody = ({ sale, pharmacy, width }) => {
 };
 
 const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) => {
+  const { t } = useTranslation(['receipt', 'common']);
   const [loadedPharmacy, setLoadedPharmacy] = useState(pharmacyCache);
   const [widthOverride, setWidthOverride] = useState(null);
   const receiptRef = useRef(null);
@@ -223,7 +226,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(
-      `<!doctype html><html><head><meta charset="utf-8"><title>${sale.invoiceNumber || 'Receipt'}</title>` +
+      `<!doctype html><html><head><meta charset="utf-8"><title>${sale.invoiceNumber || t('receipt')}</title>` +
         `<style>${RECEIPT_CSS} ${pageCss(width)} body { margin: 0; background: #fff; }</style></head>` +
         `<body>${html}</body></html>`
     );
@@ -241,36 +244,36 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
     const currency = pharmacy?.settings?.currency;
     const money = (v) => formatMoney(Number(v) || 0, currency);
     const summary = [
-      ['Invoice', sale.invoiceNumber],
-      ['Date', new Date(sale.createdAt).toLocaleString()],
-      ['Customer', sale.customerId?.name || sale.customer?.name || 'Walk-in Customer'],
-      ['Subtotal', money(sale.subtotal)],
-      ...(Number(sale.discount) > 0 ? [['Discount', `-${money(sale.discount)}`]] : []),
+      [t('invoice'), sale.invoiceNumber],
+      [t('date'), new Date(sale.createdAt).toLocaleString()],
+      [t('customer'), sale.customerId?.name || sale.customer?.name || t('walkIn')],
+      [t('subtotal'), money(sale.subtotal)],
+      ...(Number(sale.discount) > 0 ? [[t('discount'), `-${money(sale.discount)}`]] : []),
       ...(sale.taxLines?.length
-        ? sale.taxLines.map((t) => [`${t.name} ${t.rate}%`, money(t.amount)])
+        ? sale.taxLines.map((tl) => [`${tl.name} ${tl.rate}%`, money(tl.amount)])
         : Number(sale.tax) > 0
-          ? [['Tax', money(sale.tax)]]
+          ? [[t('tax'), money(sale.tax)]]
           : []),
-      ['Total', money(sale.grandTotal)],
-      ...(Number(sale.balanceDue) > 0 ? [['Balance due', money(sale.balanceDue)]] : []),
-      ...(sale.voided ? [['Status', 'VOIDED']] : sale.returnStatus && sale.returnStatus !== 'none' ? [['Status', `Returned (${sale.returnStatus})`]] : []),
+      [t('total'), money(sale.grandTotal)],
+      ...(Number(sale.balanceDue) > 0 ? [[t('balanceDue'), money(sale.balanceDue)]] : []),
+      ...(sale.voided ? [[t('status'), t('voided')]] : sale.returnStatus && sale.returnStatus !== 'none' ? [[t('status'), t('returnedStatus', { status: sale.returnStatus })]] : []),
     ];
     exportPDF({
-      title: `Invoice ${sale.invoiceNumber}`,
+      title: t('pdfTitle', { number: sale.invoiceNumber }),
       filename: `invoice-${sale.invoiceNumber}`,
       orientation: 'portrait',
       meta: {
-        pharmacy: [pharmacy?.name, pharmacy?.address, pharmacy?.settings?.tax?.registrationNo ? `TIN/VAT: ${pharmacy.settings.tax.registrationNo}` : null]
+        pharmacy: [pharmacy?.name, pharmacy?.address, pharmacy?.settings?.tax?.registrationNo ? t('tinVat', { value: pharmacy.settings.tax.registrationNo }) : null]
           .filter(Boolean)
           .join(' | '),
         summary,
       },
       columns: [
-        { key: 'name', header: 'Item' },
-        { key: 'batchNo', header: 'Batch' },
-        { key: 'quantity', header: 'Qty', align: 'right' },
-        { key: 'unitPrice', header: 'Unit price', align: 'right', format: (v) => money(v) },
-        { key: 'subtotal', header: 'Total', align: 'right', format: (v) => money(v) },
+        { key: 'name', header: t('item') },
+        { key: 'batchNo', header: t('batch') },
+        { key: 'quantity', header: t('qty'), align: 'right' },
+        { key: 'unitPrice', header: t('unitPrice'), align: 'right', format: (v) => money(v) },
+        { key: 'subtotal', header: t('total'), align: 'right', format: (v) => money(v) },
       ],
       rows: sale.items || [],
     });
@@ -286,13 +289,13 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
               <Receipt className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Receipt & Tax Invoice</h2>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Preview of the printed receipt</p>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">{t('title')}</h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('subtitle')}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -300,7 +303,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
         </div>
 
         <div className="flex items-center justify-between mb-3 text-xs">
-          <span className="text-slate-500 dark:text-slate-400">Paper</span>
+          <span className="text-slate-500 dark:text-slate-400">{t('paper')}</span>
           <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
             {['58mm', '80mm', 'A4'].map((w) => (
               <button
@@ -335,7 +338,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
             className="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1.5"
           >
             <FileDown className="w-3.5 h-3.5" />
-            <span>PDF</span>
+            <span>{t('pdf')}</span>
           </button>
           <button
             type="button"
@@ -343,14 +346,14 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
             className="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1.5"
           >
             <Printer className="w-3.5 h-3.5" />
-            <span>Print Receipt</span>
+            <span>{t('printReceipt')}</span>
           </button>
           <button
             type="button"
             onClick={onClose}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer"
           >
-            Done / Next Sale
+            {t('doneNextSale')}
           </button>
         </div>
       </div>

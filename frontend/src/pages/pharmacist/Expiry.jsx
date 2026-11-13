@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from 'lucide-react';
+import { useTranslation, Trans } from 'react-i18next';
 import { getExpiryOverview } from '../../api/notificationApi';
 import { formatMoney, formatDate } from '../../utils/format';
 
@@ -23,12 +24,6 @@ const BUCKETS = [
   { key: 'd90', icon: Hourglass, accent: 'text-sky-600 dark:text-sky-400', ring: 'ring-sky-500', chip: 'bg-sky-50 dark:bg-sky-950/40' },
 ];
 
-const SOURCE_LABELS = {
-  purchase_order: 'From PO',
-  preferred_supplier: 'Preferred supplier',
-  unknown: 'Untraced',
-};
-
 const card =
   'bg-white dark:bg-[#161c26] border border-slate-100/90 dark:border-slate-800/80 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)]';
 
@@ -37,12 +32,13 @@ const monthLabel = (key) => {
   return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
 };
 
-const daysLabel = (item) => {
-  if (item.daysLeft <= 0) return item.daysLeft === 0 ? 'Today' : `${Math.abs(item.daysLeft)}d ago`;
-  return `${item.daysLeft}d left`;
+const daysLabel = (t, item) => {
+  if (item.daysLeft <= 0) return item.daysLeft === 0 ? t('days.today') : t('days.ago', { count: Math.abs(item.daysLeft) });
+  return t('days.left', { count: item.daysLeft });
 };
 
 const Expiry = () => {
+  const { t } = useTranslation('expiry');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,11 +52,11 @@ const Expiry = () => {
       const res = await getExpiryOverview();
       setData(res);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load expiry overview');
+      setError(err.response?.data?.message || t('errors.load'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -84,14 +80,13 @@ const Expiry = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-            Expiry Management
+            {t('badge')}
           </span>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Expiry Dashboard
+            {t('title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Expired and soon-to-expire stock, write-offs and supplier returns. Expired batches are removed from sale
-            automatically every night.
+            {t('subtitle')}
           </p>
         </div>
         <button
@@ -100,7 +95,7 @@ const Expiry = () => {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#161c26] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer self-start sm:self-auto"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t('common:buttons.refresh')}
         </button>
       </div>
 
@@ -132,22 +127,22 @@ const Expiry = () => {
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{info.label}</span>
+                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">{t(`buckets.${b.key}`, { defaultValue: info.label })}</span>
                     <span className={`w-8 h-8 rounded-xl flex items-center justify-center ${b.chip}`}>
                       <Icon className={`w-4 h-4 ${b.accent}`} />
                     </span>
                   </div>
                   <p className={`text-2xl font-bold mt-2 ${b.accent}`}>{info.count}</p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    batches, {info.quantity.toLocaleString()} units
+                    {t('bucketSummary', { count: info.count, units: info.quantity.toLocaleString() })}
                   </p>
                   <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-[11px]">
                     <div>
-                      <p className="text-slate-400">At cost</p>
+                      <p className="text-slate-400">{t('atCost')}</p>
                       <p className="font-semibold text-slate-800 dark:text-slate-100">{money(info.costValue)}</p>
                     </div>
                     <div>
-                      <p className="text-slate-400">At retail</p>
+                      <p className="text-slate-400">{t('atRetail')}</p>
                       <p className="font-semibold text-slate-800 dark:text-slate-100">{money(info.retailValue)}</p>
                     </div>
                   </div>
@@ -160,23 +155,23 @@ const Expiry = () => {
           <div className={`${card} overflow-hidden`}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 dark:text-white">{bucket?.label} batches</h2>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Sorted by expiry date</p>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">{t('bucketBatches', { label: t(`buckets.${activeBucket}`, { defaultValue: bucket?.label }) })}</h2>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('sortedByExpiry')}</p>
               </div>
             </div>
             {!bucket?.items?.length ? (
-              <p className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">No batches in this group.</p>
+              <p className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">{t('noBatches')}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-slate-50 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400">
                     <tr>
-                      <th className="text-left font-semibold px-5 py-2.5">Medicine</th>
-                      <th className="text-left font-semibold px-3 py-2.5">Batch</th>
-                      <th className="text-left font-semibold px-3 py-2.5">Expiry</th>
-                      <th className="text-right font-semibold px-3 py-2.5">Qty</th>
-                      <th className="text-right font-semibold px-3 py-2.5">Cost value</th>
-                      <th className="text-right font-semibold px-5 py-2.5">Retail value</th>
+                      <th className="text-left font-semibold px-5 py-2.5">{t('table.medicine')}</th>
+                      <th className="text-left font-semibold px-3 py-2.5">{t('table.batch')}</th>
+                      <th className="text-left font-semibold px-3 py-2.5">{t('table.expiry')}</th>
+                      <th className="text-right font-semibold px-3 py-2.5">{t('table.qty')}</th>
+                      <th className="text-right font-semibold px-3 py-2.5">{t('table.costValue')}</th>
+                      <th className="text-right font-semibold px-5 py-2.5">{t('table.retailValue')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -190,7 +185,7 @@ const Expiry = () => {
                         <td className="px-3 py-2.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
                           {formatDate(item.expiryDate)}
                           <span className={`ml-2 text-[10px] font-semibold ${item.daysLeft <= 0 ? 'text-rose-500' : 'text-amber-500'}`}>
-                            {daysLabel(item)}
+                            {daysLabel(t, item)}
                           </span>
                         </td>
                         <td className="px-3 py-2.5 text-right text-slate-700 dark:text-slate-200">{item.quantity}</td>
@@ -211,12 +206,12 @@ const Expiry = () => {
                 <div>
                   <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <TrendingDown className="w-4 h-4 text-rose-500" />
-                    Write-offs per month
+                    {t('writeOffs.title')}
                   </h2>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Expired stock at cost, last 12 months</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('writeOffs.subtitle')}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] text-slate-400">Total</p>
+                  <p className="text-[11px] text-slate-400">{t('common:labels.total')}</p>
                   <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{money(totalWriteOff)}</p>
                 </div>
               </div>
@@ -228,7 +223,7 @@ const Expiry = () => {
                       <div
                         className="h-full bg-rose-400/80 dark:bg-rose-500/70 rounded-md"
                         style={{ width: `${(w.costValue / maxWriteOff) * 100}%` }}
-                        title={`${w.quantity} units, retail ${money(w.retailValue)}`}
+                        title={t('writeOffs.barTitle', { count: w.quantity, retail: money(w.retailValue) })}
                       />
                     </div>
                     <span className="w-24 shrink-0 text-right font-medium text-slate-700 dark:text-slate-200">
@@ -238,7 +233,12 @@ const Expiry = () => {
                 ))}
               </div>
               <p className="mt-4 text-[11px] text-slate-500 dark:text-slate-400">
-                Stock at risk in the next 90 days: <span className="font-semibold text-amber-600 dark:text-amber-400">{money(atRisk)}</span> at cost.
+                <Trans
+                  t={t}
+                  i18nKey="writeOffs.atRisk"
+                  values={{ amount: money(atRisk) }}
+                  components={{ b: <span className="font-semibold text-amber-600 dark:text-amber-400" /> }}
+                />
               </p>
             </div>
 
@@ -246,14 +246,13 @@ const Expiry = () => {
             <div className={`${card} p-5 lg:col-span-3`}>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Truck className="w-4 h-4 text-emerald-500" />
-                Return to supplier
+                {t('returns.title')}
               </h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Expired and near-expiry batches grouped by the supplier that delivered them (traced from purchase
-                orders, otherwise the medicine&apos;s preferred supplier).
+                {t('returns.subtitle')}
               </p>
               {!data.returnToSupplier.length ? (
-                <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">Nothing to return.</p>
+                <p className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">{t('returns.empty')}</p>
               ) : (
                 <div className="mt-4 space-y-2">
                   {data.returnToSupplier.map((g) => {
@@ -277,7 +276,7 @@ const Expiry = () => {
                             </p>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap gap-x-3">
                               <span>
-                                {g.count} batch{g.count === 1 ? '' : 'es'}, {g.quantity} units
+                                {t('returns.groupSummary', { count: g.count, units: g.quantity })}
                               </span>
                               {g.phone && (
                                 <span className="inline-flex items-center gap-1">
@@ -305,11 +304,11 @@ const Expiry = () => {
                                     <td className="px-2 py-2 font-mono text-slate-500">{item.batchNo}</td>
                                     <td className="px-2 py-2 text-slate-500 whitespace-nowrap">
                                       {formatDate(item.expiryDate)}{' '}
-                                      <span className={item.daysLeft <= 0 ? 'text-rose-500' : 'text-amber-500'}>({daysLabel(item)})</span>
+                                      <span className={item.daysLeft <= 0 ? 'text-rose-500' : 'text-amber-500'}>({daysLabel(t, item)})</span>
                                     </td>
                                     <td className="px-2 py-2 text-right text-slate-600 dark:text-slate-300">{item.quantity}</td>
                                     <td className="px-2 py-2 text-slate-400 whitespace-nowrap">
-                                      {item.poNumber || SOURCE_LABELS[item.supplierSource]}
+                                      {item.poNumber || (item.supplierSource ? t(`sources.${item.supplierSource}`, { defaultValue: '' }) : '')}
                                     </td>
                                     <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-200">{money(item.costValue)}</td>
                                   </tr>
@@ -329,7 +328,7 @@ const Expiry = () => {
       ) : (
         <div className={`${card} p-12 text-center`}>
           <CalendarClock className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">No data available.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{t('noData')}</p>
         </div>
       )}
     </div>

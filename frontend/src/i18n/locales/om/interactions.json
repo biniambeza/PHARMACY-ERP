@@ -1,0 +1,29 @@
+{
+  "badge": "Kilinikaa",
+  "title": "Seerota Walqunnamtii Qorichaa",
+  "subtitle": "Cimdii wantoota jeneerikii POS irratti qoratamani. Qorichoonni maqaa jeneerikii isaanii (makaan “,” ykn “+” irratti addaan baafama) fi maqaa daldalaatiin walsimu.",
+  "filterPlaceholder": "Seerota calali...",
+  "customTitle": "Seerota faarmaasii keessanii ({{count}})",
+  "globalTitle": "Seerota jalqabaa ijaaraman ({{count}}, dubbisuuf qofa)",
+  "noRules": "Seerri hin jiru",
+  "builtInTitle": "Seera ijaarame (dubbisuuf qofa)",
+  "editRule": "Seera gulaali",
+  "deleteRule": "Seera haqi",
+  "confirmDelete": "Seera {{a}} + {{b}} haquu?",
+  "fields": { "substanceA": "Wanta A", "substanceB": "Wanta B", "severity": "Cimina", "description": "Ibsa" },
+  "placeholders": { "substanceA": "fkn. warfarin", "substanceB": "fkn. aspirin" },
+  "severity": { "minor": "xiqqaa", "moderate": "giddugaleessa", "major": "guddaa", "contraindicated": "dhorkamaa" },
+  "errors": {
+    "load": "Seerota fe'uun hin danda'amne",
+    "bothSubstances": "Wantoota lamaanuu galchi (maqaa jeneerikii).",
+    "save": "Seera olkaa'uun hin danda'amne",
+    "delete": "Seera haquun hin danda'amne"
+  },
+  "checkFailed": "Walqunnamtii qorachuun hin danda'amne",
+  "warnings": {
+    "checking": "Walqunnamtii qorachaa jira...",
+    "allergy": "Alarjii: {{medicine}} — dhukkubsataan {{substance}}f alarjii qaba",
+    "reaction": "Deebii qaamaa: {{reaction}}",
+    "disclaimer": "Akeekkachiisni tarree jalqabaa fi seerota faarmaasii keessan irraa dhufa; murtee ogummaa bakka hin bu'u."
+  }
+}

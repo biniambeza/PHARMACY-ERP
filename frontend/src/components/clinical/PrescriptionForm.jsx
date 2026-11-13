@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Plus, Trash2, Upload, FileText, AlertCircle, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { createPrescription, MAX_RX_IMAGE_BYTES, RX_IMAGE_TYPES } from '../../api/clinicalApi';
 import { getMedicines } from '../../api/medicineApi';
 import { inputCls, labelCls, primaryBtn, secondaryBtn, errMsg, readFileAsDataUrl } from './ui';
@@ -11,6 +12,7 @@ const emptyItem = () => ({
 
 // Medicine name input with catalog suggestions; free text is allowed.
 const MedicineInput = ({ value, onSelect, onText }) => {
+  const { t } = useTranslation('patients');
   const [results, setResults] = useState([]);
   const [open, setOpen] = useState(false);
   const boxRef = useRef(null);
@@ -18,7 +20,7 @@ const MedicineInput = ({ value, onSelect, onText }) => {
   useEffect(() => {
     if (!open || !value || value.length < 2) return undefined;
     let cancelled = false;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const data = await getMedicines({ search: value, page: 1, limit: 8 });
         if (!cancelled) setResults(data.medicines || []);
@@ -28,7 +30,7 @@ const MedicineInput = ({ value, onSelect, onText }) => {
     }, 250);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [value, open]);
 
@@ -45,7 +47,7 @@ const MedicineInput = ({ value, onSelect, onText }) => {
       <input
         className={inputCls}
         value={value}
-        placeholder="Medicine"
+        placeholder={t('rx.medicine')}
         onFocus={() => setOpen(true)}
         onChange={(e) => {
           onText(e.target.value);
@@ -65,7 +67,7 @@ const MedicineInput = ({ value, onSelect, onText }) => {
               className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer text-slate-800 dark:text-slate-100"
             >
               {m.name} {m.strength && <span className="text-slate-400">{m.strength}</span>}
-              {m.isControlled && <span className="ml-1 text-[10px] font-bold text-rose-600">CONTROLLED</span>}
+              {m.isControlled && <span className="ml-1 text-[10px] font-bold text-rose-600">{t('rx.controlledTag')}</span>}
             </button>
           ))}
         </div>
@@ -84,6 +86,7 @@ const MedicineInput = ({ value, onSelect, onText }) => {
  * Needs the `prescription:manage` permission.
  */
 const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
+  const { t } = useTranslation('patients');
   const [form, setForm] = useState({
     externalNumber: '', prescriberName: '', prescriberLicense: '', facility: '',
     issueDate: today(), expiryDate: '', notes: '',
@@ -105,20 +108,20 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
     e.target.value = '';
     if (!f) return;
     setError('');
-    if (!RX_IMAGE_TYPES.includes(f.type)) return setError('Upload a PNG, JPEG, GIF, WebP image or a PDF.');
-    if (f.size > MAX_RX_IMAGE_BYTES) return setError('The file is too large (max 700KB). Try a smaller photo.');
+    if (!RX_IMAGE_TYPES.includes(f.type)) return setError(t('rx.errors.fileType'));
+    if (f.size > MAX_RX_IMAGE_BYTES) return setError(t('rx.errors.fileTooLarge'));
     try {
       setFile({ dataUrl: await readFileAsDataUrl(f), name: f.name, type: f.type });
     } catch {
-      setError('Could not read the file.');
+      setError(t('rx.errors.fileRead'));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!patientId) return setError('Select a patient first.');
-    if (!form.prescriberName.trim()) return setError('Prescriber name is required.');
+    if (!patientId) return setError(t('rx.errors.noPatient'));
+    if (!form.prescriberName.trim()) return setError(t('rx.errors.prescriberRequired'));
     const cleanItems = items
       .filter((it) => it.medicineId || it.name.trim())
       .map((it) => ({
@@ -141,7 +144,7 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
       });
       onCreated?.(res.prescription);
     } catch (err) {
-      setError(errMsg(err, 'Failed to save prescription'));
+      setError(errMsg(err, t('rx.errors.saveFailed')));
     } finally {
       setSaving(false);
     }
@@ -157,40 +160,40 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className={labelCls}>Prescriber name *</label>
+          <label className={labelCls}>{t('rx.prescriberName')} *</label>
           <input className={inputCls} value={form.prescriberName} onChange={set('prescriberName')} />
         </div>
         <div>
-          <label className={labelCls}>Prescriber license</label>
+          <label className={labelCls}>{t('rx.prescriberLicense')}</label>
           <input className={inputCls} value={form.prescriberLicense} onChange={set('prescriberLicense')} />
         </div>
         <div>
-          <label className={labelCls}>Facility</label>
+          <label className={labelCls}>{t('rx.facility')}</label>
           <input className={inputCls} value={form.facility} onChange={set('facility')} />
         </div>
         <div>
-          <label className={labelCls}>Paper Rx number</label>
+          <label className={labelCls}>{t('rx.paperNumber')}</label>
           <input className={inputCls} value={form.externalNumber} onChange={set('externalNumber')} />
         </div>
         <div>
-          <label className={labelCls}>Issue date *</label>
+          <label className={labelCls}>{t('rx.issueDate')} *</label>
           <input type="date" className={inputCls} value={form.issueDate} onChange={set('issueDate')} />
         </div>
         <div>
-          <label className={labelCls}>Expiry date</label>
+          <label className={labelCls}>{t('rx.expiryDate')}</label>
           <input type="date" className={inputCls} value={form.expiryDate} onChange={set('expiryDate')} />
         </div>
       </div>
 
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className={`${labelCls} mb-0`}>Prescribed items</label>
+          <label className={`${labelCls} mb-0`}>{t('rx.items')}</label>
           <button
             type="button"
             onClick={() => setItems((l) => [...l, emptyItem()])}
             className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" /> Add item
+            <Plus className="w-3.5 h-3.5" /> {t('rx.addItem')}
           </button>
         </div>
         <div className="space-y-2">
@@ -203,16 +206,16 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
                   onSelect={(m) => setItem(i, { name: m.name, medicineId: m._id })}
                 />
               </div>
-              <input className={`${inputCls} sm:col-span-2`} placeholder="Dose" value={it.dose} onChange={(e) => setItem(i, { dose: e.target.value })} />
-              <input className={`${inputCls} sm:col-span-2`} placeholder="Frequency" value={it.frequency} onChange={(e) => setItem(i, { frequency: e.target.value })} />
-              <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder="Days" title="Duration (days)" value={it.durationDays} onChange={(e) => setItem(i, { durationDays: e.target.value })} />
-              <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder="Qty" title="Quantity per fill (base units)" value={it.quantityPrescribed} onChange={(e) => setItem(i, { quantityPrescribed: e.target.value })} />
-              <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder="Refills" title="Refills allowed" value={it.refillsAllowed} onChange={(e) => setItem(i, { refillsAllowed: e.target.value })} />
+              <input className={`${inputCls} sm:col-span-2`} placeholder={t('rx.dose')} value={it.dose} onChange={(e) => setItem(i, { dose: e.target.value })} />
+              <input className={`${inputCls} sm:col-span-2`} placeholder={t('rx.frequency')} value={it.frequency} onChange={(e) => setItem(i, { frequency: e.target.value })} />
+              <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder={t('rx.days')} title={t('rx.durationTitle')} value={it.durationDays} onChange={(e) => setItem(i, { durationDays: e.target.value })} />
+              <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder={t('rx.qty')} title={t('rx.qtyTitle')} value={it.quantityPrescribed} onChange={(e) => setItem(i, { quantityPrescribed: e.target.value })} />
+              <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder={t('rx.refills')} title={t('rx.refillsTitle')} value={it.refillsAllowed} onChange={(e) => setItem(i, { refillsAllowed: e.target.value })} />
               <button
                 type="button"
                 onClick={() => setItems((l) => (l.length > 1 ? l.filter((_, idx) => idx !== i) : [emptyItem()]))}
                 className="sm:col-span-1 p-1.5 text-slate-400 hover:text-rose-600 cursor-pointer justify-self-end"
-                title="Remove item"
+                title={t('rx.removeItem')}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -223,35 +226,35 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className={labelCls}>Scanned prescription (image or PDF, max 700KB)</label>
+          <label className={labelCls}>{t('rx.scanLabel')}</label>
           {file ? (
             <div className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
               {file.type === 'application/pdf' ? (
                 <FileText className="w-8 h-8 text-slate-400" />
               ) : (
-                <img src={file.dataUrl} alt="Prescription preview" className="w-10 h-10 object-cover rounded-lg" />
+                <img src={file.dataUrl} alt={t('rx.previewAlt')} className="w-10 h-10 object-cover rounded-lg" />
               )}
               <span className="text-xs text-slate-700 dark:text-slate-200 truncate flex-1">{file.name}</span>
-              <button type="button" onClick={() => setFile(null)} className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer">
+              <button type="button" onClick={() => setFile(null)} aria-label={t('rx.removeFile')} className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
           ) : (
             <label className="flex items-center justify-center gap-2 p-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-xs text-slate-500 hover:border-emerald-500 hover:text-emerald-600 cursor-pointer">
-              <Upload className="w-4 h-4" /> Upload scan
+              <Upload className="w-4 h-4" /> {t('rx.uploadScan')}
               <input type="file" accept={RX_IMAGE_TYPES.join(',')} className="hidden" onChange={handleFile} />
             </label>
           )}
         </div>
         <div>
-          <label className={labelCls}>Notes</label>
+          <label className={labelCls}>{t('fields.notes')}</label>
           <textarea rows={2} className={inputCls} value={form.notes} onChange={set('notes')} />
         </div>
       </div>
 
       <div className="flex justify-end gap-2">
-        {onCancel && <button type="button" onClick={onCancel} className={secondaryBtn}>Cancel</button>}
-        <button type="submit" disabled={saving} className={primaryBtn}>{saving ? 'Saving...' : 'Save Prescription'}</button>
+        {onCancel && <button type="button" onClick={onCancel} className={secondaryBtn}>{t('common:buttons.cancel')}</button>}
+        <button type="submit" disabled={saving} className={primaryBtn}>{saving ? t('saving') : t('rx.save')}</button>
       </div>
     </form>
   );

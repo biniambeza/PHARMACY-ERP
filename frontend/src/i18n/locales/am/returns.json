@@ -1,0 +1,90 @@
+{
+  "errors": {
+    "load": "ተመላሾችን መጫን አልተሳካም"
+  },
+  "page": {
+    "badge": "ተመላሽ እና ገንዘብ መመለስ",
+    "title": "የሽያጭ ተመላሾች",
+    "subtitle": "የተከናወኑ ተመላሾችን ይገምግሙ እና የክሬዲት ማስታወሻዎችን እንደገና ያትሙ። አዲስ ተመላሽ ከሽያጭ ታሪክ ገጽ ይጀምሩ።",
+    "salesHistory": "የሽያጭ ታሪክ",
+    "searchPlaceholder": "በተመላሽ ቁጥር፣ በደረሰኝ ቁጥር ወይም በደንበኛ ይፈልጉ...",
+    "loading": "ተመላሾች በመጫን ላይ...",
+    "noMatch": "የሚዛመድ ተመላሽ የለም",
+    "none": "እስካሁን ምንም ተመላሽ አልተመዘገበም",
+    "discarded": "ተወግዷል",
+    "pagination_one": "ገጽ {{page}} ከ {{pages}} · {{count}} ተመላሽ",
+    "pagination_other": "ገጽ {{page}} ከ {{pages}} · {{count}} ተመላሾች"
+  },
+  "table": {
+    "returnNo": "የተመላሽ ቁጥር",
+    "invoice": "ደረሰኝ",
+    "items": "ዕቃዎች",
+    "reason": "ምክንያት",
+    "processedBy": "ያከናወነው",
+    "refund": "ተመላሽ ገንዘብ"
+  },
+  "methods": {
+    "cash": "ጥሬ ገንዘብ",
+    "card": "ካርድ",
+    "mobile_money": "የሞባይል ገንዘብ",
+    "credit": "የዱቤ ሂሳብ",
+    "store_credit": "የሱቅ ክሬዲት"
+  },
+  "reasons": {
+    "changedMind": "ደንበኛው ሃሳቡን ቀይሯል",
+    "wrongItem": "የተሳሳተ ዕቃ ተሰጥቷል",
+    "damaged": "የተበላሸ / ጉድለት ያለበት",
+    "expired": "ጊዜው ያለፈበት ምርት",
+    "adverse": "የጎንዮሽ ጉዳት",
+    "other": "ሌላ..."
+  },
+  "creditNote": {
+    "title": "የክሬዲት ማስታወሻ",
+    "pharmacy": "መድኃኒት ቤት",
+    "heading": "የክሬዲት ማስታወሻ / የተመላሽ ገንዘብ ደረሰኝ",
+    "number": "የክሬዲት ማስታወሻ ቁጥር",
+    "originalInvoice": "ዋናው ደረሰኝ",
+    "customer": "ደንበኛ",
+    "item": "ዕቃ",
+    "qty": "ብዛት",
+    "batch": "ባች {{batch}}",
+    "restocked": "ወደ ክምችት ተመልሷል",
+    "notRestocked": "ወደ ክምችት አልተመለሰም",
+    "totalRefund": "ጠቅላላ ተመላሽ ገንዘብ",
+    "creditReversed": "ከዱቤ ሂሳብ የተቀነሰ",
+    "refundedVia": "በ{{method}} ተመልሷል",
+    "signature": "የደንበኛ ፊርማ፦"
+  },
+  "modal": {
+    "title": "ዕቃዎችን መልስ",
+    "loading": "የሽያጭ መስመሮች በመጫን ላይ...",
+    "itemBatch": "ዕቃ / ባች",
+    "sold": "የተሸጠ",
+    "left": "የቀረ",
+    "returnQty": "የሚመለስ ብዛት",
+    "disposition": "አወጋገድ",
+    "restock": "ወደ ክምችት መልስ",
+    "discard": "አስወግድ",
+    "refundMethod": "የገንዘብ መመለሻ ዘዴ",
+    "describeReason": "ምክንያቱን ይግለጹ",
+    "restockNote": "ወደ ክምችት የሚመለሱ ዕቃዎች ወደ ተመሳሳይ ባች ይመለሳሉ። ጊዜያቸው ያለፈ ባቾች እና የተወገዱ ዕቃዎች ወደ ክምችት አይመለሱም።",
+    "creditSaleNote": "ለዚህ የዱቤ ሽያጭ፣ ተመላሹ በመጀመሪያ ደንበኛው ያለበትን ዕዳ ይቀንሳል፤ የቀረው ብቻ በመመለሻ ዘዴው ይከፈላል።",
+    "estimatedRefund": "የተገመተ ተመላሽ፦",
+    "submit": "ተመላሹን አከናውን",
+    "errors": {
+      "loadPrevious": "ለዚህ ሽያጭ የቀደሙ ተመላሾችን መጫን አልተቻለም",
+      "reason": "እባክዎ ምክንያት ይስጡ",
+      "selectItem": "ለመመለስ ቢያንስ የአንድ ዕቃ ብዛት ይምረጡ",
+      "failed": "ተመላሹን ማከናወን አልተሳካም"
+    }
+  },
+  "void": {
+    "title": "ሽያጩን ሰርዝ",
+    "description": "መሰረዝ ሙሉውን ሽያጭ ይሰርዛል እና እያንዳንዱን ዕቃ ወደ ባቹ ይመልሳል። ይህ ሊቀለበስ አይችልም።",
+    "placeholder": "ለምሳሌ፦ የተሳሳተ ዕቃ ተስካን ተደርጓል",
+    "errors": {
+      "reason": "እባክዎ ይህን ሽያጭ የሚሰርዙበትን ምክንያት ይስጡ",
+      "failed": "ሽያጩን መሰረዝ አልተሳካም"
+    }
+  }
+}

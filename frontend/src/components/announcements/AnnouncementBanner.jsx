@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Megaphone, AlertTriangle, CheckCircle2, Info, X } from 'lucide-react';
 import { getActiveAnnouncements } from '../../api/announcementApi';
 import { useAuth } from '../../context/AuthContext';
@@ -44,6 +45,7 @@ const STYLES = {
 };
 
 const AnnouncementBanner = () => {
+  const { t } = useTranslation('ui');
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [dismissed, setDismissed] = useState(readDismissed);
@@ -84,7 +86,7 @@ const AnnouncementBanner = () => {
   if (!isTenant || visible.length === 0) return null;
 
   return (
-    <div className="space-y-2 mb-4" role="region" aria-label="Announcements">
+    <div className="space-y-2 mb-4" role="region" aria-label={t('announcements.region')}>
       {visible.map((a) => {
         const style = STYLES[a.severity] || STYLES.info;
         const Icon = style.icon;
@@ -102,8 +104,8 @@ const AnnouncementBanner = () => {
             <button
               type="button"
               onClick={() => dismiss(a)}
-              title="Dismiss"
-              aria-label="Dismiss announcement"
+              title={t('announcements.dismiss')}
+              aria-label={t('announcements.dismissAnnouncement')}
               className="p-1 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer shrink-0"
             >
               <X className="w-3.5 h-3.5" />

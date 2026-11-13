@@ -1,0 +1,63 @@
+{
+  "badge": "የመድኃኒት ቤት መዝገብ",
+  "title": "የሽያጭ እና የደረሰኝ መዝገብ",
+  "subtitle": "የተመዘገቡ ግብይቶችን ይመርምሩ፣ የዕለት ገቢን ይገምግሙ እና የሽያጭ ደረሰኞችን እንደገና ያትሙ",
+  "openPos": "የሽያጭ ተርሚናል ክፈት",
+  "goToPos": "ወደ ሽያጭ ተርሚናል ሂድ",
+  "dismiss": "ዝጋ",
+  "retryLoading": "እንደገና ጫን",
+  "errors": {
+    "loadSales": "የሽያጭ ግብይቶችን መጫን አልተሳካም",
+    "loadLedger": "የመድኃኒት ቤት መዝገቡን መጫን አልተቻለም። እባክዎ የኔትወርክ ግንኙነትዎን ያረጋግጡ።"
+  },
+  "metrics": {
+    "todayRevenue": "የዛሬ ገቢ",
+    "todayRevenueSub": "የዛሬ ሽያጭ",
+    "todayBadge": "ዛሬ",
+    "todayOrders": "የዛሬ ትዕዛዞች",
+    "todayOrdersSub": "የዛሬ የክፍያ ግብይቶች",
+    "ordersBadge": "ትዕዛዞች",
+    "totalRevenue": "ጠቅላላ ገቢ",
+    "totalRevenueSub": "ድምር ጠቅላላ ሂሳብ",
+    "grossBadge": "ጠቅላላ",
+    "totalInvoices": "ጠቅላላ ደረሰኞች",
+    "totalInvoicesSub": "ሁሉም የተመዘገቡ ደረሰኞች",
+    "receiptsBadge": "ደረሰኞች"
+  },
+  "searchPlaceholder": "በደረሰኝ ቁጥር፣ በደንበኛ ስም ወይም ስልክ ይፈልጉ...",
+  "clearSearch": "ፍለጋ አጽዳ",
+  "refreshTitle": "የሽያጭ መዝገቡን አድስ",
+  "loading": "የሽያጭ መዝገቦች በመጫን ላይ...",
+  "empty": {
+    "noMatchTitle": "የሚዛመድ ደረሰኝ አልተገኘም",
+    "noneTitle": "እስካሁን ምንም ሽያጭ አልተመዘገበም",
+    "noMatchText": "የሚፈልጉትን ደረሰኝ ለማግኘት የፍለጋ ቃላትዎን ይቀይሩ።",
+    "noneText": "የመጀመሪያ ሽያጭዎን ለመመዝገብ የገንዘብ ተቀባይ ተርሚናሉን ይጠቀሙ።"
+  },
+  "table": {
+    "invoiceNo": "የደረሰኝ ቁጥር",
+    "dateTime": "ቀን እና ሰዓት",
+    "customer": "ደንበኛ",
+    "itemsSold": "የተሸጡ ዕቃዎች",
+    "payment": "ክፍያ",
+    "grandTotal": "ጠቅላላ ድምር"
+  },
+  "voided": "ተሰርዟል",
+  "returned": "ተመልሷል",
+  "partReturned": "በከፊል ተመልሷል",
+  "na": "የለም",
+  "walkIn": "ተራ ደንበኛ",
+  "itemCount_one": "{{count}} ዕቃ",
+  "itemCount_other": "{{count}} ዕቃዎች",
+  "viewReceipt": "ደረሰኝ ይመልከቱ",
+  "return": "መመለስ",
+  "returnTitle": "ከዚህ ሽያጭ ዕቃዎችን መልስ",
+  "void": "ሰርዝ",
+  "voidTitle": "ይህን ሽያጭ ሰርዝ (በዚያው ቀን ብቻ)",
+  "notices": {
+    "returnRecorded": "ተመላሽ {{number}} ተመዝግቧል። ተመላሽ ገንዘብ {{refund}}",
+    "returnCreditSplit": "({{credit}} ከዱቤ ሂሳብ ተቀንሷል፣ {{due}} የሚከፈል)።",
+    "voidCredit": "{{amount}} ከዱቤ ሂሳብ ተቀንሷል።",
+    "refundDue": "የሚመለስ ገንዘብ፦ {{amount}}።"
+  }
+}

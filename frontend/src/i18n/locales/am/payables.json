@@ -1,0 +1,70 @@
+{
+  "badge": "የሚከፈሉ ሂሳቦች",
+  "title": "ለአቅራቢዎች የሚከፈሉ",
+  "subtitle": "የአቅራቢ ደረሰኞች፣ የመክፈያ ቀኖች እና ክፍያዎች",
+  "recordInvoice": "ደረሰኝ መዝግብ",
+  "totalPayable": "ጠቅላላ የሚከፈል",
+  "overdueAmount": "{{amount}} ጊዜው ያለፈበት",
+  "aging": "ዕድሜ (ከመክፈያ ቀን ያለፉ ቀናት)",
+  "notYetDue": "ገና ጊዜው ያልደረሰ",
+  "bucketDays": "{{range}} ቀናት",
+  "tabs": { "invoices": "ደረሰኞች", "balances": "የአቅራቢ ቀሪ ሂሳቦች", "payments": "ክፍያዎች" },
+  "allSuppliers": "ሁሉም አቅራቢዎች",
+  "filters": { "unpaid": "ያልተከፈለ", "overdue": "ጊዜው ያለፈበት", "paid": "የተከፈለ", "all": "ሁሉም" },
+  "confirmDeleteInvoice": "ደረሰኝ {{invoiceNo}} ይሰረዝ?",
+  "deleteInvoice": "ደረሰኝ ሰርዝ",
+  "pay": "ክፈል",
+  "poRef": "የግዢ ትዕዛዝ {{poNumber}}",
+  "saving": "በማስቀመጥ ላይ...",
+  "days_one": "{{count}} ቀን",
+  "days_other": "{{count}} ቀናት",
+  "errors": {
+    "deleteInvoice": "ደረሰኙን መሰረዝ አልተቻለም",
+    "positiveAmount": "ከዜሮ በላይ መጠን ያስገቡ።"
+  },
+  "empty": {
+    "invoices": "ከዚህ ማጣሪያ ጋር የሚዛመድ ደረሰኝ የለም።",
+    "balances": "ለአቅራቢዎች የሚከፈል ዕዳ የለም።",
+    "payments": "እስካሁን የአቅራቢ ክፍያ የለም።"
+  },
+  "columns": {
+    "invoice": "ደረሰኝ", "supplier": "አቅራቢ", "date": "ቀን", "due": "የመክፈያ ቀን", "amount": "መጠን",
+    "paid": "የተከፈለ", "balance": "ቀሪ", "status": "ሁኔታ", "terms": "የክፍያ ውል", "openInvoices": "ክፍት ደረሰኞች",
+    "nextDue": "ቀጣይ የመክፈያ ቀን", "overdue": "ጊዜው ያለፈበት", "outstanding": "ያልተከፈለ ቀሪ", "payment": "ክፍያ",
+    "method": "ዘዴ", "appliedTo": "የተተገበረበት"
+  },
+  "invoiceStatus": { "open": "ክፍት", "partial": "ከፊል", "paid": "የተከፈለ", "overdue": "ጊዜው ያለፈበት" },
+  "methods": {
+    "bank_transfer": "የባንክ ዝውውር", "cash": "ጥሬ ገንዘብ", "cheque": "ቼክ",
+    "mobile_money": "ሞባይል ገንዘብ", "card": "ካርድ", "other": "ሌላ"
+  },
+  "fields": {
+    "supplier": "አቅራቢ", "invoiceNo": "የደረሰኝ ቁጥር", "amount": "መጠን", "invoiceDate": "የደረሰኝ ቀን",
+    "dueDate": "የመክፈያ ቀን", "notes": "ማስታወሻዎች", "method": "ዘዴ", "reference": "ማጣቀሻ",
+    "paymentDate": "የክፍያ ቀን", "note": "ማስታወሻ"
+  },
+  "invoiceModal": {
+    "title": "የአቅራቢ ደረሰኝ መዝግብ",
+    "subtitle": "ከአቅራቢ የተቀበሉት ሂሳብ",
+    "selectSupplier": "አቅራቢ ይምረጡ...",
+    "dueHint": "የአቅራቢውን የክፍያ ውል ለመጠቀም ባዶ ይተዉት።",
+    "dueHintWithTerms_one": "የአቅራቢውን የክፍያ ውል ለመጠቀም ባዶ ይተዉት ({{count}} ቀን)።",
+    "dueHintWithTerms_other": "የአቅራቢውን የክፍያ ውል ለመጠቀም ባዶ ይተዉት ({{count}} ቀናት)።",
+    "submit": "ደረሰኝ አስቀምጥ",
+    "errors": {
+      "supplier": "አቅራቢ ይምረጡ።",
+      "invoiceNo": "የደረሰኝ ቁጥር ያስፈልጋል።",
+      "save": "ደረሰኙን ማስቀመጥ አልተቻለም"
+    }
+  },
+  "paymentModal": {
+    "title": "ለአቅራቢ ክፈል",
+    "subtitle": "{{supplier}} - ያልተከፈለ {{outstanding}}",
+    "subtitleInvoice": "{{supplier}} - ደረሰኝ {{invoiceNo}} - ያልተከፈለ {{outstanding}}",
+    "referencePlaceholder": "የዝውውር / የቼክ ቁጥር",
+    "allocationInvoice": "መጀመሪያ በዚህ ደረሰኝ ላይ ይተገበራል፤ ቀሪው ጊዜያቸው ቀድሞ ለደረሰ ደረሰኞች ይሄዳል።",
+    "allocationOldest": "መጀመሪያ ጊዜያቸው ቀድሞ ለደረሰ ደረሰኞች ይተገበራል።",
+    "submit": "ክፍያ መዝግብ",
+    "errors": { "save": "ክፍያውን መመዝገብ አልተቻለም" }
+  }
+}

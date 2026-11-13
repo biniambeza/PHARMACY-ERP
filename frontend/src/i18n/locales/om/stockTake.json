@@ -1,0 +1,82 @@
+{
+  "allStock": "Kuusaa hunda",
+  "status": {
+    "draft": "wixinee",
+    "counting": "lakkaa'aa jira",
+    "submitted": "dhiyaateera",
+    "approved": "mirkanaa'eera",
+    "cancelled": "haqameera"
+  },
+  "list": {
+    "badge": "Kuusaa Qaamaa",
+    "title": "Lakkoofsa Kuusaa",
+    "subtitle": "Suuraa kuusaa fudhadhu, baachii hunda lakkaa'i, garaagarummaa ilaali fi sirreeffama hojii irra oolchi",
+    "scope": "Daangaa",
+    "notes": "Yaadannoo",
+    "notesPlaceholder": "fkn. Lakkoofsa dhuma ji'aa, gabatee A-C",
+    "start": "Lakkoofsa jalqabi",
+    "starting": "Jalqabaa jira...",
+    "empty": "Hanga ammaatti lakkoofsi kuusaa hin jiru",
+    "emptyHint": "Gubbaatti lakkoofsa jalqabi",
+    "loadFailed": "Lakkoofsota kuusaa fe'uun hin milkoofne",
+    "startFailed": "Lakkoofsa kuusaa jalqabuun hin milkoofne"
+  },
+  "detail": {
+    "loadFailed": "Lakkoofsa kuusaa fe'uun hin milkoofne",
+    "actionFailed": "Gochi hin milkoofne",
+    "countsInvalid": "Lakkoofsonni lakkoofsa guutuu 0 ykn isaa ol ta'uu qabu.",
+    "saved_one": "Lakkoofsi {{count}} olkaa'ameera",
+    "saved_other": "Lakkoofsonni {{count}} olkaa'amaniiru",
+    "confirmSubmit_one": "Sararri {{count}} hin lakkaa'amne, akkuma jirutti hafa. Ta'us dhiyeessituu?",
+    "confirmSubmit_other": "Sararoonni {{count}} hin lakkaa'amne, akkuma jiranitti hafu. Ta'us dhiyeessituu?",
+    "submitted": "Mirkaneessuuf dhiyaateera",
+    "confirmApprove_one": "Sirreeffama kuusaa {{count}} mirkaneessitee hojii irra oolchituu? Kun deebi'uu hin danda'u.",
+    "confirmApprove_other": "Sirreeffamoota kuusaa {{count}} mirkaneessitee hojii irra oolchituu? Kun deebi'uu hin danda'u.",
+    "approvedNotice": "Mirkanaa'eera: kuusaan sirraa'eera",
+    "confirmCancel": "Lakkoofsa kuusaa kana haqxaa? Lakkoofsonni wabiif ni kuufamu garuu hojii irra hin oolan.",
+    "reopened": "Lakkoofsaaf irra deebi'ee baname",
+    "categoryScope": "Ramaddii: {{category}}",
+    "startedAt": "kan jalqabame {{date}}",
+    "approvedAt": "kan mirkanaa'e {{date}}",
+    "by": "{{name}}'n",
+    "varianceCsv": "CSV Garaagarummaa",
+    "reopen": "Irra deebi'ii bani",
+    "approve": "Mirkaneessi fi hojii irra oolchi",
+    "searchPlaceholder": "Qoricha ykn baachii barbaadi...",
+    "varianceOnly": "Garaagarummaa qofa agarsiisi",
+    "expiredSuffix": "(yeroon isaa darbe)",
+    "countedAria": "Baay'ina lakkaa'ame {{name}} baachii {{batch}}",
+    "noLines": "Sararri walsimu hin jiru.",
+    "footnote": "Yeroo mirkanaa'u garaagarummaan tokkoon tokkoon isaa (kan lakkaa'ame - baay'ina sirnaa jalqabarratti) baay'ina baachii ammaa irratti hojii irra oola, kanaaf gurgurtaan yeroo lakkoofsaa raawwatame ni eegama. Sararoonni hin lakkaa'amne akkuma jiranitti hafu."
+  },
+  "summary": {
+    "counted": "Kan lakkaa'ame",
+    "varianceLines": "Sararoota garaagarummaa qaban",
+    "netVarianceUnits": "Garaagarummaa qulqulluu (yuunitii)",
+    "shortageValue": "Gatii hir'inaa",
+    "netVarianceValue": "Gatii garaagarummaa qulqulluu"
+  },
+  "table": {
+    "medicine": "Qoricha",
+    "batch": "Baachii",
+    "expiry": "Yeroon darbu",
+    "systemQty": "Baay'ina sirnaa",
+    "variance": "Garaagarummaa",
+    "value": "Gatii",
+    "number": "Lakkoofsa",
+    "status": "Haala",
+    "started": "Kan jalqabame",
+    "by": "Eenyuun"
+  },
+  "csv": {
+    "medicine": "Qoricha",
+    "category": "Ramaddii",
+    "batch": "Baachii",
+    "expiry": "Yeroon darbu",
+    "systemQty": "Baay'ina sirnaa",
+    "counted": "Kan lakkaa'ame",
+    "variance": "Garaagarummaa",
+    "unitCost": "Gatii yuunitii",
+    "varianceValue": "Gatii garaagarummaa"
+  }
+}

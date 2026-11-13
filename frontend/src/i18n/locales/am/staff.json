@@ -1,0 +1,57 @@
+{
+  "badge": "ቡድን",
+  "title": "ሠራተኞች እና ሚናዎች",
+  "subtitle": "ወደ {{pharmacy}} ማን መግባት እንደሚችል እና ምን ማድረግ እንደሚችል ያስተዳድሩ",
+  "thisPharmacy": "ይህ ፋርማሲ",
+  "newBranch": "አዲስ ቅርንጫፍ",
+  "addStaff": "ሠራተኛ ጨምር",
+  "roles": { "owner": "ባለቤት", "pharmacist": "ፋርማሲስት", "cashier": "ገንዘብ ተቀባይ", "storekeeper": "የመጋዘን ኃላፊ" },
+  "roleHelp": {
+    "owner": "ሠራተኞችን፣ ቅንብሮችን እና የኦዲት መዝገብን ጨምሮ ሁሉም ነገር",
+    "pharmacist": "መድኃኒት መስጠት፣ የሐኪም ማዘዣዎች፣ ክምችት፣ ግዢ እና ሪፖርቶች",
+    "cashier": "የሽያጭ ቦታ እና የሽያጭ ታሪክ ብቻ",
+    "storekeeper": "ክምችት ማስገባት፣ ማስተካከያዎች፣ የክምችት ቆጠራ እና የግዢ ትዕዛዞች"
+  },
+  "teamMembers": "የቡድን አባላት",
+  "activeOf": "ከ{{total}} {{active}} ንቁ",
+  "noStaff": "እስካሁን ሠራተኛ የለም",
+  "columns": { "name": "ስም", "email": "ኢሜይል", "role": "ሚና", "status": "ሁኔታ" },
+  "you": "(እርስዎ)",
+  "deactivated": "ተሰናክሏል",
+  "deactivate": "አሰናክል",
+  "reactivate": "እንደገና አግብር",
+  "confirmDeactivate": "{{name}}ን ማሰናከል ይፈልጋሉ? ወዲያውኑ ይወጣሉ።",
+  "notices": {
+    "loadFailed": "ሠራተኞችን መጫን አልተቻለም",
+    "passwordTooShort": "ጊዜያዊ የይለፍ ቃል ቢያንስ 8 ቁምፊዎች መሆን አለበት",
+    "added": "{{name}} እንደ {{role}} ተጨምሯል",
+    "createFailed": "የሠራተኛ መለያ መፍጠር አልተቻለም",
+    "roleChanged": "{{name}} አሁን {{role}} ነው",
+    "roleChangeFailed": "ሚናውን መቀየር አልተቻለም",
+    "reactivated": "{{name}} እንደገና ነቅቷል",
+    "deactivated": "{{name}} ተሰናክሏል",
+    "statusFailed": "የሠራተኛውን ሁኔታ ማዘመን አልተቻለም",
+    "branchCreated": "ቅርንጫፍ \"{{name}}\" ተፈጥሯል። ለመክፈት የቅርንጫፍ መቀየሪያውን ይጠቀሙ።",
+    "branchFailed": "ቅርንጫፍ መፍጠር አልተቻለም"
+  },
+  "addModal": {
+    "title": "የሠራተኛ አባል ጨምር",
+    "fullName": "ሙሉ ስም",
+    "email": "ኢሜይል",
+    "tempPassword": "ጊዜያዊ የይለፍ ቃል (ቢያንስ 8 ቁምፊዎች)",
+    "tempPasswordHint": "ለሠራተኛው ያጋሩት፤ በቅንብሮች ውስጥ ሊቀይሩት ይችላሉ።",
+    "role": "ሚና",
+    "saving": "በማስቀመጥ ላይ...",
+    "create": "መለያ ፍጠር"
+  },
+  "branchModal": {
+    "title": "አዲስ ቅርንጫፍ",
+    "name": "የቅርንጫፍ ስም",
+    "address": "አድራሻ",
+    "phone": "ስልክ",
+    "licenseNo": "የፈቃድ ቁጥር",
+    "hint": "የአዲሱ ቅርንጫፍ ባለቤት ይሆናሉ። ሠራተኞች በቅርንጫፍ ይተዳደራሉ።",
+    "creating": "በመፍጠር ላይ...",
+    "create": "ቅርንጫፍ ፍጠር"
+  }
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -20,10 +21,11 @@ import {
 } from 'lucide-react';
 
 const adminNavItems = [
-  { name: 'Command Center', to: '/admin', end: true, icon: Home, badge: 'Hub' },
+  { nameKey: 'layout.navCommandCenter', to: '/admin', end: true, icon: Home, badgeKey: 'layout.navHubBadge' },
 ];
 
 const AdminLayout = () => {
+  const { t } = useTranslation('admin');
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -83,10 +85,10 @@ const AdminLayout = () => {
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate max-w-[115px]">
-                    Admin Portal
+                    {t('layout.portalTitle')}
                   </h1>
                   <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-                    Global Command Center
+                    {t('layout.portalSubtitle')}
                   </p>
                 </div>
               </Link>
@@ -94,7 +96,7 @@ const AdminLayout = () => {
                 {/* Desktop Collapse Toggle */}
                 <button
                   onClick={toggleSidebarCollapse}
-                  title="Minimize Sidebar"
+                  title={t('layout.minimizeSidebar')}
                   className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition cursor-pointer"
                 >
                   <ChevronLeft className="w-4.5 h-4.5" />
@@ -110,7 +112,7 @@ const AdminLayout = () => {
             </>
           ) : (
             <div className="flex items-center justify-center relative w-full">
-              <Link to="/admin" title="Admin Command Center" className="group flex items-center justify-center">
+              <Link to="/admin" title={t('layout.commandCenterTitle')} className="group flex items-center justify-center">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white font-extrabold text-lg shadow-md shadow-emerald-500/25 group-hover:scale-105 transition-transform">
                   AD
                 </div>
@@ -118,7 +120,7 @@ const AdminLayout = () => {
               {/* Expand Toggle floating button on border */}
               <button
                 onClick={toggleSidebarCollapse}
-                title="Expand Sidebar"
+                title={t('layout.expandSidebar')}
                 className="hidden lg:flex absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-[#161c26] border border-slate-200 dark:border-slate-700 shadow-md items-center justify-center text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer z-50 hover:scale-110"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -132,13 +134,15 @@ const AdminLayout = () => {
           <div className="space-y-1">
             {adminNavItems.map((item) => {
               const IconComponent = item.icon;
+              const itemName = t(item.nameKey);
+              const itemBadge = item.badgeKey ? t(item.badgeKey) : null;
               return (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   onClick={() => setMobileOpen(false)}
-                  title={sidebarCollapsed ? item.name : undefined}
+                  title={sidebarCollapsed ? itemName : undefined}
                   className={({ isActive }) =>
                     `group relative flex items-center ${
                       sidebarCollapsed
@@ -165,8 +169,8 @@ const AdminLayout = () => {
 
                       {!sidebarCollapsed ? (
                         <>
-                          <span className="flex-1 truncate">{item.name}</span>
-                          {item.badge && (
+                          <span className="flex-1 truncate">{itemName}</span>
+                          {itemBadge && (
                             <span
                               className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                                 isActive
@@ -174,17 +178,17 @@ const AdminLayout = () => {
                                   : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                               }`}
                             >
-                              {item.badge}
+                              {itemBadge}
                             </span>
                           )}
                         </>
                       ) : (
                         /* Tooltip for collapsed mode */
                         <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 items-center gap-2 border border-slate-700/60">
-                          <span>{item.name}</span>
-                          {item.badge && (
+                          <span>{itemName}</span>
+                          {itemBadge && (
                             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
-                              {item.badge}
+                              {itemBadge}
                             </span>
                           )}
                         </div>
@@ -201,7 +205,7 @@ const AdminLayout = () => {
             {!sidebarCollapsed ? (
               <>
                 <div className="px-3 pb-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
-                  Quick Actions
+                  {t('layout.quickActions')}
                 </div>
                 <div className="space-y-1.5">
                   <button
@@ -211,7 +215,7 @@ const AdminLayout = () => {
                     <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
                       <PlusCircle className="w-3.5 h-3.5" />
                     </span>
-                    <span className="truncate">Provision Pharmacy</span>
+                    <span className="truncate">{t('layout.provisionPharmacy')}</span>
                   </button>
                   <button
                     onClick={handleSyncStats}
@@ -220,7 +224,7 @@ const AdminLayout = () => {
                     <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
                       <RefreshCw className="w-3.5 h-3.5" />
                     </span>
-                    <span className="truncate">Sync Platform Stats</span>
+                    <span className="truncate">{t('layout.syncStats')}</span>
                   </button>
                 </div>
               </>
@@ -228,22 +232,22 @@ const AdminLayout = () => {
               <div className="space-y-1.5 w-full flex flex-col items-center">
                 <button
                   onClick={handleOpenCreateModal}
-                  title="Provision Pharmacy"
+                  title={t('layout.provisionPharmacy')}
                   className="group relative w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] border border-slate-200/70 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer shadow-2xs"
                 >
                   <PlusCircle className="w-4 h-4" />
                   <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
-                    Provision Pharmacy
+                    {t('layout.provisionPharmacy')}
                   </div>
                 </button>
                 <button
                   onClick={handleSyncStats}
-                  title="Sync Platform Stats"
+                  title={t('layout.syncStats')}
                   className="group relative w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] border border-slate-200/70 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer shadow-2xs"
                 >
                   <RefreshCw className="w-4 h-4" />
                   <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
-                    Sync Platform Stats
+                    {t('layout.syncStats')}
                   </div>
                 </button>
               </div>
@@ -265,16 +269,16 @@ const AdminLayout = () => {
                 ) : (
                   <Sun className="w-4 h-4 text-amber-500" />
                 )}
-                <span>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+                <span>{isDark ? t('layout.darkMode') : t('layout.lightMode')}</span>
               </div>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-white dark:bg-[#161c26] text-slate-500 dark:text-slate-400 font-mono border border-slate-200/60 dark:border-slate-700/60">
-                Toggle
+                {t('layout.toggle')}
               </span>
             </button>
           ) : (
             <button
               onClick={toggleTheme}
-              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={isDark ? t('layout.switchToLight') : t('layout.switchToDark')}
               className="group relative w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 dark:bg-[#1f2635] dark:border-[#2b3548] dark:text-slate-200 transition cursor-pointer shadow-2xs"
             >
               {isDark ? (
@@ -284,7 +288,7 @@ const AdminLayout = () => {
               )}
               {/* Tooltip */}
               <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
-                {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                {isDark ? t('layout.switchToLight') : t('layout.switchToDark')}
               </div>
             </button>
           )}
@@ -298,24 +302,24 @@ const AdminLayout = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                    {user?.name || 'Administrator'}
+                    {user?.name || t('layout.administrator')}
                   </p>
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 capitalize truncate font-semibold">
-                    {user?.role || 'Super Admin'}
+                    {user?.role || t('layout.superAdmin')}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
               <button
                 onClick={() => setPasswordOpen(true)}
-                title="Change Password"
+                title={t('layout.changePassword')}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition cursor-pointer"
               >
                 <KeyRound className="w-4 h-4" />
               </button>
               <button
                 onClick={logout}
-                title="Sign Out"
+                title={t('layout.signOut')}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
@@ -325,26 +329,26 @@ const AdminLayout = () => {
           ) : (
             <div className="flex flex-col items-center gap-2 pt-1">
               <div
-                title={`${user?.name || 'Administrator'} (${user?.role || 'Super Admin'})`}
+                title={`${user?.name || t('layout.administrator')} (${user?.role || t('layout.superAdmin')})`}
                 className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-default"
               >
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
               <button
                 onClick={() => setPasswordOpen(true)}
-                title="Change Password"
+                title={t('layout.changePassword')}
                 className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition cursor-pointer"
               >
                 <KeyRound className="w-4.5 h-4.5" />
               </button>
               <button
                 onClick={logout}
-                title="Sign Out"
+                title={t('layout.signOut')}
                 className="group relative p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition cursor-pointer"
               >
                 <LogOut className="w-4.5 h-4.5" />
                 <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
-                  Sign Out
+                  {t('layout.signOut')}
                 </div>
               </button>
             </div>
@@ -360,7 +364,7 @@ const AdminLayout = () => {
             {/* Desktop Sidebar Toggle Button */}
             <button
               onClick={toggleSidebarCollapse}
-              title={sidebarCollapsed ? 'Expand sidebar' : 'Minimize sidebar'}
+              title={sidebarCollapsed ? t('layout.expandSidebarLower') : t('layout.minimizeSidebarLower')}
               className="hidden lg:flex p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
             >
               {sidebarCollapsed ? (
@@ -386,7 +390,7 @@ const AdminLayout = () => {
                 type="text"
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
-                placeholder="Search tenant pharmacies, license IDs, owners, or emails..."
+                placeholder={t('layout.searchPlaceholder')}
                 className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-full text-xs text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
               <svg
@@ -412,7 +416,7 @@ const AdminLayout = () => {
 
             {/* Notification Bell */}
             <button
-              title="Notifications"
+              title={t('layout.notifications')}
               className="relative p-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -424,7 +428,7 @@ const AdminLayout = () => {
             {/* Quick Dark/Light Toggle */}
             <button
               onClick={toggleTheme}
-              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              title={isDark ? t('layout.switchToLight') : t('layout.switchToDark')}
               className="p-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -444,12 +448,12 @@ const AdminLayout = () => {
               <div className="hidden lg:block text-left">
                 <div className="flex items-center gap-1">
                   <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                    {user?.name || 'Administrator'}
+                    {user?.name || t('layout.administrator')}
                   </span>
                   <span className="text-slate-400 text-[10px]">▼</span>
                 </div>
                 <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block leading-tight capitalize">
-                  {user?.role || 'Super Admin'}
+                  {user?.role || t('layout.superAdmin')}
                 </span>
               </div>
             </div>

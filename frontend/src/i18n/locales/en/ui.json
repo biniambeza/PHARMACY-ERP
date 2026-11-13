@@ -1,0 +1,61 @@
+{
+  "announcements": {
+    "region": "Announcements",
+    "dismiss": "Dismiss",
+    "dismissAnnouncement": "Dismiss announcement"
+  },
+  "branchSwitcher": {
+    "switchBranch": "Switch branch",
+    "branch": "Branch"
+  },
+  "notificationBell": {
+    "title": "Notifications",
+    "ariaUnread": "Notifications ({{n}} unread)",
+    "unread": "{{n}} unread",
+    "markAllRead": "Mark all read",
+    "allCaughtUp": "You're all caught up",
+    "viewAll": "View all notifications",
+    "justNow": "just now",
+    "minutesAgo": "{{n}}m ago",
+    "hoursAgo": "{{n}}h ago",
+    "daysAgo": "{{n}}d ago"
+  },
+  "comingSoon": {
+    "description": "This module is being built and will be available soon.",
+    "heading": "Coming soon",
+    "notAvailable": "{{title}} is not available yet."
+  },
+  "dataTable": {
+    "searchPlaceholder": "Search records...",
+    "emptyMessage": "No records found",
+    "emptySubtext": "Try adjusting your search or filter parameters",
+    "showing": "Showing {{from}} to {{to}} of {{total}} records",
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong rendering this page",
+    "fallback": "An unexpected rendering error occurred.",
+    "reload": "Reload Page",
+    "dashboard": "Dashboard"
+  },
+  "statusBadge": {
+    "active": "Active",
+    "operational": "Operational",
+    "completed": "Completed",
+    "paid": "Paid",
+    "received": "Received",
+    "healthy": "Healthy",
+    "suspended": "Suspended",
+    "cancelled": "Cancelled",
+    "out_of_stock": "Out of Stock",
+    "critical": "Critical (<30d)",
+    "pending": "Pending",
+    "ordered": "Ordered",
+    "low_stock": "Low Stock",
+    "warning": "Warning (30-60d)",
+    "draft": "Draft",
+    "depleted": "Depleted",
+    "status": "Status"
+  }
+}

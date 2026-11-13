@@ -1,0 +1,34 @@
+{
+  "badge": "Alerts Center",
+  "title": "Notifications",
+  "subtitle_one": "Expiry, low stock and purchase order alerts for this branch ({{count}} unread)",
+  "subtitle_other": "Expiry, low stock and purchase order alerts for this branch ({{count}} unread)",
+  "errors": {
+    "load": "Failed to load notifications",
+    "markAll": "Failed to mark notifications as read",
+    "runChecks": "Failed to run checks"
+  },
+  "runChecks": "Run checks now",
+  "runningChecks": "Running checks...",
+  "markAllRead": "Mark all read",
+  "markRead": "Mark read",
+  "open": "Open",
+  "checksComplete": "Checks complete: {{expired}} batches marked expired, {{expiring}} new expiry alerts, {{lowStock}} medicines low on stock, {{overdue}} overdue purchase orders.",
+  "filters": {
+    "all": "All", "unread": "Unread", "type": "Type", "severity": "Severity",
+    "allTypes": "All types", "allSeverities": "All severities"
+  },
+  "types": {
+    "expired": "Expired", "expiring_soon": "Expiring soon", "low_stock": "Low stock", "po_overdue": "Overdue PO",
+    "pharmacy_suspended": "Account", "daily_summary": "Daily summary", "system": "System"
+  },
+  "severity": { "critical": "Critical", "warning": "Warning", "success": "Success", "info": "Info" },
+  "empty": {
+    "title": "No notifications",
+    "filtered": "Nothing matches these filters.",
+    "caughtUp": "You're all caught up."
+  },
+  "pagination": "Page {{page}} of {{pages}} ({{total}} total)",
+  "previousPage": "Previous page",
+  "nextPage": "Next page"
+}

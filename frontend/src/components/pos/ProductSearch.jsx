@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Search, Package, Plus, ScanLine } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatMoney } from '../../utils/format';
 import { cardCls, unitsOf } from './posUtils';
 
@@ -16,6 +17,7 @@ const MAX_RESULTS = 60;
  *   inputRef: ref to the search input (F2 focuses it)
  */
 const ProductSearch = ({ medicines, loading, availableOf, onAdd, onCode, inputRef }) => {
+  const { t } = useTranslation('pos');
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [active, setActive] = useState(0);
@@ -85,7 +87,7 @@ const ProductSearch = ({ medicines, loading, availableOf, onAdd, onCode, inputRe
               setActive(0);
             }}
             onKeyDown={onKeyDown}
-            placeholder="Search name, generic or scan barcode…  (F2)"
+            placeholder={t('search.placeholder')}
             className="w-full pl-9 pr-9 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
           <ScanLine className="w-4 h-4 text-slate-300 dark:text-slate-600 absolute right-3 top-2.5" />
@@ -95,7 +97,7 @@ const ProductSearch = ({ medicines, loading, availableOf, onAdd, onCode, inputRe
           onChange={(e) => setCategory(e.target.value)}
           className="w-full sm:w-48 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
         >
-          <option value="">All categories</option>
+          <option value="">{t('search.allCategories')}</option>
           {categories.map((c) => (
             <option key={c} value={c}>
               {c}
@@ -106,11 +108,11 @@ const ProductSearch = ({ medicines, loading, availableOf, onAdd, onCode, inputRe
 
       <div className={`${cardCls} p-2 min-h-[320px] max-h-[520px] overflow-y-auto custom-scrollbar`}>
         {loading ? (
-          <div className="p-10 text-center text-xs text-slate-400">Loading catalog…</div>
+          <div className="p-10 text-center text-xs text-slate-400">{t('search.loading')}</div>
         ) : results.length === 0 ? (
           <div className="p-10 text-center">
             <Package className="w-6 h-6 mx-auto mb-2 text-slate-400" />
-            <p className="text-xs text-slate-500 dark:text-slate-400">No medicines found</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t('search.noResults')}</p>
           </div>
         ) : (
           <ul role="listbox" className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -150,7 +152,7 @@ const ProductSearch = ({ medicines, loading, availableOf, onAdd, onCode, inputRe
                   <div className="text-right shrink-0">
                     <div className="text-xs font-bold font-mono text-emerald-600 dark:text-emerald-400">{formatMoney(med.price)}</div>
                     <div className={`text-[10px] font-mono ${out ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400'}`}>
-                      {out ? 'Out of stock' : `${available} ${med.baseUnit || 'unit'}`}
+                      {out ? t('common:status.outOfStock') : `${available} ${med.baseUnit || t('unit')}`}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
@@ -158,7 +160,7 @@ const ProductSearch = ({ medicines, loading, availableOf, onAdd, onCode, inputRe
                       type="button"
                       disabled={out}
                       onClick={() => onAdd(med)}
-                      title={`Add 1 ${med.baseUnit || 'unit'}`}
+                      title={t('search.addOne', { unit: med.baseUnit || t('unit') })}
                       className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:bg-slate-300 dark:disabled:bg-slate-700 cursor-pointer"
                     >
                       <Plus className="w-3 h-3" />
@@ -169,7 +171,7 @@ const ProductSearch = ({ medicines, loading, availableOf, onAdd, onCode, inputRe
                         type="button"
                         disabled={available < u.factor}
                         onClick={() => onAdd(med, u)}
-                        title={`Add 1 ${u.name} (${u.factor}) – ${formatMoney(u.price)}`}
+                        title={t('search.addPack', { unit: u.name, factor: u.factor, price: formatMoney(u.price) })}
                         className="px-1.5 py-1 rounded-lg text-[10px] font-semibold border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 disabled:opacity-40 cursor-pointer"
                       >
                         +{u.name}

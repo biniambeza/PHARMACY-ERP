@@ -1,0 +1,57 @@
+{
+  "badge": "Team",
+  "title": "Staff & Roles",
+  "subtitle": "Manage who can sign in to {{pharmacy}} and what they can do",
+  "thisPharmacy": "this pharmacy",
+  "newBranch": "New Branch",
+  "addStaff": "Add Staff",
+  "roles": { "owner": "Owner", "pharmacist": "Pharmacist", "cashier": "Cashier", "storekeeper": "Storekeeper" },
+  "roleHelp": {
+    "owner": "Everything, including staff, settings and audit log",
+    "pharmacist": "Dispensing, prescriptions, stock, purchasing and reports",
+    "cashier": "Point of sale and sales history only",
+    "storekeeper": "Stock-in, adjustments, stock take and purchase orders"
+  },
+  "teamMembers": "Team members",
+  "activeOf": "{{active}} active of {{total}}",
+  "noStaff": "No staff yet",
+  "columns": { "name": "Name", "email": "Email", "role": "Role", "status": "Status" },
+  "you": "(you)",
+  "deactivated": "Deactivated",
+  "deactivate": "Deactivate",
+  "reactivate": "Reactivate",
+  "confirmDeactivate": "Deactivate {{name}}? They will be signed out immediately.",
+  "notices": {
+    "loadFailed": "Failed to load staff",
+    "passwordTooShort": "Temporary password must be at least 8 characters",
+    "added": "{{name}} added as {{role}}",
+    "createFailed": "Failed to create staff account",
+    "roleChanged": "{{name}} is now {{role}}",
+    "roleChangeFailed": "Failed to change role",
+    "reactivated": "{{name}} reactivated",
+    "deactivated": "{{name}} deactivated",
+    "statusFailed": "Failed to update staff status",
+    "branchCreated": "Branch \"{{name}}\" created. Use the branch switcher to open it.",
+    "branchFailed": "Failed to create branch"
+  },
+  "addModal": {
+    "title": "Add staff member",
+    "fullName": "Full name",
+    "email": "Email",
+    "tempPassword": "Temporary password (min 8 characters)",
+    "tempPasswordHint": "Share it with the staff member; they can change it in Settings.",
+    "role": "Role",
+    "saving": "Saving...",
+    "create": "Create account"
+  },
+  "branchModal": {
+    "title": "New branch",
+    "name": "Branch name",
+    "address": "Address",
+    "phone": "Phone",
+    "licenseNo": "License number",
+    "hint": "You become the owner of the new branch. Staff are managed per branch.",
+    "creating": "Creating...",
+    "create": "Create branch"
+  }
+}

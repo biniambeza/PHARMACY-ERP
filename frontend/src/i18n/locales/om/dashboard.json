@@ -1,0 +1,115 @@
+{
+  "ranges": { "today": "Har'a", "7d": "Guyyaa 7", "monthly": "Guyyaa 30", "yearly": "Waggaa" },
+  "error": {
+    "title": "Beeksisa Walqunnamtii Daataa",
+    "fetchFailed": "Ilaalcha waliigalaa kuusdaataa kallattii fiduun hin danda'amne. Maaloo walqunnamtii keessan mirkaneeffadhaa.",
+    "noData": "Sarvarri daataa ilaalcha waliigalaa tokkollee hin deebisne.",
+    "retry": "Walqunnamtii Irra Deebi'ii Yaali"
+  },
+  "export": {
+    "csv": "CSV",
+    "pdf": "PDF",
+    "exporting": "Ergamaa jira...",
+    "salesExcel": "Gurgurtaa Excel",
+    "title": "Cuunfaa Daashboordii",
+    "subtitle": "Lakkoofsota ijoo fi gurgurtaa dhihoo",
+    "metric": "Safartuu",
+    "value": "Gatii"
+  },
+  "summary": {
+    "revenue": "Galii ({{range}})",
+    "cogs": "Baasii meeshaalee gurguramanii",
+    "grossProfit": "Bu'aa waliigalaa",
+    "orders": "Ajajawwan",
+    "refunds": "Maallaqa deebi'e",
+    "tax": "Gibira walitti qabame",
+    "revenueGrowth": "Guddina galii",
+    "allTimeRevenue": "Galii yeroo hundaa",
+    "allTimeGrossProfit": "Bu'aa waliigalaa yeroo hundaa",
+    "activeBatches": "Baachiiwwan hojii irra jiran",
+    "stockUnits": "Baay'ina kuusaa"
+  },
+  "salesColumns": {
+    "invoice": "Nagahee",
+    "customer": "Maamila",
+    "status": "Haala",
+    "walkIn": "Maamila kallattii",
+    "voided": "Haqame",
+    "returned": "Deebi'e ({{status}})"
+  },
+  "kpi": {
+    "salesRevenue": "Galii Gurgurtaa ({{range}})",
+    "period": "yeroo",
+    "revenueSub": "yeroo darbe waliin · yeroo hundaa {{amount}}",
+    "inflows": "Galii",
+    "cogs": "Baasii Meeshaalee Gurguramanii",
+    "cogsSub": "Baasii baachii dhugaa · yeroo hundaa {{amount}}",
+    "outflows": "Baasii",
+    "grossProfit": "Bu'aa Waliigalaa",
+    "profitSub": "{{margin}}% bu'aa · yeroo hundaa {{amount}}",
+    "profitable": "Bu'aa qaba",
+    "loss": "Kasaaraa",
+    "activeBatches": "Baachiiwwan Kuusaa Hojii Irra Jiran",
+    "lots": "Lootii {{count}}",
+    "lots_one": "Lootii {{count}}",
+    "lots_other": "Lootii {{count}}",
+    "unitsInInventory": "Kuusaa keessa yuunitii {{count}}",
+    "unitsInInventory_one": "Kuusaa keessa yuunitii {{count}}",
+    "unitsInInventory_other": "Kuusaa keessa yuunitii {{count}}",
+    "skus": "SKU {{count}}",
+    "skus_one": "SKU {{count}}",
+    "skus_other": "SKU {{count}}"
+  },
+  "recentSales": {
+    "title": "Daldala Gurgurtaa Dhihoo",
+    "subtitle": "Ajaja qorichaa maamiltootaa dhihoo fi nagahee maxxansamuu danda'u",
+    "viewLedger": "Galmee Ilaali →",
+    "empty": "Har'a hanga ammaatti gurgurtaan hin galmoofne.",
+    "invoiceNo": "Nagahee #",
+    "customer": "Maamila",
+    "status": "Haala",
+    "receipt": "Nagahee",
+    "walkInPatient": "Dhukkubsataa Kallattii",
+    "voided": "Haqame",
+    "returned": "Deebi'e",
+    "partReturned": "Gartokkeen deebi'e",
+    "credit": "Liqii",
+    "printReceipt": "Nagahee Maxxansi",
+    "terminal": "Terminaalii: Galmee POS #01",
+    "openPos": "+ Kaashiyara POS Bani"
+  },
+  "chart": {
+    "title": "Gurgurtaa fi Bittaa",
+    "subtitle": "Sarara lamaan galii maamilaa baasii dhiyeessitootaa waliin wal bira qabu",
+    "revenue": "Galii",
+    "procurement": "Bittaa",
+    "footer": "Yeroowwan walitti qabaman: Galmee kuusdaataa kallattii",
+    "grossProfit": "Bu'aa waliigalaa: {{amount}}"
+  },
+  "expiry": {
+    "title": "Fayyaa Yeroo Dhumaa FEFO",
+    "monitored": "Baachiiwwan Hordofaman",
+    "healthy": "Fayyaa (>guyyaa 60)",
+    "warning": "Akeekkachiisa (guyyaa 30-60)",
+    "critical": "Hamaa (<guyyaa 30)",
+    "audit": "Baachiiwwan Kuusaa Odiitii Godhi →"
+  },
+  "suppliers": {
+    "title": "Sadarkaa Dhiyeessitoota Olaanoo",
+    "directory": "Galmee →",
+    "empty": "Hanga ammaatti dhiyeessaan hin galmoofne.",
+    "ordersFulfilled": "Ajaja {{count}} raawwatame",
+    "ordersFulfilled_one": "Ajaja {{count}} raawwatame",
+    "ordersFulfilled_other": "Ajaja {{count}} raawwataman",
+    "rating": "Sadarkaa {{rating}}",
+    "issuePo": "Ajaja Bittaa Baasi"
+  },
+  "alerts": {
+    "title": "Akeekkachiisa Adda Ta'ee Kallattii",
+    "actionRequired": "Tarkaanfiin Barbaachisa",
+    "allClear": "Dhimmoonni hojii hundi qulqulluu dha",
+    "footer": "Sakatta'iinsa Kuusdaataa Jijjiiramaa",
+    "open": "{{count}} Banaa",
+    "priority": { "High": "Olaanaa", "Medium": "Giddugaleessa", "Low": "Gadi aanaa" }
+  }
+}

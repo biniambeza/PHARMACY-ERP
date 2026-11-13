@@ -1,0 +1,63 @@
+{
+  "badge": "Dispensary Ledger",
+  "title": "Sales & Invoice Ledger",
+  "subtitle": "Audit recorded transactions, review daily dispensary revenue, and reprint patient sales receipts",
+  "openPos": "Open POS Terminal",
+  "goToPos": "Go to POS Terminal",
+  "dismiss": "Dismiss",
+  "retryLoading": "Retry Loading",
+  "errors": {
+    "loadSales": "Failed to load sales transactions",
+    "loadLedger": "Unable to load dispensary ledger. Please check your network connection."
+  },
+  "metrics": {
+    "todayRevenue": "Today's Revenue",
+    "todayRevenueSub": "Dispensary sales today",
+    "todayBadge": "Today",
+    "todayOrders": "Today's Orders",
+    "todayOrdersSub": "Checkout transactions today",
+    "ordersBadge": "Orders",
+    "totalRevenue": "Total Revenue",
+    "totalRevenueSub": "Cumulative gross billing",
+    "grossBadge": "Gross",
+    "totalInvoices": "Total Invoices",
+    "totalInvoicesSub": "All recorded receipts",
+    "receiptsBadge": "Receipts"
+  },
+  "searchPlaceholder": "Search by invoice #, customer name or phone...",
+  "clearSearch": "Clear Search",
+  "refreshTitle": "Refresh sales ledger",
+  "loading": "Loading sales records...",
+  "empty": {
+    "noMatchTitle": "No matching invoices found",
+    "noneTitle": "No sales recorded yet",
+    "noMatchText": "Try adjusting your search keywords to find the desired invoice record.",
+    "noneText": "Process transactions using the Cashier POS to record your first sale."
+  },
+  "table": {
+    "invoiceNo": "Invoice No",
+    "dateTime": "Date & Time",
+    "customer": "Customer",
+    "itemsSold": "Items Sold",
+    "payment": "Payment",
+    "grandTotal": "Grand Total"
+  },
+  "voided": "Voided",
+  "returned": "Returned",
+  "partReturned": "Part returned",
+  "na": "N/A",
+  "walkIn": "Walk-in Customer",
+  "itemCount_one": "{{count}} item",
+  "itemCount_other": "{{count}} items",
+  "viewReceipt": "View Receipt",
+  "return": "Return",
+  "returnTitle": "Return items from this sale",
+  "void": "Void",
+  "voidTitle": "Void this sale (same day only)",
+  "notices": {
+    "returnRecorded": "Return {{number}} recorded. Refund {{refund}}",
+    "returnCreditSplit": "({{credit}} off credit account, {{due}} to pay out).",
+    "voidCredit": "{{amount}} taken off credit account.",
+    "refundDue": "Refund due: {{amount}}."
+  }
+}

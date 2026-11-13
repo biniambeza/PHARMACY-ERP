@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Building2, User, Phone, Mail, MapPin, X, CheckCircle, FileText, AlertCircle, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { createSupplier, updateSupplier } from '../../api/supplierApi';
 
 const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
+  const { t } = useTranslation('suppliers');
   const [formData, setFormData] = useState({
     name: '',
     contactPerson: '',
@@ -56,12 +58,12 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
     setError('');
 
     if (!formData.name.trim()) {
-      return setError('Supplier or company name is required.');
+      return setError(t('modal.errors.nameRequired'));
     }
 
     const terms = Number(formData.paymentTermsDays);
     if (!Number.isInteger(terms) || terms < 0 || terms > 365) {
-      return setError('Payment terms must be a whole number of days between 0 and 365.');
+      return setError(t('modal.errors.terms'));
     }
 
     setLoading(true);
@@ -79,7 +81,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
       onClose();
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to save supplier details');
+      setError(err.response?.data?.message || t('modal.errors.save'));
     }
   };
 
@@ -94,17 +96,18 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                {supplier ? 'Edit Supplier Profile' : 'Register New Supplier'}
+                {supplier ? t('modal.editTitle') : t('modal.createTitle')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {supplier
-                  ? 'Update pharmaceutical vendor contacts and supply terms'
-                  : 'Add an authorized medicine wholesaler or manufacturer to directory'}
+                  ? t('modal.editSubtitle')
+                  : t('modal.createSubtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -122,7 +125,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
           {/* Supplier Name */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Company / Vendor Name <span className="text-rose-500">*</span>
+              {t('modal.fields.name')} <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -131,7 +134,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="e.g. Novartis Distribution Ltd."
+                placeholder={t('modal.placeholders.name')}
                 required
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
@@ -142,7 +145,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
             {/* Contact Person */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Account Manager / Contact
+                {t('modal.fields.contact')}
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -151,7 +154,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
                   name="contactPerson"
                   value={formData.contactPerson}
                   onChange={handleChange}
-                  placeholder="e.g. Dr. Robert Vance"
+                  placeholder={t('modal.placeholders.contact')}
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
                 />
               </div>
@@ -160,7 +163,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
             {/* Status */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Vendor Status
+                {t('modal.fields.status')}
               </label>
               <select
                 name="status"
@@ -168,8 +171,8 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
               >
-                <option value="active">Active Vendor</option>
-                <option value="inactive">Inactive / Suspended</option>
+                <option value="active">{t('modal.statusActive')}</option>
+                <option value="inactive">{t('modal.statusInactive')}</option>
               </select>
             </div>
           </div>
@@ -178,7 +181,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
             {/* Phone */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Phone Number
+                {t('modal.fields.phone')}
               </label>
               <div className="relative">
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -196,7 +199,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
             {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Email Address
+                {t('modal.fields.email')}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -215,7 +218,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
           {/* Payment terms */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Payment Terms (days)
+              {t('modal.fields.terms')}
             </label>
             <div className="relative">
               <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -230,13 +233,13 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">Supplier invoices are due this many days after the invoice date (0 = on receipt).</p>
+            <p className="text-[10px] text-slate-400 mt-1">{t('modal.termsHint')}</p>
           </div>
 
           {/* Physical Address */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Warehouse / Office Address
+              {t('modal.fields.address')}
             </label>
             <div className="relative">
               <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -245,7 +248,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                placeholder="Suite 400, Industrial Park Ave"
+                placeholder={t('modal.placeholders.address')}
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
             </div>
@@ -254,7 +257,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
           {/* Notes */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Procurement Notes & Contract Notes
+              {t('modal.fields.notes')}
             </label>
             <div className="relative">
               <FileText className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -263,7 +266,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
                 name="notes"
                 value={formData.notes}
                 onChange={handleChange}
-                placeholder="Payment terms, lead time, minimum order requirements..."
+                placeholder={t('modal.placeholders.notes')}
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
             </div>
@@ -277,7 +280,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
               disabled={loading}
               className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </button>
             <button
               type="submit"
@@ -285,11 +288,11 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
-                <span>Saving Supplier...</span>
+                <span>{t('modal.saving')}</span>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span>{supplier ? 'Save Changes' : 'Register Supplier'}</span>
+                  <span>{supplier ? t('modal.saveChanges') : t('modal.register')}</span>
                 </>
               )}
             </button>

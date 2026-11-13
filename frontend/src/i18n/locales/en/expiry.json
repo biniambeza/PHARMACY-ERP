@@ -1,0 +1,36 @@
+{
+  "badge": "Expiry Management",
+  "title": "Expiry Dashboard",
+  "subtitle": "Expired and soon-to-expire stock, write-offs and supplier returns. Expired batches are removed from sale automatically every night.",
+  "errors": { "load": "Failed to load expiry overview" },
+  "buckets": { "expired": "Expired", "d30": "Within 30 days", "d60": "31 to 60 days", "d90": "61 to 90 days" },
+  "bucketSummary_one": "batches, {{units}} units",
+  "bucketSummary_other": "batches, {{units}} units",
+  "atCost": "At cost",
+  "atRetail": "At retail",
+  "bucketBatches": "{{label}} batches",
+  "sortedByExpiry": "Sorted by expiry date",
+  "noBatches": "No batches in this group.",
+  "table": { "medicine": "Medicine", "batch": "Batch", "expiry": "Expiry", "qty": "Qty", "costValue": "Cost value", "retailValue": "Retail value" },
+  "days": {
+    "today": "Today",
+    "ago_one": "{{count}}d ago", "ago_other": "{{count}}d ago",
+    "left_one": "{{count}}d left", "left_other": "{{count}}d left"
+  },
+  "writeOffs": {
+    "title": "Write-offs per month",
+    "subtitle": "Expired stock at cost, last 12 months",
+    "barTitle_one": "{{count}} units, retail {{retail}}",
+    "barTitle_other": "{{count}} units, retail {{retail}}",
+    "atRisk": "Stock at risk in the next 90 days: <b>{{amount}}</b> at cost."
+  },
+  "returns": {
+    "title": "Return to supplier",
+    "subtitle": "Expired and near-expiry batches grouped by the supplier that delivered them (traced from purchase orders, otherwise the medicine's preferred supplier).",
+    "empty": "Nothing to return.",
+    "groupSummary_one": "{{count}} batch, {{units}} units",
+    "groupSummary_other": "{{count}} batches, {{units}} units"
+  },
+  "sources": { "purchase_order": "From PO", "preferred_supplier": "Preferred supplier", "unknown": "Untraced" },
+  "noData": "No data available."
+}

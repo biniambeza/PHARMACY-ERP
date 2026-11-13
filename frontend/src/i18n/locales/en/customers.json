@@ -1,0 +1,85 @@
+{
+  "badge": "Accounts Receivable",
+  "title": "Customers & Credit",
+  "subtitle": "Credit customers, limits, payments and statements",
+  "newCustomer": "New Customer",
+  "searchPlaceholder": "Search by name, phone or email...",
+  "saving": "Saving...",
+  "confirmRemove": "Remove customer \"{{name}}\"?",
+  "removeFailed": "Failed to remove customer",
+  "filters": { "all": "All", "withBalance": "With balance" },
+  "limit": { "unlimited": "Unlimited", "noCredit": "No credit" },
+  "paymentMethods": {
+    "cash": "Cash", "card": "Card", "mobile_money": "Mobile money",
+    "bank_transfer": "Bank transfer", "cheque": "Cheque", "other": "Other"
+  },
+  "fields": {
+    "phone": "Phone", "email": "Email", "address": "Address", "creditLimit": "Credit limit", "notes": "Notes"
+  },
+  "form": {
+    "editTitle": "Edit Customer",
+    "newTitle": "New Credit Customer",
+    "subtitle": "Contact details and credit limit",
+    "fullName": "Full name",
+    "phonePlaceholder": "09...",
+    "zeroHint": "0 means no credit is allowed.",
+    "unlimited": "Unlimited credit",
+    "accountActive": "Account active",
+    "saveChanges": "Save Changes",
+    "create": "Create Customer",
+    "errors": {
+      "nameRequired": "Customer name is required.",
+      "limitInvalid": "Credit limit must be 0 or more.",
+      "saveFailed": "Failed to save customer"
+    }
+  },
+  "payment": {
+    "title": "Record Payment",
+    "owes": "{{name}} owes {{amount}}",
+    "amount": "Amount",
+    "method": "Method",
+    "reference": "Reference",
+    "referencePlaceholder": "Receipt / txn no.",
+    "note": "Note",
+    "appliedTo": "Applied to open invoices (oldest first)",
+    "submit": "Record Payment",
+    "errors": {
+      "positive": "Enter a positive amount.",
+      "exceeds": "Amount exceeds the outstanding balance.",
+      "failed": "Failed to record payment"
+    }
+  },
+  "statement": {
+    "title": "Customer Statement",
+    "printTitle": "Statement - {{name}}",
+    "pharmacy": "Pharmacy",
+    "loadFailed": "Failed to load statement",
+    "from": "From",
+    "to": "To",
+    "period": "Period: {{from}} - {{to}}",
+    "start": "Start",
+    "opening": "Opening balance",
+    "closing": "Closing balance",
+    "printed": "Printed {{date}}",
+    "cols": {
+      "date": "Date", "description": "Description", "reference": "Reference",
+      "charges": "Charges", "payments": "Payments", "balance": "Balance"
+    }
+  },
+  "summary": {
+    "totalReceivable": "Total receivable",
+    "withBalance_one": "{{count}} customer with a balance, {{active}} active",
+    "withBalance_other": "{{count}} customers with a balance, {{active}} active",
+    "aging": "Aging (days since sale)",
+    "overdue": "{{amount}} older than 30 days",
+    "bucketDays": "{{bucket}} days"
+  },
+  "agingTable": { "title": "Receivables aging by customer" },
+  "table": { "customer": "Customer", "balance": "Balance", "status": "Status" },
+  "actions": { "recordPayment": "Record payment", "statement": "Statement", "remove": "Remove" },
+  "empty": {
+    "noMatch": "No matching customers",
+    "none": "No customers yet",
+    "hint": "Add customers to sell on credit and track what they owe."
+  }
+}

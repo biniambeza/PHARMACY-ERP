@@ -1,4 +1,6 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { Upload, FileDown, FileSpreadsheet, CheckCircle, ShieldCheck, AlertCircle } from 'lucide-react';
 import { parseImportFile, importRows } from '../../api/importApi';
 import { parseCSV, toCSV, downloadCSV } from '../../components/catalog/csv';
@@ -38,7 +40,7 @@ const fileToBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
-    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.onerror = () => reject(new Error(i18n.t('import:errors.readFile')));
     reader.readAsDataURL(file);
   });
 
@@ -51,6 +53,7 @@ const STATUS_CLS = {
 // Bulk import (#28): CSV parsed in the browser, .xlsx parsed by the server; rows are
 // validated (dry run) and then committed in chunks of 500, each in one transaction.
 const Import = () => {
+  const { t } = useTranslation('import');
   const [kind, setKind] = useState('medicines');
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState([]);
@@ -89,7 +92,7 @@ const Import = () => {
       all.push(...(res.results || []));
       total += res.committed || 0;
       if (!dryRun && !res.success) {
-        throw Object.assign(new Error(res.message || 'Import failed'), { partial: total, results: all });
+        throw Object.assign(new Error(res.message || t('errors.importFailed')), { partial: total, results: all });
       }
     }
     const summary = {
@@ -115,25 +118,25 @@ const Import = () => {
         parsed = parseCSV(await file.text());
       } else if (/\.xlsx$/i.test(file.name)) {
         if (file.size > MAX_XLSX_BYTES) {
-          throw new Error('This Excel file is too large. Save it as CSV and upload the CSV instead.');
+          throw new Error(t('errors.tooLarge'));
         }
         parsed = await parseImportFile({ fileName: file.name, data: await fileToBase64(file) });
       } else {
-        throw new Error('Please choose a .csv or .xlsx file');
+        throw new Error(t('errors.badType'));
       }
-      if (!parsed.rows.length) throw new Error('The file has no data rows');
+      if (!parsed.rows.length) throw new Error(t('errors.noRows'));
       setRows(parsed.rows);
       setResults(await runAll(true, parsed.rows));
     } catch (err) {
       setRows([]);
-      setError(err.response?.data?.message || err.message || 'Could not read the file');
+      setError(err.response?.data?.message || err.message || t('errors.readFailed'));
     } finally {
       setBusy(false);
     }
   };
 
   const handleCommit = async () => {
-    if (!window.confirm(`Import ${results.summary.valid} row(s)?`)) return;
+    if (!window.confirm(t('confirmImport', { count: results.summary.valid }))) return;
     setBusy(true);
     setError('');
     try {
@@ -143,7 +146,7 @@ const Import = () => {
     } catch (err) {
       if (err.results) setResults((prev) => ({ ...prev, results: err.results }));
       setError(
-        `${err.response?.data?.message || err.message}${err.partial ? ` (${err.partial} row(s) from earlier chunks were already imported)` : ''}`
+        `${err.response?.data?.message || err.message}${err.partial ? ` ${t('errors.partial', { count: err.partial })}` : ''}`
       );
     } finally {
       setBusy(false);
@@ -152,7 +155,7 @@ const Import = () => {
 
   const downloadErrors = () => {
     const bad = results.results.filter((r) => r.status === 'error');
-    downloadCSV(`${kind}-import-errors.csv`, toCSV(['Row', 'Name', 'Errors'], bad.map((r) => [r.row, r.name, r.errors.join('; ')])));
+    downloadCSV(`${kind}-import-errors.csv`, toCSV([t('csv.row'), t('csv.name'), t('csv.errors')], bad.map((r) => [r.row, r.name, r.errors.join('; ')])));
   };
 
   const cfg = KINDS[kind];
@@ -162,16 +165,16 @@ const Import = () => {
     <div className="space-y-6 animate-fade-in max-w-6xl mx-auto">
       <div className="pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-          Onboarding
+          {t('badge')}
         </span>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">Data Import</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">{t('title')}</h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Bulk-load medicines and opening stock from Excel (.xlsx) or CSV
+          {t('subtitle')}
         </p>
       </div>
 
       <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs font-medium w-fit">
-        {Object.entries(KINDS).map(([k, v]) => (
+        {Object.keys(KINDS).map((k) => (
           <button
             key={k}
             type="button"
@@ -182,30 +185,30 @@ const Import = () => {
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
-            {v.label}
+            {t(`kinds.${k}.label`)}
           </button>
         ))}
       </div>
 
       <div className={`${cardCls} p-5 space-y-4`}>
-        <p className="text-xs text-slate-600 dark:text-slate-300">{cfg.description}</p>
+        <p className="text-xs text-slate-600 dark:text-slate-300">{t(`kinds.${kind}.description`)}</p>
         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-          Columns: <span className="font-mono">{cfg.headers.join(', ')}</span>. Dates as YYYY-MM-DD or DD/MM/YYYY.
+          {t('columns')} <span className="font-mono">{cfg.headers.join(', ')}</span>. {t('dateFormats')}
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className={secondaryBtn} onClick={downloadTemplate}>
-            <FileDown className="w-4 h-4" /> Download template
+            <FileDown className="w-4 h-4" /> {t('downloadTemplate')}
           </button>
           <label className={`${primaryBtn} ${busy ? 'opacity-50 pointer-events-none' : ''}`}>
-            <Upload className="w-4 h-4" /> Choose file
+            <Upload className="w-4 h-4" /> {t('chooseFile')}
             <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={handleFile} />
           </label>
           {fileName && (
             <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
-              <FileSpreadsheet className="w-4 h-4" /> {fileName} ({rows.length} rows)
+              <FileSpreadsheet className="w-4 h-4" /> {fileName} ({t('rowCount', { count: rows.length })})
             </span>
           )}
-          {busy && <span className="text-xs text-slate-500">Working...</span>}
+          {busy && <span className="text-xs text-slate-500">{t('working')}</span>}
         </div>
       </div>
 
@@ -217,7 +220,7 @@ const Import = () => {
 
       {committed !== null && (
         <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-          <CheckCircle className="w-4 h-4" /> Imported {committed} row(s).
+          <CheckCircle className="w-4 h-4" /> {t('imported', { count: committed })}
         </div>
       )}
 
@@ -225,19 +228,19 @@ const Import = () => {
         <div className={`${cardCls} overflow-hidden`}>
           <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex flex-wrap gap-4 text-xs">
-              <span>Total <strong>{results.summary.total}</strong></span>
-              <span className="text-emerald-600 dark:text-emerald-400">Valid <strong>{results.summary.valid}</strong></span>
-              <span className="text-slate-500">Skipped <strong>{results.summary.skipped}</strong></span>
-              <span className="text-rose-600 dark:text-rose-400">Errors <strong>{results.summary.errors}</strong></span>
+              <span>{t('summary.total')} <strong>{results.summary.total}</strong></span>
+              <span className="text-emerald-600 dark:text-emerald-400">{t('summary.valid')} <strong>{results.summary.valid}</strong></span>
+              <span className="text-slate-500">{t('summary.skipped')} <strong>{results.summary.skipped}</strong></span>
+              <span className="text-rose-600 dark:text-rose-400">{t('summary.errors')} <strong>{results.summary.errors}</strong></span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <label className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer">
                 <input type="checkbox" className="accent-emerald-600" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
-                Show valid rows
+                {t('showValid')}
               </label>
               {results.summary.errors > 0 && (
                 <button type="button" className={secondaryBtn} onClick={downloadErrors}>
-                  <FileDown className="w-4 h-4" /> Error report
+                  <FileDown className="w-4 h-4" /> {t('errorReport')}
                 </button>
               )}
               {committed === null && (
@@ -246,9 +249,9 @@ const Import = () => {
                   className={primaryBtn}
                   disabled={busy || results.summary.errors > 0 || results.summary.valid === 0}
                   onClick={handleCommit}
-                  title={results.summary.errors ? 'Fix the errors in your file and upload it again' : ''}
+                  title={results.summary.errors ? t('fixErrors') : ''}
                 >
-                  <ShieldCheck className="w-4 h-4" /> Import {results.summary.valid} row(s)
+                  <ShieldCheck className="w-4 h-4" /> {t('importRows', { count: results.summary.valid })}
                 </button>
               )}
             </div>
@@ -257,10 +260,10 @@ const Import = () => {
             <table className="w-full text-left text-xs">
               <thead className={theadCls}>
                 <tr>
-                  <th className="py-2.5 px-5">Row</th>
-                  <th className="py-2.5 px-4">Item</th>
-                  <th className="py-2.5 px-4">Status</th>
-                  <th className="py-2.5 px-5">Details</th>
+                  <th className="py-2.5 px-5">{t('table.row')}</th>
+                  <th className="py-2.5 px-4">{t('table.item')}</th>
+                  <th className="py-2.5 px-4">{t('table.status')}</th>
+                  <th className="py-2.5 px-5">{t('table.details')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
@@ -268,12 +271,12 @@ const Import = () => {
                   <tr key={r.row}>
                     <td className="py-2 px-5 font-mono">{r.row}</td>
                     <td className="py-2 px-4">{r.name || '-'}</td>
-                    <td className={`py-2 px-4 font-semibold capitalize ${STATUS_CLS[r.status]}`}>{r.status}</td>
+                    <td className={`py-2 px-4 font-semibold capitalize ${STATUS_CLS[r.status]}`}>{t(`status.${r.status}`, { defaultValue: r.status })}</td>
                     <td className="py-2 px-5">{r.errors?.length ? r.errors.join('; ') : r.message || ''}</td>
                   </tr>
                 ))}
                 {visible.length === 0 && (
-                  <tr><td colSpan={4} className="py-8 text-center text-slate-500">All rows are valid.</td></tr>
+                  <tr><td colSpan={4} className="py-8 text-center text-slate-500">{t('allValid')}</td></tr>
                 )}
               </tbody>
             </table>

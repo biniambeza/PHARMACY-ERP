@@ -1,0 +1,61 @@
+{
+  "announcements": {
+    "region": "Beeksisota",
+    "dismiss": "Cufi",
+    "dismissAnnouncement": "Beeksisa cufi"
+  },
+  "branchSwitcher": {
+    "switchBranch": "Damee jijjiiri",
+    "branch": "Damee"
+  },
+  "notificationBell": {
+    "title": "Beeksisa",
+    "ariaUnread": "Beeksisa ({{n}} kan hin dubbifamne)",
+    "unread": "{{n}} kan hin dubbifamne",
+    "markAllRead": "Hunda akka dubbifametti mallatteessi",
+    "allCaughtUp": "Waan hunda ilaaltaniittu",
+    "viewAll": "Beeksisa hunda ilaali",
+    "justNow": "amma",
+    "minutesAgo": "daqiiqaa {{n}} dura",
+    "hoursAgo": "sa'aatii {{n}} dura",
+    "daysAgo": "guyyaa {{n}} dura"
+  },
+  "comingSoon": {
+    "description": "Kutaan kun ijaaramaa jira; dhiyootti ni argama.",
+    "heading": "Dhiyootti dhufa",
+    "notAvailable": "{{title}} ammaaf hin argamu."
+  },
+  "dataTable": {
+    "searchPlaceholder": "Galmeewwan barbaadi...",
+    "emptyMessage": "Galmeen hin argamne",
+    "emptySubtext": "Barbaacha ykn calleessaa keessan sirreessuu yaalaa",
+    "showing": "Galmeewwan {{total}} keessaa {{from}} hanga {{to}} agarsiisaa jira",
+    "prev": "Duraa",
+    "next": "Itti aanu"
+  },
+  "errorBoundary": {
+    "title": "Fuula kana agarsiisuu irratti rakkoon uumame",
+    "fallback": "Dogoggorri agarsiisaa hin eegamne uumame.",
+    "reload": "Fuula Irra Deebi'ii Fe'i",
+    "dashboard": "Daashboordii"
+  },
+  "statusBadge": {
+    "active": "Hojiirra",
+    "operational": "Hojjechaa jira",
+    "completed": "Xumurame",
+    "paid": "Kaffalame",
+    "received": "Fudhatame",
+    "healthy": "Fayyaa",
+    "suspended": "Dhaabbate",
+    "cancelled": "Haqame",
+    "out_of_stock": "Kuusaan Dhumate",
+    "critical": "Hamaa (<guyyaa 30)",
+    "pending": "Eegaa jira",
+    "ordered": "Ajajame",
+    "low_stock": "Kuusaa Xiqqaa",
+    "warning": "Akeekkachiisa (guyyaa 30-60)",
+    "draft": "Wixinee",
+    "depleted": "Dhumate",
+    "status": "Haala"
+  }
+}

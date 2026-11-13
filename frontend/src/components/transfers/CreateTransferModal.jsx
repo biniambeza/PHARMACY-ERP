@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, Plus, Trash2, Search, Truck, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n';
 import { getStockBatches } from '../../api/stockApi';
 import { createTransfer, getTransferDestinations } from '../../api/transferApi';
 import { formatDate } from '../../utils/format';
@@ -24,6 +26,7 @@ const groupByMedicine = (batches) => {
 };
 
 const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
+  const { t } = useTranslation('transfers');
   const [destinations, setDestinations] = useState([]);
   const [stock, setStock] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,7 +53,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
         setStock(groupByMedicine(s.batches || []));
       })
       .catch((err) => {
-        if (!cancelled) setError(err.response?.data?.message || 'Failed to load branches and stock');
+        if (!cancelled) setError(err.response?.data?.message || i18n.t('transfers:create.errors.load'));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -87,18 +90,18 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
 
   const lineError = (line) => {
     const entry = stockById.get(line.medicineId);
-    if (!entry) return 'No usable stock';
+    if (!entry) return t('create.errors.noStock');
     const qty = Number(line.quantity);
-    if (!Number.isInteger(qty) || qty < 1) return 'Enter a whole quantity';
+    if (!Number.isInteger(qty) || qty < 1) return t('create.errors.wholeQty');
     const available = line.batchId ? entry.batches.find((b) => b._id === line.batchId)?.quantity || 0 : entry.total;
-    if (qty > available) return `Only ${available} available`;
+    if (qty > available) return t('create.errors.onlyAvailable', { count: available });
     return '';
   };
 
   const submit = async (draft) => {
     setError('');
-    if (!toPharmacyId) return setError('Choose a destination branch');
-    if (!lines.length) return setError('Add at least one medicine');
+    if (!toPharmacyId) return setError(t('create.errors.destination'));
+    if (!lines.length) return setError(t('create.errors.noLines'));
     const bad = lines.find((l) => lineError(l));
     if (bad) return setError(lineError(bad));
     setSaving(true);
@@ -116,7 +119,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
       onCreated?.();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create transfer');
+      setError(err.response?.data?.message || t('create.errors.save'));
     } finally {
       setSaving(false);
     }
@@ -132,13 +135,13 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
               <Truck className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">New Stock Transfer</h3>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('create.title')}</h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Send stock from this branch to another branch of your organization
+                {t('create.subtitle')}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
+          <button onClick={onClose} aria-label={t('common:buttons.close')} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -146,17 +149,17 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {loading ? (
             <div className="flex items-center gap-2 text-xs text-slate-500 py-10 justify-center">
-              <Loader2 className="w-4 h-4 animate-spin" /> Loading branches and stock...
+              <Loader2 className="w-4 h-4 animate-spin" /> {t('create.loading')}
             </div>
           ) : destinations.length === 0 ? (
             <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-200">
-              There is no other active branch in your organization. The owner can create a branch from the Staff page.
+              {t('create.noDestinations')}
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className="block text-xs">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">Destination branch</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{t('create.destination')}</span>
                   <select value={toPharmacyId} onChange={(e) => setToPharmacyId(e.target.value)} className={`${inputClass} mt-1`}>
                     {destinations.map((d) => (
                       <option key={d._id} value={d._id}>
@@ -167,8 +170,8 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
                   </select>
                 </label>
                 <label className="block text-xs">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">Notes</span>
-                  <input value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} placeholder="Optional" className={`${inputClass} mt-1`} />
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{t('create.notes')}</span>
+                  <input value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} placeholder={t('create.optional')} className={`${inputClass} mt-1`} />
                 </label>
               </div>
 
@@ -177,7 +180,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search medicines in stock to add..."
+                  placeholder={t('create.searchPlaceholder')}
                   className={`${inputClass} pl-9`}
                 />
                 {matches.length > 0 && (
@@ -192,7 +195,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
                         <span className="font-semibold text-slate-800 dark:text-slate-200">
                           {m.medicine.name} {m.medicine.strength}
                         </span>
-                        <span className="text-slate-500">{m.total} in stock</span>
+                        <span className="text-slate-500">{t('create.inStock', { count: m.total })}</span>
                       </button>
                     ))}
                   </div>
@@ -200,7 +203,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
               </div>
 
               {lines.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-6">No medicines added yet.</p>
+                <p className="text-xs text-slate-400 text-center py-6">{t('create.noLines')}</p>
               ) : (
                 <div className="space-y-2">
                   {lines.map((line) => {
@@ -210,17 +213,17 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
                       <div key={line.key} className="grid grid-cols-12 gap-2 items-start p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/30">
                         <div className="col-span-12 sm:col-span-4 text-xs">
                           <p className="font-semibold text-slate-800 dark:text-slate-200">{entry?.medicine.name}</p>
-                          <p className="text-[11px] text-slate-500">{entry?.total || 0} usable units</p>
+                          <p className="text-[11px] text-slate-500">{t('create.usableUnits', { count: entry?.total || 0 })}</p>
                         </div>
                         <select
                           value={line.batchId}
                           onChange={(e) => updateLine(line.key, { batchId: e.target.value })}
                           className={`${inputClass} col-span-7 sm:col-span-5`}
                         >
-                          <option value="">Auto (first expiry first)</option>
+                          <option value="">{t('create.autoBatch')}</option>
                           {(entry?.batches || []).map((b) => (
                             <option key={b._id} value={b._id}>
-                              {b.batchNo} | exp {formatDate(b.expiryDate)} | {b.quantity} units
+                              {t('create.batchOption', { batchNo: b.batchNo, expiry: formatDate(b.expiryDate), count: b.quantity })}
                             </option>
                           ))}
                         </select>
@@ -231,12 +234,13 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
                           value={line.quantity}
                           onChange={(e) => updateLine(line.key, { quantity: e.target.value })}
                           className={`${inputClass} col-span-3 sm:col-span-2`}
-                          aria-label="Quantity"
+                          aria-label={t('common:labels.quantity')}
                         />
                         <button
                           type="button"
                           onClick={() => removeLine(line.key)}
-                          title="Remove"
+                          title={t('create.remove')}
+                          aria-label={t('create.remove')}
                           className="col-span-2 sm:col-span-1 p-2 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer justify-self-end"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -261,14 +265,14 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
             onClick={onClose}
             className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
           >
-            Cancel
+            {t('common:buttons.cancel')}
           </button>
           <button
             disabled={saving || loading || !destinations.length}
             onClick={() => submit(true)}
             className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-50"
           >
-            Save as draft
+            {t('create.saveDraft')}
           </button>
           <button
             disabled={saving || loading || !destinations.length}
@@ -276,7 +280,7 @@ const CreateTransferModal = ({ isOpen, onClose, onCreated }) => {
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition cursor-pointer disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            Send now
+            {t('create.sendNow')}
           </button>
         </div>
       </div>

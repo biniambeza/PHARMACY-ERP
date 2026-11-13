@@ -1,0 +1,88 @@
+{
+  "open": "OPEN",
+  "xReport": "X-report",
+  "zReport": "Z-report",
+  "errors": {
+    "load": "Failed to load shifts"
+  },
+  "methods": {
+    "cash": "Cash",
+    "card": "Card",
+    "mobile_money": "Mobile money",
+    "credit": "Credit"
+  },
+  "page": {
+    "badge": "Cash drawer",
+    "title": "Shifts",
+    "subtitle": "Open a shift with a cash float, close it with counted amounts and print the Z-report.",
+    "requireShift": "This pharmacy requires an open shift to sell.",
+    "pos": "POS"
+  },
+  "current": {
+    "since": "Since {{date}} · float {{amount}}",
+    "closeShift": "Close shift",
+    "openShift": "Open shift",
+    "none": "You have no open shift.",
+    "sales": "Sales",
+    "expectedCash": "Expected cash"
+  },
+  "history": {
+    "allStaff": "Shift history (all staff)",
+    "mine": "My shifts",
+    "all": "All",
+    "open": "Open",
+    "closed": "Closed",
+    "shift": "Shift",
+    "cashier": "Cashier",
+    "opened": "Opened",
+    "float": "Float",
+    "countedCash": "Counted cash",
+    "loading": "Loading…",
+    "empty": "No shifts yet."
+  },
+  "close": {
+    "title": "Close shift {{number}}",
+    "closing": "Closing…",
+    "submit": "Close shift & print Z-report",
+    "instructions": "Count the drawer and enter the totals. Expected amounts include the opening float, cash sales, customer payments you received and cash refunds you paid out.",
+    "method": "Method",
+    "expected": "Expected",
+    "counted": "Counted",
+    "variance": "Variance",
+    "labels": {
+      "cash": "Cash in drawer",
+      "card": "Card (terminal total)",
+      "mobile_money": "Mobile money"
+    },
+    "notesPlaceholder": "Notes (e.g. reason for a variance)",
+    "errors": {
+      "failed": "Could not close the shift"
+    }
+  },
+  "report": {
+    "title": "Shift report",
+    "printTitle": "Z-report {{number}}",
+    "xTitle": "X-REPORT (shift open)",
+    "zTitle": "Z-REPORT",
+    "closedBy": "Closed by",
+    "sales": "Sales ({{count}})",
+    "discounts": "Discounts",
+    "tax": "Tax",
+    "netSales": "Net sales",
+    "voids": "Voids ({{count}})",
+    "returns": "Returns ({{count}})",
+    "payments": "Payments",
+    "customerPayments": "Customer payments ({{count}})",
+    "openingFloat": "Opening float",
+    "cashSales": "+ Cash sales",
+    "plusCustomerPayments": "+ Customer payments",
+    "cashRefunds": "- Cash refunds",
+    "countedVariance": "Counted / variance",
+    "countedLine": "{{method}}: {{counted}} (exp. {{expected}})",
+    "topItems": "Top items",
+    "generated": "Generated {{date}}",
+    "errors": {
+      "load": "Could not load the report"
+    }
+  }
+}

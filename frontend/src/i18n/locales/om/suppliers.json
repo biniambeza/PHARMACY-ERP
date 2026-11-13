@@ -1,0 +1,82 @@
+{
+  "badge": "Galmee Dhiyeessitootaa",
+  "title": "Galmee Dhiyeessitoota Qorichaa",
+  "subtitle": "Raabsitoota qorichaa, oomishtoota mirkanaa'an fi quunnamtii waliigaltee dhiyeessii bulchi",
+  "addSupplier": "Dhiyeessaa Dabali",
+  "addFirst": "Dhiyeessaa Jalqabaa Dabali",
+  "confirmDelete": "Dhiyeessaa \"{{name}}\" haquu barbaaddaa?",
+  "errors": { "delete": "Dhiyeessaa haquun hin danda'amne" },
+  "metrics": {
+    "total": { "title": "Dhiyeessitoota Galmaa'an Waliigalaa", "sub": "Dhiyeessitoota hojii irra fi duraanii", "badge": "Galmee" },
+    "active": { "title": "Dhiyeessitoota Waliigaltee Hojii Irra Jiran", "sub": "Bittaaf kan argaman" },
+    "inactive": {
+      "title": "Hojii Ala / Dhaabbatan",
+      "sub": "Herrega daldalaa dhaabbatan",
+      "underReview": "Ilaalamaa jira",
+      "zero": "Dhaabbiin hin jiru"
+    }
+  },
+  "searchPlaceholder": "Maqaa dhiyeessaa, nama quunnamtii, bilbila ykn imeeliin barbaadi...",
+  "filters": { "all": "Dhiyeessitoota Hunda", "active": "Hojii Irra Qofa" },
+  "empty": {
+    "noMatch": "Dhiyeessaan walsimu hin argamne",
+    "none": "Dhiyeessaan galmaa'e hin jiru",
+    "noMatchHint": "Jecha barbaacha ykn calallii jijjiiri",
+    "noneHint": "Ajaja bittaa kennuu jalqabuuf raabsitoota qorichaa hayyama qaban dabali"
+  },
+  "columns": {
+    "vendor": "Dhaabbata Dhiyeessaa",
+    "contact": "Bakka Bu'aa Herregaa",
+    "phone": "Bilbila",
+    "email": "Teessoo Imeelii",
+    "address": "Teessoo Kuusaa",
+    "outstanding": "Hin kaffalamne",
+    "status": "Haala"
+  },
+  "notSpecified": "Hin ibsamne",
+  "na": "Hin jiru",
+  "openInPayables": "Kaffaltii keessatti bani",
+  "overdueAmount": "{{amount}} yeroon darbe",
+  "terms_one": "Haala kaffaltii guyyaa {{count}}",
+  "terms_other": "Haala kaffaltii guyyoota {{count}}",
+  "editSupplier": "Dhiyeessaa gulaali",
+  "deleteSupplier": "Dhiyeessaa haqi",
+  "footer": {
+    "showing_one": "Raabsaa galmaa'e <strong>{{count}}</strong> agarsiisaa jira",
+    "showing_other": "Raabsitoota galmaa'an <strong>{{count}}</strong> agarsiisaa jira",
+    "directoryId": "Eenyummaa Galmee: SUP-DIR-{{n}}"
+  },
+  "modal": {
+    "editTitle": "Piroofaayilii Dhiyeessaa Gulaali",
+    "createTitle": "Dhiyeessaa Haaraa Galmeessi",
+    "editSubtitle": "Quunnamtii dhiyeessaa qorichaa fi haala dhiyeessii haaromsi",
+    "createSubtitle": "Daldalaa jumlaa qorichaa ykn oomishaa hayyama qabu galmeetti dabali",
+    "fields": {
+      "name": "Maqaa Dhaabbataa / Dhiyeessaa",
+      "contact": "Bulchaa Herregaa / Nama Quunnamtii",
+      "status": "Haala Dhiyeessaa",
+      "phone": "Lakkoofsa Bilbilaa",
+      "email": "Teessoo Imeelii",
+      "terms": "Haala Kaffaltii (guyyoota)",
+      "address": "Teessoo Kuusaa / Waajjiraa",
+      "notes": "Yaadannoo Bittaa fi Waliigaltee"
+    },
+    "placeholders": {
+      "name": "fkn. Novartis Distribution Ltd.",
+      "contact": "fkn. Dr. Caalaa Tolasaa",
+      "address": "Waajjira 400, Karaa Paarkii Industirii",
+      "notes": "Haala kaffaltii, yeroo geejjibaa, ajaja xiqqaa barbaachisu..."
+    },
+    "statusActive": "Dhiyeessaa Hojii Irra Jiru",
+    "statusInactive": "Hojii Ala / Dhaabbate",
+    "termsHint": "Nagaheen dhiyeessaa guyyaa nagahee booda guyyoota kana keessatti kaffalama (0 = yeroo argametti).",
+    "saving": "Dhiyeessaa olkaa'aa jira...",
+    "saveChanges": "Jijjiirama Olkaa'i",
+    "register": "Dhiyeessaa Galmeessi",
+    "errors": {
+      "nameRequired": "Maqaan dhiyeessaa ykn dhaabbataa barbaachisaadha.",
+      "terms": "Haalli kaffaltii lakkoofsa guyyoota guutuu 0 fi 365 gidduu ta'uu qaba.",
+      "save": "Odeeffannoo dhiyeessaa olkaa'uun hin danda'amne"
+    }
+  }
+}

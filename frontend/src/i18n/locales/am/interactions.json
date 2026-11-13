@@ -1,0 +1,29 @@
+{
+  "badge": "ክሊኒካል",
+  "title": "የመድኃኒት መስተጋብር ደንቦች",
+  "subtitle": "በሽያጭ ቦታ (POS) የሚፈተሹ የጀነሪክ ንጥረ ነገሮች ጥንዶች። መድኃኒቶች በጀነሪክ ስማቸው (ጥምሮች በ “,” ወይም “+” ይለያሉ) እና በብራንድ ስማቸው ይዛመዳሉ።",
+  "filterPlaceholder": "ደንቦችን አጣራ...",
+  "customTitle": "የፋርማሲዎ ደንቦች ({{count}})",
+  "globalTitle": "አብሮ የተሰሩ መነሻ ደንቦች ({{count}}፣ ለንባብ ብቻ)",
+  "noRules": "ምንም ደንብ የለም",
+  "builtInTitle": "አብሮ የተሰራ ደንብ (ለንባብ ብቻ)",
+  "editRule": "ደንብ አርትዕ",
+  "deleteRule": "ደንብ ሰርዝ",
+  "confirmDelete": "ደንቡ {{a}} + {{b}} ይሰረዝ?",
+  "fields": { "substanceA": "ንጥረ ነገር ሀ", "substanceB": "ንጥረ ነገር ለ", "severity": "ክብደት", "description": "መግለጫ" },
+  "placeholders": { "substanceA": "ለምሳሌ warfarin", "substanceB": "ለምሳሌ aspirin" },
+  "severity": { "minor": "ቀላል", "moderate": "መካከለኛ", "major": "ከባድ", "contraindicated": "የተከለከለ" },
+  "errors": {
+    "load": "ደንቦችን መጫን አልተቻለም",
+    "bothSubstances": "ሁለቱንም ንጥረ ነገሮች ያስገቡ (የጀነሪክ ስሞች)።",
+    "save": "ደንቡን ማስቀመጥ አልተቻለም",
+    "delete": "ደንቡን መሰረዝ አልተቻለም"
+  },
+  "checkFailed": "መስተጋብሮችን መፈተሽ አልተቻለም",
+  "warnings": {
+    "checking": "መስተጋብሮችን በመፈተሽ ላይ...",
+    "allergy": "አለርጂ: {{medicine}} — ታካሚው ለ{{substance}} አለርጂ አለበት",
+    "reaction": "ምላሽ: {{reaction}}",
+    "disclaimer": "ማስጠንቀቂያዎቹ ከመነሻ ዝርዝር እና ከፋርማሲዎ ደንቦች የመጡ ናቸው፤ የሙያዊ ውሳኔን አይተኩም።"
+  }
+}

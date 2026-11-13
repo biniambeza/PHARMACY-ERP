@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, KeyRound, Loader2, Copy, Check } from 'lucide-react';
 import { adminResetUserPassword } from '../../api/authApi';
 
 // Admin password reset for a pharmacy user: one-time temporary password or an
 // emailed reset link. The parent mounts it with a `key` per user.
 const ResetPasswordModal = ({ user, onClose }) => {
+  const { t } = useTranslation('admin');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -13,14 +15,14 @@ const ResetPasswordModal = ({ user, onClose }) => {
   if (!user) return null;
 
   const reset = async (mode) => {
-    const what = mode === 'temp' ? 'set a temporary password for' : 'email a reset link to';
-    if (!window.confirm(`This will sign ${user.name} out everywhere and ${what} ${user.email}. Continue?`)) return;
+    const confirmKey = mode === 'temp' ? 'resetPassword.confirmTemp' : 'resetPassword.confirmEmail';
+    if (!window.confirm(t(confirmKey, { name: user.name, email: user.email }))) return;
     setBusy(true);
     setError('');
     try {
       setResult(await adminResetUserPassword(user._id, mode));
     } catch (err) {
-      setError(err.response?.data?.message || 'Password reset failed');
+      setError(err.response?.data?.message || t('resetPassword.failed'));
     } finally {
       setBusy(false);
     }
@@ -47,7 +49,7 @@ const ResetPasswordModal = ({ user, onClose }) => {
               <KeyRound className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Reset password</h3>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t('shared.resetPassword')}</h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {user.name} ({user.email})
               </p>
@@ -62,8 +64,7 @@ const ResetPasswordModal = ({ user, onClose }) => {
           result.tempPassword ? (
             <div className="space-y-2">
               <p className="text-slate-600 dark:text-slate-300">
-                One-time temporary password. It is shown only once: share it securely. The user should change it after
-                signing in.
+                {t('resetPassword.tempInfo')}
               </p>
               <div className="flex items-center gap-2">
                 <input
@@ -72,9 +73,9 @@ const ResetPasswordModal = ({ user, onClose }) => {
                   onFocus={(e) => e.target.select()}
                   className="flex-1 px-3 py-2 font-mono text-sm bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"
                 />
-                <button onClick={copy} title="Copy" className={`${btn} bg-emerald-600 hover:bg-emerald-500 text-white inline-flex items-center gap-1.5`}>
+                <button onClick={copy} title={t('resetPassword.copy')} className={`${btn} bg-emerald-600 hover:bg-emerald-500 text-white inline-flex items-center gap-1.5`}>
                   {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copied ? 'Copied' : 'Copy'}
+                  {copied ? t('resetPassword.copied') : t('resetPassword.copy')}
                 </button>
               </div>
             </div>
@@ -91,7 +92,7 @@ const ResetPasswordModal = ({ user, onClose }) => {
           )
         ) : (
           <p className="text-slate-600 dark:text-slate-300">
-            Choose how to reset. Either way the user's current sessions are signed out.
+            {t('resetPassword.choose')}
           </p>
         )}
 
@@ -105,15 +106,15 @@ const ResetPasswordModal = ({ user, onClose }) => {
           {!result?.tempPassword && (
             <>
               <button disabled={busy} onClick={() => reset('email')} className={`${btn} border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800`}>
-                Email reset link
+                {t('resetPassword.emailLink')}
               </button>
               <button disabled={busy} onClick={() => reset('temp')} className={`${btn} bg-amber-600 hover:bg-amber-500 text-white inline-flex items-center gap-1.5`}>
-                {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Set temporary password
+                {busy && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {t('resetPassword.setTemp')}
               </button>
             </>
           )}
           <button onClick={onClose} className={`${btn} bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200`}>
-            {result ? 'Done' : 'Cancel'}
+            {result ? t('resetPassword.done') : t('buttons.cancel', { ns: 'common' })}
           </button>
         </div>
       </div>

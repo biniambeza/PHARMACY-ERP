@@ -1,0 +1,158 @@
+{
+  "page": {
+    "badge": "Bittaa fi Sansalata Dhiyeessii",
+    "title": "Ajajoota Bittaa fi Geessituu",
+    "subtitle": "Meeshaalee kuusaa guutuu dhiyeessitoota qorichaa irraa bitadhu fi lootiiwwan seenan fudhadhu",
+    "create": "Ajaja Bittaa Uumi",
+    "searchPlaceholder": "Lakkoofsa ajajaa ykn maqaa dhiyeessaatiin barbaadi..."
+  },
+  "filters": {
+    "all": "Ajajoota Hunda",
+    "draft": "Wixineewwan",
+    "ordered": "Geessituu Eeggachaa",
+    "partial": "Gartokkee",
+    "received": "Kan Fudhataman",
+    "closed": "Hir'inaan Cufame",
+    "cancelled": "Kan Haqaman"
+  },
+  "status": {
+    "pendingDelivery": "Geessituu Eeggachaa",
+    "partiallyReceived": "Gartokkeen Fudhatame",
+    "closedShort": "Hir'inaan Cufame"
+  },
+  "metrics": {
+    "totalRequisitions": "Gaaffilee Waliigalaa",
+    "totalRequisitionsSub": "Ajajoota bittaa uumaman hunda",
+    "totalPOs": "Ajajoota Waliigalaa",
+    "pendingDeliveries": "Geessituu Eeggataman",
+    "pendingDeliveriesSub": "Dhiyeessaa irraa fudhachuu eeggachaa",
+    "inTransit": "Karaa Irra",
+    "clear": "Qulqulluu",
+    "receivedDeliveries": "Geessituu Fudhataman",
+    "receivedDeliveriesSub": "Kuusaa hojii irra jirutti galeera",
+    "fulfilled": "Guutameera",
+    "procurementSpend": "Baasii Bittaa",
+    "procurementSpendSub": "Kaappitaala guutuu hojii irra jiru",
+    "capital": "Kaappitaala"
+  },
+  "empty": {
+    "noMatchTitle": "Ajajni bittaa walsimu hin jiru",
+    "noneTitle": "Ajajni bittaa hin qophoofne",
+    "noMatchHint": "Ulaagaa barbaadaa ykn calaltuu sirreessuu yaali",
+    "noneHint": "Dhiyeessitoota galmaa'an irraa kuusaa qorichaa gaafachuuf ajaja bittaa qopheessi",
+    "createFirst": "Ajaja Jalqabaa Uumi"
+  },
+  "table": {
+    "poId": "Eenyummaa Ajajaa",
+    "vendor": "Dhiyeessaa Qorichaa",
+    "orderDate": "Guyyaa Ajajaa",
+    "summary": "Cuunfaa Gaaffii",
+    "orderTotal": "Ida'ama Ajajaa",
+    "deliveryStatus": "Haala Geessituu",
+    "showDetails": "Sararoota fi seenaa fudhannaa agarsiisi",
+    "verifiedSupplier": "Dhiyeessaa Mirkanaa'e",
+    "expected": "Kan eegamu: {{date}}",
+    "productSummary_one": "Oomisha {{count}} (yuunitii {{units}})",
+    "productSummary_other": "Oomishaalee {{count}} (yuunitii {{units}})",
+    "receivedOf": "{{ordered}} keessaa {{received}} fudhatame",
+    "receiveStock": "Kuusaa Fudhadhu",
+    "receiveMore": "Dabalataan Fudhadhu",
+    "closeShortTitle": "Hir'inaan cufi (kan hafe hin geeffamu)",
+    "cancelTitle": "Ajaja Bittaa Haqi",
+    "receivedOn": "Fudhatame {{date}}",
+    "closedOn": "Cufame {{date}}"
+  },
+  "footer": {
+    "showingPrefix": "Agarsiifamaa jira",
+    "showingSuffix": "ajajoota bittaa",
+    "spend": "Baasii Bittaa: {{amount}}"
+  },
+  "confirm": {
+    "cancel": "Ajaja bittaa \"{{poNumber}}\" haquu barbaaduu kee mirkaneeffatteettaa?",
+    "closeShort": "\"{{poNumber}}\" hir'inaan haa cufamu? Baay'inni hafe akka hin dhufne ni galmaa'a.\nSababa (filannoo):"
+  },
+  "errors": {
+    "cancelFailed": "Ajaja haquun hin milkoofne",
+    "submitFailed": "Ajaja galchuun hin milkoofne",
+    "closeFailed": "Ajaja cufuun hin milkoofne"
+  },
+  "details": {
+    "lines": "Sararoota",
+    "item": "Meeshaa",
+    "ordered": "Kan ajajame",
+    "received": "Kan fudhatame",
+    "bonus": "Kennaa",
+    "unitCost": "Gatii yuunitii",
+    "closedShort": "Hir'inaan cufame",
+    "closedShortReason": "Hir'inaan cufame: {{reason}}",
+    "receiptHistory": "Seenaa fudhannaa",
+    "noDeliveries": "Hanga ammaatti geessituun hin galmoofne.",
+    "by": "{{name}}n",
+    "supplierInvoice": "Nagahee dhiyeessaa",
+    "plusBonus": "+ kennaa {{qty}}"
+  },
+  "create": {
+    "title": "Wixinee Ajaja Bittaa",
+    "subtitle": "Kuusaa qorichaa guutuuf gaaffii bittaa dhiyeessaa jalqabi",
+    "vendor": "Dhiyeessaa Qorichaa Filadhu",
+    "loadingVendors": "Dhiyeessitoota fe'aa jira...",
+    "noSuppliers": "Dhiyeessaan hojii irra jiru hin jiru. Jalqaba dhiyeessitoota dabali.",
+    "expectedDelivery": "Guyyaa Geessituu Eegamu",
+    "lineItems": "Meeshaalee Sarara Ajajaa",
+    "addLine": "Sarara Oomishaa Dabali",
+    "unit": "Yuunitii",
+    "qtyPlaceholder": "Baay'ina",
+    "costPlaceholder": "Gatii",
+    "removeLine": "Oomisha haqi",
+    "notes": "Yaadannoo Bittaa fi Haalawwan Geessituu",
+    "notesPlaceholder": "Fkn. Sansalatni qorraa barbaachisa, kaffaltiin nagahee guyyaa 30 keessatti...",
+    "estimatedTotal": "Ida'ama Ajajaa Tilmaamame:",
+    "productLines_one": "sarara oomishaa {{count}}",
+    "productLines_other": "sararoota oomishaa {{count}}",
+    "saveDraft": "Akka Wixineetti Olkaa'i",
+    "generating": "Ajaja uumaa jira...",
+    "issue": "Ajaja Bittaa Baasi",
+    "errors": {
+      "loadFailed": "Dhiyeessitoota hojii irra jiran fi kaataloogii qorichaa fe'uun hin milkoofne.",
+      "selectSupplier": "Maaloo dhiyeessaa mirkanaa'e filadhu.",
+      "noItems": "Ajajni bittaa yoo xiqqaate sarara meeshaa tokko qabaachuu qaba.",
+      "invalidLines": "Maaloo baay'ina fi gatii bittaa sararoota oomishaa hundaa mirkaneessi.",
+      "createFailed": "Ajaja bittaa uumuun hin milkoofne"
+    }
+  },
+  "receive": {
+    "title": "Geessituu Fudhadhu",
+    "subtitle": "Waan dhufe galchi. Geessituun gartokkee, lootiiwwan hedduun meeshaa tokkoof fi yuunitiin kennaa ni deeggaramu.",
+    "itemN": "Meeshaa #{{n}}",
+    "supplierLabel": "Dhiyeessaa:",
+    "supplierFallback": "Dhiyeessaa",
+    "fillExpiry": "Guyyaa dhumaa duwwaa guuti (+waggaa 2)",
+    "invoiceNo": "Lakk. nagahee dhiyeessaa",
+    "optional": "Filannoo",
+    "invoiceDate": "Guyyaa nagahee",
+    "notes": "Yaadannoo",
+    "items_one": "Meeshaalee ({{count}})",
+    "items_other": "Meeshaalee ({{count}})",
+    "ordered": "Kan ajajame",
+    "received": "Kan fudhatame",
+    "now": "Amma",
+    "fullyReceived": "Guutummaan fudhatameera.",
+    "lotNumber": "Lakkoofsa lootii",
+    "expiryDate": "Guyyaa dhumaa",
+    "receivedQty": "Baay'ina fudhatame",
+    "bonus": "Kennaa",
+    "removeLot": "Lootii haqi",
+    "addLot": "Lootii biraa dabali",
+    "addBonusLot": "Lootii kennaa dabali",
+    "receiptCost": "Baasii fudhannaa kanaa (kennaan bilisa):",
+    "saving": "Fudhannaa olkaa'aa jira...",
+    "submit": "Fudhadhu fi Kuusaatti Dabali",
+    "errors": {
+      "overOutstanding": "\"{{name}}\": baay'inni fudhatame {{outstanding}} hafe caala. Yuunitii bilisaa akka kennaatti galmeessi.",
+      "wholeNumbers": "\"{{name}}\": baay'inni lakkoofsa guutuu zeeroo ykn isaa ol ta'uu qaba.",
+      "lotAndExpiry": "Maaloo \"{{name}}\"f lakkoofsa lootii fi guyyaa dhumaa lachuu galchi.",
+      "nothingEntered": "Yoo xiqqaate meeshaa tokkoof baay'ina fudhatame ykn kennaa galchi.",
+      "receiveFailed": "Geessituu ajaja bittaa fudhachuun hin milkoofne"
+    }
+  }
+}

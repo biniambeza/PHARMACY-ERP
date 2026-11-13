@@ -1,0 +1,158 @@
+{
+  "page": {
+    "badge": "Procurement & Supply Chain",
+    "title": "Purchase Orders & Deliveries",
+    "subtitle": "Procure inventory replenishment batches from pharmaceutical vendors and receive inbound lots",
+    "create": "Create Purchase Order",
+    "searchPlaceholder": "Search by PO number or supplier name..."
+  },
+  "filters": {
+    "all": "All Orders",
+    "draft": "Drafts",
+    "ordered": "Pending Delivery",
+    "partial": "Partial",
+    "received": "Received",
+    "closed": "Closed Short",
+    "cancelled": "Cancelled"
+  },
+  "status": {
+    "pendingDelivery": "Pending Delivery",
+    "partiallyReceived": "Partially Received",
+    "closedShort": "Closed Short"
+  },
+  "metrics": {
+    "totalRequisitions": "Total Requisitions",
+    "totalRequisitionsSub": "All generated purchase orders",
+    "totalPOs": "Total POs",
+    "pendingDeliveries": "Pending Deliveries",
+    "pendingDeliveriesSub": "Awaiting vendor receipt",
+    "inTransit": "In Transit",
+    "clear": "Clear",
+    "receivedDeliveries": "Received Deliveries",
+    "receivedDeliveriesSub": "Deposited to active stock",
+    "fulfilled": "Fulfilled",
+    "procurementSpend": "Procurement Spend",
+    "procurementSpendSub": "Active replenishment capital",
+    "capital": "Capital"
+  },
+  "empty": {
+    "noMatchTitle": "No matching purchase orders",
+    "noneTitle": "No purchase orders drafted",
+    "noMatchHint": "Try adjusting your search criteria or filter tags",
+    "noneHint": "Draft a purchase order to request pharmaceutical inventory from registered suppliers",
+    "createFirst": "Create First PO"
+  },
+  "table": {
+    "poId": "PO Identification",
+    "vendor": "Pharmaceutical Vendor",
+    "orderDate": "Order Date",
+    "summary": "Requisition Summary",
+    "orderTotal": "Order Total",
+    "deliveryStatus": "Delivery Status",
+    "showDetails": "Show lines and receipt history",
+    "verifiedSupplier": "Verified Supplier",
+    "expected": "Expected: {{date}}",
+    "productSummary_one": "{{count}} product ({{units}} units)",
+    "productSummary_other": "{{count}} products ({{units}} units)",
+    "receivedOf": "Received {{received}} of {{ordered}}",
+    "receiveStock": "Receive Stock",
+    "receiveMore": "Receive More",
+    "closeShortTitle": "Close short (remaining will not be delivered)",
+    "cancelTitle": "Cancel Purchase Order",
+    "receivedOn": "Received {{date}}",
+    "closedOn": "Closed {{date}}"
+  },
+  "footer": {
+    "showingPrefix": "Showing",
+    "showingSuffix": "purchase orders",
+    "spend": "Procurement Spend: {{amount}}"
+  },
+  "confirm": {
+    "cancel": "Are you sure you want to cancel purchase order \"{{poNumber}}\"?",
+    "closeShort": "Close \"{{poNumber}}\" short? The remaining quantities will be marked as not coming.\nReason (optional):"
+  },
+  "errors": {
+    "cancelFailed": "Failed to cancel order",
+    "submitFailed": "Failed to submit order",
+    "closeFailed": "Failed to close order"
+  },
+  "details": {
+    "lines": "Lines",
+    "item": "Item",
+    "ordered": "Ordered",
+    "received": "Received",
+    "bonus": "Bonus",
+    "unitCost": "Unit cost",
+    "closedShort": "Closed short",
+    "closedShortReason": "Closed short: {{reason}}",
+    "receiptHistory": "Receipt history",
+    "noDeliveries": "No deliveries recorded yet.",
+    "by": "by {{name}}",
+    "supplierInvoice": "Supplier invoice",
+    "plusBonus": "+ {{qty}} bonus"
+  },
+  "create": {
+    "title": "Draft Purchase Order",
+    "subtitle": "Initiate supplier procurement requisition for pharmaceutical inventory replenishment",
+    "vendor": "Select Pharmaceutical Vendor",
+    "loadingVendors": "Loading vendors...",
+    "noSuppliers": "No active suppliers available. Add suppliers first.",
+    "expectedDelivery": "Expected Delivery Date",
+    "lineItems": "Order Line Items",
+    "addLine": "Add Product Line",
+    "unit": "Unit",
+    "qtyPlaceholder": "Qty",
+    "costPlaceholder": "Cost",
+    "removeLine": "Remove product",
+    "notes": "Procurement Notes & Delivery Terms",
+    "notesPlaceholder": "e.g. Standard cold-chain required, net 30 days invoice payment...",
+    "estimatedTotal": "Estimated Order Total:",
+    "productLines_one": "{{count}} product lines",
+    "productLines_other": "{{count}} product lines",
+    "saveDraft": "Save as Draft",
+    "generating": "Generating Order...",
+    "issue": "Issue Purchase Order",
+    "errors": {
+      "loadFailed": "Failed to load active suppliers and medication catalog.",
+      "selectSupplier": "Please select a verified vendor/supplier.",
+      "noItems": "Purchase order must contain at least one item line.",
+      "invalidLines": "Please check all product line quantities and unit purchase costs.",
+      "createFailed": "Failed to generate purchase order"
+    }
+  },
+  "receive": {
+    "title": "Receive Delivery",
+    "subtitle": "Enter what arrived. Partial deliveries, several lots per item and bonus units are supported.",
+    "itemN": "Item #{{n}}",
+    "supplierLabel": "Supplier:",
+    "supplierFallback": "Supplier",
+    "fillExpiry": "Fill empty expiry dates (+2 years)",
+    "invoiceNo": "Supplier invoice no.",
+    "optional": "Optional",
+    "invoiceDate": "Invoice date",
+    "notes": "Notes",
+    "items_one": "Items ({{count}})",
+    "items_other": "Items ({{count}})",
+    "ordered": "Ordered",
+    "received": "Received",
+    "now": "Now",
+    "fullyReceived": "Fully received.",
+    "lotNumber": "Lot number",
+    "expiryDate": "Expiry date",
+    "receivedQty": "Received qty",
+    "bonus": "Bonus",
+    "removeLot": "Remove lot",
+    "addLot": "Add another lot",
+    "addBonusLot": "Add bonus lot",
+    "receiptCost": "Cost of this receipt (bonus is free):",
+    "saving": "Saving receipt...",
+    "submit": "Receive & Add to Stock",
+    "errors": {
+      "overOutstanding": "\"{{name}}\": received quantity is more than the {{outstanding}} still outstanding. Record free units as bonus.",
+      "wholeNumbers": "\"{{name}}\": quantities must be whole numbers of zero or more.",
+      "lotAndExpiry": "Please provide both lot number and expiry date for \"{{name}}\".",
+      "nothingEntered": "Enter a received or bonus quantity for at least one item.",
+      "receiveFailed": "Failed to receive purchase order delivery"
+    }
+  }
+}

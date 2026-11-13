@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ExternalLink,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import {
   getNotifications,
@@ -23,21 +24,13 @@ import {
 import { formatDateTime } from '../../utils/format';
 
 const SEVERITY_STYLES = {
-  critical: { icon: AlertOctagon, color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/40', label: 'Critical' },
-  warning: { icon: AlertTriangle, color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/40', label: 'Warning' },
-  success: { icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40', label: 'Success' },
-  info: { icon: Info, color: 'text-sky-500 bg-sky-50 dark:bg-sky-950/40', label: 'Info' },
+  critical: { icon: AlertOctagon, color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/40' },
+  warning: { icon: AlertTriangle, color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/40' },
+  success: { icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40' },
+  info: { icon: Info, color: 'text-sky-500 bg-sky-50 dark:bg-sky-950/40' },
 };
 
-const TYPE_LABELS = {
-  expired: 'Expired',
-  expiring_soon: 'Expiring soon',
-  low_stock: 'Low stock',
-  po_overdue: 'Overdue PO',
-  pharmacy_suspended: 'Account',
-  daily_summary: 'Daily summary',
-  system: 'System',
-};
+const TYPES = ['expired', 'expiring_soon', 'low_stock', 'po_overdue', 'pharmacy_suspended', 'daily_summary', 'system'];
 
 const selectClass =
   'px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer';
@@ -45,6 +38,7 @@ const selectClass =
 const PAGE_SIZE = 20;
 
 const Notifications = () => {
+  const { t } = useTranslation('notifications');
   const { can } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
@@ -74,11 +68,11 @@ const Notifications = () => {
       setTotal(data.total || 0);
       setPages(data.pages || 1);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load notifications');
+      setError(err.response?.data?.message || t('errors.load'));
     } finally {
       setLoading(false);
     }
-  }, [page, onlyUnread, type, severity]);
+  }, [page, onlyUnread, type, severity, t]);
 
   useEffect(() => {
     load();
@@ -113,7 +107,7 @@ const Notifications = () => {
       await markAllNotificationsRead();
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to mark notifications as read');
+      setError(err.response?.data?.message || t('errors.markAll'));
     }
   };
 
@@ -126,7 +120,7 @@ const Notifications = () => {
       setPage(1);
       load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to run checks');
+      setError(err.response?.data?.message || t('errors.runChecks'));
     } finally {
       setRunning(false);
     }
@@ -138,13 +132,13 @@ const Notifications = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-            Alerts Center
+            {t('badge')}
           </span>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Notifications
+            {t('title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Expiry, low stock and purchase order alerts for this branch ({unreadCount} unread)
+            {t('subtitle', { count: unreadCount })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -156,7 +150,7 @@ const Notifications = () => {
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#161c26] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer disabled:opacity-50"
             >
               <PlayCircle className={`w-4 h-4 ${running ? 'animate-pulse' : ''}`} />
-              {running ? 'Running checks...' : 'Run checks now'}
+              {running ? t('runningChecks') : t('runChecks')}
             </button>
           )}
           <button
@@ -166,16 +160,19 @@ const Notifications = () => {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50"
           >
             <CheckCheck className="w-4 h-4" />
-            Mark all read
+            {t('markAllRead')}
           </button>
         </div>
       </div>
 
       {runResult && (
         <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-xs text-emerald-800 dark:text-emerald-300">
-          Checks complete: {runResult.expired || 0} batches marked expired, {runResult.expiringNotified || 0} new
-          expiry alerts, {runResult.lowStock || 0} medicines low on stock, {runResult.overduePOs || 0} overdue
-          purchase orders.
+          {t('checksComplete', {
+            expired: runResult.expired || 0,
+            expiring: runResult.expiringNotified || 0,
+            lowStock: runResult.lowStock || 0,
+            overdue: runResult.overduePOs || 0,
+          })}
         </div>
       )}
 
@@ -183,11 +180,11 @@ const Notifications = () => {
       <div className="bg-white dark:bg-[#161c26] border border-slate-100/90 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs font-medium self-start">
           {[
-            [false, 'All'],
-            [true, 'Unread'],
+            [false, t('filters.all')],
+            [true, t('filters.unread')],
           ].map(([value, label]) => (
             <button
-              key={label}
+              key={String(value)}
               type="button"
               onClick={() => changeFilter(setOnlyUnread)(value)}
               className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
@@ -201,11 +198,11 @@ const Notifications = () => {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select value={type} onChange={(e) => changeFilter(setType)(e.target.value)} className={selectClass} aria-label="Type">
-            <option value="">All types</option>
-            {Object.entries(TYPE_LABELS).map(([value, label]) => (
+          <select value={type} onChange={(e) => changeFilter(setType)(e.target.value)} className={selectClass} aria-label={t('filters.type')}>
+            <option value="">{t('filters.allTypes')}</option>
+            {TYPES.map((value) => (
               <option key={value} value={value}>
-                {label}
+                {t(`types.${value}`)}
               </option>
             ))}
           </select>
@@ -213,19 +210,19 @@ const Notifications = () => {
             value={severity}
             onChange={(e) => changeFilter(setSeverity)(e.target.value)}
             className={selectClass}
-            aria-label="Severity"
+            aria-label={t('filters.severity')}
           >
-            <option value="">All severities</option>
-            {Object.entries(SEVERITY_STYLES).map(([value, s]) => (
+            <option value="">{t('filters.allSeverities')}</option>
+            {Object.keys(SEVERITY_STYLES).map((value) => (
               <option key={value} value={value}>
-                {s.label}
+                {t(`severity.${value}`)}
               </option>
             ))}
           </select>
           <button
             type="button"
             onClick={load}
-            title="Refresh"
+            title={t('common:buttons.refresh')}
             className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -250,9 +247,9 @@ const Notifications = () => {
             <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-center">
               <Bell className="w-6 h-6 text-slate-300 dark:text-slate-600" />
             </div>
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-3">No notifications</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mt-3">{t('empty.title')}</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              {onlyUnread || type || severity ? 'Nothing matches these filters.' : "You're all caught up."}
+              {onlyUnread || type || severity ? t('empty.filtered') : t('empty.caughtUp')}
             </p>
           </div>
         ) : (
@@ -272,9 +269,9 @@ const Notifications = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <p className={`text-sm text-slate-900 dark:text-white ${n.read ? 'font-medium' : 'font-bold'}`}>{n.title}</p>
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                        {TYPE_LABELS[n.type] || n.type}
+                        {t(`types.${n.type}`, { defaultValue: n.type })}
                       </span>
-                      {!n.read && <span className="w-2 h-2 rounded-full bg-emerald-500" aria-label="Unread" />}
+                      {!n.read && <span className="w-2 h-2 rounded-full bg-emerald-500" aria-label={t('filters.unread')} />}
                     </div>
                     {n.message && <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 break-words">{n.message}</p>}
                     <p className="text-[11px] text-slate-400 mt-1.5">{formatDateTime(n.createdAt)}</p>
@@ -286,7 +283,7 @@ const Notifications = () => {
                         onClick={() => handleOpen(n)}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg transition cursor-pointer"
                       >
-                        Open
+                        {t('open')}
                         <ExternalLink className="w-3 h-3" />
                       </button>
                     )}
@@ -296,7 +293,7 @@ const Notifications = () => {
                         onClick={() => handleMarkRead(n)}
                         className="px-2.5 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition cursor-pointer"
                       >
-                        Mark read
+                        {t('markRead')}
                       </button>
                     )}
                   </div>
@@ -309,7 +306,7 @@ const Notifications = () => {
         {pages > 1 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
             <span>
-              Page {page} of {pages} ({total} total)
+              {t('pagination', { page, pages, total })}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -317,7 +314,7 @@ const Notifications = () => {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 cursor-pointer"
-                aria-label="Previous page"
+                aria-label={t('previousPage')}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -326,7 +323,7 @@ const Notifications = () => {
                 onClick={() => setPage((p) => Math.min(pages, p + 1))}
                 disabled={page >= pages}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 cursor-pointer"
-                aria-label="Next page"
+                aria-label={t('nextPage')}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

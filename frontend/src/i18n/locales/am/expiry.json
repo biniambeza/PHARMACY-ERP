@@ -1,0 +1,36 @@
+{
+  "badge": "የማብቂያ ጊዜ አስተዳደር",
+  "title": "የማብቂያ ጊዜ ዳሽቦርድ",
+  "subtitle": "ጊዜያቸው ያለፈባቸው እና በቅርቡ የሚያልፉ ክምችቶች፣ የተሰረዙ እና ወደ አቅራቢ የሚመለሱ። ጊዜያቸው ያለፈባቸው ባችዎች በየምሽቱ ከሽያጭ በራስ-ሰር ይወገዳሉ።",
+  "errors": { "load": "የማብቂያ ጊዜ አጠቃላይ እይታን መጫን አልተሳካም" },
+  "buckets": { "expired": "ጊዜው ያለፈበት", "d30": "በ30 ቀናት ውስጥ", "d60": "ከ31 እስከ 60 ቀናት", "d90": "ከ61 እስከ 90 ቀናት" },
+  "bucketSummary_one": "ባች፣ {{units}} ፍሬ",
+  "bucketSummary_other": "ባችዎች፣ {{units}} ፍሬ",
+  "atCost": "በግዢ ዋጋ",
+  "atRetail": "በችርቻሮ ዋጋ",
+  "bucketBatches": "{{label}} ባችዎች",
+  "sortedByExpiry": "በማብቂያ ቀን የተደረደረ",
+  "noBatches": "በዚህ ቡድን ውስጥ ምንም ባች የለም።",
+  "table": { "medicine": "መድሃኒት", "batch": "ባች", "expiry": "ማብቂያ", "qty": "ብዛት", "costValue": "የግዢ ዋጋ", "retailValue": "የችርቻሮ ዋጋ" },
+  "days": {
+    "today": "ዛሬ",
+    "ago_one": "ከ{{count}} ቀን በፊት", "ago_other": "ከ{{count}} ቀናት በፊት",
+    "left_one": "{{count}} ቀን ቀርቷል", "left_other": "{{count}} ቀናት ቀርተዋል"
+  },
+  "writeOffs": {
+    "title": "ወርሃዊ ኪሳራ (የተሰረዘ)",
+    "subtitle": "ጊዜው ያለፈበት ክምችት በግዢ ዋጋ፣ ያለፉት 12 ወራት",
+    "barTitle_one": "{{count}} ፍሬ፣ ችርቻሮ {{retail}}",
+    "barTitle_other": "{{count}} ፍሬዎች፣ ችርቻሮ {{retail}}",
+    "atRisk": "በሚቀጥሉት 90 ቀናት ስጋት ላይ ያለ ክምችት፦ <b>{{amount}}</b> በግዢ ዋጋ።"
+  },
+  "returns": {
+    "title": "ወደ አቅራቢ መመለስ",
+    "subtitle": "ጊዜያቸው ያለፈባቸው እና ሊያልፉ የተቃረቡ ባችዎች ባቀረባቸው አቅራቢ የተመደቡ (ከግዢ ትዕዛዞች የተገኘ፣ ካልሆነ የመድሃኒቱ ተመራጭ አቅራቢ)።",
+    "empty": "የሚመለስ ምንም የለም።",
+    "groupSummary_one": "{{count}} ባች፣ {{units}} ፍሬ",
+    "groupSummary_other": "{{count}} ባችዎች፣ {{units}} ፍሬ"
+  },
+  "sources": { "purchase_order": "ከግዢ ትዕዛዝ", "preferred_supplier": "ተመራጭ አቅራቢ", "unknown": "ያልታወቀ ምንጭ" },
+  "noData": "ምንም መረጃ የለም።"
+}

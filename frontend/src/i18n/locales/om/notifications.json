@@ -1,0 +1,34 @@
+{
+  "badge": "Giddugala Akeekkachiisaa",
+  "title": "Beeksisota",
+  "subtitle_one": "Akeekkachiisa yeroo darbuu, kuusaa xiqqaa fi ajaja bittaa damee kanaaf ({{count}} kan hin dubbifamne)",
+  "subtitle_other": "Akeekkachiisa yeroo darbuu, kuusaa xiqqaa fi ajaja bittaa damee kanaaf ({{count}} kan hin dubbifamne)",
+  "errors": {
+    "load": "Beeksisota fe'uun hin milkoofne",
+    "markAll": "Beeksisota akka dubbifamanitti mallatteessuun hin milkoofne",
+    "runChecks": "Sakatta'insa gaggeessuun hin milkoofne"
+  },
+  "runChecks": "Amma sakatta'i",
+  "runningChecks": "Sakatta'aa jira...",
+  "markAllRead": "Hunda akka dubbifameetti mallatteessi",
+  "markRead": "Akka dubbifameetti mallatteessi",
+  "open": "Bani",
+  "checksComplete": "Sakatta'insi xumurameera: baachiiwwan {{expired}} akka yeroon isaanii darbetti mallatteeffaman, akeekkachiisa haaraa yeroo darbuu {{expiring}}, qorichoota kuusaan isaanii xiqqaa ta'e {{lowStock}}, ajaja bittaa yeroon isaa darbe {{overdue}}.",
+  "filters": {
+    "all": "Hunda", "unread": "Kan hin dubbifamne", "type": "Gosa", "severity": "Hammeenya",
+    "allTypes": "Gosoota hunda", "allSeverities": "Hammeenya hunda"
+  },
+  "types": {
+    "expired": "Yeroon isaa darbe", "expiring_soon": "Dhiheenyatti darba", "low_stock": "Kuusaa xiqqaa", "po_overdue": "Ajaja bittaa yeroon darbe",
+    "pharmacy_suspended": "Herrega", "daily_summary": "Cuunfaa guyyaa", "system": "Sirna"
+  },
+  "severity": { "critical": "Hamaa", "warning": "Akeekkachiisa", "success": "Milkaa'ina", "info": "Odeeffannoo" },
+  "empty": {
+    "title": "Beeksisni hin jiru",
+    "filtered": "Calallii kanaan kan walsimu hin jiru.",
+    "caughtUp": "Hunda ilaaltaniittu."
+  },
+  "pagination": "Fuula {{page}} kan {{pages}} keessaa (waliigala {{total}})",
+  "previousPage": "Fuula duraa",
+  "nextPage": "Fuula itti aanu"
+}

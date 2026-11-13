@@ -1,0 +1,64 @@
+{
+  "badge": "Onboarding",
+  "title": "Data Import",
+  "subtitle": "Bulk-load medicines and opening stock from Excel (.xlsx) or CSV",
+  "kinds": {
+    "medicines": {
+      "label": "Medicines",
+      "description": "Create catalog items. Medicines whose name already exists are skipped."
+    },
+    "opening-stock": {
+      "label": "Opening Stock",
+      "description": "Add starting batches for medicines already in the catalog (matched by barcode, SKU or exact name). Quantity is in base units."
+    }
+  },
+  "columns": "Columns:",
+  "dateFormats": "Dates as YYYY-MM-DD or DD/MM/YYYY.",
+  "downloadTemplate": "Download template",
+  "chooseFile": "Choose file",
+  "rowCount_one": "{{count}} row",
+  "rowCount_other": "{{count}} rows",
+  "working": "Working...",
+  "imported_one": "Imported {{count}} row.",
+  "imported_other": "Imported {{count}} rows.",
+  "confirmImport_one": "Import {{count}} row?",
+  "confirmImport_other": "Import {{count}} rows?",
+  "importRows_one": "Import {{count}} row",
+  "importRows_other": "Import {{count}} rows",
+  "showValid": "Show valid rows",
+  "errorReport": "Error report",
+  "fixErrors": "Fix the errors in your file and upload it again",
+  "allValid": "All rows are valid.",
+  "summary": {
+    "total": "Total",
+    "valid": "Valid",
+    "skipped": "Skipped",
+    "errors": "Errors"
+  },
+  "table": {
+    "row": "Row",
+    "item": "Item",
+    "status": "Status",
+    "details": "Details"
+  },
+  "status": {
+    "ok": "ok",
+    "skip": "skip",
+    "error": "error"
+  },
+  "csv": {
+    "row": "Row",
+    "name": "Name",
+    "errors": "Errors"
+  },
+  "errors": {
+    "readFile": "Could not read file",
+    "readFailed": "Could not read the file",
+    "importFailed": "Import failed",
+    "tooLarge": "This Excel file is too large. Save it as CSV and upload the CSV instead.",
+    "badType": "Please choose a .csv or .xlsx file",
+    "noRows": "The file has no data rows",
+    "partial_one": "({{count}} row from earlier chunks was already imported)",
+    "partial_other": "({{count}} rows from earlier chunks were already imported)"
+  }
+}

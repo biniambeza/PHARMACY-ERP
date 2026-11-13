@@ -1,4 +1,5 @@
 import { Minus, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatMoney } from '../../utils/format';
 import { unitsOf } from './posUtils';
 
@@ -12,10 +13,11 @@ import { unitsOf } from './posUtils';
  *   registerQtyInput(key, el): lets the POS focus a line's quantity (F4)
  */
 const CartLines = ({ cart, selectedKey, onSelect, onQty, onUnit, onRemove, maxQtyOf, registerQtyInput }) => {
+  const { t } = useTranslation('pos');
   if (cart.length === 0) {
     return (
       <div className="p-8 text-center text-xs text-slate-400">
-        Cart is empty. Search, scan a barcode or use quick pick to add medicines.
+        {t('cart.empty')}
       </div>
     );
   }
@@ -68,6 +70,7 @@ const CartLines = ({ cart, selectedKey, onSelect, onQty, onUnit, onRemove, maxQt
                 type="button"
                 onClick={() => onQty(line.key, line.quantity - 1)}
                 disabled={line.quantity <= 1}
+                aria-label={t('cart.decrease')}
                 className="w-6 h-6 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 flex items-center justify-center cursor-pointer"
               >
                 <Minus className="w-3 h-3" />
@@ -92,11 +95,12 @@ const CartLines = ({ cart, selectedKey, onSelect, onQty, onUnit, onRemove, maxQt
                 type="button"
                 onClick={() => onQty(line.key, line.quantity + 1)}
                 disabled={line.quantity >= max}
+                aria-label={t('cart.increase')}
                 className="w-6 h-6 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 disabled:opacity-30 flex items-center justify-center cursor-pointer"
               >
                 <Plus className="w-3 h-3" />
               </button>
-              <button type="button" onClick={() => onRemove(line.key)} className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer" title="Remove">
+              <button type="button" onClick={() => onRemove(line.key)} className="text-slate-400 hover:text-rose-500 p-1 cursor-pointer" title={t('cart.remove')}>
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>

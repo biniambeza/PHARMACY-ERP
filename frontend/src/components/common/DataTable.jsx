@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Search, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * DataTable - Reusable enterprise ERP table with search, filter tabs, pagination, and empty states
@@ -9,7 +10,7 @@ const DataTable = ({
   subtitle,
   columns = [],
   data = [],
-  searchPlaceholder = 'Search records...',
+  searchPlaceholder: searchPlaceholderProp,
   searchKeys = [],
   filterOptions = [], // e.g. [{ label: 'All', value: 'all' }, { label: 'Active', value: 'active' }]
   activeFilter = 'all',
@@ -19,9 +20,13 @@ const DataTable = ({
   renderRow,
   headerAction,
   emptyIcon = null,
-  emptyMessage = 'No records found',
-  emptySubtext = 'Try adjusting your search or filter parameters',
+  emptyMessage: emptyMessageProp,
+  emptySubtext: emptySubtextProp,
 }) => {
+  const { t } = useTranslation('ui');
+  const searchPlaceholder = searchPlaceholderProp === undefined ? t('dataTable.searchPlaceholder') : searchPlaceholderProp;
+  const emptyMessage = emptyMessageProp === undefined ? t('dataTable.emptyMessage') : emptyMessageProp;
+  const emptySubtext = emptySubtextProp === undefined ? t('dataTable.emptySubtext') : emptySubtextProp;
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -189,9 +194,11 @@ const DataTable = ({
       {filteredData.length > pageSize && (
         <div className="flex items-center justify-between pt-4 mt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            Showing {(currentPage - 1) * pageSize + 1} to{' '}
-            {Math.min(currentPage * pageSize, filteredData.length)} of{' '}
-            {filteredData.length} records
+            {t('dataTable.showing', {
+              from: (currentPage - 1) * pageSize + 1,
+              to: Math.min(currentPage * pageSize, filteredData.length),
+              total: filteredData.length,
+            })}
           </span>
 
           <div className="flex items-center gap-2">
@@ -200,7 +207,7 @@ const DataTable = ({
               disabled={currentPage === 1}
               className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1"
             >
-              <ChevronLeft className="w-3.5 h-3.5" /> Prev
+              <ChevronLeft className="w-3.5 h-3.5" /> {t('dataTable.prev')}
             </button>
             <span className="font-semibold text-slate-700 dark:text-slate-300">
               {currentPage} / {totalPages}
@@ -210,7 +217,7 @@ const DataTable = ({
               disabled={currentPage === totalPages}
               className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1"
             >
-              Next <ChevronRight className="w-3.5 h-3.5" />
+              {t('dataTable.next')} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

@@ -1,0 +1,45 @@
+{
+  "badge": "Bittaa",
+  "title": "Yaada Irra Deebi'anii Ajajuu",
+  "subtitle": "Gurgurtaa guyyaa giddugaleessaa × (yeroo geessituu + guyyoota eegumsaa) irratti hundaa'ee, kuusaa gurguramu fi ajajoota banaa hir'isuun",
+  "days_one": "guyyaa {{count}}",
+  "days_other": "guyyoota {{count}}",
+  "viewPOs": "Ajajoota bittaa ilaali",
+  "created": "Ajajoonni bittaa uumamaniiru",
+  "empty": {
+    "title": "Wanti irra deebi'ee ajajamu hin jiru",
+    "hint_one": "Kuusaa fi ajajoonni banaan fedhii eegamu gurgurtaa guyyaa {{count}} darbe ni haguugu.",
+    "hint_other": "Kuusaa fi ajajoonni banaan fedhii eegamu gurgurtaa guyyoota {{count}} darban ni haguugu."
+  },
+  "noPreferredSupplier": "Dhiyeessaan filatamaa hin jiru",
+  "itemCount_one": "meeshaa {{count}}",
+  "itemCount_other": "meeshaalee {{count}}",
+  "orderFrom": "Kanneen irraa ajaji…",
+  "selectAllInGroup": "Garee keessaa hunda filadhu",
+  "selectItem": "{{name}} filadhu",
+  "belowMinimum": "Xiqqaa gadi ({{min}})",
+  "leadSafetyValue": "{{lead}} + {{safety}}g",
+  "table": {
+    "medicine": "Qoricha",
+    "avgPerDay": "Giddugala / guyyaa",
+    "leadSafety": "Geessituu + eegumsa",
+    "stock": "Kuusaa",
+    "onOrder": "Ajaja irra",
+    "suggested": "Kan yaadame",
+    "orderQty": "Baay'ina ajajaa",
+    "unitCost": "Gatii yuunitii",
+    "lineTotal": "Ida'ama sararaa"
+  },
+  "itemsSelected_one": "meeshaan filatame",
+  "itemsSelected_other": "meeshaaleen filataman",
+  "createAsDrafts": "Akka wixineetti uumi",
+  "creating": "Uumaa jira…",
+  "createPOs": "Ajajoota Bittaa Uumi",
+  "errors": {
+    "loadFailed": "Yaada irra deebi'anii ajajuu fe'uun hin milkoofne",
+    "selectOne": "Yoo xiqqaate meeshaa tokko filadhu.",
+    "badQuantity": "\"{{name}}\": baay'inni lakkoofsa guutuu poozatiivii ta'uu qaba.",
+    "chooseSupplier": "Meeshaalee dhiyeessaa filatamaa hin qabneef dhiyeessaa filadhu.",
+    "createFailed": "Ajajoota bittaa uumuun hin milkoofne"
+  }
+}

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Clock, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { openShift } from '../../api/shiftApi';
 import PosModal, { primaryBtn, secondaryBtn } from './PosModal';
 import { inputCls, errMsg } from './posUtils';
 
 // Opens a cash-drawer shift with an opening float. Props: { open, onClose, onOpened(shift), required }
 const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
+  const { t } = useTranslation('pos');
   const [openingFloat, setOpeningFloat] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -15,7 +17,7 @@ const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
     e?.preventDefault();
     const value = Number(openingFloat || 0);
     if (!Number.isFinite(value) || value < 0) {
-      setError('Opening float must be zero or more');
+      setError(t('shift.floatInvalid'));
       return;
     }
     setSaving(true);
@@ -26,7 +28,7 @@ const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
       setNotes('');
       onOpened?.(res.shift);
     } catch (err) {
-      setError(errMsg(err, 'Could not open the shift'));
+      setError(errMsg(err, t('shift.openFailed')));
     } finally {
       setSaving(false);
     }
@@ -35,16 +37,16 @@ const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
   return (
     <PosModal
       open={open}
-      title="Open shift"
+      title={t('shift.title')}
       icon={Clock}
       onClose={onClose}
       footer={
         <>
           <button type="button" className={secondaryBtn} onClick={onClose}>
-            {required ? 'Not now' : 'Sell without a shift'}
+            {required ? t('shift.notNow') : t('shift.withoutShift')}
           </button>
           <button type="button" className={primaryBtn} onClick={submit} disabled={saving}>
-            {saving ? 'Opening…' : 'Open shift'}
+            {saving ? t('shift.opening') : t('shift.open')}
           </button>
         </>
       }
@@ -52,11 +54,11 @@ const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
       <form onSubmit={submit} className="space-y-3">
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {required
-            ? 'This pharmacy requires an open shift before selling. Count the cash in the drawer and enter it as the opening float.'
-            : 'Open a shift to track your cash drawer. Count the cash in the drawer and enter it as the opening float.'}
+            ? t('shift.requiredHint')
+            : t('shift.hint')}
         </p>
         <div>
-          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Opening float (cash in drawer)</label>
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">{t('shift.float')}</label>
           <input
             type="number"
             min="0"
@@ -69,7 +71,7 @@ const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
           />
         </div>
         <div>
-          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Notes (optional)</label>
+          <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">{t('shift.notes')}</label>
           <input value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={300} className={inputCls} />
         </div>
         {error && (

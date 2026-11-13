@@ -1,0 +1,111 @@
+{
+  "ranges": { "today": "Today", "7d": "7 Days", "monthly": "30 Days", "yearly": "Year" },
+  "error": {
+    "title": "Data Connection Notice",
+    "fetchFailed": "Unable to fetch live database overview. Please verify your connection.",
+    "noData": "No overview data was returned by the server.",
+    "retry": "Retry Connection"
+  },
+  "export": {
+    "csv": "CSV",
+    "pdf": "PDF",
+    "exporting": "Exporting...",
+    "salesExcel": "Sales Excel",
+    "title": "Dashboard Summary",
+    "subtitle": "Key figures and most recent sales",
+    "metric": "Metric",
+    "value": "Value"
+  },
+  "summary": {
+    "revenue": "Revenue ({{range}})",
+    "cogs": "Cost of goods sold",
+    "grossProfit": "Gross profit",
+    "orders": "Orders",
+    "refunds": "Refunds",
+    "tax": "Tax collected",
+    "revenueGrowth": "Revenue growth",
+    "allTimeRevenue": "All-time revenue",
+    "allTimeGrossProfit": "All-time gross profit",
+    "activeBatches": "Active batches",
+    "stockUnits": "Stock units"
+  },
+  "salesColumns": {
+    "invoice": "Invoice",
+    "customer": "Customer",
+    "status": "Status",
+    "walkIn": "Walk-in",
+    "voided": "Voided",
+    "returned": "Returned ({{status}})"
+  },
+  "kpi": {
+    "salesRevenue": "Sales Revenue ({{range}})",
+    "period": "period",
+    "revenueSub": "vs previous period · all-time {{amount}}",
+    "inflows": "Inflows",
+    "cogs": "Cost of Goods Sold",
+    "cogsSub": "Actual batch costs · all-time {{amount}}",
+    "outflows": "Outflows",
+    "grossProfit": "Gross Profit",
+    "profitSub": "{{margin}}% margin · all-time {{amount}}",
+    "profitable": "Profitable",
+    "loss": "Loss",
+    "activeBatches": "Active Stock Batches",
+    "lots_one": "{{count}} Lot",
+    "lots_other": "{{count}} Lots",
+    "unitsInInventory_one": "{{count}} unit in inventory",
+    "unitsInInventory_other": "{{count}} units in inventory",
+    "skus_one": "{{count}} SKU",
+    "skus_other": "{{count}} SKUs"
+  },
+  "recentSales": {
+    "title": "Recent Sales Transactions",
+    "subtitle": "Latest customer dispensing orders and printable receipts",
+    "viewLedger": "View Ledger →",
+    "empty": "No sales recorded today yet.",
+    "invoiceNo": "Invoice #",
+    "customer": "Customer",
+    "status": "Status",
+    "receipt": "Receipt",
+    "walkInPatient": "Walk-in Patient",
+    "voided": "Voided",
+    "returned": "Returned",
+    "partReturned": "Part returned",
+    "credit": "Credit",
+    "printReceipt": "Print Receipt",
+    "terminal": "Terminal: POS Register #01",
+    "openPos": "+ Open POS Cashier"
+  },
+  "chart": {
+    "title": "Sales vs. Procurement Flow",
+    "subtitle": "Dual-line trajectory comparing customer revenue against vendor expenses",
+    "revenue": "Revenue",
+    "procurement": "Procurement",
+    "footer": "Aggregated intervals: Real-time DB records",
+    "grossProfit": "Gross profit: {{amount}}"
+  },
+  "expiry": {
+    "title": "FEFO Expiry Health",
+    "monitored": "Batches Monitored",
+    "healthy": "Healthy (>60d)",
+    "warning": "Warning (30-60d)",
+    "critical": "Critical (<30d)",
+    "audit": "Audit Inventory Batches →"
+  },
+  "suppliers": {
+    "title": "Top Suppliers Leaderboard",
+    "directory": "Directory →",
+    "empty": "No suppliers registered yet.",
+    "ordersFulfilled_one": "{{count}} order fulfilled",
+    "ordersFulfilled_other": "{{count}} orders fulfilled",
+    "rating": "{{rating}} Rating",
+    "issuePo": "Issue Purchase Order"
+  },
+  "alerts": {
+    "title": "Live Anomaly Alerts",
+    "actionRequired": "Action Required",
+    "allClear": "All operational items clear",
+    "footer": "Dynamic DB Checks",
+    "open": "{{count}} Open",
+    "priority": { "High": "High", "Medium": "Medium", "Low": "Low" }
+  }
+}

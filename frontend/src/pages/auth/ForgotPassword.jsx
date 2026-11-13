@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Mail, ArrowRight, ArrowLeft, AlertCircle, KeyRound, MailCheck } from 'lucide-react';
 import { requestPasswordReset } from '../../api/authApi';
 
@@ -11,12 +12,13 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
+  const { t } = useTranslation('auth');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (!email.trim()) {
-      setError('Please enter your email address');
+      setError(t('enterEmail'));
       return;
     }
     setLoading(true);
@@ -24,7 +26,7 @@ const ForgotPassword = () => {
       await requestPasswordReset(email.trim());
       setSent(true);
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not send the reset email. Please try again.');
+      setError(err.response?.data?.message || t('resetEmailFailed'));
     } finally {
       setLoading(false);
     }
@@ -41,12 +43,12 @@ const ForgotPassword = () => {
             {sent ? <MailCheck className="w-6 h-6" /> : <KeyRound className="w-6 h-6" />}
           </div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            {sent ? 'Check your email' : 'Forgot password?'}
+            {sent ? t('checkEmail') : t('forgotPassword')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {sent
-              ? 'If an account exists for that email, we sent a link to reset your password. The link is valid for 30 minutes.'
-              : "Enter your account email and we'll send you a link to reset your password."}
+              ? t('resetEmailSentBody', { minutes: 30 })
+              : t('forgotIntro')}
           </p>
         </div>
 
@@ -60,22 +62,21 @@ const ForgotPassword = () => {
         {sent ? (
           <div className="space-y-3">
             <p className="text-[11px] text-center text-slate-500 dark:text-slate-400">
-              Didn&apos;t get it? Check your spam folder, or ask your pharmacy owner or the administrator to reset your
-              password.
+              {t('didntGetIt')}
             </p>
             <button
               type="button"
               onClick={() => setSent(false)}
               className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold rounded-xl transition cursor-pointer"
             >
-              Send again
+              {t('sendAgain')}
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="forgot-email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Email
+                {t('emailLabel')}
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -103,11 +104,11 @@ const ForgotPassword = () => {
               {loading ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Sending...</span>
+                  <span>{t('sending')}</span>
                 </>
               ) : (
                 <>
-                  <span>Send reset link</span>
+                  <span>{t('sendResetLink')}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -121,7 +122,7 @@ const ForgotPassword = () => {
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to sign in
+            {t('backToLogin')}
           </Link>
         </div>
       </div>

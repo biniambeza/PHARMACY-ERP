@@ -1,0 +1,101 @@
+{
+  "loading": "Qindaa'inni fe'amaa jira...",
+  "saving": "Olkaa'amaa jira...",
+  "updating": "Haaromfamaa jira...",
+  "header": {
+    "badge": "Bulchiinsa fi Piroofaayilii",
+    "title": "Qindaa'ina Faarmaasii fi Herregaa",
+    "subtitleOwner": "Piroofaayilii faarmaasii keessanii, gibira, nagahee, akeekkachiisa fi ragaa dhuunfaa keessan bulchaa",
+    "subtitleStaff": "Piroofaayilii dhuunfaa fi jecha icciitii keessan haaromsaa",
+    "tenantId": "Eenyummaa Kireeffataa:"
+  },
+  "business": {
+    "title": "Odeeffannoo Daldala Faarmaasii",
+    "subtitle": "Bal'ina ifaa nagahee fi kaffaltii gaafatu irratti mul'atu",
+    "name": "Maqaa Faarmaasii",
+    "provisioned": "Bulchaa Sirnaatiin kenname",
+    "license": "Lakk. Hayyama Seeraa",
+    "phone": "Lakkoofsa Bilbilaa Quunnamtii *",
+    "address": "Bakka Argamaa / Teessoo *",
+    "addressPlaceholder": "Teessoo daandii, Magaalaa, Biyya",
+    "save": "Odeeffannoo Daldalaa Olkaa'i",
+    "ownerOnly": "Bal'ina kana jijjiiruu kan danda'u abbaa faarmaasii qofa.",
+    "updated": "Bal'inni quunnamtii faarmaasii milkaa'inaan haaromfameera.",
+    "updateFailed": "Bal'ina faarmaasii haaromsuun hin milkoofne"
+  },
+  "account": {
+    "title": "Herrega fi Ragaa Keessan",
+    "subtitle": "Maqaa keessan haaromsaa ykn jecha icciitii seensaa jijjiiraa",
+    "fullName": "Maqaa Keessan Guutuu",
+    "email": "Imeelii (Maqaa Fayyadamaa)",
+    "changePassword": "Jecha Icciitii Jijjiiri (Filannoo)",
+    "currentPassword": "Jecha Icciitii Ammaa",
+    "newPassword": "Jecha Icciitii Haaraa",
+    "newPasswordPlaceholder": "Yoo xiqqaate qubee 8",
+    "confirmPassword": "Jecha Icciitii Haaraa Mirkaneessi",
+    "submit": "Herregaa fi Jecha Icciitii Haaromsi",
+    "mismatch": "Jechoonni icciitii haaraan wal hin simne",
+    "tooShort": "Jechi icciitii haaraan yoo xiqqaate qubee 8 qabaachuu qaba",
+    "updated": "Ragaan piroofaayilii milkaa'inaan haaromfameera.",
+    "updateFailed": "Ragaa dhuunfaa haaromsuun hin milkoofne"
+  },
+  "tax": {
+    "title": "Gibira / VAT",
+    "subtitle": "POS irratti ofumaan herregama",
+    "enable": "Gurgurtaa irratti gibira kaffalchiisi",
+    "enableHint": "Qorichoonni gibira irraa bilisa ta'an gonkumaa gibirri irratti hin kaffalamu",
+    "name": "Maqaa gibiraa",
+    "rate": "Sadarkaa (%)",
+    "pricing": "Gatii kaa'uu",
+    "exclusive": "Kan hin dabalamne (gubbaatti ida'ama)",
+    "inclusive": "Kan dabalame (gatii keessa jira)",
+    "registrationNo": "Lakk. galmee gibiraa (TIN / Lakk. VAT)",
+    "registrationPlaceholder": "Nagahee irratti maxxanfama",
+    "exampleContains": "Fakkeenya: sararri 100.00 <b>{{amount}}</b> {{name}} of keessaa qaba.",
+    "exampleAdds": "Fakkeenya: sararri 100.00 <b>{{amount}}</b> {{name}} ida'a.",
+    "defaultName": "gibira"
+  },
+  "receipts": {
+    "title": "Nagahee",
+    "subtitle": "Qindaa'ina nagahee maxxanfamuu fi miila isaa",
+    "paperWidth": "Bal'ina waraqaa",
+    "paperHint": "58mm / 80mm maxxansituu ho'aaf, A4 maxxansituu waajjiraaf",
+    "footer": "Miila nagahee",
+    "footerPlaceholder": "fkn. Galatoomaa! Qorichoonni gurguraman guyyaa 7 booda hin deebi'an."
+  },
+  "locale": {
+    "title": "Maallaqa fi Afaan",
+    "subtitle": "Durtii faarmaasii kanaa",
+    "currency": "Maallaqa",
+    "language": "Afaan durtii"
+  },
+  "alerts": {
+    "title": "Akeekkachiisa fi Daangaa POS",
+    "subtitle": "Akeekkachiisa yeroo dhumaa, beeksisa fi hir'isa gatii",
+    "expiryDays": "Guyyoota akeekkachiisa yeroo dhumaa",
+    "expiryHint": "Baachiin tokko osoo hin dhumin guyyoota kanaan dura akeekkachiisi (koomaan addaan baasi)",
+    "email": "Beeksisa imeelii",
+    "sms": "Beeksisa SMS",
+    "daily": "Cuunfaa guyyaa guyyaa",
+    "dailyHint": "Cuunfaa gurgurtaa, kuusaa gadi aanaa fi yeroo dhumaa",
+    "requireShift": "Gurguruuf shiftiin banaa barbaachisa",
+    "requireShiftHint": "Kaashiyaronni POS irratti osoo hin gurgurin dura shifti sanduuqa maallaqaa banuu qabu",
+    "maxDiscount": "Hir'isa gatii olaanaa POS irratti (%)",
+    "maxDiscountHint": "100 = daangaa hin qabu"
+  },
+  "pharmacySettings": {
+    "save": "Qindaa'ina Faarmaasii Olkaa'i",
+    "saved": "Qindaa'inni faarmaasii olkaa'ameera.",
+    "saveFailed": "Qindaa'ina faarmaasii olkaa'uun hin milkoofne"
+  },
+  "validation": {
+    "expiryDays": "Guyyoonni akeekkachiisa yeroo dhumaa lakkoofsa guutuu 1 hanga 730 ta'anii koomaan addaan bahuu qabu.",
+    "taxRate": "Sadarkaan gibiraa 0 fi 100 gidduu ta'uu qaba.",
+    "maxDiscount": "Hir'isni gatii olaanaan 0 fi 100 gidduu ta'uu qaba."
+  },
+  "tenancy": {
+    "title": "Ijaarsi Kireeffattoota Hedduu Hojii Irra Jira",
+    "body": "Galmeewwan kuusdaataa keessanii daangaa kireeffataa jalatti cimsanii qoodamaniiru: <code>{{id}}</code>.",
+    "enforced": "Addaan Baasuun Daataa Hojiirra Ooleera"
+  }
+}

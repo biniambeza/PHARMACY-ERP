@@ -1,13 +1,10 @@
 import { AlertTriangle } from 'lucide-react';
-
-const LABELS = {
-  below_cost: 'Below cost',
-  below_min_margin: 'Below min margin',
-};
+import { useTranslation } from 'react-i18next';
 
 // warning comes from the API (marginWarning) or marginWarningFor():
 // 'below_cost' | 'below_min_margin' | null
 const MarginBadge = ({ warning }) => {
+  const { t } = useTranslation('medicines');
   if (!warning) return null;
   const danger = warning === 'below_cost';
   return (
@@ -19,7 +16,7 @@ const MarginBadge = ({ warning }) => {
       }`}
     >
       <AlertTriangle className="w-3 h-3" />
-      {LABELS[warning] || warning}
+      {t(`margin.${warning}`, { defaultValue: warning })}
     </span>
   );
 };

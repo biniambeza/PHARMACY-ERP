@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   Receipt,
@@ -24,6 +25,7 @@ import { useAuth } from '../../context/AuthContext';
 const isToday = (d) => d && new Date(d).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
 
 const SalesHistory = () => {
+  const { t } = useTranslation('sales');
   const [sales, setSales] = useState([]);
   const [summary, setSummary] = useState(null);
   const [search, setSearch] = useState('');
@@ -58,7 +60,7 @@ const SalesHistory = () => {
         setSales(loadedSales);
       } else if (salesResult.status === 'rejected') {
         console.error('Failed to load sales list:', salesResult.reason);
-        setError(salesResult.reason?.response?.data?.message || 'Failed to load sales transactions');
+        setError(salesResult.reason?.response?.data?.message || t('errors.loadSales'));
       }
 
       if (summaryResult.status === 'fulfilled' && summaryResult.value?.summary) {
@@ -76,11 +78,11 @@ const SalesHistory = () => {
       }
     } catch (err) {
       console.error('Failed to load sales history:', err);
-      setError('Unable to load dispensary ledger. Please check your network connection.');
+      setError(t('errors.loadLedger'));
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, t]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -101,14 +103,14 @@ const SalesHistory = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-              Dispensary Ledger
+              {t('badge')}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Sales & Invoice Ledger
+            {t('title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Audit recorded transactions, review daily dispensary revenue, and reprint patient sales receipts
+            {t('subtitle')}
           </p>
         </div>
 
@@ -117,14 +119,14 @@ const SalesHistory = () => {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
         >
           <ShoppingCart className="w-4 h-4" />
-          <span>Open POS Terminal</span>
+          <span>{t('openPos')}</span>
         </Link>
       </div>
 
       {notice && (
         <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl flex items-center justify-between gap-3 text-xs text-emerald-700 dark:text-emerald-300">
           <span>{notice}</span>
-          <button onClick={() => setNotice('')} className="font-semibold cursor-pointer">Dismiss</button>
+          <button onClick={() => setNotice('')} className="font-semibold cursor-pointer">{t('dismiss')}</button>
         </div>
       )}
 
@@ -139,7 +141,7 @@ const SalesHistory = () => {
             onClick={loadData}
             className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-semibold transition cursor-pointer self-start sm:self-auto shrink-0 shadow-xs"
           >
-            Retry Loading
+            {t('retryLoading')}
           </button>
         </div>
       )}
@@ -148,40 +150,40 @@ const SalesHistory = () => {
       {summary ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           <MetricCard
-            title="Today's Revenue"
-            value={`$${(Number(summary.todayRevenue) || 0).toFixed(2)}`}
-            subValue="Dispensary sales today"
-            badgeText="Today"
+            title={t('metrics.todayRevenue')}
+            value={formatMoney(Number(summary.todayRevenue) || 0)}
+            subValue={t('metrics.todayRevenueSub')}
+            badgeText={t('metrics.todayBadge')}
             badgeVariant="emerald"
             icon={<DollarSign className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />}
             sparklineColor="#10b981"
             sparklineId="sales-today-rev-spark"
           />
           <MetricCard
-            title="Today's Orders"
+            title={t('metrics.todayOrders')}
             value={(summary.todaySalesCount || 0).toString()}
-            subValue="Checkout transactions today"
-            badgeText="Orders"
+            subValue={t('metrics.todayOrdersSub')}
+            badgeText={t('metrics.ordersBadge')}
             badgeVariant="emerald"
             icon={<ShoppingCart className="w-4.5 h-4.5 text-cyan-600 dark:text-cyan-400" />}
             sparklineColor="#06b6d4"
             sparklineId="sales-today-orders-spark"
           />
           <MetricCard
-            title="Total Revenue"
-            value={`$${(Number(summary.totalRevenue) || 0).toFixed(2)}`}
-            subValue="Cumulative gross billing"
-            badgeText="Gross"
+            title={t('metrics.totalRevenue')}
+            value={formatMoney(Number(summary.totalRevenue) || 0)}
+            subValue={t('metrics.totalRevenueSub')}
+            badgeText={t('metrics.grossBadge')}
             badgeVariant="indigo"
             icon={<TrendingUp className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400" />}
             sparklineColor="#6366f1"
             sparklineId="sales-total-rev-spark"
           />
           <MetricCard
-            title="Total Invoices"
+            title={t('metrics.totalInvoices')}
             value={(summary.totalSalesCount || 0).toString()}
-            subValue="All recorded receipts"
-            badgeText="Receipts"
+            subValue={t('metrics.totalInvoicesSub')}
+            badgeText={t('metrics.receiptsBadge')}
             badgeVariant="emerald"
             icon={<Receipt className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" />}
             sparklineColor="#10b981"
@@ -205,7 +207,7 @@ const SalesHistory = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by invoice #, customer name or phone..."
+            placeholder={t('searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
         </div>
@@ -216,18 +218,18 @@ const SalesHistory = () => {
               onClick={() => setSearch('')}
               className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white px-2 py-1 transition cursor-pointer"
             >
-              Clear Search
+              {t('clearSearch')}
             </button>
           )}
 
           <button
             onClick={loadData}
             disabled={loading}
-            title="Refresh sales ledger"
+            title={t('refreshTitle')}
             className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
           >
             <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
+            <span>{t('common:buttons.refresh')}</span>
           </button>
         </div>
       </div>
@@ -236,39 +238,37 @@ const SalesHistory = () => {
       <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           {loading ? (
-            <div className="p-12 text-center text-xs text-slate-400">Loading sales records...</div>
+            <div className="p-12 text-center text-xs text-slate-400">{t('loading')}</div>
           ) : sales.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
                 <Receipt className="w-6 h-6" />
               </div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
-                {search ? 'No matching invoices found' : 'No sales recorded yet'}
+                {search ? t('empty.noMatchTitle') : t('empty.noneTitle')}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-4">
-                {search
-                  ? 'Try adjusting your search keywords to find the desired invoice record.'
-                  : 'Process transactions using the Cashier POS to record your first sale.'}
+                {search ? t('empty.noMatchText') : t('empty.noneText')}
               </p>
               <Link
                 to="/pharmacy/pos"
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition"
               >
                 <ShoppingCart className="w-3.5 h-3.5" />
-                <span>Go to POS Terminal</span>
+                <span>{t('goToPos')}</span>
               </Link>
             </div>
           ) : (
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
                 <tr>
-                  <th className="py-3 px-4">Invoice No</th>
-                  <th className="py-3 px-4">Date & Time</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Items Sold</th>
-                  <th className="py-3 px-4">Payment</th>
-                  <th className="py-3 px-4 text-right">Grand Total</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">{t('table.invoiceNo')}</th>
+                  <th className="py-3 px-4">{t('table.dateTime')}</th>
+                  <th className="py-3 px-4">{t('table.customer')}</th>
+                  <th className="py-3 px-4">{t('table.itemsSold')}</th>
+                  <th className="py-3 px-4">{t('table.payment')}</th>
+                  <th className="py-3 px-4 text-right">{t('table.grandTotal')}</th>
+                  <th className="py-3 px-4 text-right">{t('common:labels.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
@@ -284,18 +284,18 @@ const SalesHistory = () => {
                         </span>
                         {sale.voided && (
                           <span title={sale.voidReason || ''} className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-                            Voided
+                            {t('voided')}
                           </span>
                         )}
                         {!sale.voided && sale.returnStatus && sale.returnStatus !== 'none' && (
                           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                            {sale.returnStatus === 'full' ? 'Returned' : 'Part returned'}
+                            {sale.returnStatus === 'full' ? t('returned') : t('partReturned')}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">
-                      {sale.createdAt ? new Date(sale.createdAt).toLocaleDateString() : 'N/A'}
+                      {sale.createdAt ? new Date(sale.createdAt).toLocaleDateString() : t('na')}
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
                         {sale.createdAt
                           ? new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -304,7 +304,7 @@ const SalesHistory = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="font-semibold text-slate-900 dark:text-white block">
-                        {sale.customer?.name || 'Walk-in Customer'}
+                        {sale.customer?.name || t('walkIn')}
                       </span>
                       {sale.customer?.phone && (
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
@@ -314,7 +314,7 @@ const SalesHistory = () => {
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="text-slate-700 dark:text-slate-300 font-medium">
-                        {sale.items?.length || 0} item{(sale.items?.length || 0) !== 1 ? 's' : ''}
+                        {t('itemCount', { count: sale.items?.length || 0 })}
                       </span>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate max-w-xs">
                         {sale.items?.map((it) => `${it.name} (x${it.quantity})`).join(', ')}
@@ -327,7 +327,7 @@ const SalesHistory = () => {
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
-                        ${(Number(sale.grandTotal) || 0).toFixed(2)}
+                        {formatMoney(Number(sale.grandTotal) || 0)}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
@@ -337,26 +337,26 @@ const SalesHistory = () => {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>View Receipt</span>
+                        <span>{t('viewReceipt')}</span>
                       </button>
                       {!sale.voided && sale.returnStatus !== 'full' && can('sales:return') && (
                         <button
                           onClick={() => setReturnSale(sale)}
-                          title="Return items from this sale"
+                          title={t('returnTitle')}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                         >
                           <Undo2 className="w-3.5 h-3.5" />
-                          <span>Return</span>
+                          <span>{t('return')}</span>
                         </button>
                       )}
                       {!sale.voided && (!sale.returnStatus || sale.returnStatus === 'none') && isToday(sale.createdAt) && can('sales:void') && (
                         <button
                           onClick={() => setVoidingSale(sale)}
-                          title="Void this sale (same day only)"
+                          title={t('voidTitle')}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                         >
                           <Ban className="w-3.5 h-3.5" />
-                          <span>Void</span>
+                          <span>{t('void')}</span>
                         </button>
                       )}
                       </div>
@@ -386,9 +386,9 @@ const SalesHistory = () => {
           onDone={(res) => {
             setReturnSale(null);
             setNotice(
-              `Return ${res.return?.returnNumber} recorded. Refund ${formatMoney(res.return?.refundTotal)}` +
+              t('notices.returnRecorded', { number: res.return?.returnNumber, refund: formatMoney(res.return?.refundTotal) }) +
                 (res.return?.creditReversed > 0
-                  ? ` (${formatMoney(res.return.creditReversed)} off credit account, ${formatMoney(res.return.refundDue)} to pay out).`
+                  ? ` ${t('notices.returnCreditSplit', { credit: formatMoney(res.return.creditReversed), due: formatMoney(res.return.refundDue) })}`
                   : '.') +
                 (res.warning ? ` ${res.warning}.` : '')
             );
@@ -404,8 +404,8 @@ const SalesHistory = () => {
             setVoidingSale(null);
             setNotice(
               `${res.message}.` +
-                (res.creditReversed > 0 ? ` ${formatMoney(res.creditReversed)} taken off credit account.` : '') +
-                ` Refund due: ${formatMoney(res.refundDue)}.` +
+                (res.creditReversed > 0 ? ` ${t('notices.voidCredit', { amount: formatMoney(res.creditReversed) })}` : '') +
+                ` ${t('notices.refundDue', { amount: formatMoney(res.refundDue) })}` +
                 (res.warning ? ` ${res.warning}.` : '')
             );
             loadData();

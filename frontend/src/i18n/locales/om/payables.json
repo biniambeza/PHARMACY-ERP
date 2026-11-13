@@ -1,0 +1,70 @@
+{
+  "badge": "Herrega Kaffalamuu Qabu",
+  "title": "Kaffaltii Dhiyeessitootaa",
+  "subtitle": "Nagahee dhiyeessitootaa, guyyaa kaffaltii fi kaffaltiiwwan",
+  "recordInvoice": "Nagahee Galmeessi",
+  "totalPayable": "Waliigala kaffalamuu qabu",
+  "overdueAmount": "{{amount}} yeroon darbe",
+  "aging": "Umurii (guyyoota yeroo kaffaltii booda)",
+  "notYetDue": "Yeroon isaa hin geenye",
+  "bucketDays": "Guyyoota {{range}}",
+  "tabs": { "invoices": "Nagahee", "balances": "Haftee dhiyeessitootaa", "payments": "Kaffaltiiwwan" },
+  "allSuppliers": "Dhiyeessitoota hunda",
+  "filters": { "unpaid": "Hin kaffalamne", "overdue": "Yeroon darbe", "paid": "Kaffalame", "all": "Hunda" },
+  "confirmDeleteInvoice": "Nagahee {{invoiceNo}} haquu?",
+  "deleteInvoice": "Nagahee haqi",
+  "pay": "Kaffali",
+  "poRef": "Ajaja bittaa {{poNumber}}",
+  "saving": "Olkaa'aa jira...",
+  "days_one": "Guyyaa {{count}}",
+  "days_other": "Guyyoota {{count}}",
+  "errors": {
+    "deleteInvoice": "Nagahee haquun hin danda'amne",
+    "positiveAmount": "Hanga zeeroo ol galchi."
+  },
+  "empty": {
+    "invoices": "Nagaheen calallii kana waliin walsimu hin jiru.",
+    "balances": "Idaan dhiyeessitootaaf kaffalamu hin jiru.",
+    "payments": "Hanga ammaatti kaffaltiin dhiyeessitootaa hin jiru."
+  },
+  "columns": {
+    "invoice": "Nagahee", "supplier": "Dhiyeessaa", "date": "Guyyaa", "due": "Yeroo kaffaltii", "amount": "Hanga",
+    "paid": "Kaffalame", "balance": "Haftee", "status": "Haala", "terms": "Haala kaffaltii", "openInvoices": "Nagahee banaa",
+    "nextDue": "Yeroo kaffaltii itti aanu", "overdue": "Yeroon darbe", "outstanding": "Hin kaffalamne", "payment": "Kaffaltii",
+    "method": "Mala", "appliedTo": "Kan irratti raawwatame"
+  },
+  "invoiceStatus": { "open": "banaa", "partial": "gartokkee", "paid": "kaffalame", "overdue": "yeroon darbe" },
+  "methods": {
+    "bank_transfer": "Dabarsa baankii", "cash": "Maallaqa callaa", "cheque": "Cheekii",
+    "mobile_money": "Maallaqa moobaayilaa", "card": "Kaardii", "other": "Kan biraa"
+  },
+  "fields": {
+    "supplier": "Dhiyeessaa", "invoiceNo": "Lakkoofsa nagahee", "amount": "Hanga", "invoiceDate": "Guyyaa nagahee",
+    "dueDate": "Guyyaa kaffaltii", "notes": "Yaadannoo", "method": "Mala", "reference": "Wabii",
+    "paymentDate": "Guyyaa kaffaltii", "note": "Yaadannoo"
+  },
+  "invoiceModal": {
+    "title": "Nagahee Dhiyeessaa Galmeessi",
+    "subtitle": "Herrega dhiyeessaa irraa argame",
+    "selectSupplier": "Dhiyeessaa filadhu...",
+    "dueHint": "Haala kaffaltii dhiyeessaa fayyadamuuf duwwaa dhiisi.",
+    "dueHintWithTerms_one": "Haala kaffaltii dhiyeessaa fayyadamuuf duwwaa dhiisi (guyyaa {{count}}).",
+    "dueHintWithTerms_other": "Haala kaffaltii dhiyeessaa fayyadamuuf duwwaa dhiisi (guyyoota {{count}}).",
+    "submit": "Nagahee Olkaa'i",
+    "errors": {
+      "supplier": "Dhiyeessaa filadhu.",
+      "invoiceNo": "Lakkoofsi nagahee barbaachisaadha.",
+      "save": "Nagahee olkaa'uun hin danda'amne"
+    }
+  },
+  "paymentModal": {
+    "title": "Dhiyeessaaf Kaffali",
+    "subtitle": "{{supplier}} - hin kaffalamne {{outstanding}}",
+    "subtitleInvoice": "{{supplier}} - nagahee {{invoiceNo}} - hin kaffalamne {{outstanding}}",
+    "referencePlaceholder": "Lakk. dabarsaa / cheekii",
+    "allocationInvoice": "Jalqaba nagahee kana irratti raawwatama; hafteen nagahee durii yeroon isaanii gaheef ni darba.",
+    "allocationOldest": "Jalqaba nagahee durii yeroon isaanii gaheef raawwatama.",
+    "submit": "Kaffaltii Galmeessi",
+    "errors": { "save": "Kaffaltii galmeessuun hin danda'amne" }
+  }
+}

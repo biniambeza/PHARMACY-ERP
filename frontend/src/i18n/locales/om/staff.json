@@ -1,0 +1,57 @@
+{
+  "badge": "Garee",
+  "title": "Hojjettootaa fi Gaheewwan",
+  "subtitle": "Eenyu {{pharmacy}} seenuu akka danda'uu fi maal gochuu akka danda'u bulchi",
+  "thisPharmacy": "faarmaasii kana",
+  "newBranch": "Damee Haaraa",
+  "addStaff": "Hojjetaa Dabali",
+  "roles": { "owner": "Abbaa", "pharmacist": "Faarmaasistii", "cashier": "Kaashiyeera", "storekeeper": "Kuusaa Eegduu" },
+  "roleHelp": {
+    "owner": "Hojjettoota, qindaa'ina fi galmee odiitii dabalatee waan hunda",
+    "pharmacist": "Qoricha kennuu, ajaja ogeessaa, kuusaa, bittaa fi gabaasa",
+    "cashier": "Bakka gurgurtaa fi seenaa gurgurtaa qofa",
+    "storekeeper": "Kuusaa galchuu, sirreeffama, lakkoofsa kuusaa fi ajaja bittaa"
+  },
+  "teamMembers": "Miseensota garee",
+  "activeOf": "{{total}} keessaa {{active}} hojiirra",
+  "noStaff": "Ammaaf hojjetaan hin jiru",
+  "columns": { "name": "Maqaa", "email": "Imeelii", "role": "Gahee", "status": "Haala" },
+  "you": "(isin)",
+  "deactivated": "Dhaabbateera",
+  "deactivate": "Dhaabi",
+  "reactivate": "Deebisii hojiirra oolchi",
+  "confirmDeactivate": "{{name}} dhaabuu barbaaddaa? Battalumatti ni ba'u.",
+  "notices": {
+    "loadFailed": "Hojjettoota fe'uun hin danda'amne",
+    "passwordTooShort": "Jechi icciitii yeroo yoo xiqqaate qubee 8 qabaachuu qaba",
+    "added": "{{name}} akka {{role}}tti dabalameera",
+    "createFailed": "Herrega hojjetaa uumuun hin danda'amne",
+    "roleChanged": "{{name}} amma {{role}} dha",
+    "roleChangeFailed": "Gahee jijjiiruun hin danda'amne",
+    "reactivated": "{{name}} deebi'ee hojiirra oole",
+    "deactivated": "{{name}} dhaabbateera",
+    "statusFailed": "Haala hojjetaa haaromsuun hin danda'amne",
+    "branchCreated": "Dameen \"{{name}}\" uumameera. Banuuf jijjiiraa damee fayyadamaa.",
+    "branchFailed": "Damee uumuun hin danda'amne"
+  },
+  "addModal": {
+    "title": "Miseensa hojjetaa dabali",
+    "fullName": "Maqaa guutuu",
+    "email": "Imeelii",
+    "tempPassword": "Jecha icciitii yeroo (yoo xiqqaate qubee 8)",
+    "tempPasswordHint": "Hojjetaa sanaaf qoodaa; Qindaa'ina keessatti jijjiiruu danda'u.",
+    "role": "Gahee",
+    "saving": "Olkaa'aa jira...",
+    "create": "Herrega uumi"
+  },
+  "branchModal": {
+    "title": "Damee haaraa",
+    "name": "Maqaa damee",
+    "address": "Teessoo",
+    "phone": "Bilbila",
+    "licenseNo": "Lakkoofsa hayyamaa",
+    "hint": "Abbaa damee haaraa ni taatu. Hojjettoonni damee damee bulchamu.",
+    "creating": "Uumaa jira...",
+    "create": "Damee uumi"
+  }
+}

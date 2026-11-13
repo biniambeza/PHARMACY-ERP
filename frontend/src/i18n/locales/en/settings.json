@@ -1,0 +1,101 @@
+{
+  "loading": "Loading settings...",
+  "saving": "Saving...",
+  "updating": "Updating...",
+  "header": {
+    "badge": "Administration & Profile",
+    "title": "Pharmacy & Account Settings",
+    "subtitleOwner": "Manage your pharmacy profile, tax, receipts, alerts and your personal credentials",
+    "subtitleStaff": "Update your personal profile and password",
+    "tenantId": "Tenant ID:"
+  },
+  "business": {
+    "title": "Pharmacy Business Info",
+    "subtitle": "Public details displayed on receipts and invoices",
+    "name": "Pharmacy Name",
+    "provisioned": "Provisioned by System Admin",
+    "license": "Official License #",
+    "phone": "Contact Phone Number *",
+    "address": "Physical Location / Address *",
+    "addressPlaceholder": "Street address, City, Country",
+    "save": "Save Business Info",
+    "ownerOnly": "Only the pharmacy owner can change these details.",
+    "updated": "Pharmacy contact details updated successfully.",
+    "updateFailed": "Failed to update pharmacy details"
+  },
+  "account": {
+    "title": "Your Account & Credentials",
+    "subtitle": "Update your name or change your login password",
+    "fullName": "Your Full Name",
+    "email": "Email (Username)",
+    "changePassword": "Change Password (Optional)",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "At least 8 characters",
+    "confirmPassword": "Confirm New Password",
+    "submit": "Update Account & Password",
+    "mismatch": "New passwords do not match",
+    "tooShort": "New password must be at least 8 characters long",
+    "updated": "Profile credentials updated successfully.",
+    "updateFailed": "Failed to update personal credentials"
+  },
+  "tax": {
+    "title": "Tax / VAT",
+    "subtitle": "Calculated automatically at the POS",
+    "enable": "Charge tax on sales",
+    "enableHint": "Medicines marked tax-exempt are never taxed",
+    "name": "Tax name",
+    "rate": "Rate (%)",
+    "pricing": "Pricing",
+    "exclusive": "Exclusive (added on top)",
+    "inclusive": "Inclusive (in the price)",
+    "registrationNo": "Tax registration no. (TIN / VAT no.)",
+    "registrationPlaceholder": "Printed on receipts",
+    "exampleContains": "Example: a line of 100.00 contains <b>{{amount}}</b> {{name}}.",
+    "exampleAdds": "Example: a line of 100.00 adds <b>{{amount}}</b> {{name}}.",
+    "defaultName": "tax"
+  },
+  "receipts": {
+    "title": "Receipts",
+    "subtitle": "Printed receipt layout and footer",
+    "paperWidth": "Paper width",
+    "paperHint": "58mm / 80mm for thermal printers, A4 for office printers",
+    "footer": "Receipt footer",
+    "footerPlaceholder": "e.g. Thank you! Medicines sold are not returnable after 7 days."
+  },
+  "locale": {
+    "title": "Currency & Language",
+    "subtitle": "Defaults for this pharmacy",
+    "currency": "Currency",
+    "language": "Default language"
+  },
+  "alerts": {
+    "title": "Alerts & POS Limits",
+    "subtitle": "Expiry alerts, notifications and discounts",
+    "expiryDays": "Expiry alert days",
+    "expiryHint": "Warn this many days before a batch expires (comma separated)",
+    "email": "Email notifications",
+    "sms": "SMS notifications",
+    "daily": "Daily summary",
+    "dailyHint": "Sales, low stock and expiry digest",
+    "requireShift": "Require an open shift to sell",
+    "requireShiftHint": "Cashiers must open a cash-drawer shift before selling at the POS",
+    "maxDiscount": "Max discount at POS (%)",
+    "maxDiscountHint": "100 = no limit"
+  },
+  "pharmacySettings": {
+    "save": "Save Pharmacy Settings",
+    "saved": "Pharmacy settings saved.",
+    "saveFailed": "Failed to save pharmacy settings"
+  },
+  "validation": {
+    "expiryDays": "Expiry alert days must be whole numbers between 1 and 730, separated by commas.",
+    "taxRate": "Tax rate must be between 0 and 100.",
+    "maxDiscount": "Max discount must be between 0 and 100."
+  },
+  "tenancy": {
+    "title": "Multi-Tenant Architecture Active",
+    "body": "Your database records are strictly partitioned under tenant scope: <code>{{id}}</code>.",
+    "enforced": "Data Isolation Enforced"
+  }
+}

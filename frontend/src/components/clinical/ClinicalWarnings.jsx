@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ShieldAlert, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { checkInteractions } from '../../api/clinicalApi';
 import { severityCls } from './ui';
 
@@ -15,6 +16,7 @@ import { severityCls } from './ui';
  * Needs `sales:create` or `patient:view`.
  */
 const ClinicalWarnings = ({ patientId, medicineIds = [], onResult, compact = false }) => {
+  const { t } = useTranslation('interactions');
   const key = useMemo(() => [...new Set((medicineIds || []).map(String))].sort().join(','), [medicineIds]);
   const [result, setResult] = useState({ interactions: [], allergyHits: [], key: '' });
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ const ClinicalWarnings = ({ patientId, medicineIds = [], onResult, compact = fal
         setResult({ ...out, key: requestKey });
         onResult?.(out);
       } catch {
-        if (!cancelled) setError('Could not check interactions');
+        if (!cancelled) setError('checkFailed');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -66,24 +68,24 @@ const ClinicalWarnings = ({ patientId, medicineIds = [], onResult, compact = fal
     <div className="space-y-2" role="alert">
       {showLoading && (
         <p className="text-[11px] text-slate-400 inline-flex items-center gap-1">
-          <Loader2 className="w-3 h-3 animate-spin" /> Checking interactions...
+          <Loader2 className="w-3 h-3 animate-spin" /> {t('warnings.checking')}
         </p>
       )}
-      {showError && <p className="text-[11px] text-amber-600">{error}</p>}
+      {showError && <p className="text-[11px] text-amber-600">{t(error)}</p>}
       {allergyHits.map((h, i) => (
         <div key={`al-${i}`} className={`${pad} rounded-xl border text-xs ${severityCls(h.allergy?.severity === 'unknown' ? 'severe' : h.allergy?.severity)}`}>
           <div className="flex items-center gap-1.5 font-bold">
             <ShieldAlert className="w-4 h-4 shrink-0" />
-            Allergy: {h.medicineName} — patient allergic to {h.allergy?.substance}
+            {t('warnings.allergy', { medicine: h.medicineName, substance: h.allergy?.substance })}
           </div>
-          {!compact && h.allergy?.reaction && <p className="mt-0.5 opacity-90">Reaction: {h.allergy.reaction}</p>}
+          {!compact && h.allergy?.reaction && <p className="mt-0.5 opacity-90">{t('warnings.reaction', { reaction: h.allergy.reaction })}</p>}
         </div>
       ))}
       {interactions.map((it, i) => (
         <div key={`ix-${i}`} className={`${pad} rounded-xl border text-xs ${severityCls(it.severity)}`}>
           <div className="flex items-center gap-1.5 font-bold">
             <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span className="uppercase text-[10px] tracking-wider">{it.severity}</span>
+            <span className="uppercase text-[10px] tracking-wider">{t(`severity.${it.severity}`, { defaultValue: it.severity })}</span>
             <span className="truncate">
               {it.a} + {it.b}
             </span>
@@ -92,7 +94,7 @@ const ClinicalWarnings = ({ patientId, medicineIds = [], onResult, compact = fal
         </div>
       ))}
       {!compact && (interactions.length > 0 || allergyHits.length > 0) && (
-        <p className="text-[10px] text-slate-400">Warnings come from a starter list and your pharmacy rules; they are not a substitute for professional judgement.</p>
+        <p className="text-[10px] text-slate-400">{t('warnings.disclaimer')}</p>
       )}
     </div>
   );

@@ -1,0 +1,61 @@
+{
+  "announcements": {
+    "region": "ማስታወቂያዎች",
+    "dismiss": "አሰናብት",
+    "dismissAnnouncement": "ማስታወቂያውን አሰናብት"
+  },
+  "branchSwitcher": {
+    "switchBranch": "ቅርንጫፍ ቀይር",
+    "branch": "ቅርንጫፍ"
+  },
+  "notificationBell": {
+    "title": "ማሳወቂያዎች",
+    "ariaUnread": "ማሳወቂያዎች ({{n}} ያልተነበቡ)",
+    "unread": "{{n}} ያልተነበቡ",
+    "markAllRead": "ሁሉንም እንደተነበበ ምልክት አድርግ",
+    "allCaughtUp": "ሁሉንም አይተዋል",
+    "viewAll": "ሁሉንም ማሳወቂያዎች ይመልከቱ",
+    "justNow": "አሁን",
+    "minutesAgo": "ከ{{n}} ደቂቃ በፊት",
+    "hoursAgo": "ከ{{n}} ሰዓት በፊት",
+    "daysAgo": "ከ{{n}} ቀን በፊት"
+  },
+  "comingSoon": {
+    "description": "ይህ ክፍል እየተገነባ ነው፤ በቅርቡ ይገኛል።",
+    "heading": "በቅርቡ ይመጣል",
+    "notAvailable": "{{title}} ገና አልተገኘም።"
+  },
+  "dataTable": {
+    "searchPlaceholder": "መዝገቦችን ይፈልጉ...",
+    "emptyMessage": "ምንም መዝገብ አልተገኘም",
+    "emptySubtext": "ፍለጋዎን ወይም ማጣሪያዎን ለማስተካከል ይሞክሩ",
+    "showing": "ከ{{total}} መዝገቦች {{from}} እስከ {{to}} በማሳየት ላይ",
+    "prev": "ቀዳሚ",
+    "next": "ቀጣይ"
+  },
+  "errorBoundary": {
+    "title": "ይህን ገጽ በማሳየት ላይ ችግር ተፈጥሯል",
+    "fallback": "ያልተጠበቀ የማሳያ ስህተት ተከስቷል።",
+    "reload": "ገጹን እንደገና ጫን",
+    "dashboard": "ዳሽቦርድ"
+  },
+  "statusBadge": {
+    "active": "ንቁ",
+    "operational": "በሥራ ላይ",
+    "completed": "ተጠናቋል",
+    "paid": "ተከፍሏል",
+    "received": "ተቀብሏል",
+    "healthy": "ጤናማ",
+    "suspended": "ታግዷል",
+    "cancelled": "ተሰርዟል",
+    "out_of_stock": "ክምችት አልቋል",
+    "critical": "አሳሳቢ (<30ቀ)",
+    "pending": "በመጠባበቅ ላይ",
+    "ordered": "ታዝዟል",
+    "low_stock": "ዝቅተኛ ክምችት",
+    "warning": "ማስጠንቀቂያ (30-60ቀ)",
+    "draft": "ረቂቅ",
+    "depleted": "ተሟጧል",
+    "status": "ሁኔታ"
+  }
+}

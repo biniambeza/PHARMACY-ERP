@@ -1,0 +1,90 @@
+{
+  "errors": {
+    "load": "Failed to load returns"
+  },
+  "page": {
+    "badge": "Returns & Refunds",
+    "title": "Sales Returns",
+    "subtitle": "Review processed returns and reprint credit notes. Start a new return from the Sales History page.",
+    "salesHistory": "Sales History",
+    "searchPlaceholder": "Search by return #, invoice # or customer...",
+    "loading": "Loading returns...",
+    "noMatch": "No matching returns",
+    "none": "No returns recorded yet",
+    "discarded": "discarded",
+    "pagination_one": "Page {{page}} of {{pages}} · {{count}} return",
+    "pagination_other": "Page {{page}} of {{pages}} · {{count}} returns"
+  },
+  "table": {
+    "returnNo": "Return No",
+    "invoice": "Invoice",
+    "items": "Items",
+    "reason": "Reason",
+    "processedBy": "Processed by",
+    "refund": "Refund"
+  },
+  "methods": {
+    "cash": "Cash",
+    "card": "Card",
+    "mobile_money": "Mobile money",
+    "credit": "Credit account",
+    "store_credit": "Store credit"
+  },
+  "reasons": {
+    "changedMind": "Customer changed mind",
+    "wrongItem": "Wrong item dispensed",
+    "damaged": "Damaged / defective",
+    "expired": "Expired product",
+    "adverse": "Adverse reaction",
+    "other": "Other..."
+  },
+  "creditNote": {
+    "title": "Credit note",
+    "pharmacy": "Pharmacy",
+    "heading": "Credit Note / Refund Receipt",
+    "number": "Credit note no",
+    "originalInvoice": "Original invoice",
+    "customer": "Customer",
+    "item": "Item",
+    "qty": "Qty",
+    "batch": "Batch {{batch}}",
+    "restocked": "restocked",
+    "notRestocked": "not restocked",
+    "totalRefund": "Total refund",
+    "creditReversed": "Taken off credit account",
+    "refundedVia": "Refunded via {{method}}",
+    "signature": "Customer signature:"
+  },
+  "modal": {
+    "title": "Return items",
+    "loading": "Loading sale lines...",
+    "itemBatch": "Item / batch",
+    "sold": "Sold",
+    "left": "Left",
+    "returnQty": "Return qty",
+    "disposition": "Disposition",
+    "restock": "Restock",
+    "discard": "Discard",
+    "refundMethod": "Refund method",
+    "describeReason": "Describe the reason",
+    "restockNote": "Restocked items go back into the same batch. Expired batches and discarded items are not restocked.",
+    "creditSaleNote": "For this credit sale, the refund first reduces what the customer still owes; only the rest is paid out via the refund method.",
+    "estimatedRefund": "Estimated refund:",
+    "submit": "Process return",
+    "errors": {
+      "loadPrevious": "Could not load previous returns for this sale",
+      "reason": "Please give a reason",
+      "selectItem": "Select at least one item quantity to return",
+      "failed": "Failed to process the return"
+    }
+  },
+  "void": {
+    "title": "Void sale",
+    "description": "Voiding cancels the whole sale and puts every item back into its batch. This cannot be undone.",
+    "placeholder": "e.g. Wrong item scanned",
+    "errors": {
+      "reason": "Please give a reason for voiding this sale",
+      "failed": "Failed to void the sale"
+    }
+  }
+}

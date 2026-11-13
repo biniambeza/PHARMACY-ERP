@@ -1,0 +1,36 @@
+{
+  "badge": "Bulchiinsa Yeroo Darbuu",
+  "title": "Daashboordii Yeroo Darbuu",
+  "subtitle": "Kuusaa yeroon isaa darbe fi dhiheenyatti darbu, kasaaraa fi deebii dhiyeessitootaa. Baachiin yeroon isaa darbe halkan halkan gurgurtaa irraa ofumaan ni haqama.",
+  "errors": { "load": "Ilaalcha waliigalaa yeroo darbuu fe'uun hin milkoofne" },
+  "buckets": { "expired": "Yeroon isaa darbe", "d30": "Guyyoota 30 keessatti", "d60": "Guyyoota 31 hanga 60", "d90": "Guyyoota 61 hanga 90" },
+  "bucketSummary_one": "baachii, yuunitii {{units}}",
+  "bucketSummary_other": "baachiiwwan, yuunitii {{units}}",
+  "atCost": "Gatii bittaatiin",
+  "atRetail": "Gatii gurgurtaatiin",
+  "bucketBatches": "Baachiiwwan {{label}}",
+  "sortedByExpiry": "Guyyaa yeroo darbuutiin tartiibaan",
+  "noBatches": "Garee kana keessa baachiin hin jiru.",
+  "table": { "medicine": "Qoricha", "batch": "Baachii", "expiry": "Yeroo darbuu", "qty": "Baay'ina", "costValue": "Gatii bittaa", "retailValue": "Gatii gurgurtaa" },
+  "days": {
+    "today": "Har'a",
+    "ago_one": "Guyyaa {{count}} dura", "ago_other": "Guyyoota {{count}} dura",
+    "left_one": "Guyyaan {{count}} hafe", "left_other": "Guyyoonni {{count}} hafan"
+  },
+  "writeOffs": {
+    "title": "Kasaaraa ji'aan",
+    "subtitle": "Kuusaa yeroon isaa darbe gatii bittaatiin, ji'oota 12 darban",
+    "barTitle_one": "Yuunitii {{count}}, gurgurtaa {{retail}}",
+    "barTitle_other": "Yuunitii {{count}}, gurgurtaa {{retail}}",
+    "atRisk": "Kuusaa guyyoota 90 itti aanan keessatti balaa irra jiru: <b>{{amount}}</b> gatii bittaatiin."
+  },
+  "returns": {
+    "title": "Dhiyeessaatti deebisuu",
+    "subtitle": "Baachiiwwan yeroon isaanii darbe fi dhiyaate dhiyeessaa isaan fide irratti garee qabatan (ajaja bittaa irraa kan argame, yoo hin taane dhiyeessaa filatamaa qorichaa).",
+    "empty": "Wanti deebi'u hin jiru.",
+    "groupSummary_one": "Baachii {{count}}, yuunitii {{units}}",
+    "groupSummary_other": "Baachiiwwan {{count}}, yuunitii {{units}}"
+  },
+  "sources": { "purchase_order": "Ajaja bittaa irraa", "preferred_supplier": "Dhiyeessaa filatamaa", "unknown": "Kan hin beekamne" },
+  "noData": "Daataan hin jiru."
+}

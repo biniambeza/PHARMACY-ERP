@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Clock, PlayCircle, StopCircle, FileBarChart2, AlertCircle, RotateCw, ChevronLeft, ChevronRight, ShoppingCart,
 } from 'lucide-react';
@@ -12,11 +13,7 @@ import PosModal, { primaryBtn, secondaryBtn } from '../../components/pos/PosModa
 import { cardCls, inputCls, round2, errMsg } from '../../components/pos/posUtils';
 
 const LIMIT = 20;
-const COUNTED = [
-  { key: 'cash', label: 'Cash in drawer' },
-  { key: 'card', label: 'Card (terminal total)' },
-  { key: 'mobile_money', label: 'Mobile money' },
-];
+const COUNTED = ['cash', 'card', 'mobile_money'];
 
 const varianceCls = (v) =>
   Math.abs(v) < 0.005 ? 'text-emerald-600 dark:text-emerald-400' : v < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400';
@@ -24,6 +21,7 @@ const signed = (v) => `${v > 0 ? '+' : ''}${formatMoney(v)}`;
 
 // Close a shift: counted amounts against expected, live variance (#7).
 const CloseShiftModal = ({ shift, open, onClose, onClosed }) => {
+  const { t } = useTranslation('shifts');
   const [counted, setCounted] = useState({ cash: '', card: '', mobile_money: '' });
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -34,11 +32,11 @@ const CloseShiftModal = ({ shift, open, onClose, onClosed }) => {
     setSaving(true);
     setError('');
     try {
-      const body = { counted: Object.fromEntries(COUNTED.map(({ key }) => [key, Number(counted[key] || 0)])), notes };
+      const body = { counted: Object.fromEntries(COUNTED.map((key) => [key, Number(counted[key] || 0)])), notes };
       const res = await closeShift(shift._id, body);
       onClosed?.(res);
     } catch (err) {
-      setError(errMsg(err, 'Could not close the shift'));
+      setError(errMsg(err, t('close.errors.failed')));
     } finally {
       setSaving(false);
     }
@@ -47,39 +45,38 @@ const CloseShiftModal = ({ shift, open, onClose, onClosed }) => {
   return (
     <PosModal
       open={open}
-      title={`Close shift ${shift?.shiftNumber || ''}`}
+      title={t('close.title', { number: shift?.shiftNumber || '' })}
       icon={StopCircle}
       onClose={onClose}
       footer={
         <>
-          <button type="button" className={secondaryBtn} onClick={onClose}>Cancel</button>
+          <button type="button" className={secondaryBtn} onClick={onClose}>{t('common:buttons.cancel')}</button>
           <button type="button" className={primaryBtn} onClick={submit} disabled={saving}>
-            {saving ? 'Closing…' : 'Close shift & print Z-report'}
+            {saving ? t('close.closing') : t('close.submit')}
           </button>
         </>
       }
     >
       <div className="space-y-3">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Count the drawer and enter the totals. Expected amounts include the opening float, cash sales, customer
-          payments you received and cash refunds you paid out.
+          {t('close.instructions')}
         </p>
         <table className="w-full text-xs">
           <thead>
             <tr className="text-[11px] text-slate-500">
-              <th className="text-left font-semibold pb-1">Method</th>
-              <th className="text-right font-semibold pb-1">Expected</th>
-              <th className="text-right font-semibold pb-1">Counted</th>
-              <th className="text-right font-semibold pb-1">Variance</th>
+              <th className="text-left font-semibold pb-1">{t('close.method')}</th>
+              <th className="text-right font-semibold pb-1">{t('close.expected')}</th>
+              <th className="text-right font-semibold pb-1">{t('close.counted')}</th>
+              <th className="text-right font-semibold pb-1">{t('close.variance')}</th>
             </tr>
           </thead>
           <tbody>
-            {COUNTED.map(({ key, label }) => {
+            {COUNTED.map((key) => {
               const exp = Number(expected[key]) || 0;
               const variance = round2((Number(counted[key]) || 0) - exp);
               return (
                 <tr key={key}>
-                  <td className="py-1 text-slate-700 dark:text-slate-200">{label}</td>
+                  <td className="py-1 text-slate-700 dark:text-slate-200">{t(`close.labels.${key}`)}</td>
                   <td className="py-1 text-right font-mono">{formatMoney(exp)}</td>
                   <td className="py-1 pl-2 w-32">
                     <input
@@ -98,7 +95,7 @@ const CloseShiftModal = ({ shift, open, onClose, onClosed }) => {
             })}
           </tbody>
         </table>
-        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notes (e.g. reason for a variance)" maxLength={500} className={inputCls} />
+        <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('close.notesPlaceholder')} maxLength={500} className={inputCls} />
         {error && (
           <div className="flex items-center gap-2 text-xs text-rose-600"><AlertCircle className="w-4 h-4" />{error}</div>
         )}
@@ -108,6 +105,7 @@ const CloseShiftModal = ({ shift, open, onClose, onClosed }) => {
 };
 
 const Shifts = () => {
+  const { t } = useTranslation('shifts');
   const { activePharmacy } = useAuth();
   const [current, setCurrent] = useState(null);
   const [requireShift, setRequireShift] = useState(false);
@@ -136,15 +134,15 @@ const Shifts = () => {
       setTotal(list.total || 0);
       setCanManage(Boolean(list.canManage));
     } catch (err) {
-      setError(errMsg(err, 'Failed to load shifts'));
+      setError(errMsg(err, t('errors.load')));
     } finally {
       setLoading(false);
     }
-  }, [page, status]);
+  }, [page, status, t]);
 
   useEffect(() => {
-    const t = setTimeout(load, 0);
-    return () => clearTimeout(t);
+    const timer = setTimeout(load, 0);
+    return () => clearTimeout(timer);
   }, [load]);
 
   const pages = Math.max(1, Math.ceil(total / LIMIT));
@@ -155,20 +153,20 @@ const Shifts = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-            Cash drawer
+            {t('page.badge')}
           </span>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">Shifts</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">{t('page.title')}</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Open a shift with a cash float, close it with counted amounts and print the Z-report.
-            {requireShift ? ' This pharmacy requires an open shift to sell.' : ''}
+            {t('page.subtitle')}
+            {requireShift ? ` ${t('page.requireShift')}` : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={load} className={secondaryBtn}>
-            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> {t('common:buttons.refresh')}
           </button>
           <Link to="/pharmacy/pos" className={primaryBtn}>
-            <ShoppingCart className="w-3.5 h-3.5" /> POS
+            <ShoppingCart className="w-3.5 h-3.5" /> {t('page.pos')}
           </Link>
         </div>
       </div>
@@ -191,35 +189,35 @@ const Shifts = () => {
                 </div>
                 <div>
                   <div className="text-sm font-bold text-slate-900 dark:text-white">
-                    {current.shiftNumber} <span className="ml-1 text-[11px] font-semibold text-emerald-600">OPEN</span>
+                    {current.shiftNumber} <span className="ml-1 text-[11px] font-semibold text-emerald-600">{t('open')}</span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    Since {formatDateTime(current.openedAt)} · float {formatMoney(current.openingFloat)}
+                    {t('current.since', { date: formatDateTime(current.openedAt), amount: formatMoney(current.openingFloat) })}
                   </div>
                 </div>
               </div>
               <div className="flex gap-2">
                 <button type="button" className={secondaryBtn} onClick={() => setReport({ shiftId: current._id })}>
-                  <FileBarChart2 className="w-3.5 h-3.5" /> X-report
+                  <FileBarChart2 className="w-3.5 h-3.5" /> {t('xReport')}
                 </button>
                 <button
                   type="button"
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl cursor-pointer"
                   onClick={() => setCloseModal(true)}
                 >
-                  <StopCircle className="w-3.5 h-3.5" /> Close shift
+                  <StopCircle className="w-3.5 h-3.5" /> {t('current.closeShift')}
                 </button>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[
-                ['Sales', live ? `${live.sales.count} · ${formatMoney(live.sales.total)}` : '-'],
-                ['Expected cash', formatMoney(current.expected?.cash)],
-                ['Card', formatMoney(current.expected?.card)],
-                ['Mobile money', formatMoney(current.expected?.mobile_money)],
-                ['Credit', formatMoney(current.expected?.credit)],
-              ].map(([label, value]) => (
-                <div key={label} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800">
+                ['sales', t('current.sales'), live ? `${live.sales.count} · ${formatMoney(live.sales.total)}` : '-'],
+                ['cash', t('current.expectedCash'), formatMoney(current.expected?.cash)],
+                ['card', t('methods.card'), formatMoney(current.expected?.card)],
+                ['mobile_money', t('methods.mobile_money'), formatMoney(current.expected?.mobile_money)],
+                ['credit', t('methods.credit'), formatMoney(current.expected?.credit)],
+              ].map(([id, label, value]) => (
+                <div key={id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800">
                   <div className="text-[11px] text-slate-500">{label}</div>
                   <div className="text-sm font-bold font-mono text-slate-900 dark:text-white">{value}</div>
                 </div>
@@ -228,9 +226,9 @@ const Shifts = () => {
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm text-slate-600 dark:text-slate-300">You have no open shift.</div>
+            <div className="text-sm text-slate-600 dark:text-slate-300">{t('current.none')}</div>
             <button type="button" className={primaryBtn} onClick={() => setOpenModal(true)}>
-              <PlayCircle className="w-3.5 h-3.5" /> Open shift
+              <PlayCircle className="w-3.5 h-3.5" /> {t('current.openShift')}
             </button>
           </div>
         )}
@@ -239,7 +237,7 @@ const Shifts = () => {
       {/* History */}
       <div className={`${cardCls} overflow-hidden`}>
         <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b border-slate-200/80 dark:border-slate-800">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">{canManage ? 'Shift history (all staff)' : 'My shifts'}</h2>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">{canManage ? t('history.allStaff') : t('history.mine')}</h2>
           <select
             value={status}
             onChange={(e) => {
@@ -248,23 +246,23 @@ const Shifts = () => {
             }}
             className={`${inputCls} w-36 cursor-pointer`}
           >
-            <option value="">All</option>
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
+            <option value="">{t('history.all')}</option>
+            <option value="open">{t('history.open')}</option>
+            <option value="closed">{t('history.closed')}</option>
           </select>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead className="bg-slate-50 dark:bg-slate-900/60 text-[11px] text-slate-500 uppercase tracking-wider">
               <tr>
-                <th className="text-left px-4 py-2.5">Shift</th>
-                {canManage && <th className="text-left px-4 py-2.5">Cashier</th>}
-                <th className="text-left px-4 py-2.5">Opened</th>
-                <th className="text-left px-4 py-2.5">Closed</th>
-                <th className="text-right px-4 py-2.5">Float</th>
-                <th className="text-right px-4 py-2.5">Expected cash</th>
-                <th className="text-right px-4 py-2.5">Counted cash</th>
-                <th className="text-right px-4 py-2.5">Variance</th>
+                <th className="text-left px-4 py-2.5">{t('history.shift')}</th>
+                {canManage && <th className="text-left px-4 py-2.5">{t('history.cashier')}</th>}
+                <th className="text-left px-4 py-2.5">{t('history.opened')}</th>
+                <th className="text-left px-4 py-2.5">{t('history.closed')}</th>
+                <th className="text-right px-4 py-2.5">{t('history.float')}</th>
+                <th className="text-right px-4 py-2.5">{t('current.expectedCash')}</th>
+                <th className="text-right px-4 py-2.5">{t('history.countedCash')}</th>
+                <th className="text-right px-4 py-2.5">{t('close.variance')}</th>
                 <th className="px-4 py-2.5" />
               </tr>
             </thead>
@@ -272,7 +270,7 @@ const Shifts = () => {
               {shifts.length === 0 ? (
                 <tr>
                   <td colSpan={canManage ? 9 : 8} className="px-4 py-10 text-center text-slate-400">
-                    {loading ? 'Loading…' : 'No shifts yet.'}
+                    {loading ? t('history.loading') : t('history.empty')}
                   </td>
                 </tr>
               ) : (
@@ -280,7 +278,7 @@ const Shifts = () => {
                   <tr key={s._id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
                     <td className="px-4 py-2.5 font-mono font-semibold text-slate-900 dark:text-white">
                       {s.shiftNumber}
-                      {s.status === 'open' && <span className="ml-1.5 text-[10px] text-emerald-600 font-bold">OPEN</span>}
+                      {s.status === 'open' && <span className="ml-1.5 text-[10px] text-emerald-600 font-bold">{t('open')}</span>}
                     </td>
                     {canManage && <td className="px-4 py-2.5">{s.userId?.name || '-'}</td>}
                     <td className="px-4 py-2.5">{formatDateTime(s.openedAt)}</td>
@@ -297,7 +295,7 @@ const Shifts = () => {
                         onClick={() => setReport({ shiftId: s._id })}
                         className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-500 cursor-pointer"
                       >
-                        <FileBarChart2 className="w-3.5 h-3.5" /> {s.status === 'closed' ? 'Z-report' : 'X-report'}
+                        <FileBarChart2 className="w-3.5 h-3.5" /> {s.status === 'closed' ? t('zReport') : t('xReport')}
                       </button>
                     </td>
                   </tr>

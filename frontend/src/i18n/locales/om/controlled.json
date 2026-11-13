@@ -1,0 +1,46 @@
+{
+  "badge": "Seera Eeguu",
+  "title": "Galmee Qorichoota To'annoo Jalaa",
+  "subtitle": "Kennaa fi galii qorichoota to'annoo jalaa hunda hafaa isaa wajjin",
+  "printRegister": "Galmee Maxxansi",
+  "entryTypes": { "dispense": "Kenname", "receive": "Fudhatame", "return": "Deebi'e", "adjust": "Sirreeffama" },
+  "filters": {
+    "medicine": "Qoricha",
+    "all": "Qorichoota to'annoo jalaa hunda",
+    "option": "{{name}} {{strength}} (kuusaa {{stock}})",
+    "from": "Irraa",
+    "to": "Hanga",
+    "apply": "Raawwadhu"
+  },
+  "empty": {
+    "title": "Qorichoonni to'annoo jalaa hin jiran",
+    "hint": "Asitti hordofuuf kaataloogii qorichaa keessatti qorichoota akka to'annoo jalaatti mallatteessi."
+  },
+  "scheduleTag": "Sadarkaa {{schedule}}",
+  "stats": { "opening": "Jalqaba", "closing": "Xumura", "stockNow": "Kuusaa amma {{stock}}" },
+  "cols": {
+    "date": "Guyyaa", "type": "Gosa", "patient": "Dhukkubsataa", "prescriber": "Ajajaa", "rxNo": "Lakk. Ajajaa",
+    "batch": "Baachii", "invoice": "Nagahee", "in": "Seene", "out": "Ba'e", "balance": "Hafaa", "by": "Kan raawwate"
+  },
+  "opening": "Hafaa jalqabaa",
+  "closing": "Hafaa xumuraa",
+  "noMovements": "Yeroo kana keessa sochiin hin jiru",
+  "truncated": "Galmee 5000 jalqabaa qofatu mul'ata; daangaa guyyaa dhiphisi.",
+  "errors": { "load": "Galmee fe'uun hin danda'amne", "popups": "Galmee maxxansuuf foddaa ol-ka'aa hayyami." },
+  "print": {
+    "form": "Bifa:",
+    "schedule": "Sadarkaa:",
+    "unit": "Safartuu:",
+    "pharmacist": "Faarmaasistii",
+    "signature": "Mallattoo",
+    "license": "Hayyama:",
+    "period": "Yeroo:",
+    "start": "jalqaba",
+    "today": "har'a",
+    "printed": "Kan maxxanfame:",
+    "noMedicines": "Qorichoonni to'annoo jalaa hin jiran.",
+    "responsible": "Faarmaasistii itti gaafatamu:",
+    "signatureLine": "Mallattoo:",
+    "dateLine": "Guyyaa:"
+  }
+}

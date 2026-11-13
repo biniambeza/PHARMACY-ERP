@@ -7,6 +7,7 @@ import {
   reopenStockTake, approveStockTake, cancelStockTake,
 } from '../../api/stockTakeApi';
 import { getCategories } from '../../api/medicineApi';
+import { useTranslation } from 'react-i18next';
 import Can from '../../components/common/Can';
 import { formatMoney, formatDate, formatDateTime } from '../../utils/format';
 import { toCSV, downloadCSV } from '../../components/catalog/csv';
@@ -22,11 +23,14 @@ const STATUS_STYLES = {
   cancelled: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60',
 };
 
-const StatusPill = ({ status }) => (
-  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold border capitalize ${STATUS_STYLES[status] || ''}`}>
-    {status}
-  </span>
-);
+const StatusPill = ({ status }) => {
+  const { t } = useTranslation('stockTake');
+  return (
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold border capitalize ${STATUS_STYLES[status] || ''}`}>
+      {t(`status.${status}`, { defaultValue: status })}
+    </span>
+  );
+};
 
 const SummaryTile = ({ label, value, tone = '' }) => (
   <div className={`${cardCls} p-4`}>
@@ -40,6 +44,7 @@ const varianceTone = (v) =>
 
 // ---------- Detail / counting view ----------
 const StockTakeDetail = ({ id, onBack }) => {
+  const { t } = useTranslation('stockTake');
   const [st, setSt] = useState(null);
   const [edits, setEdits] = useState({}); // lineId -> string
   const [search, setSearch] = useState('');
@@ -52,11 +57,11 @@ const StockTakeDetail = ({ id, onBack }) => {
     let active = true;
     getStockTake(id)
       .then((res) => active && setSt(res.stockTake))
-      .catch((err) => active && setError(err.response?.data?.message || 'Failed to load stock take'));
+      .catch((err) => active && setError(err.response?.data?.message || t('detail.loadFailed')));
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, t]);
 
   const dirtyCount = Object.keys(edits).length;
   const editable = st?.status === 'counting';
@@ -71,7 +76,7 @@ const StockTakeDetail = ({ id, onBack }) => {
       if (okMessage) setNotice(okMessage);
       return true;
     } catch (err) {
-      setError(err.response?.data?.message || 'Action failed');
+      setError(err.response?.data?.message || t('detail.actionFailed'));
       return false;
     } finally {
       setBusy(false);
@@ -86,10 +91,10 @@ const StockTakeDetail = ({ id, onBack }) => {
     }));
     const bad = counts.find((c) => c.countedQty !== null && (!Number.isInteger(c.countedQty) || c.countedQty < 0));
     if (bad) {
-      setError('Counts must be whole numbers of 0 or more.');
+      setError(t('detail.countsInvalid'));
       return false;
     }
-    const ok = await run(() => saveStockTakeCounts(id, counts), `Saved ${counts.length} count(s)`);
+    const ok = await run(() => saveStockTakeCounts(id, counts), t('detail.saved', { count: counts.length }));
     if (ok) setEdits({});
     return ok;
   };
@@ -97,17 +102,17 @@ const StockTakeDetail = ({ id, onBack }) => {
   const handleSubmit = async () => {
     if (!(await saveEdits())) return;
     if (st.summary.uncountedLines > 0
-      && !window.confirm(`${st.summary.uncountedLines} line(s) are not counted and will be left unchanged. Submit anyway?`)) return;
-    await run(() => submitStockTake(id), 'Submitted for approval');
+      && !window.confirm(t('detail.confirmSubmit', { count: st.summary.uncountedLines }))) return;
+    await run(() => submitStockTake(id), t('detail.submitted'));
   };
 
   const handleApprove = async () => {
-    if (!window.confirm(`Approve and apply ${st.summary.varianceLines} stock correction(s)? This cannot be undone.`)) return;
-    await run(() => approveStockTake(id), 'Approved: stock corrected');
+    if (!window.confirm(t('detail.confirmApprove', { count: st.summary.varianceLines }))) return;
+    await run(() => approveStockTake(id), t('detail.approvedNotice'));
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Cancel this stock take? Counts will be kept for reference but not applied.')) return;
+    if (!window.confirm(t('detail.confirmCancel'))) return;
     const ok = await run(() => cancelStockTake(id));
     if (ok) onBack();
   };
@@ -129,15 +134,18 @@ const StockTakeDetail = ({ id, onBack }) => {
     ]);
     downloadCSV(
       `${st.number}-variance.csv`,
-      toCSV(['Medicine', 'Category', 'Batch', 'Expiry', 'System qty', 'Counted', 'Variance', 'Unit cost', 'Variance value'], rows)
+      toCSV([
+        t('csv.medicine'), t('csv.category'), t('csv.batch'), t('csv.expiry'), t('csv.systemQty'),
+        t('csv.counted'), t('csv.variance'), t('csv.unitCost'), t('csv.varianceValue'),
+      ], rows)
     );
   };
 
   if (!st) {
     return (
       <div className="max-w-7xl mx-auto space-y-4">
-        <button type="button" className={secondaryBtn} onClick={onBack}><ArrowLeft className="w-4 h-4" /> Back</button>
-        {error ? <div className={errorBox}>{error}</div> : <p className="text-xs text-slate-500">Loading...</p>}
+        <button type="button" className={secondaryBtn} onClick={onBack}><ArrowLeft className="w-4 h-4" /> {t('common:buttons.back')}</button>
+        {error ? <div className={errorBox}>{error}</div> : <p className="text-xs text-slate-500">{t('common:labels.loading')}</p>}
       </div>
     );
   }
@@ -148,46 +156,46 @@ const StockTakeDetail = ({ id, onBack }) => {
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <button type="button" className={secondaryBtn} onClick={onBack} aria-label="Back"><ArrowLeft className="w-4 h-4" /></button>
+          <button type="button" className={secondaryBtn} onClick={onBack} aria-label={t('common:buttons.back')}><ArrowLeft className="w-4 h-4" /></button>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white font-mono">{st.number}</h1>
               <StatusPill status={st.status} />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {st.scope?.category ? `Category: ${st.scope.category}` : 'All stock'} · started {formatDateTime(st.createdAt)}
-              {st.createdBy?.name ? ` by ${st.createdBy.name}` : ''}
-              {st.approvedAt ? ` · approved ${formatDateTime(st.approvedAt)}${st.approvedBy?.name ? ` by ${st.approvedBy.name}` : ''}` : ''}
+              {st.scope?.category ? t('detail.categoryScope', { category: st.scope.category }) : t('allStock')} · {t('detail.startedAt', { date: formatDateTime(st.createdAt) })}
+              {st.createdBy?.name ? ` ${t('detail.by', { name: st.createdBy.name })}` : ''}
+              {st.approvedAt ? ` · ${t('detail.approvedAt', { date: formatDateTime(st.approvedAt) })}${st.approvedBy?.name ? ` ${t('detail.by', { name: st.approvedBy.name })}` : ''}` : ''}
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className={secondaryBtn} onClick={exportVariance}><Download className="w-4 h-4" /> Variance CSV</button>
+          <button type="button" className={secondaryBtn} onClick={exportVariance}><Download className="w-4 h-4" /> {t('detail.varianceCsv')}</button>
           {editable && (
             <>
               <button type="button" className={secondaryBtn} disabled={busy || !dirtyCount} onClick={saveEdits}>
-                <Save className="w-4 h-4" /> Save{dirtyCount ? ` (${dirtyCount})` : ''}
+                <Save className="w-4 h-4" /> {t('common:buttons.save')}{dirtyCount ? ` (${dirtyCount})` : ''}
               </button>
               <button type="button" className={primaryBtn} disabled={busy} onClick={handleSubmit}>
-                <Send className="w-4 h-4" /> Submit
+                <Send className="w-4 h-4" /> {t('common:buttons.submit')}
               </button>
             </>
           )}
           {st.status === 'submitted' && (
             <>
-              <button type="button" className={secondaryBtn} disabled={busy} onClick={() => run(() => reopenStockTake(id), 'Reopened for counting')}>
-                <RotateCcw className="w-4 h-4" /> Reopen
+              <button type="button" className={secondaryBtn} disabled={busy} onClick={() => run(() => reopenStockTake(id), t('detail.reopened'))}>
+                <RotateCcw className="w-4 h-4" /> {t('detail.reopen')}
               </button>
               <Can perm="stock:adjust">
                 <button type="button" className={primaryBtn} disabled={busy} onClick={handleApprove}>
-                  <CheckCircle className="w-4 h-4" /> Approve & apply
+                  <CheckCircle className="w-4 h-4" /> {t('detail.approve')}
                 </button>
               </Can>
             </>
           )}
           {['draft', 'counting', 'submitted'].includes(st.status) && (
             <button type="button" className={dangerBtn} disabled={busy} onClick={handleCancel}>
-              <XCircle className="w-4 h-4" /> Cancel
+              <XCircle className="w-4 h-4" /> {t('common:buttons.cancel')}
             </button>
           )}
         </div>
@@ -201,21 +209,21 @@ const StockTakeDetail = ({ id, onBack }) => {
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <SummaryTile label="Counted" value={`${s.countedLines} / ${s.totalLines}`} />
-        <SummaryTile label="Lines with variance" value={s.varianceLines} />
-        <SummaryTile label="Net variance (units)" value={s.netVarianceQty > 0 ? `+${s.netVarianceQty}` : s.netVarianceQty} tone={varianceTone(s.netVarianceQty)} />
-        <SummaryTile label="Shortage value" value={formatMoney(s.shortageValue)} tone={s.shortageValue < 0 ? 'text-rose-600 dark:text-rose-400' : ''} />
-        <SummaryTile label="Net variance value" value={formatMoney(s.netVarianceValue)} tone={varianceTone(s.netVarianceValue)} />
+        <SummaryTile label={t('summary.counted')} value={`${s.countedLines} / ${s.totalLines}`} />
+        <SummaryTile label={t('summary.varianceLines')} value={s.varianceLines} />
+        <SummaryTile label={t('summary.netVarianceUnits')} value={s.netVarianceQty > 0 ? `+${s.netVarianceQty}` : s.netVarianceQty} tone={varianceTone(s.netVarianceQty)} />
+        <SummaryTile label={t('summary.shortageValue')} value={formatMoney(s.shortageValue)} tone={s.shortageValue < 0 ? 'text-rose-600 dark:text-rose-400' : ''} />
+        <SummaryTile label={t('summary.netVarianceValue')} value={formatMoney(s.netVarianceValue)} tone={varianceTone(s.netVarianceValue)} />
       </div>
 
       <div className={`${cardCls} p-4 flex flex-col sm:flex-row gap-3 sm:items-center justify-between`}>
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-          <input className={`${inputCls} pl-9`} placeholder="Search medicine or batch..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className={`${inputCls} pl-9`} placeholder={t('detail.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <label className="text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2 cursor-pointer">
           <input type="checkbox" className="accent-emerald-600" checked={varianceOnly} onChange={(e) => setVarianceOnly(e.target.checked)} />
-          Show variances only
+          {t('detail.varianceOnly')}
         </label>
       </div>
 
@@ -224,13 +232,13 @@ const StockTakeDetail = ({ id, onBack }) => {
           <table className="w-full text-left text-xs">
             <thead className={theadCls}>
               <tr>
-                <th className="py-3 px-5">Medicine</th>
-                <th className="py-3 px-4">Batch</th>
-                <th className="py-3 px-4">Expiry</th>
-                <th className="py-3 px-4 text-right">System qty</th>
-                <th className="py-3 px-4 text-right">Counted</th>
-                <th className="py-3 px-4 text-right">Variance</th>
-                <th className="py-3 px-5 text-right">Value</th>
+                <th className="py-3 px-5">{t('table.medicine')}</th>
+                <th className="py-3 px-4">{t('table.batch')}</th>
+                <th className="py-3 px-4">{t('table.expiry')}</th>
+                <th className="py-3 px-4 text-right">{t('table.systemQty')}</th>
+                <th className="py-3 px-4 text-right">{t('summary.counted')}</th>
+                <th className="py-3 px-4 text-right">{t('table.variance')}</th>
+                <th className="py-3 px-5 text-right">{t('table.value')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
@@ -249,7 +257,7 @@ const StockTakeDetail = ({ id, onBack }) => {
                     </td>
                     <td className="py-2 px-4 font-mono">{l.batchNo}</td>
                     <td className={`py-2 px-4 ${expired ? 'text-rose-600 dark:text-rose-400 font-semibold' : ''}`}>
-                      {formatDate(l.expiryDate)}{expired ? ' (expired)' : ''}
+                      {formatDate(l.expiryDate)}{expired ? ` ${t('detail.expiredSuffix')}` : ''}
                     </td>
                     <td className="py-2 px-4 text-right font-mono">{l.systemQty}</td>
                     <td className="py-2 px-4 text-right">
@@ -258,7 +266,7 @@ const StockTakeDetail = ({ id, onBack }) => {
                           type="number"
                           min="0"
                           step="1"
-                          aria-label={`Counted quantity for ${l.medicineName} batch ${l.batchNo}`}
+                          aria-label={t('detail.countedAria', { name: l.medicineName, batch: l.batchNo })}
                           className={`${inputCls} w-24 text-right font-mono`}
                           value={shown}
                           onChange={(e) => setEdits((prev) => ({ ...prev, [l._id]: e.target.value }))}
@@ -277,15 +285,14 @@ const StockTakeDetail = ({ id, onBack }) => {
                 );
               })}
               {lines.length === 0 && (
-                <tr><td colSpan={7} className="py-10 text-center text-slate-500">No lines match.</td></tr>
+                <tr><td colSpan={7} className="py-10 text-center text-slate-500">{t('detail.noLines')}</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-        On approval each variance (counted - system qty at start) is applied to the batch&apos;s current quantity, so sales made
-        during the count are kept. Uncounted lines are left unchanged.
+        {t('detail.footnote')}
       </p>
     </div>
   );
@@ -293,6 +300,7 @@ const StockTakeDetail = ({ id, onBack }) => {
 
 // ---------- List view ----------
 const StockTake = () => {
+  const { t } = useTranslation('stockTake');
   const [openId, setOpenId] = useState(null);
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -312,12 +320,12 @@ const StockTake = () => {
     let active = true;
     getStockTakes({ limit: 50 })
       .then((res) => active && setItems(res.stockTakes || []))
-      .catch((err) => active && setError(err.response?.data?.message || 'Failed to load stock takes'))
+      .catch((err) => active && setError(err.response?.data?.message || t('list.loadFailed')))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [openId, reloadKey]);
+  }, [openId, reloadKey, t]);
 
   const handleStart = async () => {
     setStarting(true);
@@ -327,7 +335,7 @@ const StockTake = () => {
       setNotes('');
       setOpenId(res.stockTake._id);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to start stock take');
+      setError(err.response?.data?.message || t('list.startFailed'));
     } finally {
       setStarting(false);
     }
@@ -349,11 +357,11 @@ const StockTake = () => {
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       <div className="pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-          Physical Inventory
+          {t('list.badge')}
         </span>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">Stock Take</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">{t('list.title')}</h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Snapshot stock, count each batch, review variances and apply corrections
+          {t('list.subtitle')}
         </p>
       </div>
 
@@ -361,44 +369,44 @@ const StockTake = () => {
 
       <div className={`${cardCls} p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end`}>
         <div>
-          <label className={labelCls}>Scope</label>
+          <label className={labelCls}>{t('list.scope')}</label>
           <select className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="">All stock</option>
+            <option value="">{t('allStock')}</option>
             {categories.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
         <div className="sm:col-span-2">
-          <label className={labelCls}>Notes</label>
-          <input className={inputCls} value={notes} maxLength={500} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Month-end count, shelf A-C" />
+          <label className={labelCls}>{t('list.notes')}</label>
+          <input className={inputCls} value={notes} maxLength={500} onChange={(e) => setNotes(e.target.value)} placeholder={t('list.notesPlaceholder')} />
         </div>
         <button type="button" className={`${primaryBtn} justify-center`} disabled={starting} onClick={handleStart}>
-          <Plus className="w-4 h-4" /> {starting ? 'Starting...' : 'Start count'}
+          <Plus className="w-4 h-4" /> {starting ? t('list.starting') : t('list.start')}
         </button>
       </div>
 
       <div className={`${cardCls} overflow-hidden`}>
         <div className="overflow-x-auto">
           {loading ? (
-            <p className="p-8 text-xs text-slate-500">Loading...</p>
+            <p className="p-8 text-xs text-slate-500">{t('common:labels.loading')}</p>
           ) : items.length === 0 ? (
             <div className="py-16 text-center">
               <ClipboardCheck className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-              <p className="text-sm font-bold text-slate-900 dark:text-white">No stock takes yet</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Start a count above</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{t('list.empty')}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('list.emptyHint')}</p>
             </div>
           ) : (
             <table className="w-full text-left text-xs">
               <thead className={theadCls}>
                 <tr>
-                  <th className="py-3 px-5">Number</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Scope</th>
-                  <th className="py-3 px-4 text-right">Counted</th>
-                  <th className="py-3 px-4 text-right">Net variance value</th>
-                  <th className="py-3 px-4">Started</th>
-                  <th className="py-3 px-5">By</th>
+                  <th className="py-3 px-5">{t('table.number')}</th>
+                  <th className="py-3 px-4">{t('table.status')}</th>
+                  <th className="py-3 px-4">{t('list.scope')}</th>
+                  <th className="py-3 px-4 text-right">{t('summary.counted')}</th>
+                  <th className="py-3 px-4 text-right">{t('summary.netVarianceValue')}</th>
+                  <th className="py-3 px-4">{t('table.started')}</th>
+                  <th className="py-3 px-5">{t('table.by')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
@@ -410,7 +418,7 @@ const StockTake = () => {
                   >
                     <td className="py-3 px-5 font-mono font-bold text-slate-900 dark:text-white">{st.number}</td>
                     <td className="py-3 px-4"><StatusPill status={st.status} /></td>
-                    <td className="py-3 px-4">{st.scope?.category || 'All stock'}</td>
+                    <td className="py-3 px-4">{st.scope?.category || t('allStock')}</td>
                     <td className="py-3 px-4 text-right font-mono">{st.summary.countedLines} / {st.summary.totalLines}</td>
                     <td className={`py-3 px-4 text-right font-mono ${varianceTone(st.summary.netVarianceValue)}`}>
                       {formatMoney(st.summary.netVarianceValue)}

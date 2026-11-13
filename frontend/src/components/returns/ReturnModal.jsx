@@ -1,25 +1,29 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Undo2, X, AlertCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { createReturn, getReturns } from '../../api/returnApi';
 import { formatMoney } from '../../utils/format';
 
-const REFUND_METHODS = [
-  { value: 'cash', label: 'Cash' },
-  { value: 'card', label: 'Card' },
-  { value: 'mobile_money', label: 'Mobile money' },
-  { value: 'store_credit', label: 'Store credit' },
-];
+const REFUND_METHODS = ['cash', 'card', 'mobile_money', 'store_credit'];
 
-const REASONS = ['Customer changed mind', 'Wrong item dispensed', 'Damaged / defective', 'Expired product', 'Adverse reaction'];
+// Values are stored as-is (English) on the return; only the labels are translated.
+const REASONS = [
+  { value: 'Customer changed mind', key: 'changedMind' },
+  { value: 'Wrong item dispensed', key: 'wrongItem' },
+  { value: 'Damaged / defective', key: 'damaged' },
+  { value: 'Expired product', key: 'expired' },
+  { value: 'Adverse reaction', key: 'adverse' },
+];
 
 const inputCls =
   'w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition';
 
 // Lets the user pick quantities per sale line, the disposition, a reason and a refund method.
 const ReturnModal = ({ sale, onClose, onDone }) => {
+  const { t } = useTranslation('returns');
   const [returnedByItem, setReturnedByItem] = useState({});
   const [lines, setLines] = useState({});
-  const [reason, setReason] = useState(REASONS[0]);
+  const [reason, setReason] = useState(REASONS[0].value);
   const [customReason, setCustomReason] = useState('');
   const [refundMethod, setRefundMethod] = useState('cash');
   const [loading, setLoading] = useState(true);
@@ -39,12 +43,12 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
         );
         setReturnedByItem(map);
       })
-      .catch(() => !cancelled && setError('Could not load previous returns for this sale'))
+      .catch(() => !cancelled && setError(t('modal.errors.loadPrevious')))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [sale._id]);
+  }, [sale._id, t]);
 
   const factor = sale.subtotal > 0 ? sale.grandTotal / sale.subtotal : 0;
 
@@ -68,8 +72,8 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
     e.preventDefault();
     setError('');
     const finalReason = reason === 'other' ? customReason.trim() : reason;
-    if (!finalReason) return setError('Please give a reason');
-    if (selected.length === 0) return setError('Select at least one item quantity to return');
+    if (!finalReason) return setError(t('modal.errors.reason'));
+    if (selected.length === 0) return setError(t('modal.errors.selectItem'));
     setSubmitting(true);
     try {
       const res = await createReturn({
@@ -80,7 +84,7 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
       });
       onDone?.(res);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to process the return');
+      setError(err.response?.data?.message || t('modal.errors.failed'));
     } finally {
       setSubmitting(false);
     }
@@ -98,13 +102,14 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
               <Undo2 className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">Return items</h2>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">{t('modal.title')}</h2>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{sale.invoiceNumber}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-4 h-4" />
@@ -121,18 +126,18 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
         {loading ? (
           <div className="p-8 text-center text-xs text-slate-400">
             <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
-            Loading sale lines...
+            {t('modal.loading')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[10px]">
                 <tr>
-                  <th className="py-2 pr-2">Item / batch</th>
-                  <th className="py-2 px-2 text-right">Sold</th>
-                  <th className="py-2 px-2 text-right">Left</th>
-                  <th className="py-2 px-2">Return qty</th>
-                  <th className="py-2 pl-2">Disposition</th>
+                  <th className="py-2 pr-2">{t('modal.itemBatch')}</th>
+                  <th className="py-2 px-2 text-right">{t('modal.sold')}</th>
+                  <th className="py-2 px-2 text-right">{t('modal.left')}</th>
+                  <th className="py-2 px-2">{t('modal.returnQty')}</th>
+                  <th className="py-2 pl-2">{t('modal.disposition')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
@@ -168,8 +173,8 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
                         onChange={(e) => setLine(r.item._id, { disposition: e.target.value })}
                         className={`${inputCls} disabled:opacity-50`}
                       >
-                        <option value="restock">Restock</option>
-                        <option value="discard">Discard</option>
+                        <option value="restock">{t('modal.restock')}</option>
+                        <option value="discard">{t('modal.discard')}</option>
                       </select>
                     </td>
                   </tr>
@@ -181,29 +186,29 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
           <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 space-y-1">
-            <span>Reason</span>
+            <span>{t('table.reason')}</span>
             <select value={reason} onChange={(e) => setReason(e.target.value)} className={inputCls}>
               {REASONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
+                <option key={r.value} value={r.value}>
+                  {t(`reasons.${r.key}`)}
                 </option>
               ))}
-              <option value="other">Other...</option>
+              <option value="other">{t('reasons.other')}</option>
             </select>
           </label>
           <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 space-y-1">
-            <span>Refund method</span>
+            <span>{t('modal.refundMethod')}</span>
             <select value={refundMethod} onChange={(e) => setRefundMethod(e.target.value)} className={inputCls}>
               {REFUND_METHODS.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
+                <option key={m} value={m}>
+                  {t(`methods.${m}`)}
                 </option>
               ))}
             </select>
           </label>
           {reason === 'other' && (
             <label className="sm:col-span-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300 space-y-1">
-              <span>Describe the reason</span>
+              <span>{t('modal.describeReason')}</span>
               <input
                 type="text"
                 maxLength={500}
@@ -216,15 +221,13 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
         </div>
 
         <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
-          Restocked items go back into the same batch. Expired batches and discarded items are not restocked.
-          {sale.customerId && sale.balanceDue > 0 && (
-            <> For this credit sale, the refund first reduces what the customer still owes; only the rest is paid out via the refund method.</>
-          )}
+          {t('modal.restockNote')}
+          {sale.customerId && sale.balanceDue > 0 && <> {t('modal.creditSaleNote')}</>}
         </p>
 
         <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-200/80 dark:border-slate-800">
           <div className="text-xs text-slate-600 dark:text-slate-300">
-            Estimated refund:{' '}
+            {t('modal.estimatedRefund')}{' '}
             <span className="font-bold font-mono text-slate-900 dark:text-white">{formatMoney(estimate)}</span>
           </div>
           <div className="flex gap-2">
@@ -233,7 +236,7 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
               onClick={onClose}
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </button>
             <button
               type="submit"
@@ -241,7 +244,7 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
             >
               {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Undo2 className="w-3.5 h-3.5" />}
-              <span>Process return</span>
+              <span>{t('modal.submit')}</span>
             </button>
           </div>
         </div>

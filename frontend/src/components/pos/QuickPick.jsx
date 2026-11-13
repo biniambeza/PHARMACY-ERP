@@ -1,15 +1,17 @@
 import { Zap } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatMoney } from '../../utils/format';
 import { cardCls } from './posUtils';
 
 // Quick-pick grid of the top-selling medicines (#29). Props: { items: medicines[], availableOf, onAdd }
 const QuickPick = ({ items, availableOf, onAdd }) => {
+  const { t } = useTranslation('pos');
   if (!items || items.length === 0) return null;
   return (
     <div className={`${cardCls} p-3`}>
       <div className="flex items-center gap-1.5 mb-2">
         <Zap className="w-3.5 h-3.5 text-amber-500" />
-        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quick pick</span>
+        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t('quickPick')}</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1.5">
         {items.map((med) => {

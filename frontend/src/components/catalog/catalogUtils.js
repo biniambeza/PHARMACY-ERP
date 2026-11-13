@@ -15,17 +15,19 @@ export const marginWarningFor = ({ price, costPrice, minMarginPercent }) => {
 
 // Pack units: name required/unique (and != base unit), factor whole number >= 2,
 // price >= 0 or empty. Returns an error string or ''.
-export const validatePackUnits = (units, baseUnit = 'unit') => {
+// Pass i18next `t` to get translated messages (medicines:packs.*); English otherwise.
+export const validatePackUnits = (units, baseUnit = 'unit', t = null) => {
+  const msg = (key, fallback, params) => (t ? t(`medicines:packs.${key}`, params) : fallback);
   const seen = new Set([String(baseUnit || 'unit').trim().toLowerCase()]);
   for (const u of units) {
     const name = String(u.name || '').trim();
-    if (!name) return 'Every pack unit needs a name.';
-    if (seen.has(name.toLowerCase())) return `Pack unit "${name}" is duplicated or equals the base unit.`;
+    if (!name) return msg('errName', 'Every pack unit needs a name.');
+    if (seen.has(name.toLowerCase())) return msg('errDuplicate', `Pack unit "${name}" is duplicated or equals the base unit.`, { name });
     seen.add(name.toLowerCase());
     const f = Number(u.factor);
-    if (!Number.isInteger(f) || f < 2) return `Pack unit "${name}": factor must be a whole number of at least 2.`;
+    if (!Number.isInteger(f) || f < 2) return msg('errFactor', `Pack unit "${name}": factor must be a whole number of at least 2.`, { name });
     if (u.price !== '' && u.price !== null && u.price !== undefined && !(Number(u.price) >= 0)) {
-      return `Pack unit "${name}": price must be 0 or more.`;
+      return msg('errPrice', `Pack unit "${name}": price must be 0 or more.`, { name });
     }
   }
   return '';

@@ -13,14 +13,17 @@ import {
   History,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import { getStockBatches, getInventorySummary, deleteStockBatch } from '../../api/stockApi';
 import StockInModal from './StockInModal';
 import StockAdjustModal from './StockAdjustModal';
 import MetricCard from '../../components/common/MetricCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
+import { formatMoney } from '../../utils/format';
 
 const Stock = () => {
+  const { t } = useTranslation('stock');
   const [batches, setBatches] = useState([]);
   const [summary, setSummary] = useState(null);
   const [statusFilter, setStatusFilter] = useState('active');
@@ -64,7 +67,7 @@ const Stock = () => {
   };
 
   const handleDelete = async (id, batchNo) => {
-    if (!window.confirm(`Are you sure you want to permanently delete batch "${batchNo}"?`)) {
+    if (!window.confirm(t('page.confirmDelete', { batchNo }))) {
       return;
     }
 
@@ -73,7 +76,7 @@ const Stock = () => {
       await deleteStockBatch(id);
       await loadData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete batch');
+      alert(err.response?.data?.message || t('page.deleteFailed'));
     } finally {
       setDeletingId(null);
     }
@@ -118,14 +121,14 @@ const Stock = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-              FEFO Protocol
+              {t('page.badge')}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Inventory & Stock Batches
+            {t('page.title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Monitor real-time lot allocations, enforce First-Expired-First-Out dispensing, and record stock receipts
+            {t('page.subtitle')}
           </p>
         </div>
 
@@ -134,17 +137,17 @@ const Stock = () => {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Record Stock In</span>
+          <span>{t('page.recordStockIn')}</span>
         </button>
       </div>
 
       {/* KPI Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         <MetricCard
-          title="Active Lots on Hand"
+          title={t('kpi.activeLots')}
           value={totalActiveBatches.toString()}
-          subValue="Available for dispensing"
-          badgeText="Active"
+          subValue={t('kpi.activeLotsSub')}
+          badgeText={t('common:status.active')}
           badgeVariant="emerald"
           icon={<Boxes className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
           sparklineData={[12, 16, 14, 20, 22, 28, 25, totalActiveBatches]}
@@ -153,10 +156,10 @@ const Stock = () => {
         />
 
         <MetricCard
-          title="Total Stock Units"
+          title={t('kpi.totalUnits')}
           value={totalStockUnits.toLocaleString()}
-          subValue="Units across active catalog"
-          badgeText="Volume"
+          subValue={t('kpi.totalUnitsSub')}
+          badgeText={t('kpi.volume')}
           badgeVariant="emerald"
           icon={<Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
           sparklineData={[140, 180, 210, 290, 310, 390, 420, totalStockUnits]}
@@ -165,10 +168,10 @@ const Stock = () => {
         />
 
         <MetricCard
-          title="Total Stock Valuation"
-          value={`$${Number(totalValuation).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          subValue="Wholesale asset value"
-          badgeText="Capital"
+          title={t('kpi.valuation')}
+          value={formatMoney(Number(totalValuation) || 0)}
+          subValue={t('kpi.valuationSub')}
+          badgeText={t('kpi.capital')}
           badgeVariant="indigo"
           icon={<DollarSign className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
           sparklineData={[1200, 1450, 1300, 1900, 2100, 2400, 2800, totalValuation]}
@@ -177,10 +180,10 @@ const Stock = () => {
         />
 
         <MetricCard
-          title="Expiry Risk (<30 Days)"
+          title={t('kpi.expiryRisk')}
           value={expiringSoonCount.toString()}
-          subValue={expiringSoonCount > 0 ? 'Requires priority sale' : 'No near-term expirations'}
-          badgeText={expiringSoonCount > 0 ? 'Action Needed' : 'Compliant'}
+          subValue={expiringSoonCount > 0 ? t('kpi.expiryRiskSub') : t('kpi.expiryRiskNone')}
+          badgeText={expiringSoonCount > 0 ? t('kpi.actionNeeded') : t('kpi.compliant')}
           badgeVariant={expiringSoonCount > 0 ? 'rose' : 'emerald'}
           icon={<AlertTriangle className={`w-4 h-4 ${expiringSoonCount > 0 ? 'text-rose-500' : 'text-emerald-500'}`} />}
           sparklineData={[4, 2, 6, 3, 5, 2, 1, expiringSoonCount]}
@@ -198,7 +201,7 @@ const Stock = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by lot batch number, brand name, or active formula..."
+            placeholder={t('page.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
         </div>
@@ -214,7 +217,7 @@ const Stock = () => {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Active Stock
+              {t('filters.active')}
             </button>
             <button
               onClick={() => setStatusFilter('expiring')}
@@ -224,7 +227,7 @@ const Stock = () => {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Expiring Soon
+              {t('filters.expiring')}
             </button>
             <button
               onClick={() => setStatusFilter('depleted')}
@@ -234,7 +237,7 @@ const Stock = () => {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Depleted
+              {t('filters.depleted')}
             </button>
             <button
               onClick={() => setStatusFilter('')}
@@ -244,7 +247,7 @@ const Stock = () => {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              All Batches
+              {t('filters.all')}
             </button>
           </div>
 
@@ -253,7 +256,7 @@ const Stock = () => {
               onClick={() => setSearch('')}
               className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-medium cursor-pointer"
             >
-              Clear
+              {t('common:buttons.clear')}
             </button>
           )}
         </div>
@@ -272,32 +275,32 @@ const Stock = () => {
                 <Boxes className="w-6 h-6" />
               </div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">
-                {search || statusFilter ? 'No matching inventory batches' : 'No stock recorded'}
+                {search || statusFilter ? t('empty.noMatch') : t('empty.none')}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                 {search || statusFilter
-                  ? 'Try modifying your search query or filter parameters'
-                  : 'Receive incoming pharmaceutical shipments or direct stock to begin dispensing'}
+                  ? t('empty.noMatchHint')
+                  : t('empty.noneHint')}
               </p>
               <button
                 onClick={() => setIsStockInOpen(true)}
                 className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
               >
-                <Plus className="w-4 h-4" /> Record First Stock In
+                <Plus className="w-4 h-4" /> {t('empty.recordFirst')}
               </button>
             </div>
           ) : (
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
                 <tr>
-                  <th className="py-3.5 px-5">Batch Lot No</th>
-                  <th className="py-3.5 px-4">Medicine Item</th>
-                  <th className="py-3.5 px-4">Available Units</th>
-                  <th className="py-3.5 px-4">Expiration Date (FEFO)</th>
-                  <th className="py-3.5 px-4">Unit Cost</th>
-                  <th className="py-3.5 px-4">Batch Valuation</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-5 text-right">Actions</th>
+                  <th className="py-3.5 px-5">{t('table.batchNo')}</th>
+                  <th className="py-3.5 px-4">{t('table.medicine')}</th>
+                  <th className="py-3.5 px-4">{t('table.available')}</th>
+                  <th className="py-3.5 px-4">{t('table.expiry')}</th>
+                  <th className="py-3.5 px-4">{t('table.unitCost')}</th>
+                  <th className="py-3.5 px-4">{t('table.valuation')}</th>
+                  <th className="py-3.5 px-4">{t('table.status')}</th>
+                  <th className="py-3.5 px-5 text-right">{t('common:labels.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60 font-medium">
@@ -330,10 +333,10 @@ const Stock = () => {
                           </div>
                           <div>
                             <span className="font-bold text-slate-900 dark:text-white block">
-                              {batch.medicineId?.name || 'Unnamed Product'}
+                              {batch.medicineId?.name || t('table.unnamed')}
                             </span>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                              {batch.medicineId?.dosageForm || 'Unit'} • {batch.medicineId?.category || 'General'}
+                              {batch.medicineId?.dosageForm || t('table.unit')} • {batch.medicineId?.category || t('table.general')}
                             </span>
                           </div>
                         </div>
@@ -351,7 +354,7 @@ const Stock = () => {
                           }`}>
                             {batch.quantity}
                           </span>
-                          <span className="text-[11px] text-slate-500 dark:text-slate-400">units</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('table.units')}</span>
                         </div>
                       </td>
 
@@ -365,19 +368,19 @@ const Stock = () => {
                                   month: 'short',
                                   day: 'numeric',
                                 })
-                              : 'N/A'}
+                              : t('table.na')}
                           </span>
                           {isExpired ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-                              <AlertTriangle className="w-3 h-3 text-rose-500" /> Expired
+                              <AlertTriangle className="w-3 h-3 text-rose-500" /> {t('common:status.expired')}
                             </span>
                           ) : isCritical ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                              <Clock className="w-3 h-3 text-amber-500" /> {daysLeft}d remaining
+                              <Clock className="w-3 h-3 text-amber-500" /> {t('table.daysRemaining', { count: daysLeft })}
                             </span>
                           ) : daysLeft !== null ? (
                             <span className="text-[10px] text-slate-400 font-mono">
-                              {daysLeft} days valid
+                              {t('table.daysValid', { count: daysLeft })}
                             </span>
                           ) : null}
                         </div>
@@ -386,27 +389,27 @@ const Stock = () => {
                       {/* Unit Cost */}
                       <td className="py-3.5 px-4">
                         <span className="font-mono text-slate-600 dark:text-slate-300">
-                          ${Number(batch.purchasePrice || 0).toFixed(2)}
+                          {formatMoney(Number(batch.purchasePrice || 0))}
                         </span>
                       </td>
 
                       {/* Batch Valuation */}
                       <td className="py-3.5 px-4">
                         <span className="font-mono font-bold text-slate-900 dark:text-white">
-                          ${((Number(batch.quantity) || 0) * (Number(batch.purchasePrice) || 0)).toFixed(2)}
+                          {formatMoney((Number(batch.quantity) || 0) * (Number(batch.purchasePrice) || 0))}
                         </span>
                       </td>
 
                       {/* Status */}
                       <td className="py-3.5 px-4">
                         {isDepleted ? (
-                          <StatusBadge status="depleted" label="Depleted" />
+                          <StatusBadge status="depleted" label={t('filters.depleted')} />
                         ) : isExpired ? (
-                          <StatusBadge status="out_of_stock" label="Expired" />
+                          <StatusBadge status="out_of_stock" label={t('common:status.expired')} />
                         ) : isCritical ? (
-                          <StatusBadge status="warning" label="Expiring" />
+                          <StatusBadge status="warning" label={t('table.expiring')} />
                         ) : (
-                          <StatusBadge status="active" label="Available" />
+                          <StatusBadge status="active" label={t('table.availableStatus')} />
                         )}
                       </td>
 
@@ -415,7 +418,7 @@ const Stock = () => {
                         <div className="flex items-center justify-end gap-1.5">
                           <Link
                             to={`/pharmacy/movements?batchId=${batch._id}`}
-                            title="Batch movement history"
+                            title={t('actions.history')}
                             className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/30 rounded-lg transition"
                           >
                             <History className="w-4 h-4" />
@@ -423,7 +426,7 @@ const Stock = () => {
                           {!isDepleted && (
                             <button
                               onClick={() => handleOpenAdjust(batch)}
-                              title="Adjust stock (write-off / damaged)"
+                              title={t('actions.adjust')}
                               className="p-1.5 text-slate-600 hover:text-amber-600 hover:bg-amber-50 dark:text-slate-400 dark:hover:text-amber-400 dark:hover:bg-amber-950/30 rounded-lg transition cursor-pointer"
                             >
                               <SlidersHorizontal className="w-4 h-4" />
@@ -432,7 +435,7 @@ const Stock = () => {
                           <button
                             onClick={() => handleDelete(batch._id, batch.batchNo)}
                             disabled={deletingId === batch._id}
-                            title="Delete batch record"
+                            title={t('actions.delete')}
                             className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 rounded-lg transition disabled:opacity-40 cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -451,11 +454,15 @@ const Stock = () => {
         {filteredBatches.length > 0 && (
           <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-800/20">
             <span>
-              Showing <strong>{filteredBatches.length}</strong> of{' '}
-              <strong>{batches.length}</strong> inventory batches
+              <Trans
+                t={t}
+                i18nKey="page.footerShowing"
+                values={{ shown: filteredBatches.length, total: batches.length }}
+                components={{ b: <strong /> }}
+              />
             </span>
             <span className="font-mono text-[11px]">
-              Protocol: FEFO Compliance Enforced
+              {t('page.footerProtocol')}
             </span>
           </div>
         )}

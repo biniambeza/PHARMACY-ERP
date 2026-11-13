@@ -1,0 +1,85 @@
+{
+  "badge": "ተቀባይ ሂሳቦች",
+  "title": "ደንበኞች እና ብድር",
+  "subtitle": "የብድር ደንበኞች፣ ገደቦች፣ ክፍያዎች እና መግለጫዎች",
+  "newCustomer": "አዲስ ደንበኛ",
+  "searchPlaceholder": "በስም፣ በስልክ ወይም በኢሜይል ይፈልጉ...",
+  "saving": "በማስቀመጥ ላይ...",
+  "confirmRemove": "ደንበኛ \"{{name}}\" ይወገድ?",
+  "removeFailed": "ደንበኛውን ማስወገድ አልተቻለም",
+  "filters": { "all": "ሁሉም", "withBalance": "ቀሪ ሂሳብ ያላቸው" },
+  "limit": { "unlimited": "ያልተገደበ", "noCredit": "ብድር የለም" },
+  "paymentMethods": {
+    "cash": "ጥሬ ገንዘብ", "card": "ካርድ", "mobile_money": "የሞባይል ገንዘብ",
+    "bank_transfer": "የባንክ ዝውውር", "cheque": "ቼክ", "other": "ሌላ"
+  },
+  "fields": {
+    "phone": "ስልክ", "email": "ኢሜይል", "address": "አድራሻ", "creditLimit": "የብድር ገደብ", "notes": "ማስታወሻ"
+  },
+  "form": {
+    "editTitle": "ደንበኛ አርትዕ",
+    "newTitle": "አዲስ የብድር ደንበኛ",
+    "subtitle": "የመገኛ መረጃ እና የብድር ገደብ",
+    "fullName": "ሙሉ ስም",
+    "phonePlaceholder": "09...",
+    "zeroHint": "0 ማለት ብድር አይፈቀድም ማለት ነው።",
+    "unlimited": "ያልተገደበ ብድር",
+    "accountActive": "ሂሳቡ ንቁ ነው",
+    "saveChanges": "ለውጦችን አስቀምጥ",
+    "create": "ደንበኛ ፍጠር",
+    "errors": {
+      "nameRequired": "የደንበኛ ስም ያስፈልጋል።",
+      "limitInvalid": "የብድር ገደብ 0 ወይም ከዚያ በላይ መሆን አለበት።",
+      "saveFailed": "ደንበኛውን ማስቀመጥ አልተቻለም"
+    }
+  },
+  "payment": {
+    "title": "ክፍያ መዝግብ",
+    "owes": "{{name}} {{amount}} ዕዳ አለበት",
+    "amount": "መጠን",
+    "method": "ዘዴ",
+    "reference": "ማጣቀሻ",
+    "referencePlaceholder": "ደረሰኝ / የግብይት ቁጥር",
+    "note": "ማስታወሻ",
+    "appliedTo": "ለክፍት ደረሰኞች ተተግብሯል (ከቀደመው ጀምሮ)",
+    "submit": "ክፍያ መዝግብ",
+    "errors": {
+      "positive": "አዎንታዊ መጠን ያስገቡ።",
+      "exceeds": "መጠኑ ከቀሪ ዕዳው ይበልጣል።",
+      "failed": "ክፍያውን መመዝገብ አልተቻለም"
+    }
+  },
+  "statement": {
+    "title": "የደንበኛ መግለጫ",
+    "printTitle": "መግለጫ - {{name}}",
+    "pharmacy": "ፋርማሲ",
+    "loadFailed": "መግለጫውን መጫን አልተቻለም",
+    "from": "ከ",
+    "to": "እስከ",
+    "period": "ጊዜ: {{from}} - {{to}}",
+    "start": "መጀመሪያ",
+    "opening": "የመክፈቻ ቀሪ ሂሳብ",
+    "closing": "የመዝጊያ ቀሪ ሂሳብ",
+    "printed": "የታተመው {{date}}",
+    "cols": {
+      "date": "ቀን", "description": "መግለጫ", "reference": "ማጣቀሻ",
+      "charges": "ክፍያዎች (ዴቢት)", "payments": "የተከፈሉ", "balance": "ቀሪ ሂሳብ"
+    }
+  },
+  "summary": {
+    "totalReceivable": "ጠቅላላ ተቀባይ",
+    "withBalance_one": "ቀሪ ሂሳብ ያለው {{count}} ደንበኛ፣ {{active}} ንቁ",
+    "withBalance_other": "ቀሪ ሂሳብ ያላቸው {{count}} ደንበኞች፣ {{active}} ንቁ",
+    "aging": "ዕድሜ (ከሽያጭ በኋላ ያሉ ቀናት)",
+    "overdue": "{{amount}} ከ30 ቀናት በላይ የቆየ",
+    "bucketDays": "{{bucket}} ቀናት"
+  },
+  "agingTable": { "title": "የተቀባይ ሂሳቦች ዕድሜ በደንበኛ" },
+  "table": { "customer": "ደንበኛ", "balance": "ቀሪ ሂሳብ", "status": "ሁኔታ" },
+  "actions": { "recordPayment": "ክፍያ መዝግብ", "statement": "መግለጫ", "remove": "አስወግድ" },
+  "empty": {
+    "noMatch": "የሚዛመዱ ደንበኞች የሉም",
+    "none": "እስካሁን ደንበኞች የሉም",
+    "hint": "በብድር ለመሸጥ እና ያለባቸውን ዕዳ ለመከታተል ደንበኞችን ያክሉ።"
+  }
+}

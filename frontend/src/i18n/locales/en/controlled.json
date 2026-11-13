@@ -1,0 +1,46 @@
+{
+  "badge": "Compliance",
+  "title": "Controlled Substances Register",
+  "subtitle": "Every dispense and receipt of controlled medicines with running balances",
+  "printRegister": "Print Register",
+  "entryTypes": { "dispense": "Dispensed", "receive": "Received", "return": "Returned", "adjust": "Adjustment" },
+  "filters": {
+    "medicine": "Medicine",
+    "all": "All controlled medicines",
+    "option": "{{name}} {{strength}} (stock {{stock}})",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply"
+  },
+  "empty": {
+    "title": "No controlled medicines",
+    "hint": "Flag medicines as controlled in the medicine catalog to track them here."
+  },
+  "scheduleTag": "Schedule {{schedule}}",
+  "stats": { "opening": "Opening", "closing": "Closing", "stockNow": "Stock now {{stock}}" },
+  "cols": {
+    "date": "Date", "type": "Type", "patient": "Patient", "prescriber": "Prescriber", "rxNo": "Rx No.",
+    "batch": "Batch", "invoice": "Invoice", "in": "In", "out": "Out", "balance": "Balance", "by": "By"
+  },
+  "opening": "Opening balance",
+  "closing": "Closing balance",
+  "noMovements": "No movements in this period",
+  "truncated": "Showing the first 5000 entries; narrow the date range.",
+  "errors": { "load": "Failed to load register", "popups": "Allow pop-ups to print the register." },
+  "print": {
+    "form": "Form:",
+    "schedule": "Schedule:",
+    "unit": "Unit:",
+    "pharmacist": "Pharmacist",
+    "signature": "Signature",
+    "license": "License:",
+    "period": "Period:",
+    "start": "start",
+    "today": "today",
+    "printed": "Printed:",
+    "noMedicines": "No controlled medicines.",
+    "responsible": "Responsible pharmacist:",
+    "signatureLine": "Signature:",
+    "dateLine": "Date:"
+  }
+}

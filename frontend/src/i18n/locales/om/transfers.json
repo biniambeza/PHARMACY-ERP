@@ -1,0 +1,79 @@
+{
+  "badge": "Damee hedduu",
+  "title": "Dabarsa Dameelee",
+  "subtitle": "Dameelee dhaabbata keessanii gidduu kuusaa socho'si fi raawwii dameelee wal bira qabi",
+  "newTransfer": "Dabarsa Haaraa",
+  "tabs": { "outgoing": "Kan ba'u", "incoming": "Kan galu", "overview": "Ilaalcha dameelee" },
+  "allStatuses": "Haala hunda",
+  "status": { "draft": "Wixinee", "in_transit": "Karaa irra", "received": "Fudhatame", "cancelled": "Haqame" },
+  "errors": { "load": "Dabarsa fe'uun hin danda'amne", "action": "Gochi hin milkoofne" },
+  "empty": {
+    "outgoing": "Dabarsi ba'u hin jiru",
+    "incoming": "Dabarsi galu hin jiru",
+    "outgoingHint": "Kuusaa damee biraatti erguuf dabarsa uumi.",
+    "incomingHint": "Dabarsi damee kanaaf ergame asitti mul'ata."
+  },
+  "columns": {
+    "number": "Lakkoofsa", "toBranch": "Gara damee", "fromBranch": "Damee irraa", "units": "Baay'ina",
+    "value": "Gatii (baasii)", "status": "Haala", "date": "Guyyaa"
+  },
+  "confirm": {
+    "send": "{{number}} erguu? Kuusaan damee kana irraa ni hir'ata.",
+    "receive": "{{number}} damee kanatti fudhachuu?",
+    "reject": "{{number}} didduu? Kuusaan gara damee ergeetti deebi'a. Sababa (filannoo):",
+    "cancel": "{{number}} haquu? Sababa (filannoo):",
+    "cancelInTransit": "{{number}} haquu? Kuusaan gara damee kanaatti deebi'a. Sababa (filannoo):"
+  },
+  "actions": { "send": "Ergi", "receive": "Fudhadhu", "reject": "Didi", "cancel": "Haqi" },
+  "lines": { "medicine": "Qoricha", "batch": "Baachii", "expiry": "Yeroo dhumaa", "qty": "Baay'ina", "unitCost": "Baasii tokkoo", "auto": "ofumaan" },
+  "details": {
+    "from": "Irraa: {{name}}",
+    "to": "Gara: {{name}}",
+    "createdBy": "Kan uume {{name}}",
+    "received": "Kan fudhatame {{date}}",
+    "receivedBy": "{{date}} {{name}}n fudhatame",
+    "cancelled": "Kan haqame {{date}}",
+    "cancelledBy": "{{date}} {{name}}n haqame"
+  },
+  "create": {
+    "title": "Dabarsa Kuusaa Haaraa",
+    "subtitle": "Damee kana irraa gara damee dhaabbata keessanii biraatti kuusaa ergi",
+    "loading": "Dameelee fi kuusaa fe'aa jira...",
+    "noDestinations": "Dhaabbata keessan keessa dameen biraa hojii irra jiru hin jiru. Abbaan qabeenyaa fuula Hojjettootaa irraa damee uumuu danda'a.",
+    "destination": "Damee itti ergamu",
+    "notes": "Yaadannoo",
+    "optional": "Filannoo",
+    "searchPlaceholder": "Dabaluuf qorichoota kuusaa keessa jiran barbaadi...",
+    "inStock_one": "{{count}} kuusaa keessa",
+    "inStock_other": "{{count}} kuusaa keessa",
+    "noLines": "Hanga ammaatti qorichi hin dabalamne.",
+    "usableUnits_one": "Yuunitii fayyadamuu danda'amu {{count}}",
+    "usableUnits_other": "Yuunitiiwwan fayyadamuu danda'aman {{count}}",
+    "autoBatch": "Ofumaan (kan dura dhumu dura)",
+    "batchOption_one": "{{batchNo}} | dhuma {{expiry}} | yuunitii {{count}}",
+    "batchOption_other": "{{batchNo}} | dhuma {{expiry}} | yuunitii {{count}}",
+    "remove": "Balleessi",
+    "saveDraft": "Akka wixineetti olkaa'i",
+    "sendNow": "Amma ergi",
+    "errors": {
+      "load": "Dameelee fi kuusaa fe'uun hin danda'amne",
+      "noStock": "Kuusaan fayyadamuu danda'amu hin jiru",
+      "wholeQty": "Baay'ina lakkoofsa guutuu galchi",
+      "onlyAvailable_one": "Kan jiru {{count}} qofa",
+      "onlyAvailable_other": "Kan jiru {{count}} qofa",
+      "destination": "Damee itti ergamu filadhu",
+      "noLines": "Yoo xiqqaate qoricha tokko dabali",
+      "save": "Dabarsa uumuun hin danda'amne"
+    }
+  },
+  "overview": {
+    "from": "Irraa",
+    "to": "Hanga",
+    "organization": "Dhaabbata:",
+    "chartTitle": "Gurgurtaa fi gatii kuusaa dameen",
+    "sales": "Gurgurtaa",
+    "stockValueCost": "Gatii kuusaa (baasii)",
+    "columns": { "branch": "Damee", "transactions": "Daldala", "stockValue": "Gatii kuusaa", "units": "Baay'ina" },
+    "errors": { "load": "Gabaasa walitti qabame fe'uun hin danda'amne" }
+  }
+}

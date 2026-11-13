@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Undo2, Search, RotateCw, AlertCircle, FileText, ChevronLeft, ChevronRight, Receipt } from 'lucide-react';
 import { getReturns, getReturnById } from '../../api/returnApi';
 import { formatMoney, formatDateTime } from '../../utils/format';
@@ -9,6 +10,7 @@ import CreditNote from '../../components/returns/CreditNote';
 const LIMIT = 25;
 
 const Returns = () => {
+  const { t } = useTranslation('returns');
   const { activePharmacy } = useAuth();
   const [returns, setReturns] = useState([]);
   const [total, setTotal] = useState(0);
@@ -28,15 +30,15 @@ const Returns = () => {
       setReturns(data.returns || []);
       setTotal(data.total || 0);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load returns');
+      setError(err.response?.data?.message || t('errors.load'));
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, t]);
 
   useEffect(() => {
-    const t = setTimeout(load, 300);
-    return () => clearTimeout(t);
+    const timer = setTimeout(load, 300);
+    return () => clearTimeout(timer);
   }, [load]);
 
   const openNote = async (ret) => {
@@ -56,13 +58,13 @@ const Returns = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/60 uppercase tracking-wider">
-            Returns & Refunds
+            {t('page.badge')}
           </span>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Sales Returns
+            {t('page.title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Review processed returns and reprint credit notes. Start a new return from the Sales History page.
+            {t('page.subtitle')}
           </p>
         </div>
         <Link
@@ -70,7 +72,7 @@ const Returns = () => {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition self-start sm:self-auto shrink-0"
         >
           <Receipt className="w-4 h-4" />
-          <span>Sales History</span>
+          <span>{t('page.salesHistory')}</span>
         </Link>
       </div>
 
@@ -91,7 +93,7 @@ const Returns = () => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Search by return #, invoice # or customer..."
+            placeholder={t('page.searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
         </div>
@@ -101,35 +103,35 @@ const Returns = () => {
           className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50 self-start sm:self-auto"
         >
           <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh</span>
+          <span>{t('common:buttons.refresh')}</span>
         </button>
       </div>
 
       <div className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           {loading ? (
-            <div className="p-12 text-center text-xs text-slate-400">Loading returns...</div>
+            <div className="p-12 text-center text-xs text-slate-400">{t('page.loading')}</div>
           ) : returns.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
                 <Undo2 className="w-6 h-6" />
               </div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                {search ? 'No matching returns' : 'No returns recorded yet'}
+                {search ? t('page.noMatch') : t('page.none')}
               </h3>
             </div>
           ) : (
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
                 <tr>
-                  <th className="py-3 px-4">Return No</th>
-                  <th className="py-3 px-4">Invoice</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Items</th>
-                  <th className="py-3 px-4">Reason</th>
-                  <th className="py-3 px-4">Processed by</th>
-                  <th className="py-3 px-4 text-right">Refund</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4">{t('table.returnNo')}</th>
+                  <th className="py-3 px-4">{t('table.invoice')}</th>
+                  <th className="py-3 px-4">{t('common:labels.date')}</th>
+                  <th className="py-3 px-4">{t('table.items')}</th>
+                  <th className="py-3 px-4">{t('table.reason')}</th>
+                  <th className="py-3 px-4">{t('table.processedBy')}</th>
+                  <th className="py-3 px-4 text-right">{t('table.refund')}</th>
+                  <th className="py-3 px-4 text-right">{t('common:labels.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
@@ -140,7 +142,7 @@ const Returns = () => {
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300">{formatDateTime(r.createdAt)}</td>
                     <td className="py-3.5 px-4">
                       <span className="text-[11px] text-slate-600 dark:text-slate-300 block truncate max-w-xs">
-                        {r.items.map((it) => `${it.name} (x${it.quantity}${it.restocked ? '' : ', discarded'})`).join(', ')}
+                        {r.items.map((it) => `${it.name} (x${it.quantity}${it.restocked ? '' : `, ${t('page.discarded')}`})`).join(', ')}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 max-w-[12rem] truncate">{r.reason}</td>
@@ -154,7 +156,7 @@ const Returns = () => {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 dark:bg-slate-800 dark:hover:bg-amber-900/40 dark:hover:text-amber-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        <span>Credit note</span>
+                        <span>{t('creditNote.title')}</span>
                       </button>
                     </td>
                   </tr>
@@ -166,7 +168,7 @@ const Returns = () => {
         {pages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
             <span>
-              Page {page} of {pages} · {total} returns
+              {t('page.pagination', { page, pages, count: total })}
             </span>
             <div className="flex gap-1.5">
               <button

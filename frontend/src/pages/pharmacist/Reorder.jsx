@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCcw, Building2, AlertTriangle, ShoppingCart, AlertCircle, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getReorderSuggestions, createReorderPOs } from '../../api/reorderApi';
 import { getSuppliers } from '../../api/supplierApi';
 import Can from '../../components/common/Can';
@@ -15,6 +16,7 @@ const inputCls =
 const groupKey = (g) => (g.supplier ? String(g.supplier._id) : 'none');
 
 const Reorder = () => {
+  const { t, i18n } = useTranslation('reorder');
   const navigate = useNavigate();
   const [days, setDays] = useState(30);
   const [groups, setGroups] = useState([]);
@@ -48,11 +50,11 @@ const Reorder = () => {
       );
       setRows(next);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load reorder suggestions');
+      setError(err.response?.data?.message || i18n.t('reorder:errors.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [days]);
+  }, [days, i18n]);
 
   useEffect(() => {
     load();
@@ -96,12 +98,12 @@ const Reorder = () => {
     setError('');
     setMessage('');
     const { lines } = selection;
-    if (lines.length === 0) return setError('Select at least one item.');
+    if (lines.length === 0) return setError(t('errors.selectOne'));
     const bad = lines.find((l) => !Number.isInteger(l.quantity) || l.quantity <= 0);
-    if (bad) return setError(`"${bad.name}": quantity must be a positive whole number.`);
+    if (bad) return setError(t('errors.badQuantity', { name: bad.name }));
     const needsSupplier = lines.some((l) => l.group === 'none');
     if (needsSupplier && !fallbackSupplierId) {
-      return setError('Choose a supplier for the items without a preferred supplier.');
+      return setError(t('errors.chooseSupplier'));
     }
 
     setCreating(true);
@@ -115,10 +117,10 @@ const Reorder = () => {
           ...(l.group === 'none' ? { supplierId: fallbackSupplierId } : {}),
         })),
       });
-      setMessage(res.message || 'Purchase orders created');
+      setMessage(res.message || t('created'));
       await load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create purchase orders');
+      setError(err.response?.data?.message || t('errors.createFailed'));
     } finally {
       setCreating(false);
     }
@@ -132,13 +134,13 @@ const Reorder = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-            Procurement
+            {t('badge')}
           </span>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Reorder Suggestions
+            {t('title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Based on average daily sales × (lead time + safety days), minus sellable stock and open orders
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -153,14 +155,14 @@ const Reorder = () => {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                {d} days
+                {t('days', { count: d })}
               </button>
             ))}
           </div>
           <button
             onClick={load}
             className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg transition cursor-pointer"
-            title="Refresh"
+            title={t('common:buttons.refresh')}
           >
             <RefreshCcw className="w-4 h-4" />
           </button>
@@ -179,7 +181,7 @@ const Reorder = () => {
             <CheckCircle className="w-4 h-4 shrink-0" /> {message}
           </span>
           <button onClick={() => navigate('/pharmacy/procurement')} className="font-semibold hover:underline cursor-pointer">
-            View purchase orders
+            {t('viewPOs')}
           </button>
         </div>
       )}
@@ -191,9 +193,9 @@ const Reorder = () => {
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3">
             <CheckCircle className="w-6 h-6" />
           </div>
-          <p className="text-sm font-bold text-slate-900 dark:text-white">Nothing to reorder</p>
+          <p className="text-sm font-bold text-slate-900 dark:text-white">{t('empty.title')}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Stock and open orders cover expected demand for the last {days} days of sales.
+            {t('empty.hint', { count: days })}
           </p>
         </div>
       ) : (
@@ -210,9 +212,9 @@ const Reorder = () => {
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-slate-400" />
                     <span className="font-bold text-sm text-slate-900 dark:text-white">
-                      {g.supplier ? g.supplier.name : 'No preferred supplier'}
+                      {g.supplier ? g.supplier.name : t('noPreferredSupplier')}
                     </span>
-                    <span className="text-[11px] text-slate-500">({g.items.length} items)</span>
+                    <span className="text-[11px] text-slate-500">({t('itemCount', { count: g.items.length })})</span>
                   </div>
                   {!g.supplier && (
                     <select
@@ -220,7 +222,7 @@ const Reorder = () => {
                       onChange={(e) => setFallbackSupplierId(e.target.value)}
                       className="px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white cursor-pointer"
                     >
-                      <option value="">Order these from…</option>
+                      <option value="">{t('orderFrom')}</option>
                       {suppliers.map((s) => (
                         <option key={s._id} value={s._id}>
                           {s.name}
@@ -239,18 +241,18 @@ const Reorder = () => {
                             checked={allSelected}
                             onChange={(e) => toggleGroup(g, e.target.checked)}
                             className="cursor-pointer accent-emerald-600"
-                            aria-label="Select all in group"
+                            aria-label={t('selectAllInGroup')}
                           />
                         </th>
-                        <th className="py-2.5 px-3">Medicine</th>
-                        <th className="py-2.5 px-3 text-right">Avg / day</th>
-                        <th className="py-2.5 px-3 text-right">Lead + safety</th>
-                        <th className="py-2.5 px-3 text-right">Stock</th>
-                        <th className="py-2.5 px-3 text-right">On order</th>
-                        <th className="py-2.5 px-3 text-right">Suggested</th>
-                        <th className="py-2.5 px-3">Order qty</th>
-                        <th className="py-2.5 px-3">Unit cost</th>
-                        <th className="py-2.5 px-4 text-right">Line total</th>
+                        <th className="py-2.5 px-3">{t('table.medicine')}</th>
+                        <th className="py-2.5 px-3 text-right">{t('table.avgPerDay')}</th>
+                        <th className="py-2.5 px-3 text-right">{t('table.leadSafety')}</th>
+                        <th className="py-2.5 px-3 text-right">{t('table.stock')}</th>
+                        <th className="py-2.5 px-3 text-right">{t('table.onOrder')}</th>
+                        <th className="py-2.5 px-3 text-right">{t('table.suggested')}</th>
+                        <th className="py-2.5 px-3">{t('table.orderQty')}</th>
+                        <th className="py-2.5 px-3">{t('table.unitCost')}</th>
+                        <th className="py-2.5 px-4 text-right">{t('table.lineTotal')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100/80 dark:divide-slate-800/60">
@@ -265,7 +267,7 @@ const Reorder = () => {
                                 checked={!!r.selected}
                                 onChange={(e) => updateRow(id, { selected: e.target.checked })}
                                 className="cursor-pointer accent-emerald-600"
-                                aria-label={`Select ${it.name}`}
+                                aria-label={t('selectItem', { name: it.name })}
                               />
                             </td>
                             <td className="py-2.5 px-3">
@@ -275,13 +277,13 @@ const Reorder = () => {
                               </span>
                               {it.belowMinStock && (
                                 <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                                  <AlertTriangle className="w-3 h-3" /> Below minimum ({it.minStockLevel})
+                                  <AlertTriangle className="w-3 h-3" /> {t('belowMinimum', { min: it.minStockLevel })}
                                 </span>
                               )}
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono">{it.avgDailySales}</td>
                             <td className="py-2.5 px-3 text-right font-mono">
-                              {it.leadTimeDays} + {it.reorderSafetyDays}d
+                              {t('leadSafetyValue', { lead: it.leadTimeDays, safety: it.reorderSafetyDays })}
                             </td>
                             <td className="py-2.5 px-3 text-right font-mono">{it.currentStock}</td>
                             <td className="py-2.5 px-3 text-right font-mono">{it.onOrder}</td>
@@ -325,7 +327,7 @@ const Reorder = () => {
           <Can perm="po:manage">
             <div className="sticky bottom-4 bg-white dark:bg-[#161c26] border border-slate-200/90 dark:border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="text-xs text-slate-600 dark:text-slate-300">
-                <strong>{selection.lines.length}</strong> items selected ·{' '}
+                <strong>{selection.lines.length}</strong> {t('itemsSelected', { count: selection.lines.length })} ·{' '}
                 <span className="font-mono font-bold">{formatMoney(selection.total)}</span>
               </div>
               <div className="flex items-center gap-3">
@@ -336,7 +338,7 @@ const Reorder = () => {
                     onChange={(e) => setAsDraft(e.target.checked)}
                     className="accent-emerald-600"
                   />
-                  Create as drafts
+                  {t('createAsDrafts')}
                 </label>
                 <button
                   onClick={handleCreate}
@@ -344,7 +346,7 @@ const Reorder = () => {
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer"
                 >
                   <ShoppingCart className="w-4 h-4" />
-                  {creating ? 'Creating…' : 'Create POs'}
+                  {creating ? t('creating') : t('createPOs')}
                 </button>
               </div>
             </div>

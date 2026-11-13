@@ -1,0 +1,45 @@
+{
+  "badge": "Procurement",
+  "title": "Reorder Suggestions",
+  "subtitle": "Based on average daily sales × (lead time + safety days), minus sellable stock and open orders",
+  "days_one": "{{count}} days",
+  "days_other": "{{count}} days",
+  "viewPOs": "View purchase orders",
+  "created": "Purchase orders created",
+  "empty": {
+    "title": "Nothing to reorder",
+    "hint_one": "Stock and open orders cover expected demand for the last {{count}} days of sales.",
+    "hint_other": "Stock and open orders cover expected demand for the last {{count}} days of sales."
+  },
+  "noPreferredSupplier": "No preferred supplier",
+  "itemCount_one": "{{count}} items",
+  "itemCount_other": "{{count}} items",
+  "orderFrom": "Order these from…",
+  "selectAllInGroup": "Select all in group",
+  "selectItem": "Select {{name}}",
+  "belowMinimum": "Below minimum ({{min}})",
+  "leadSafetyValue": "{{lead}} + {{safety}}d",
+  "table": {
+    "medicine": "Medicine",
+    "avgPerDay": "Avg / day",
+    "leadSafety": "Lead + safety",
+    "stock": "Stock",
+    "onOrder": "On order",
+    "suggested": "Suggested",
+    "orderQty": "Order qty",
+    "unitCost": "Unit cost",
+    "lineTotal": "Line total"
+  },
+  "itemsSelected_one": "items selected",
+  "itemsSelected_other": "items selected",
+  "createAsDrafts": "Create as drafts",
+  "creating": "Creating…",
+  "createPOs": "Create POs",
+  "errors": {
+    "loadFailed": "Failed to load reorder suggestions",
+    "selectOne": "Select at least one item.",
+    "badQuantity": "\"{{name}}\": quantity must be a positive whole number.",
+    "chooseSupplier": "Choose a supplier for the items without a preferred supplier.",
+    "createFailed": "Failed to create purchase orders"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "allStock": "ሁሉም ክምችት",
+  "status": {
+    "draft": "ረቂቅ",
+    "counting": "በመቁጠር ላይ",
+    "submitted": "ቀርቧል",
+    "approved": "ጸድቋል",
+    "cancelled": "ተሰርዟል"
+  },
+  "list": {
+    "badge": "አካላዊ ክምችት",
+    "title": "የክምችት ቆጠራ",
+    "subtitle": "የክምችት ቅጽበታዊ ምስል ይውሰዱ፣ እያንዳንዱን ባች ይቁጠሩ፣ ልዩነቶችን ይገምግሙ እና ማስተካከያዎችን ይተግብሩ",
+    "scope": "ወሰን",
+    "notes": "ማስታወሻዎች",
+    "notesPlaceholder": "ለምሳሌ የወር መጨረሻ ቆጠራ፣ መደርደሪያ A-C",
+    "start": "ቆጠራ ጀምር",
+    "starting": "በመጀመር ላይ...",
+    "empty": "እስካሁን ምንም የክምችት ቆጠራ የለም",
+    "emptyHint": "ከላይ ቆጠራ ይጀምሩ",
+    "loadFailed": "የክምችት ቆጠራዎችን መጫን አልተሳካም",
+    "startFailed": "የክምችት ቆጠራ መጀመር አልተሳካም"
+  },
+  "detail": {
+    "loadFailed": "የክምችት ቆጠራውን መጫን አልተሳካም",
+    "actionFailed": "እርምጃው አልተሳካም",
+    "countsInvalid": "ቆጠራዎች 0 ወይም ከዚያ በላይ የሆኑ ሙሉ ቁጥሮች መሆን አለባቸው።",
+    "saved_one": "{{count}} ቆጠራ ተቀምጧል",
+    "saved_other": "{{count}} ቆጠራዎች ተቀምጠዋል",
+    "confirmSubmit_one": "{{count}} መስመር አልተቆጠረም እና ሳይቀየር ይቆያል። ቢሆንም ይቅረብ?",
+    "confirmSubmit_other": "{{count}} መስመሮች አልተቆጠሩም እና ሳይቀየሩ ይቆያሉ። ቢሆንም ይቅረብ?",
+    "submitted": "ለማጽደቅ ቀርቧል",
+    "confirmApprove_one": "{{count}} የክምችት ማስተካከያ አጽድቀው ይተግብሩ? ይህ ሊቀለበስ አይችልም።",
+    "confirmApprove_other": "{{count}} የክምችት ማስተካከያዎችን አጽድቀው ይተግብሩ? ይህ ሊቀለበስ አይችልም።",
+    "approvedNotice": "ጸድቋል፦ ክምችቱ ተስተካክሏል",
+    "confirmCancel": "ይህን የክምችት ቆጠራ ይሰረዝ? ቆጠራዎቹ ለማጣቀሻ ይቀመጣሉ ግን አይተገበሩም።",
+    "reopened": "ለቆጠራ እንደገና ተከፍቷል",
+    "categoryScope": "ምድብ፦ {{category}}",
+    "startedAt": "የተጀመረው {{date}}",
+    "approvedAt": "የጸደቀው {{date}}",
+    "by": "በ{{name}}",
+    "varianceCsv": "የልዩነት CSV",
+    "reopen": "እንደገና ክፈት",
+    "approve": "አጽድቅ እና ተግብር",
+    "searchPlaceholder": "መድኃኒት ወይም ባች ይፈልጉ...",
+    "varianceOnly": "ልዩነቶችን ብቻ አሳይ",
+    "expiredSuffix": "(ጊዜው ያለፈ)",
+    "countedAria": "ለ{{name}} ባች {{batch}} የተቆጠረ ብዛት",
+    "noLines": "ምንም ተዛማጅ መስመር የለም።",
+    "footnote": "ሲጸድቅ እያንዳንዱ ልዩነት (የተቆጠረ - በመጀመሪያ የነበረ የሲስተም ብዛት) በባቹ የአሁኑ ብዛት ላይ ይተገበራል፣ ስለዚህ በቆጠራው ወቅት የተደረጉ ሽያጮች ይጠበቃሉ። ያልተቆጠሩ መስመሮች ሳይቀየሩ ይቆያሉ።"
+  },
+  "summary": {
+    "counted": "የተቆጠረ",
+    "varianceLines": "ልዩነት ያላቸው መስመሮች",
+    "netVarianceUnits": "የተጣራ ልዩነት (ክፍሎች)",
+    "shortageValue": "የጉድለት ዋጋ",
+    "netVarianceValue": "የተጣራ የልዩነት ዋጋ"
+  },
+  "table": {
+    "medicine": "መድኃኒት",
+    "batch": "ባች",
+    "expiry": "ማብቂያ",
+    "systemQty": "የሲስተም ብዛት",
+    "variance": "ልዩነት",
+    "value": "ዋጋ",
+    "number": "ቁጥር",
+    "status": "ሁኔታ",
+    "started": "የተጀመረው",
+    "by": "በ"
+  },
+  "csv": {
+    "medicine": "መድኃኒት",
+    "category": "ምድብ",
+    "batch": "ባች",
+    "expiry": "ማብቂያ",
+    "systemQty": "የሲስተም ብዛት",
+    "counted": "የተቆጠረ",
+    "variance": "ልዩነት",
+    "unitCost": "የአንዱ ዋጋ",
+    "varianceValue": "የልዩነት ዋጋ"
+  }
+}

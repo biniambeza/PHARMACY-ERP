@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SlidersHorizontal, X, AlertTriangle, ArrowDown, CheckCircle } from 'lucide-react';
 import { adjustStock } from '../../api/stockApi';
+import { useTranslation } from 'react-i18next';
 
 const ADJUSTMENT_REASONS = [
   { value: 'damaged', label: 'Damaged / Broken Packaging', desc: 'Physically compromised goods' },
@@ -11,6 +12,7 @@ const ADJUSTMENT_REASONS = [
 ];
 
 const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
+  const { t } = useTranslation('stock');
   const [adjustmentType, setAdjustmentType] = useState('damaged');
   const [reduceQty, setReduceQty] = useState('');
   const [reasonNote, setReasonNote] = useState('');
@@ -37,11 +39,11 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
     setError('');
 
     if (!parsedQty || parsedQty <= 0) {
-      return setError('Please enter a valid deduction quantity greater than 0.');
+      return setError(t('adjust.errQuantity'));
     }
 
     if (parsedQty > currentQuantity) {
-      return setError(`Cannot deduct ${parsedQty} units. Batch only contains ${currentQuantity} available units.`);
+      return setError(t('adjust.errTooMany', { qty: parsedQty, available: currentQuantity }));
     }
 
     setLoading(true);
@@ -58,7 +60,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
       onClose();
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to adjust inventory batch');
+      setError(err.response?.data?.message || t('adjust.saveFailed'));
     }
   };
 
@@ -73,15 +75,16 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                Adjust Inventory Batch
+                {t('adjust.title')}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Record shrinkage, damages, or reconciliation write-offs
+                {t('adjust.subtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -99,23 +102,23 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
         <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 mb-4 space-y-1.5">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-slate-900 dark:text-white">
-              {batch.medicineId?.name || 'Selected Item'}
+              {batch.medicineId?.name || t('adjust.selectedItem')}
             </span>
             <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
               {batch.batchNo}
             </span>
           </div>
           <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-            <span>Dosage: {batch.medicineId?.dosageForm || 'Unit'}</span>
+            <span>{t('adjust.dosage', { form: batch.medicineId?.dosageForm || t('table.unit') })}</span>
             <span>
-              Expires:{' '}
+              {t('adjust.expires')}{' '}
               {batch.expiryDate
                 ? new Date(batch.expiryDate).toLocaleDateString(undefined, {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
                   })
-                : 'N/A'}
+                : t('table.na')}
             </span>
           </div>
         </div>
@@ -124,7 +127,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
           {/* Reason Selection */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Reason for Adjustment <span className="text-rose-500">*</span>
+              {t('adjust.reasonLabel')} <span className="text-rose-500">*</span>
             </label>
             <select
               value={adjustmentType}
@@ -133,7 +136,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
             >
               {ADJUSTMENT_REASONS.map((r) => (
                 <option key={r.value} value={r.value}>
-                  {r.label}
+                  {t(`adjust.reasons.${r.value}`, { defaultValue: r.label })}
                 </option>
               ))}
             </select>
@@ -142,7 +145,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
           {/* Quantity to Deduct */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Quantity to Deduct <span className="text-rose-500">*</span>
+              {t('adjust.qtyLabel')} <span className="text-rose-500">*</span>
             </label>
             <div className="relative">
               <ArrowDown className="w-4 h-4 text-rose-500 absolute left-3 top-2.5 pointer-events-none" />
@@ -152,7 +155,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
                 max={currentQuantity}
                 value={reduceQty}
                 onChange={(e) => setReduceQty(e.target.value)}
-                placeholder={`1 to ${currentQuantity}`}
+                placeholder={t('adjust.qtyPlaceholder', { max: currentQuantity })}
                 required
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
               />
@@ -162,19 +165,19 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
           {/* Stock Impact Visualizer */}
           <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
             <div>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Current Qty</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{t('adjust.currentQty')}</span>
               <span className="font-mono font-bold text-slate-800 dark:text-slate-200 text-sm">
                 {currentQuantity}
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Deduction</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{t('adjust.deduction')}</span>
               <span className="font-mono font-bold text-rose-500 text-sm">
                 -{parsedQty}
               </span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 block">New Balance</span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block">{t('adjust.newBalance')}</span>
               <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                 {remainingQty}
               </span>
@@ -189,7 +192,7 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
               disabled={loading}
               className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </button>
             <button
               type="submit"
@@ -197,11 +200,11 @@ const StockAdjustModal = ({ isOpen, onClose, onSuccess, batch }) => {
               className="px-5 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
-                <span>Writing off...</span>
+                <span>{t('adjust.saving')}</span>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span>Confirm Write-Off</span>
+                  <span>{t('adjust.confirm')}</span>
                 </>
               )}
             </button>

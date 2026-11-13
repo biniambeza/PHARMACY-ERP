@@ -1,0 +1,64 @@
+{
+  "badge": "Jalqabsiisa",
+  "title": "Galchuu Daataa",
+  "subtitle": "Qorichootaa fi kuusaa jalqabaa Excel (.xlsx) ykn CSV irraa jumlaan fe'i",
+  "kinds": {
+    "medicines": {
+      "label": "Qorichoota",
+      "description": "Meeshaalee kaataalogii uumi. Qorichonni maqaan isaanii duraan jiru ni darbamu."
+    },
+    "opening-stock": {
+      "label": "Kuusaa Jalqabaa",
+      "description": "Qorichoota duraan kaataalogii keessa jiraniif (baarkoodii, SKU ykn maqaa sirrii irratti walsimsiifaman) baachii jalqabaa dabali. Baay'inni yuunitii bu'uraatiin."
+    }
+  },
+  "columns": "Kutaalee:",
+  "dateFormats": "Guyyoonni akka YYYY-MM-DD ykn DD/MM/YYYY.",
+  "downloadTemplate": "Fakkii buufadhu",
+  "chooseFile": "Faayilii filadhu",
+  "rowCount_one": "toora {{count}}",
+  "rowCount_other": "tooraalee {{count}}",
+  "working": "Hojjechaa jira...",
+  "imported_one": "Toorri {{count}} galeera.",
+  "imported_other": "Tooraaleen {{count}} galaniiru.",
+  "confirmImport_one": "Toora {{count}} galchituu?",
+  "confirmImport_other": "Tooraalee {{count}} galchituu?",
+  "importRows_one": "Toora {{count}} galchi",
+  "importRows_other": "Tooraalee {{count}} galchi",
+  "showValid": "Tooraalee sirrii agarsiisi",
+  "errorReport": "Gabaasa dogoggoraa",
+  "fixErrors": "Dogoggora faayilii kee keessa jiru sirreessii irra deebi'ii fe'i",
+  "allValid": "Tooraaleen hundi sirrii dha.",
+  "summary": {
+    "total": "Waliigala",
+    "valid": "Sirrii",
+    "skipped": "Kan darbame",
+    "errors": "Dogoggora"
+  },
+  "table": {
+    "row": "Toora",
+    "item": "Meeshaa",
+    "status": "Haala",
+    "details": "Bal'ina"
+  },
+  "status": {
+    "ok": "sirrii",
+    "skip": "darbame",
+    "error": "dogoggora"
+  },
+  "csv": {
+    "row": "Toora",
+    "name": "Maqaa",
+    "errors": "Dogoggora"
+  },
+  "errors": {
+    "readFile": "Faayilii dubbisuun hin danda'amne",
+    "readFailed": "Faayilii dubbisuun hin danda'amne",
+    "importFailed": "Galchuun hin milkoofne",
+    "tooLarge": "Faayiliin Excel kun baay'ee guddaa dha. Akka CSV olkaa'ii CSV sana fe'i.",
+    "badType": "Maaloo faayilii .csv ykn .xlsx filadhu",
+    "noRows": "Faayiliin toora daataa hin qabu",
+    "partial_one": "(toorri {{count}} kutaalee duraa irraa duraan galeera)",
+    "partial_other": "(tooraaleen {{count}} kutaalee duraa irraa duraan galaniiru)"
+  }
+}

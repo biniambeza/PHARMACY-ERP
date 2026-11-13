@@ -1,0 +1,29 @@
+{
+  "badge": "Clinical",
+  "title": "Drug Interaction Rules",
+  "subtitle": "Pairs of generic substances checked at the POS. Medicines match on their generic name (combinations split on “,” or “+”) and brand name.",
+  "filterPlaceholder": "Filter rules...",
+  "customTitle": "Your pharmacy rules ({{count}})",
+  "globalTitle": "Built-in starter rules ({{count}}, read-only)",
+  "noRules": "No rules",
+  "builtInTitle": "Built-in rule (read-only)",
+  "editRule": "Edit rule",
+  "deleteRule": "Delete rule",
+  "confirmDelete": "Delete the rule {{a}} + {{b}}?",
+  "fields": { "substanceA": "Substance A", "substanceB": "Substance B", "severity": "Severity", "description": "Description" },
+  "placeholders": { "substanceA": "e.g. warfarin", "substanceB": "e.g. aspirin" },
+  "severity": { "minor": "minor", "moderate": "moderate", "major": "major", "contraindicated": "contraindicated" },
+  "errors": {
+    "load": "Failed to load rules",
+    "bothSubstances": "Enter both substances (generic names).",
+    "save": "Failed to save rule",
+    "delete": "Failed to delete rule"
+  },
+  "checkFailed": "Could not check interactions",
+  "warnings": {
+    "checking": "Checking interactions...",
+    "allergy": "Allergy: {{medicine}} — patient allergic to {{substance}}",
+    "reaction": "Reaction: {{reaction}}",
+    "disclaimer": "Warnings come from a starter list and your pharmacy rules; they are not a substitute for professional judgement."
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FileBarChart2, Printer, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PosModal, { primaryBtn, secondaryBtn } from './PosModal';
 import { getZReport } from '../../api/shiftApi';
 import { formatMoney, formatDateTime } from '../../utils/format';
@@ -23,53 +24,55 @@ const Row = ({ label, value, bold, neg }) => (
 );
 
 const ZReportBody = ({ z, pharmacyName }) => {
+  const { t } = useTranslation('shifts');
+  const methodLabel = (k) => (METHOD_LABELS[k] ? t(`methods.${k}`) : k);
   const m = (v) => formatMoney(Number(v) || 0);
   const pays = z.paymentsByMethod || {};
   return (
     <div className="zr">
-      <h2>{z.status === 'open' ? 'X-REPORT (shift open)' : 'Z-REPORT'}</h2>
+      <h2>{z.status === 'open' ? t('report.xTitle') : t('report.zTitle')}</h2>
       {pharmacyName && <div className="c">{pharmacyName}</div>}
       <div className="sep" />
-      <Row label="Shift" value={z.shiftNumber} bold />
-      <Row label="Cashier" value={z.cashier?.name || '-'} />
-      <Row label="Opened" value={formatDateTime(z.openedAt)} />
-      <Row label="Closed" value={z.closedAt ? formatDateTime(z.closedAt) : '-'} />
-      {z.closedBy?.name && <Row label="Closed by" value={z.closedBy.name} />}
+      <Row label={t('history.shift')} value={z.shiftNumber} bold />
+      <Row label={t('history.cashier')} value={z.cashier?.name || '-'} />
+      <Row label={t('history.opened')} value={formatDateTime(z.openedAt)} />
+      <Row label={t('history.closed')} value={z.closedAt ? formatDateTime(z.closedAt) : '-'} />
+      {z.closedBy?.name && <Row label={t('report.closedBy')} value={z.closedBy.name} />}
       <div className="sep" />
-      <Row label={`Sales (${z.sales?.count || 0})`} value={m(z.sales?.subtotal)} />
-      <Row label="Discounts" value={`-${m(z.sales?.discount)}`} />
-      <Row label="Tax" value={m(z.sales?.tax)} />
-      <Row label="Net sales" value={m(z.sales?.total)} bold />
-      <Row label={`Voids (${z.voids?.count || 0})`} value={m(z.voids?.total)} />
-      <Row label={`Returns (${z.returns?.count || 0})`} value={m(z.returns?.refundTotal)} />
+      <Row label={t('report.sales', { count: z.sales?.count || 0 })} value={m(z.sales?.subtotal)} />
+      <Row label={t('report.discounts')} value={`-${m(z.sales?.discount)}`} />
+      <Row label={t('report.tax')} value={m(z.sales?.tax)} />
+      <Row label={t('report.netSales')} value={m(z.sales?.total)} bold />
+      <Row label={t('report.voids', { count: z.voids?.count || 0 })} value={m(z.voids?.total)} />
+      <Row label={t('report.returns', { count: z.returns?.count || 0 })} value={m(z.returns?.refundTotal)} />
       <div className="sep" />
-      <div className="b">Payments</div>
+      <div className="b">{t('report.payments')}</div>
       {Object.keys(METHOD_LABELS).map((k) => (
-        <Row key={k} label={METHOD_LABELS[k]} value={m(pays[k])} />
+        <Row key={k} label={methodLabel(k)} value={m(pays[k])} />
       ))}
       {z.customerPayments?.count > 0 && (
         <>
-          <div className="b" style={{ marginTop: 4 }}>Customer payments ({z.customerPayments.count})</div>
+          <div className="b" style={{ marginTop: 4 }}>{t('report.customerPayments', { count: z.customerPayments.count })}</div>
           {Object.entries(z.customerPayments.byMethod || {}).map(([k, v]) => (
-            <Row key={k} label={METHOD_LABELS[k] || k} value={m(v)} />
+            <Row key={k} label={methodLabel(k)} value={m(v)} />
           ))}
         </>
       )}
       <div className="sep" />
-      <div className="b">Cash drawer</div>
-      <Row label="Opening float" value={m(z.openingFloat)} />
-      <Row label="+ Cash sales" value={m(z.expected?.cashSales)} />
-      <Row label="+ Customer payments" value={m(z.expected?.customerPaymentsCash)} />
-      <Row label="- Cash refunds" value={m(z.expected?.refundsCash)} />
-      <Row label="Expected cash" value={m(z.expected?.cash)} bold />
+      <div className="b">{t('page.badge')}</div>
+      <Row label={t('report.openingFloat')} value={m(z.openingFloat)} />
+      <Row label={t('report.cashSales')} value={m(z.expected?.cashSales)} />
+      <Row label={t('report.plusCustomerPayments')} value={m(z.expected?.customerPaymentsCash)} />
+      <Row label={t('report.cashRefunds')} value={m(z.expected?.refundsCash)} />
+      <Row label={t('current.expectedCash')} value={m(z.expected?.cash)} bold />
       {z.counted && (
         <>
           <div className="sep" />
-          <div className="b">Counted / variance</div>
+          <div className="b">{t('report.countedVariance')}</div>
           {['cash', 'card', 'mobile_money'].map((k) => (
             <Row
               key={k}
-              label={`${METHOD_LABELS[k]}: ${m(z.counted[k])} (exp. ${m(z.expected?.[k])})`}
+              label={t('report.countedLine', { method: methodLabel(k), counted: m(z.counted[k]), expected: m(z.expected?.[k]) })}
               value={`${Number(z.variance?.[k]) > 0 ? '+' : ''}${m(z.variance?.[k])}`}
               neg={Number(z.variance?.[k]) < 0}
             />
@@ -79,20 +82,21 @@ const ZReportBody = ({ z, pharmacyName }) => {
       {z.topItems?.length > 0 && (
         <>
           <div className="sep" />
-          <div className="b">Top items</div>
+          <div className="b">{t('report.topItems')}</div>
           {z.topItems.slice(0, 5).map((i) => (
             <Row key={i.medicineId} label={`${i.name} ×${i.quantity}`} value={m(i.total)} />
           ))}
         </>
       )}
       <div className="sep" />
-      <div className="c">Generated {formatDateTime(z.generatedAt)}</div>
+      <div className="c">{t('report.generated', { date: formatDateTime(z.generatedAt) })}</div>
     </div>
   );
 };
 
 // Printable Z-report of a shift. Props: { shiftId, open, onClose, initial?, pharmacyName? }
 const ZReportModal = ({ shiftId, open, onClose, initial, pharmacyName }) => {
+  const { t } = useTranslation('shifts');
   const [z, setZ] = useState(initial || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -101,23 +105,23 @@ const ZReportModal = ({ shiftId, open, onClose, initial, pharmacyName }) => {
   useEffect(() => {
     if (!open || !shiftId || initial) return undefined;
     let cancelled = false;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       setLoading(true);
       setError('');
       try {
         const data = await getZReport(shiftId);
         if (!cancelled) setZ(data.zReport);
       } catch (err) {
-        if (!cancelled) setError(errMsg(err, 'Could not load the report'));
+        if (!cancelled) setError(errMsg(err, t('report.errors.load')));
       } finally {
         if (!cancelled) setLoading(false);
       }
     }, 0);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
-  }, [open, shiftId, initial]);
+  }, [open, shiftId, initial, t]);
 
   const report = initial || z;
 
@@ -132,7 +136,7 @@ const ZReportModal = ({ shiftId, open, onClose, initial, pharmacyName }) => {
     const doc = iframe.contentDocument;
     doc.open();
     doc.write(
-      `<!doctype html><html><head><title>Z-report ${report?.shiftNumber || ''}</title><style>${CSS} @page { size: 80mm auto; margin: 3mm; }</style></head><body>${bodyRef.current.innerHTML}</body></html>`
+      `<!doctype html><html><head><title>${t('report.printTitle', { number: report?.shiftNumber || '' })}</title><style>${CSS} @page { size: 80mm auto; margin: 3mm; }</style></head><body>${bodyRef.current.innerHTML}</body></html>`
     );
     doc.close();
     setTimeout(() => {
@@ -145,14 +149,14 @@ const ZReportModal = ({ shiftId, open, onClose, initial, pharmacyName }) => {
   return (
     <PosModal
       open={open}
-      title="Shift report"
+      title={t('report.title')}
       icon={FileBarChart2}
       onClose={onClose}
       footer={
         <>
-          <button type="button" className={secondaryBtn} onClick={onClose}>Close</button>
+          <button type="button" className={secondaryBtn} onClick={onClose}>{t('common:buttons.close')}</button>
           <button type="button" className={primaryBtn} onClick={print} disabled={!report}>
-            <Printer className="w-3.5 h-3.5" /> Print
+            <Printer className="w-3.5 h-3.5" /> {t('common:buttons.print')}
           </button>
         </>
       }

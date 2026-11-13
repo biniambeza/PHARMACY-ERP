@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Users,
   UserPlus,
@@ -18,13 +19,6 @@ import { MEMBERSHIP_ROLES, ROLE_LABELS } from '../../config/permissions';
 import StatusBadge from '../../components/common/StatusBadge';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
 import Can from '../../components/common/Can';
-
-const ROLE_HELP = {
-  owner: 'Everything, including staff, settings and audit log',
-  pharmacist: 'Dispensing, prescriptions, stock, purchasing and reports',
-  cashier: 'Point of sale and sales history only',
-  storekeeper: 'Stock-in, adjustments, stock take and purchase orders',
-};
 
 const inputCls =
   'w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition';
@@ -57,6 +51,9 @@ const Modal = ({ title, onClose, children }) => (
 );
 
 const Staff = () => {
+  const { t } = useTranslation(['staff', 'common']);
+  const roleLabel = (r) => t(`roles.${r}`, { defaultValue: ROLE_LABELS[r] || r });
+  const roleHelp = (r) => t(`roleHelp.${r}`);
   const { user, memberships, activePharmacy, updateSession } = useAuth();
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +76,7 @@ const Staff = () => {
         if (!cancelled) setStaff(data.staff || []);
       })
       .catch((err) => {
-        if (!cancelled) setNotice({ type: 'error', text: errorMessage(err, 'Failed to load staff') });
+        if (!cancelled) setNotice({ type: 'error', text: errorMessage(err, t('notices.loadFailed')) });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -87,7 +84,7 @@ const Staff = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const replaceMember = (member) => setStaff((prev) => prev.map((s) => (s._id === member._id ? member : s)));
 
@@ -95,7 +92,7 @@ const Staff = () => {
     e.preventDefault();
     setFormError('');
     if (form.password.length < 8) {
-      setFormError('Temporary password must be at least 8 characters');
+      setFormError(t('notices.passwordTooShort'));
       return;
     }
     setSaving(true);
@@ -104,9 +101,9 @@ const Staff = () => {
       setStaff((prev) => [...prev, data.staff]);
       setShowAdd(false);
       setForm(EMPTY_STAFF);
-      setNotice({ type: 'success', text: `${data.staff.name} added as ${ROLE_LABELS[data.staff.role]}` });
+      setNotice({ type: 'success', text: t('notices.added', { name: data.staff.name, role: roleLabel(data.staff.role) }) });
     } catch (err) {
-      setFormError(errorMessage(err, 'Failed to create staff account'));
+      setFormError(errorMessage(err, t('notices.createFailed')));
     } finally {
       setSaving(false);
     }
@@ -118,26 +115,26 @@ const Staff = () => {
     try {
       const data = await changeStaffRole(member._id, role);
       replaceMember(data.staff);
-      setNotice({ type: 'success', text: `${member.name} is now ${ROLE_LABELS[role]}` });
+      setNotice({ type: 'success', text: t('notices.roleChanged', { name: member.name, role: roleLabel(role) }) });
     } catch (err) {
-      setNotice({ type: 'error', text: errorMessage(err, 'Failed to change role') });
+      setNotice({ type: 'error', text: errorMessage(err, t('notices.roleChangeFailed')) });
     } finally {
       setBusyId(null);
     }
   };
 
   const handleToggleActive = async (member) => {
-    if (member.active && !window.confirm(`Deactivate ${member.name}? They will be signed out immediately.`)) return;
+    if (member.active && !window.confirm(t('confirmDeactivate', { name: member.name }))) return;
     setBusyId(member._id);
     try {
       const data = member.active ? await deactivateStaff(member._id) : await reactivateStaff(member._id);
       replaceMember(data.staff);
       setNotice({
         type: 'success',
-        text: `${member.name} ${data.staff.active ? 'reactivated' : 'deactivated'}`,
+        text: t(data.staff.active ? 'notices.reactivated' : 'notices.deactivated', { name: member.name }),
       });
     } catch (err) {
-      setNotice({ type: 'error', text: errorMessage(err, 'Failed to update staff status') });
+      setNotice({ type: 'error', text: errorMessage(err, t('notices.statusFailed')) });
     } finally {
       setBusyId(null);
     }
@@ -170,9 +167,9 @@ const Staff = () => {
       });
       setShowBranch(false);
       setBranchForm(EMPTY_BRANCH);
-      setNotice({ type: 'success', text: `Branch "${branch.name}" created. Use the branch switcher to open it.` });
+      setNotice({ type: 'success', text: t('notices.branchCreated', { name: branch.name }) });
     } catch (err) {
-      setBranchError(errorMessage(err, 'Failed to create branch'));
+      setBranchError(errorMessage(err, t('notices.branchFailed')));
     } finally {
       setSaving(false);
     }
@@ -187,14 +184,14 @@ const Staff = () => {
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Team
+              {t('badge')}
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">
-            Staff & Roles
+            {t('title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Manage who can sign in to {activePharmacy?.name || 'this pharmacy'} and what they can do
+            {t('subtitle', { pharmacy: activePharmacy?.name || t('thisPharmacy') })}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 self-start sm:self-auto">
@@ -204,7 +201,7 @@ const Staff = () => {
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#1a2230] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer hover:border-emerald-400"
             >
               <Building2 className="w-4 h-4" />
-              <span>New Branch</span>
+              <span>{t('newBranch')}</span>
             </button>
           </Can>
           <button
@@ -216,7 +213,7 @@ const Staff = () => {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Add Staff</span>
+            <span>{t('addStaff')}</span>
           </button>
         </div>
       </div>
@@ -247,12 +244,12 @@ const Staff = () => {
           <div key={role} className={`${cardCls} p-4`}>
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span className="text-xs font-bold text-slate-900 dark:text-white">{ROLE_LABELS[role]}</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white">{roleLabel(role)}</span>
               <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                 {staff.filter((s) => s.role === role && s.active).length}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{ROLE_HELP[role]}</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">{roleHelp(role)}</p>
           </div>
         ))}
       </div>
@@ -261,9 +258,9 @@ const Staff = () => {
       <div className={`${cardCls} overflow-hidden`}>
         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
           <Users className="w-4 h-4 text-slate-500" />
-          <span className="text-xs font-bold text-slate-900 dark:text-white">Team members</span>
+          <span className="text-xs font-bold text-slate-900 dark:text-white">{t('teamMembers')}</span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
-            {activeCount} active of {staff.length}
+            {t('activeOf', { active: activeCount, total: staff.length })}
           </span>
         </div>
         <div className="overflow-x-auto">
@@ -272,16 +269,16 @@ const Staff = () => {
               <CardSkeleton height="h-48" />
             </div>
           ) : staff.length === 0 ? (
-            <div className="py-16 text-center text-xs text-slate-500 dark:text-slate-400">No staff yet</div>
+            <div className="py-16 text-center text-xs text-slate-500 dark:text-slate-400">{t('noStaff')}</div>
           ) : (
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
                 <tr>
-                  <th className="py-3.5 px-5">Name</th>
-                  <th className="py-3.5 px-4">Email</th>
-                  <th className="py-3.5 px-4">Role</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-5">{t('columns.name')}</th>
+                  <th className="py-3.5 px-4">{t('columns.email')}</th>
+                  <th className="py-3.5 px-4">{t('columns.role')}</th>
+                  <th className="py-3.5 px-4">{t('columns.status')}</th>
+                  <th className="py-3.5 px-4 text-right">{t('common:labels.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -297,7 +294,7 @@ const Staff = () => {
                           </div>
                           <span className="font-semibold text-slate-900 dark:text-white">
                             {member.name}
-                            {isSelf && <span className="ml-1.5 text-[10px] text-slate-400 font-medium">(you)</span>}
+                            {isSelf && <span className="ml-1.5 text-[10px] text-slate-400 font-medium">{t('you')}</span>}
                           </span>
                         </div>
                       </td>
@@ -311,13 +308,13 @@ const Staff = () => {
                         >
                           {MEMBERSHIP_ROLES.map((r) => (
                             <option key={r} value={r}>
-                              {ROLE_LABELS[r]}
+                              {roleLabel(r)}
                             </option>
                           ))}
                         </select>
                       </td>
                       <td className="py-3 px-4">
-                        <StatusBadge status={member.active ? 'active' : 'suspended'} label={member.active ? 'Active' : 'Deactivated'} />
+                        <StatusBadge status={member.active ? 'active' : 'suspended'} label={member.active ? t('common:status.active') : t('deactivated')} />
                       </td>
                       <td className="py-3 px-4 text-right">
                         <button
@@ -330,7 +327,7 @@ const Staff = () => {
                           }`}
                         >
                           {member.active ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
-                          {member.active ? 'Deactivate' : 'Reactivate'}
+                          {member.active ? t('deactivate') : t('reactivate')}
                         </button>
                       </td>
                     </tr>
@@ -343,10 +340,10 @@ const Staff = () => {
       </div>
 
       {showAdd && (
-        <Modal title="Add staff member" onClose={() => setShowAdd(false)}>
+        <Modal title={t('addModal.title')} onClose={() => setShowAdd(false)}>
           <form onSubmit={handleCreate} className="space-y-3">
             <div>
-              <label className={labelCls}>Full name</label>
+              <label className={labelCls}>{t('addModal.fullName')}</label>
               <input
                 className={inputCls}
                 value={form.name}
@@ -355,7 +352,7 @@ const Staff = () => {
               />
             </div>
             <div>
-              <label className={labelCls}>Email</label>
+              <label className={labelCls}>{t('addModal.email')}</label>
               <input
                 type="email"
                 className={inputCls}
@@ -365,7 +362,7 @@ const Staff = () => {
               />
             </div>
             <div>
-              <label className={labelCls}>Temporary password (min 8 characters)</label>
+              <label className={labelCls}>{t('addModal.tempPassword')}</label>
               <input
                 type="password"
                 autoComplete="new-password"
@@ -375,10 +372,10 @@ const Staff = () => {
                 minLength={8}
                 required
               />
-              <p className="text-[10px] text-slate-400 mt-1">Share it with the staff member; they can change it in Settings.</p>
+              <p className="text-[10px] text-slate-400 mt-1">{t('addModal.tempPasswordHint')}</p>
             </div>
             <div>
-              <label className={labelCls}>Role</label>
+              <label className={labelCls}>{t('addModal.role')}</label>
               <select
                 className={inputCls}
                 value={form.role}
@@ -386,11 +383,11 @@ const Staff = () => {
               >
                 {MEMBERSHIP_ROLES.map((r) => (
                   <option key={r} value={r}>
-                    {ROLE_LABELS[r]}
+                    {roleLabel(r)}
                   </option>
                 ))}
               </select>
-              <p className="text-[10px] text-slate-400 mt-1">{ROLE_HELP[form.role]}</p>
+              <p className="text-[10px] text-slate-400 mt-1">{roleHelp(form.role)}</p>
             </div>
             {formError && <p className="text-xs text-rose-600 dark:text-rose-400">{formError}</p>}
             <div className="flex justify-end gap-2 pt-2">
@@ -399,14 +396,14 @@ const Staff = () => {
                 onClick={() => setShowAdd(false)}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Cancel
+                {t('common:buttons.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-60"
               >
-                <Plus className="w-4 h-4" /> {saving ? 'Saving...' : 'Create account'}
+                <Plus className="w-4 h-4" /> {saving ? t('addModal.saving') : t('addModal.create')}
               </button>
             </div>
           </form>
@@ -414,16 +411,11 @@ const Staff = () => {
       )}
 
       {showBranch && (
-        <Modal title="New branch" onClose={() => setShowBranch(false)}>
+        <Modal title={t('branchModal.title')} onClose={() => setShowBranch(false)}>
           <form onSubmit={handleCreateBranch} className="space-y-3">
-            {[
-              ['name', 'Branch name'],
-              ['address', 'Address'],
-              ['phone', 'Phone'],
-              ['licenseNo', 'License number'],
-            ].map(([key, label]) => (
+            {['name', 'address', 'phone', 'licenseNo'].map((key) => (
               <div key={key}>
-                <label className={labelCls}>{label}</label>
+                <label className={labelCls}>{t(`branchModal.${key}`)}</label>
                 <input
                   className={inputCls}
                   value={branchForm[key]}
@@ -432,7 +424,7 @@ const Staff = () => {
                 />
               </div>
             ))}
-            <p className="text-[10px] text-slate-400">You become the owner of the new branch. Staff are managed per branch.</p>
+            <p className="text-[10px] text-slate-400">{t('branchModal.hint')}</p>
             {branchError && <p className="text-xs text-rose-600 dark:text-rose-400">{branchError}</p>}
             <div className="flex justify-end gap-2 pt-2">
               <button
@@ -440,14 +432,14 @@ const Staff = () => {
                 onClick={() => setShowBranch(false)}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Cancel
+                {t('common:buttons.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer disabled:opacity-60"
               >
-                <Building2 className="w-4 h-4" /> {saving ? 'Creating...' : 'Create branch'}
+                <Building2 className="w-4 h-4" /> {saving ? t('branchModal.creating') : t('branchModal.create')}
               </button>
             </div>
           </form>

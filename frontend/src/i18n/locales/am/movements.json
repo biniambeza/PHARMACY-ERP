@@ -1,0 +1,63 @@
+{
+  "badge": "የክምችት መዝገብ",
+  "title": "የክምችት እንቅስቃሴዎች",
+  "subtitle": "እያንዳንዱ የክምችት ለውጥ፦ ሽያጮች፣ ገቢዎች፣ ማስተካከያዎች፣ ተመላሾች፣ ዝውውሮች እና የክምችት ቆጠራዎች",
+  "exportCsv": "CSV ላክ",
+  "exporting": "በመላክ ላይ...",
+  "exportFailed": "መላክ አልተሳካም",
+  "loadFailed": "እንቅስቃሴዎችን መጫን አልተሳካም",
+  "empty": "ምንም እንቅስቃሴ አልተገኘም",
+  "emptyHint": "የተለያዩ ማጣሪያዎችን ይሞክሩ",
+  "pagination_one": "{{count}} እንቅስቃሴ፣ ገጽ {{page}} ከ{{pages}}",
+  "pagination_other": "{{count}} እንቅስቃሴዎች፣ ገጽ {{page}} ከ{{pages}}",
+  "filters": {
+    "medicine": "መድኃኒት",
+    "allMedicines": "ሁሉም መድኃኒቶች",
+    "archivedSuffix": "(በማህደር የተቀመጠ)",
+    "type": "ዓይነት",
+    "allTypes": "ሁሉም ዓይነቶች",
+    "from": "ከ",
+    "to": "እስከ",
+    "batchChip": "ባች {{batch}}",
+    "clearBatch": "የባች ማጣሪያ አጽዳ"
+  },
+  "table": {
+    "date": "ቀን",
+    "type": "ዓይነት",
+    "medicine": "መድኃኒት",
+    "batch": "ባች",
+    "change": "ለውጥ",
+    "balance": "ቀሪ",
+    "user": "ተጠቃሚ",
+    "reasonRef": "ምክንያት / ማጣቀሻ",
+    "exp": "ማብቂያ {{date}}"
+  },
+  "csv": {
+    "date": "ቀን",
+    "type": "ዓይነት",
+    "medicine": "መድኃኒት",
+    "batch": "ባች",
+    "expiry": "ማብቂያ",
+    "change": "ለውጥ",
+    "balanceAfter": "ከለውጥ በኋላ ቀሪ",
+    "user": "ተጠቃሚ",
+    "reason": "ምክንያት",
+    "reference": "ማጣቀሻ"
+  },
+  "types": {
+    "sale": "ሽያጭ",
+    "purchase_receive": "የግዢ ትዕዛዝ ገቢ",
+    "stock_in": "የክምችት ገቢ",
+    "adjust_damaged": "የተበላሸ",
+    "adjust_expired": "ጊዜው ያለፈበት ቅናሽ",
+    "correction": "ማስተካከያ",
+    "delete": "ባች ተሰርዟል",
+    "return": "ተመላሽ",
+    "void": "ውድቅ",
+    "transfer_out": "ወጪ ዝውውር",
+    "transfer_in": "ገቢ ዝውውር",
+    "stock_take": "የክምችት ቆጠራ",
+    "expire": "ጊዜው ያለፈበት",
+    "unit_conversion": "የክፍል ልወጣ"
+  }
+}

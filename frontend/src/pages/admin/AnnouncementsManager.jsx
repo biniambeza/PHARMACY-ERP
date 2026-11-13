@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Megaphone, Plus, Edit3, Trash2, Loader2 } from 'lucide-react';
 import {
   getAnnouncements,
@@ -29,13 +30,14 @@ const EMPTY = { title: '', message: '', severity: 'info', audience: 'all', pharm
 
 const stateOf = (a) => {
   const now = Date.now();
-  if (a.startsAt && new Date(a.startsAt).getTime() > now) return 'Scheduled';
-  if (a.endsAt && new Date(a.endsAt).getTime() <= now) return 'Ended';
-  return 'Live';
+  if (a.startsAt && new Date(a.startsAt).getTime() > now) return 'scheduled';
+  if (a.endsAt && new Date(a.endsAt).getTime() <= now) return 'ended';
+  return 'live';
 };
 
 // Platform announcements management (#24)
 const AnnouncementsManager = ({ pharmacies = [] }) => {
+  const { t } = useTranslation('admin');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(null); // null = closed
@@ -49,11 +51,11 @@ const AnnouncementsManager = ({ pharmacies = [] }) => {
       const data = await getAnnouncements();
       setItems(data.announcements || []);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load announcements');
+      setError(err.response?.data?.message || t('announcements.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -97,19 +99,19 @@ const AnnouncementsManager = ({ pharmacies = [] }) => {
       setForm(null);
       await load();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save the announcement');
+      setError(err.response?.data?.message || t('announcements.saveFailed'));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (a) => {
-    if (!window.confirm(`Delete announcement "${a.title}"?`)) return;
+    if (!window.confirm(t('announcements.deleteConfirm', { title: a.title }))) return;
     try {
       await deleteAnnouncement(a._id);
       await load();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete');
+      alert(err.response?.data?.message || t('announcements.deleteFailed'));
     }
   };
 
@@ -123,13 +125,13 @@ const AnnouncementsManager = ({ pharmacies = [] }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Broadcast messages shown as a banner to pharmacy staff. Staff can dismiss them on their device.
+          {t('announcements.intro')}
         </p>
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs cursor-pointer"
         >
-          <Plus className="w-4 h-4" /> New announcement
+          <Plus className="w-4 h-4" /> {t('announcements.newAnnouncement')}
         </button>
       </div>
 
@@ -137,20 +139,20 @@ const AnnouncementsManager = ({ pharmacies = [] }) => {
         <form onSubmit={save} className="bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <label className="block sm:col-span-2">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Title</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('announcements.title')}</span>
               <input required maxLength={200} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} />
             </label>
             <label className="block">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Severity</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('announcements.severity')}</span>
               <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })} className={inputClass}>
-                <option value="info">Info</option>
-                <option value="success">Success</option>
-                <option value="warning">Warning</option>
-                <option value="critical">Critical</option>
+                <option value="info">{t('announcements.severities.info')}</option>
+                <option value="success">{t('announcements.severities.success')}</option>
+                <option value="warning">{t('announcements.severities.warning')}</option>
+                <option value="critical">{t('announcements.severities.critical')}</option>
               </select>
             </label>
             <label className="block sm:col-span-3">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Message</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('announcements.message')}</span>
               <textarea
                 required
                 rows={3}
@@ -161,18 +163,18 @@ const AnnouncementsManager = ({ pharmacies = [] }) => {
               />
             </label>
             <label className="block">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Starts</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('announcements.starts')}</span>
               <input type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} className={inputClass} />
             </label>
             <label className="block">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Ends (optional)</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('announcements.endsOptional')}</span>
               <input type="datetime-local" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} className={inputClass} />
             </label>
             <label className="block">
-              <span className="font-semibold text-slate-700 dark:text-slate-300">Audience</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('announcements.audience')}</span>
               <select value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value })} className={inputClass}>
-                <option value="all">All pharmacies</option>
-                <option value="pharmacies">Selected pharmacies</option>
+                <option value="all">{t('announcements.allPharmacies')}</option>
+                <option value="pharmacies">{t('announcements.selectedPharmacies')}</option>
               </select>
             </label>
           </div>
@@ -193,14 +195,14 @@ const AnnouncementsManager = ({ pharmacies = [] }) => {
           )}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => setForm(null)} className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer">
-              Cancel
+              {t('buttons.cancel', { ns: 'common' })}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer disabled:opacity-50"
             >
-              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {editingId ? 'Save changes' : 'Publish'}
+              {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {editingId ? t('announcements.saveChanges') : t('announcements.publish')}
             </button>
           </div>
         </form>
@@ -208,33 +210,33 @@ const AnnouncementsManager = ({ pharmacies = [] }) => {
 
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-12 text-xs text-slate-500">
-          <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+          <Loader2 className="w-4 h-4 animate-spin" /> {t('labels.loading', { ns: 'common' })}
         </div>
       ) : items.length === 0 ? (
         <div className="p-10 text-center bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800">
           <Megaphone className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-xs text-slate-500">No announcements yet.</p>
+          <p className="mt-2 text-xs text-slate-500">{t('announcements.empty')}</p>
         </div>
       ) : (
         <div className="space-y-2">
           {items.map((a) => (
             <div key={a._id} className="flex items-start gap-3 p-4 bg-white dark:bg-[#161c26] rounded-2xl border border-slate-200/80 dark:border-slate-800">
               <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${SEVERITY_STYLES[a.severity] || SEVERITY_STYLES.info}`}>
-                {a.severity}
+                {t(`announcements.severities.${a.severity}`, { defaultValue: a.severity })}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-slate-900 dark:text-white">{a.title}</p>
                 <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line mt-0.5">{a.message}</p>
                 <p className="text-[11px] text-slate-400 mt-1.5">
-                  {stateOf(a)} | {formatDateTime(a.startsAt)}
-                  {a.endsAt ? ` to ${formatDateTime(a.endsAt)}` : ' (no end)'} |{' '}
-                  {a.audience === 'all' ? 'All pharmacies' : (a.pharmacyIds || []).map((p) => p.name || p).join(', ')}
+                  {t(`announcements.state.${stateOf(a)}`)} | {formatDateTime(a.startsAt)}
+                  {a.endsAt ? t('announcements.until', { date: formatDateTime(a.endsAt) }) : t('announcements.noEnd')} |{' '}
+                  {a.audience === 'all' ? t('announcements.allPharmacies') : (a.pharmacyIds || []).map((p) => p.name || p).join(', ')}
                 </p>
               </div>
-              <button onClick={() => openEdit(a)} title="Edit" className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 cursor-pointer">
+              <button onClick={() => openEdit(a)} title={t('buttons.edit', { ns: 'common' })} className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 cursor-pointer">
                 <Edit3 className="w-4 h-4" />
               </button>
-              <button onClick={() => remove(a)} title="Delete" className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 cursor-pointer">
+              <button onClick={() => remove(a)} title={t('buttons.delete', { ns: 'common' })} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 cursor-pointer">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>

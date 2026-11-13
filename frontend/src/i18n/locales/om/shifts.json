@@ -1,0 +1,88 @@
+{
+  "open": "BANAA",
+  "xReport": "Gabaasa-X",
+  "zReport": "Gabaasa-Z",
+  "errors": {
+    "load": "Shiftiiwwan fe'uun hin milkoofne"
+  },
+  "methods": {
+    "cash": "Maallaqa callaa",
+    "card": "Kaardii",
+    "mobile_money": "Maallaqa moobaayilaa",
+    "credit": "Liqii"
+  },
+  "page": {
+    "badge": "Saanduqa maallaqaa",
+    "title": "Shiftiiwwan",
+    "subtitle": "Shiftii maallaqa jalqabaatiin bani, baay'ina lakkaa'ameen cufi fi Gabaasa-Z maxxansi.",
+    "requireShift": "Faarmaasiin kun gurgurachuuf shiftii banaa barbaada.",
+    "pos": "Gurgurtaa"
+  },
+  "current": {
+    "since": "Erga {{date}} · maallaqa jalqabaa {{amount}}",
+    "closeShift": "Shiftii cufi",
+    "openShift": "Shiftii bani",
+    "none": "Shiftii banaa hin qabdu.",
+    "sales": "Gurgurtaa",
+    "expectedCash": "Maallaqa callaa eegamu"
+  },
+  "history": {
+    "allStaff": "Seenaa shiftii (hojjettoota hunda)",
+    "mine": "Shiftiiwwan koo",
+    "all": "Hunda",
+    "open": "Banaa",
+    "closed": "Cufame",
+    "shift": "Shiftii",
+    "cashier": "Kaffaltii fudhataa",
+    "opened": "Kan banname",
+    "float": "Maallaqa jalqabaa",
+    "countedCash": "Maallaqa callaa lakkaa'ame",
+    "loading": "Fe'amaa jira…",
+    "empty": "Hanga ammaatti shiftiin hin jiru."
+  },
+  "close": {
+    "title": "Shiftii {{number}} cufi",
+    "closing": "Cufamaa jira…",
+    "submit": "Shiftii cufi fi Gabaasa-Z maxxansi",
+    "instructions": "Saanduqa lakkaa'ii ida'ama galchi. Baay'inni eegamu maallaqa jalqabaa, gurgurtaa callaa, kaffaltii maamilaa fudhatte fi maallaqa callaa deebifte of keessaa qaba.",
+    "method": "Mala",
+    "expected": "Eegamu",
+    "counted": "Lakkaa'ame",
+    "variance": "Garaagarummaa",
+    "labels": {
+      "cash": "Maallaqa callaa saanduqa keessa jiru",
+      "card": "Kaardii (ida'ama teerminaalaa)",
+      "mobile_money": "Maallaqa moobaayilaa"
+    },
+    "notesPlaceholder": "Yaadannoo (fkn. sababa garaagarummaa)",
+    "errors": {
+      "failed": "Shiftii cufuun hin danda'amne"
+    }
+  },
+  "report": {
+    "title": "Gabaasa shiftii",
+    "printTitle": "Gabaasa-Z {{number}}",
+    "xTitle": "GABAASA-X (shiftiin banaa)",
+    "zTitle": "GABAASA-Z",
+    "closedBy": "Kan cufe",
+    "sales": "Gurgurtaa ({{count}})",
+    "discounts": "Hir'ina gatii",
+    "tax": "Gibira",
+    "netSales": "Gurgurtaa qulqulluu",
+    "voids": "Haqaman ({{count}})",
+    "returns": "Deebii ({{count}})",
+    "payments": "Kaffaltiiwwan",
+    "customerPayments": "Kaffaltii maamilaa ({{count}})",
+    "openingFloat": "Maallaqa jalqabaa",
+    "cashSales": "+ Gurgurtaa callaa",
+    "plusCustomerPayments": "+ Kaffaltii maamilaa",
+    "cashRefunds": "- Maallaqa callaa deebi'e",
+    "countedVariance": "Lakkaa'ame / garaagarummaa",
+    "countedLine": "{{method}}: {{counted}} (eegamu {{expected}})",
+    "topItems": "Meeshaalee olaanoo",
+    "generated": "Kan qophaa'e {{date}}",
+    "errors": {
+      "load": "Gabaasa fe'uun hin danda'amne"
+    }
+  }
+}

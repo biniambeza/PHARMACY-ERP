@@ -1,0 +1,34 @@
+{
+  "badge": "የማንቂያዎች ማዕከል",
+  "title": "ማሳወቂያዎች",
+  "subtitle_one": "ለዚህ ቅርንጫፍ የማብቂያ ጊዜ፣ ዝቅተኛ ክምችት እና የግዢ ትዕዛዝ ማንቂያዎች ({{count}} ያልተነበበ)",
+  "subtitle_other": "ለዚህ ቅርንጫፍ የማብቂያ ጊዜ፣ ዝቅተኛ ክምችት እና የግዢ ትዕዛዝ ማንቂያዎች ({{count}} ያልተነበቡ)",
+  "errors": {
+    "load": "ማሳወቂያዎችን መጫን አልተሳካም",
+    "markAll": "ማሳወቂያዎችን እንደተነበቡ ምልክት ማድረግ አልተሳካም",
+    "runChecks": "ፍተሻዎችን ማካሄድ አልተሳካም"
+  },
+  "runChecks": "አሁን ፍተሻ አካሂድ",
+  "runningChecks": "ፍተሻ በማካሄድ ላይ...",
+  "markAllRead": "ሁሉንም እንደተነበበ ምልክት አድርግ",
+  "markRead": "እንደተነበበ ምልክት አድርግ",
+  "open": "ክፈት",
+  "checksComplete": "ፍተሻ ተጠናቋል፦ {{expired}} ባችዎች ጊዜያቸው እንዳለፈ ተመዝግበዋል፣ {{expiring}} አዲስ የማብቂያ ማንቂያዎች፣ {{lowStock}} መድሃኒቶች ዝቅተኛ ክምችት ላይ፣ {{overdue}} ጊዜያቸው ያለፈ የግዢ ትዕዛዞች።",
+  "filters": {
+    "all": "ሁሉም", "unread": "ያልተነበቡ", "type": "አይነት", "severity": "ክብደት",
+    "allTypes": "ሁሉም አይነቶች", "allSeverities": "ሁሉም ክብደቶች"
+  },
+  "types": {
+    "expired": "ጊዜው ያለፈበት", "expiring_soon": "በቅርቡ የሚያልፍ", "low_stock": "ዝቅተኛ ክምችት", "po_overdue": "ጊዜው ያለፈ የግዢ ትዕዛዝ",
+    "pharmacy_suspended": "መለያ", "daily_summary": "ዕለታዊ ማጠቃለያ", "system": "ሲስተም"
+  },
+  "severity": { "critical": "አሳሳቢ", "warning": "ማስጠንቀቂያ", "success": "ስኬት", "info": "መረጃ" },
+  "empty": {
+    "title": "ምንም ማሳወቂያ የለም",
+    "filtered": "ከእነዚህ ማጣሪያዎች ጋር የሚዛመድ የለም።",
+    "caughtUp": "ሁሉንም አይተዋል።"
+  },
+  "pagination": "ገጽ {{page}} ከ{{pages}} (በአጠቃላይ {{total}})",
+  "previousPage": "ቀዳሚ ገጽ",
+  "nextPage": "ቀጣይ ገጽ"
+}

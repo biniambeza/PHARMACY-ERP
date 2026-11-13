@@ -1,0 +1,63 @@
+{
+  "badge": "Galmee Kuusaa",
+  "title": "Sochii Kuusaa",
+  "subtitle": "Jijjiirama kuusaa hunda: gurgurtaa, galii, sirreeffama, deebii, dabarsuu fi lakkoofsa kuusaa",
+  "exportCsv": "CSV Ala Ergi",
+  "exporting": "Ala ergaa jira...",
+  "exportFailed": "Ala erguun hin milkoofne",
+  "loadFailed": "Sochiiwwan fe'uun hin milkoofne",
+  "empty": "Sochiin hin argamne",
+  "emptyHint": "Calaltuu biroo yaali",
+  "pagination_one": "Sochii {{count}}, fuula {{page}} kan {{pages}} keessaa",
+  "pagination_other": "Sochiiwwan {{count}}, fuula {{page}} kan {{pages}} keessaa",
+  "filters": {
+    "medicine": "Qoricha",
+    "allMedicines": "Qorichoota hunda",
+    "archivedSuffix": "(kuufame)",
+    "type": "Gosa",
+    "allTypes": "Gosa hunda",
+    "from": "Irraa",
+    "to": "Hanga",
+    "batchChip": "Baachii {{batch}}",
+    "clearBatch": "Calaltuu baachii qulqulleessi"
+  },
+  "table": {
+    "date": "Guyyaa",
+    "type": "Gosa",
+    "medicine": "Qoricha",
+    "batch": "Baachii",
+    "change": "Jijjiirama",
+    "balance": "Haftee",
+    "user": "Fayyadamaa",
+    "reasonRef": "Sababa / Wabii",
+    "exp": "darba {{date}}"
+  },
+  "csv": {
+    "date": "Guyyaa",
+    "type": "Gosa",
+    "medicine": "Qoricha",
+    "batch": "Baachii",
+    "expiry": "Yeroon darbu",
+    "change": "Jijjiirama",
+    "balanceAfter": "Haftee booda",
+    "user": "Fayyadamaa",
+    "reason": "Sababa",
+    "reference": "Wabii"
+  },
+  "types": {
+    "sale": "Gurgurtaa",
+    "purchase_receive": "Galii ajaja bittaa",
+    "stock_in": "Galii kuusaa",
+    "adjust_damaged": "Kan miidhame",
+    "adjust_expired": "Hir'isuu yeroon darbe",
+    "correction": "Sirreeffama",
+    "delete": "Baachiin haqame",
+    "return": "Deebii",
+    "void": "Haqamuu",
+    "transfer_out": "Dabarsa ala",
+    "transfer_in": "Dabarsa keessa",
+    "stock_take": "Lakkoofsa kuusaa",
+    "expire": "Yeroon darbe",
+    "unit_conversion": "Jijjiirraa yuunitii"
+  }
+}

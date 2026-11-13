@@ -1,0 +1,85 @@
+{
+  "badge": "Herrega Argatamuu Qabu",
+  "title": "Maamiltootaa fi Liqii",
+  "subtitle": "Maamiltoota liqii, daangaa, kaffaltii fi ibsa herregaa",
+  "newCustomer": "Maamila Haaraa",
+  "searchPlaceholder": "Maqaa, bilbila ykn imeeliin barbaadi...",
+  "saving": "Olkaa'aa jira...",
+  "confirmRemove": "Maamila \"{{name}}\" haquu?",
+  "removeFailed": "Maamila haquun hin danda'amne",
+  "filters": { "all": "Hunda", "withBalance": "Hafaa qaban" },
+  "limit": { "unlimited": "Daangaa malee", "noCredit": "Liqii hin qabu" },
+  "paymentMethods": {
+    "cash": "Maallaqa callaa", "card": "Kaardii", "mobile_money": "Maallaqa moobaayilaa",
+    "bank_transfer": "Dabarsa baankii", "cheque": "Cheekii", "other": "Kan biroo"
+  },
+  "fields": {
+    "phone": "Bilbila", "email": "Imeelii", "address": "Teessoo", "creditLimit": "Daangaa liqii", "notes": "Yaadannoo"
+  },
+  "form": {
+    "editTitle": "Maamila Gulaali",
+    "newTitle": "Maamila Liqii Haaraa",
+    "subtitle": "Odeeffannoo quunnamtii fi daangaa liqii",
+    "fullName": "Maqaa guutuu",
+    "phonePlaceholder": "09...",
+    "zeroHint": "0 jechuun liqiin hin hayyamamu jechuudha.",
+    "unlimited": "Liqii daangaa malee",
+    "accountActive": "Herregni hojii irra jira",
+    "saveChanges": "Jijjiirama Olkaa'i",
+    "create": "Maamila Uumi",
+    "errors": {
+      "nameRequired": "Maqaan maamilaa barbaachisaadha.",
+      "limitInvalid": "Daangaan liqii 0 ykn isaa ol ta'uu qaba.",
+      "saveFailed": "Maamila olkaa'uun hin danda'amne"
+    }
+  },
+  "payment": {
+    "title": "Kaffaltii Galmeessi",
+    "owes": "{{name}} {{amount}} liqii qaba",
+    "amount": "Hanga",
+    "method": "Mala",
+    "reference": "Wabii",
+    "referencePlaceholder": "Nagahee / lakk. daldalaa",
+    "note": "Yaadannoo",
+    "appliedTo": "Nagahee banaa irratti raawwatame (kan durii jalqaba)",
+    "submit": "Kaffaltii Galmeessi",
+    "errors": {
+      "positive": "Hanga poozatiivii galchi.",
+      "exceeds": "Hangichi liqii hafe caala.",
+      "failed": "Kaffaltii galmeessuun hin danda'amne"
+    }
+  },
+  "statement": {
+    "title": "Ibsa Herrega Maamilaa",
+    "printTitle": "Ibsa Herregaa - {{name}}",
+    "pharmacy": "Faarmaasii",
+    "loadFailed": "Ibsa herregaa fe'uun hin danda'amne",
+    "from": "Irraa",
+    "to": "Hanga",
+    "period": "Yeroo: {{from}} - {{to}}",
+    "start": "Jalqaba",
+    "opening": "Hafaa jalqabaa",
+    "closing": "Hafaa xumuraa",
+    "printed": "Kan maxxanfame {{date}}",
+    "cols": {
+      "date": "Guyyaa", "description": "Ibsa", "reference": "Wabii",
+      "charges": "Kaffaltii gaafatame", "payments": "Kaffaltiiwwan", "balance": "Hafaa"
+    }
+  },
+  "summary": {
+    "totalReceivable": "Waliigala argatamuu qabu",
+    "withBalance_one": "Maamila {{count}} hafaa qabu, {{active}} hojii irra",
+    "withBalance_other": "Maamiltoota {{count}} hafaa qaban, {{active}} hojii irra",
+    "aging": "Umurii (guyyoota gurgurtaa booda)",
+    "overdue": "{{amount}} guyyaa 30 ol kan turan",
+    "bucketDays": "Guyyaa {{bucket}}"
+  },
+  "agingTable": { "title": "Umurii herrega argatamuu qabu maamilaan" },
+  "table": { "customer": "Maamila", "balance": "Hafaa", "status": "Haala" },
+  "actions": { "recordPayment": "Kaffaltii galmeessi", "statement": "Ibsa herregaa", "remove": "Haqi" },
+  "empty": {
+    "noMatch": "Maamiltoota walsiman hin jiran",
+    "none": "Hanga ammaatti maamiltoonni hin jiran",
+    "hint": "Liqiin gurguruu fi liqii isaanii hordofuuf maamiltoota dabali."
+  }
+}

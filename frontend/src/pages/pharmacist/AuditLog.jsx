@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollText, Search, ChevronDown, ChevronRight, ChevronLeft, RefreshCw, Download, AlertTriangle, Filter } from 'lucide-react';
 import { getAuditLogs, getAuditFacets } from '../../api/auditApi';
 import { formatDateTime } from '../../utils/format';
@@ -61,6 +62,7 @@ const actionTone = (action = '') => {
 };
 
 const DiffView = ({ log }) => {
+  const { t } = useTranslation('audit');
   const [showAll, setShowAll] = useState(false);
   const rows = useMemo(() => buildDiff(log.before, log.after), [log]);
   const visible = showAll ? rows : rows.filter((r) => r.changed);
@@ -72,26 +74,26 @@ const DiffView = ({ log }) => {
         <>
           <div className="flex items-center justify-between">
             <span className="font-semibold text-slate-700 dark:text-slate-300">
-              {rows.filter((r) => r.changed).length} changed field(s)
+              {t('diff.changedFields', { count: rows.filter((r) => r.changed).length })}
             </span>
             <label className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 cursor-pointer">
               <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} className="accent-emerald-600" />
-              Show unchanged
+              {t('diff.showUnchanged')}
             </label>
           </div>
           <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
             <table className="w-full text-left">
               <thead className="bg-slate-50 dark:bg-slate-800/60 text-[11px] uppercase text-slate-400">
                 <tr>
-                  <th className="px-3 py-2">Field</th>
-                  <th className="px-3 py-2">Before</th>
-                  <th className="px-3 py-2">After</th>
+                  <th className="px-3 py-2">{t('columns.field')}</th>
+                  <th className="px-3 py-2">{t('columns.before')}</th>
+                  <th className="px-3 py-2">{t('columns.after')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
                 {visible.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-3 py-3 text-center text-slate-400">No field changes recorded</td>
+                    <td colSpan={3} className="px-3 py-3 text-center text-slate-400">{t('diff.noFieldChanges')}</td>
                   </tr>
                 )}
                 {visible.map((r) => (
@@ -110,20 +112,20 @@ const DiffView = ({ log }) => {
           </div>
         </>
       ) : (
-        <p className="text-slate-400">No before/after snapshot for this entry.</p>
+        <p className="text-slate-400">{t('diff.noSnapshot')}</p>
       )}
       {log.meta && (
         <div>
-          <span className="font-semibold text-slate-700 dark:text-slate-300">Details</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-300">{t('diff.details')}</span>
           <pre className="mt-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 text-[11px] text-slate-600 dark:text-slate-300 overflow-x-auto">
             {JSON.stringify(log.meta, null, 2)}
           </pre>
         </div>
       )}
       <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-slate-400">
-        {log.entityId && <span>Entity ID: <span className="font-mono">{log.entityId}</span></span>}
-        {log.ip && <span>IP: <span className="font-mono">{log.ip}</span></span>}
-        {log.userAgent && <span className="truncate max-w-md" title={log.userAgent}>Device: {log.userAgent}</span>}
+        {log.entityId && <span>{t('diff.entityId')} <span className="font-mono">{log.entityId}</span></span>}
+        {log.ip && <span>{t('diff.ip')} <span className="font-mono">{log.ip}</span></span>}
+        {log.userAgent && <span className="truncate max-w-md" title={log.userAgent}>{t('diff.device', { device: log.userAgent })}</span>}
       </div>
     </div>
   );
@@ -132,6 +134,7 @@ const DiffView = ({ log }) => {
 const EMPTY_FILTERS = { search: '', userId: '', action: '', entity: '', from: '', to: '' };
 
 const AuditLog = () => {
+  const { t } = useTranslation(['audit', 'common']);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [applied, setApplied] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
@@ -148,11 +151,11 @@ const AuditLog = () => {
       const res = await getAuditLogs({ ...applied, page, limit: 25 });
       setData({ logs: res.logs || [], pagination: res.pagination || { page: 1, pages: 1, total: 0 } });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load the audit log');
+      setError(err.response?.data?.message || t('loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, [applied, page]);
+  }, [applied, page, t]);
 
   useEffect(() => {
     load();
@@ -183,15 +186,15 @@ const AuditLog = () => {
     exportCSV(
       data.logs,
       [
-        { key: 'createdAt', header: 'Time', format: (v) => formatDateTime(v) },
-        { key: 'userName', header: 'User' },
-        { key: 'userRole', header: 'Role' },
-        { key: 'action', header: 'Action' },
-        { key: 'entity', header: 'Entity' },
-        { key: 'entityId', header: 'Entity ID' },
-        { key: 'ip', header: 'IP' },
-        { key: 'before', header: 'Before', format: (v) => (v ? JSON.stringify(v) : '') },
-        { key: 'after', header: 'After', format: (v) => (v ? JSON.stringify(v) : '') },
+        { key: 'createdAt', header: t('columns.time'), format: (v) => formatDateTime(v) },
+        { key: 'userName', header: t('columns.user') },
+        { key: 'userRole', header: t('columns.role') },
+        { key: 'action', header: t('columns.action') },
+        { key: 'entity', header: t('columns.entity') },
+        { key: 'entityId', header: t('columns.entityId') },
+        { key: 'ip', header: t('columns.ip') },
+        { key: 'before', header: t('columns.before'), format: (v) => (v ? JSON.stringify(v) : '') },
+        { key: 'after', header: t('columns.after'), format: (v) => (v ? JSON.stringify(v) : '') },
       ],
       `audit-log-page-${page}`
     );
@@ -204,13 +207,13 @@ const AuditLog = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-            Compliance
+            {t('badge')}
           </span>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1 flex items-center gap-2">
-            <ScrollText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Audit Log
+            <ScrollText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> {t('title')}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Who did what and when. Entries are permanent and cannot be edited or deleted.
+            {t('subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -218,14 +221,14 @@ const AuditLog = () => {
             onClick={load}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-xs font-semibold rounded-xl transition cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> {t('common:buttons.refresh')}
           </button>
           <button
             onClick={handleExport}
             disabled={!logs.length}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 disabled:opacity-50 text-xs font-semibold rounded-xl transition cursor-pointer"
           >
-            <Download className="w-4 h-4" /> CSV
+            <Download className="w-4 h-4" /> {t('csv')}
           </button>
         </div>
       </div>
@@ -237,10 +240,10 @@ const AuditLog = () => {
       >
         <div className="relative lg:col-span-2">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-          <input value={filters.search} onChange={setField('search')} placeholder="Search user, action, entity" className={`${inputCls} w-full pl-9`} />
+          <input value={filters.search} onChange={setField('search')} placeholder={t('searchPlaceholder')} className={`${inputCls} w-full pl-9`} />
         </div>
-        <select value={filters.userId} onChange={setField('userId')} className={inputCls} aria-label="User">
-          <option value="">All users</option>
+        <select value={filters.userId} onChange={setField('userId')} className={inputCls} aria-label={t('columns.user')}>
+          <option value="">{t('allUsers')}</option>
           {facets.users.map((u) => (
             <option key={u._id} value={u._id}>
               {u.name}
@@ -248,29 +251,29 @@ const AuditLog = () => {
             </option>
           ))}
         </select>
-        <select value={filters.action} onChange={setField('action')} className={inputCls} aria-label="Action">
-          <option value="">All actions</option>
+        <select value={filters.action} onChange={setField('action')} className={inputCls} aria-label={t('columns.action')}>
+          <option value="">{t('allActions')}</option>
           {[...new Set(facets.actions.map((a) => a.split('.')[0]))].map((mod) => (
-            <option key={`${mod}.*`} value={`${mod}.*`}>{mod}.* (all)</option>
+            <option key={`${mod}.*`} value={`${mod}.*`}>{t('moduleAll', { module: mod })}</option>
           ))}
           {facets.actions.map((a) => (
             <option key={a} value={a}>{a}</option>
           ))}
         </select>
-        <select value={filters.entity} onChange={setField('entity')} className={inputCls} aria-label="Entity">
-          <option value="">All entities</option>
+        <select value={filters.entity} onChange={setField('entity')} className={inputCls} aria-label={t('columns.entity')}>
+          <option value="">{t('allEntities')}</option>
           {facets.entities.map((en) => (
             <option key={en} value={en}>{en}</option>
           ))}
         </select>
-        <input type="date" value={filters.from} onChange={setField('from')} className={inputCls} aria-label="From" />
-        <input type="date" value={filters.to} onChange={setField('to')} className={inputCls} aria-label="To" />
+        <input type="date" value={filters.from} onChange={setField('from')} className={inputCls} aria-label={t('from')} />
+        <input type="date" value={filters.to} onChange={setField('to')} className={inputCls} aria-label={t('to')} />
         <div className="flex gap-2 sm:col-span-2 lg:col-span-7 justify-end">
           <button type="button" onClick={resetFilters} className="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer">
-            Reset
+            {t('common:buttons.reset')}
           </button>
           <button type="submit" className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl transition cursor-pointer">
-            <Filter className="w-3.5 h-3.5" /> Apply filters
+            <Filter className="w-3.5 h-3.5" /> {t('applyFilters')}
           </button>
         </div>
       </form>
@@ -288,21 +291,21 @@ const AuditLog = () => {
             <thead className="bg-slate-50/80 dark:bg-slate-800/40 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
               <tr>
                 <th className="px-4 py-3 w-8" />
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Action</th>
-                <th className="px-4 py-3">Entity</th>
+                <th className="px-4 py-3">{t('columns.time')}</th>
+                <th className="px-4 py-3">{t('columns.user')}</th>
+                <th className="px-4 py-3">{t('columns.action')}</th>
+                <th className="px-4 py-3">{t('columns.entity')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {loading && logs.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">Loading audit entries...</td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">{t('loadingEntries')}</td>
                 </tr>
               )}
               {!loading && logs.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">No audit entries match these filters.</td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">{t('noEntries')}</td>
                 </tr>
               )}
               {logs.map((log) => {
@@ -318,7 +321,7 @@ const AuditLog = () => {
                       </td>
                       <td className="px-4 py-3 font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatDateTime(log.createdAt)}</td>
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-slate-900 dark:text-white">{log.userName || 'System'}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">{log.userName || t('system')}</span>
                         {log.userRole && <span className="ml-1.5 text-[10px] uppercase text-slate-400">{log.userRole}</span>}
                       </td>
                       <td className="px-4 py-3">
@@ -346,14 +349,14 @@ const AuditLog = () => {
 
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           <span>
-            {pagination.total} entr{pagination.total === 1 ? 'y' : 'ies'} · page {pagination.page} of {pagination.pages}
+            {t('entries', { count: pagination.total })} · {t('pageOf', { page: pagination.page, pages: pagination.pages })}
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1 || loading}
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 cursor-pointer"
-              aria-label="Previous page"
+              aria-label={t('previousPage')}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -361,7 +364,7 @@ const AuditLog = () => {
               onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
               disabled={page >= pagination.pages || loading}
               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 disabled:opacity-40 cursor-pointer"
-              aria-label="Next page"
+              aria-label={t('nextPage')}
             >
               <ChevronRight className="w-4 h-4" />
             </button>

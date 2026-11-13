@@ -1,0 +1,64 @@
+{
+  "badge": "ማስጀመሪያ",
+  "title": "የመረጃ ማስገቢያ",
+  "subtitle": "መድኃኒቶችን እና የመነሻ ክምችትን ከExcel (.xlsx) ወይም CSV በጅምላ ይጫኑ",
+  "kinds": {
+    "medicines": {
+      "label": "መድኃኒቶች",
+      "description": "የካታሎግ እቃዎችን ይፍጠሩ። ስማቸው ቀድሞ ያለ መድኃኒቶች ይዘለላሉ።"
+    },
+    "opening-stock": {
+      "label": "የመነሻ ክምችት",
+      "description": "ቀድሞ በካታሎግ ውስጥ ላሉ መድኃኒቶች (በባርኮድ፣ በSKU ወይም በትክክለኛ ስም የተዛመዱ) የመነሻ ባችዎችን ይጨምሩ። ብዛቱ በመሰረታዊ ክፍሎች ነው።"
+    }
+  },
+  "columns": "አምዶች፦",
+  "dateFormats": "ቀኖች በYYYY-MM-DD ወይም DD/MM/YYYY ቅርጸት።",
+  "downloadTemplate": "አብነት አውርድ",
+  "chooseFile": "ፋይል ምረጥ",
+  "rowCount_one": "{{count}} ረድፍ",
+  "rowCount_other": "{{count}} ረድፎች",
+  "working": "በሂደት ላይ...",
+  "imported_one": "{{count}} ረድፍ ገብቷል።",
+  "imported_other": "{{count}} ረድፎች ገብተዋል።",
+  "confirmImport_one": "{{count}} ረድፍ ይግባ?",
+  "confirmImport_other": "{{count}} ረድፎች ይግቡ?",
+  "importRows_one": "{{count}} ረድፍ አስገባ",
+  "importRows_other": "{{count}} ረድፎች አስገባ",
+  "showValid": "ትክክለኛ ረድፎችን አሳይ",
+  "errorReport": "የስህተት ሪፖርት",
+  "fixErrors": "በፋይልዎ ውስጥ ያሉትን ስህተቶች አስተካክለው እንደገና ይጫኑ",
+  "allValid": "ሁሉም ረድፎች ትክክለኛ ናቸው።",
+  "summary": {
+    "total": "ጠቅላላ",
+    "valid": "ትክክለኛ",
+    "skipped": "የተዘለሉ",
+    "errors": "ስህተቶች"
+  },
+  "table": {
+    "row": "ረድፍ",
+    "item": "እቃ",
+    "status": "ሁኔታ",
+    "details": "ዝርዝሮች"
+  },
+  "status": {
+    "ok": "ትክክል",
+    "skip": "ተዘሏል",
+    "error": "ስህተት"
+  },
+  "csv": {
+    "row": "ረድፍ",
+    "name": "ስም",
+    "errors": "ስህተቶች"
+  },
+  "errors": {
+    "readFile": "ፋይሉን ማንበብ አልተቻለም",
+    "readFailed": "ፋይሉን ማንበብ አልተቻለም",
+    "importFailed": "ማስገባት አልተሳካም",
+    "tooLarge": "ይህ የExcel ፋይል በጣም ትልቅ ነው። እንደ CSV አስቀምጠው CSV ፋይሉን ይጫኑ።",
+    "badType": "እባክዎ .csv ወይም .xlsx ፋይል ይምረጡ",
+    "noRows": "ፋይሉ ምንም የመረጃ ረድፍ የለውም",
+    "partial_one": "(ከቀደምት ክፍሎች {{count}} ረድፍ ቀድሞ ገብቷል)",
+    "partial_other": "(ከቀደምት ክፍሎች {{count}} ረድፎች ቀድመው ገብተዋል)"
+  }
+}

@@ -13,6 +13,7 @@ import {
   FileText,
   Gift,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { receivePurchaseOrder } from '../../api/procurementApi';
 import { formatMoney } from '../../utils/format';
 
@@ -31,6 +32,7 @@ const newBatch = (quantity = 0) => ({
 });
 
 const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
+  const { t } = useTranslation('procurement');
   const [lines, setLines] = useState([]);
   const [supplierInvoiceNo, setSupplierInvoiceNo] = useState('');
   const [supplierInvoiceDate, setSupplierInvoiceDate] = useState('');
@@ -46,7 +48,8 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
           const outstanding = Math.max(0, it.quantityOrdered - received);
           return {
             medicineId: it.medicineId?._id || it.medicineId,
-            name: it.name || it.medicineId?.name || `Item #${idx + 1}`,
+            name: it.name || it.medicineId?.name || '',
+            itemNo: idx + 1,
             quantityOrdered: it.quantityOrdered,
             quantityReceived: received,
             outstanding,
@@ -102,6 +105,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
     );
   };
 
+  const lineName = (l) => l.name || t('receive.itemN', { n: l.itemNo });
   const lineEntered = (l) => l.batches.reduce((s, b) => s + (Number(b.quantity) || 0), 0);
   const receiptTotal = lines.reduce(
     (sum, l) => sum + l.batches.reduce((s, b) => s + (Number(b.quantity) || 0) * (Number(l.unitCost) || 0), 0),
@@ -115,19 +119,17 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
     const payloadLines = [];
     for (const l of lines) {
       if (lineEntered(l) > l.outstanding) {
-        return setError(
-          `"${l.name}": received quantity is more than the ${l.outstanding} still outstanding. Record free units as bonus.`
-        );
+        return setError(t('receive.errors.overOutstanding', { name: lineName(l), outstanding: l.outstanding }));
       }
       for (const b of l.batches) {
         const qty = Number(b.quantity) || 0;
         const bonus = Number(b.bonusQuantity) || 0;
         if (qty < 0 || bonus < 0 || !Number.isInteger(qty) || !Number.isInteger(bonus)) {
-          return setError(`"${l.name}": quantities must be whole numbers of zero or more.`);
+          return setError(t('receive.errors.wholeNumbers', { name: lineName(l) }));
         }
         if (qty + bonus === 0) continue; // empty batch row is ignored
         if (!b.batchNo?.trim() || !b.expiryDate) {
-          return setError(`Please provide both lot number and expiry date for "${l.name}".`);
+          return setError(t('receive.errors.lotAndExpiry', { name: lineName(l) }));
         }
         payloadLines.push({
           medicineId: l.medicineId,
@@ -140,7 +142,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
     }
 
     if (payloadLines.length === 0) {
-      return setError('Enter a received or bonus quantity for at least one item.');
+      return setError(t('receive.errors.nothingEntered'));
     }
 
     setLoading(true);
@@ -156,7 +158,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
       onClose();
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to receive purchase order delivery');
+      setError(err.response?.data?.message || t('receive.errors.receiveFailed'));
     }
   };
 
@@ -172,19 +174,20 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                  Receive Delivery
+                  {t('receive.title')}
                 </h2>
                 <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
                   {order.poNumber}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Enter what arrived. Partial deliveries, several lots per item and bonus units are supported.
+                {t('receive.subtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label={t('common:buttons.close')}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -203,9 +206,9 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
           <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 space-y-3 text-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Supplier:</span>
+                <span className="text-slate-500 dark:text-slate-400 block text-[11px]">{t('receive.supplierLabel')}</span>
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {order.supplierId?.name || 'Supplier'}
+                  {order.supplierId?.name || t('receive.supplierFallback')}
                 </span>
               </div>
               <button
@@ -213,26 +216,26 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                 onClick={handleAutoFillExpiry}
                 className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-medium cursor-pointer self-start"
               >
-                <Sparkles className="w-3.5 h-3.5" /> Fill empty expiry dates (+2 years)
+                <Sparkles className="w-3.5 h-3.5" /> {t('receive.fillExpiry')}
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className={labelCls}>Supplier invoice no.</label>
+                <label className={labelCls}>{t('receive.invoiceNo')}</label>
                 <div className="relative">
                   <FileText className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
                   <input
                     type="text"
                     value={supplierInvoiceNo}
                     onChange={(e) => setSupplierInvoiceNo(e.target.value)}
-                    placeholder="Optional"
+                    placeholder={t('receive.optional')}
                     maxLength={100}
                     className={`${inputCls} pl-8 font-mono`}
                   />
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Invoice date</label>
+                <label className={labelCls}>{t('receive.invoiceDate')}</label>
                 <input
                   type="date"
                   value={supplierInvoiceDate}
@@ -241,12 +244,12 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                 />
               </div>
               <div>
-                <label className={labelCls}>Notes</label>
+                <label className={labelCls}>{t('receive.notes')}</label>
                 <input
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Optional"
+                  placeholder={t('receive.optional')}
                   maxLength={500}
                   className={inputCls}
                 />
@@ -256,7 +259,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
 
           <div className="space-y-3">
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Items ({lines.length})
+              {t('receive.items', { count: lines.length })}
             </label>
 
             {lines.map((l, lineIdx) => {
@@ -270,25 +273,25 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <PackageCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span className="font-bold text-xs text-slate-900 dark:text-white">{l.name}</span>
+                      <span className="font-bold text-xs text-slate-900 dark:text-white">{lineName(l)}</span>
                     </div>
                     <div className="flex items-center gap-3 text-[11px] font-mono text-slate-600 dark:text-slate-300">
-                      <span>Ordered <strong>{l.quantityOrdered}</strong></span>
-                      <span>Received <strong>{l.quantityReceived}</strong></span>
+                      <span>{t('receive.ordered')} <strong>{l.quantityOrdered}</strong></span>
+                      <span>{t('receive.received')} <strong>{l.quantityReceived}</strong></span>
                       <span className={over ? 'text-rose-600 dark:text-rose-400' : ''}>
-                        Now <strong>{entered}</strong> / {l.outstanding}
+                        {t('receive.now')} <strong>{entered}</strong> / {l.outstanding}
                       </span>
                     </div>
                   </div>
 
                   {l.outstanding === 0 && l.batches.length === 0 && (
-                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400">Fully received.</p>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400">{t('receive.fullyReceived')}</p>
                   )}
 
                   {l.batches.map((b, batchIdx) => (
                     <div key={batchIdx} className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end">
                       <div className="col-span-2 sm:col-span-4">
-                        <label className={labelCls}>Lot number</label>
+                        <label className={labelCls}>{t('receive.lotNumber')}</label>
                         <div className="relative">
                           <Hash className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
                           <input
@@ -301,7 +304,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                         </div>
                       </div>
                       <div className="col-span-2 sm:col-span-3">
-                        <label className={labelCls}>Expiry date</label>
+                        <label className={labelCls}>{t('receive.expiryDate')}</label>
                         <div className="relative">
                           <Calendar className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
                           <input
@@ -313,7 +316,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                         </div>
                       </div>
                       <div className="sm:col-span-2">
-                        <label className={labelCls}>Received qty</label>
+                        <label className={labelCls}>{t('receive.receivedQty')}</label>
                         <input
                           type="number"
                           min="0"
@@ -325,7 +328,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                       </div>
                       <div className="sm:col-span-2">
                         <label className={`${labelCls} flex items-center gap-1`}>
-                          <Gift className="w-3 h-3" /> Bonus
+                          <Gift className="w-3 h-3" /> {t('receive.bonus')}
                         </label>
                         <input
                           type="number"
@@ -341,7 +344,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                           type="button"
                           onClick={() => removeBatch(lineIdx, batchIdx)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition cursor-pointer"
-                          title="Remove lot"
+                          title={t('receive.removeLot')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -354,7 +357,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
                     onClick={() => addBatch(lineIdx)}
                     className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 font-medium cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" /> {l.outstanding > 0 ? 'Add another lot' : 'Add bonus lot'}
+                    <Plus className="w-3.5 h-3.5" /> {l.outstanding > 0 ? t('receive.addLot') : t('receive.addBonusLot')}
                   </button>
                 </div>
               );
@@ -362,7 +365,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
           </div>
 
           <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between text-xs">
-            <span className="text-slate-600 dark:text-slate-300 font-medium">Cost of this receipt (bonus is free):</span>
+            <span className="text-slate-600 dark:text-slate-300 font-medium">{t('receive.receiptCost')}</span>
             <span className="font-mono font-bold text-base text-emerald-600 dark:text-emerald-400">
               {formatMoney(receiptTotal)}
             </span>
@@ -376,7 +379,7 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
               disabled={loading}
               className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </button>
             <button
               type="submit"
@@ -384,11 +387,11 @@ const ReceivePOModal = ({ isOpen, onClose, onSuccess, order }) => {
               className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               {loading ? (
-                <span>Saving receipt...</span>
+                <span>{t('receive.saving')}</span>
               ) : (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span>Receive & Add to Stock</span>
+                  <span>{t('receive.submit')}</span>
                 </>
               )}
             </button>

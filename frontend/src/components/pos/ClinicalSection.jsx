@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Stethoscope, FilePlus2, FileText, ShieldAlert } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PatientPicker from '../clinical/PatientPicker';
 import ClinicalWarnings from '../clinical/ClinicalWarnings';
 import PrescriptionForm from '../clinical/PrescriptionForm';
@@ -21,6 +22,7 @@ import { inputCls, sectionCls, labelCls } from './posUtils';
 const ClinicalSection = ({
   cart, online, patient, onPatient, prescription, onPrescription, legacyRx, onLegacyRx, onWarnings, needsRx, hasControlled,
 }) => {
+  const { t } = useTranslation('pos');
   const { can } = useAuth();
   const [rxList, setRxList] = useState([]);
   const [creatingRx, setCreatingRx] = useState(false);
@@ -53,16 +55,16 @@ const ClinicalSection = ({
     <div className={`${sectionCls} ${hasControlled ? 'border-rose-300/80 dark:border-rose-800/60' : needsRx ? 'border-amber-300/80 dark:border-amber-700/50' : ''}`}>
       <div className="flex items-center justify-between">
         <span className={`${labelCls} inline-flex items-center gap-1`}>
-          <Stethoscope className="w-3 h-3" /> Patient & prescription
+          <Stethoscope className="w-3 h-3" /> {t('clinical.title')}
         </span>
         {hasControlled ? (
           <span className="text-[10px] font-bold text-rose-600 inline-flex items-center gap-1">
-            <ShieldAlert className="w-3 h-3" /> Controlled: patient + Rx required
+            <ShieldAlert className="w-3 h-3" /> {t('clinical.controlledRequired')}
           </span>
         ) : needsRx ? (
-          <span className="text-[10px] font-bold text-amber-600">Prescription required</span>
+          <span className="text-[10px] font-bold text-amber-600">{t('clinical.rxRequired')}</span>
         ) : (
-          <span className="text-[10px] text-slate-400">optional</span>
+          <span className="text-[10px] text-slate-400">{t('clinical.optional')}</span>
         )}
       </div>
 
@@ -74,7 +76,7 @@ const ClinicalSection = ({
             onPrescription(null);
             if (!p) setRxList([]);
           }}
-          placeholder="Select patient (allergy & interaction checks)"
+          placeholder={t('clinical.patientPlaceholder')}
         />
       )}
 
@@ -91,7 +93,7 @@ const ClinicalSection = ({
               onChange={(e) => onPrescription(rxList.find((r) => r._id === e.target.value) || null)}
               className={`${inputCls} cursor-pointer`}
             >
-              <option value="">{rxList.length ? 'Select prescription…' : 'No active prescriptions'}</option>
+              <option value="">{rxList.length ? t('clinical.selectRx') : t('clinical.noActiveRx')}</option>
               {rxList.map((rx) => (
                 <option key={rx._id} value={rx._id}>
                   {rx.number} · {rx.prescriberName} · {(rx.items || []).map((i) => i.name).join(', ').slice(0, 40)}
@@ -104,7 +106,7 @@ const ClinicalSection = ({
                 onClick={() => setCreatingRx(true)}
                 className="shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-500 cursor-pointer"
               >
-                <FilePlus2 className="w-3.5 h-3.5" /> New
+                <FilePlus2 className="w-3.5 h-3.5" /> {t('clinical.new')}
               </button>
             )}
           </div>
@@ -117,19 +119,19 @@ const ClinicalSection = ({
           <input
             value={legacyRx.number}
             onChange={(e) => onLegacyRx({ ...legacyRx, number: e.target.value })}
-            placeholder="Prescription no. *"
+            placeholder={t('clinical.rxNo')}
             className={`${inputCls} font-mono`}
           />
           <input
             value={legacyRx.prescriber}
             onChange={(e) => onLegacyRx({ ...legacyRx, prescriber: e.target.value })}
-            placeholder="Prescriber *"
+            placeholder={t('clinical.prescriber')}
             className={inputCls}
           />
         </div>
       )}
 
-      <PosModal open={creatingRx} title="New prescription" icon={FilePlus2} onClose={() => setCreatingRx(false)} wide>
+      <PosModal open={creatingRx} title={t('clinical.newRx')} icon={FilePlus2} onClose={() => setCreatingRx(false)} wide>
         {patient && (
           <PrescriptionForm
             patientId={patient._id}

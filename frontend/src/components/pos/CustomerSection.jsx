@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, UserPlus, X, User, Phone, Wallet } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { getCustomers, createCustomer } from '../../api/customerApi';
 import { useAuth } from '../../context/AuthContext';
 import { formatMoney } from '../../utils/format';
@@ -11,6 +12,7 @@ import { inputCls, sectionCls, labelCls, errMsg } from './posUtils';
  * Props: { customer, onChange(customer|null), walkIn: { name, phone }, onWalkIn(next), online }
  */
 const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
+  const { t } = useTranslation('pos');
   const { can } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -25,7 +27,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
   useEffect(() => {
     if (!open || !online || !canView) return undefined;
     let cancelled = false;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       try {
         const data = await getCustomers({ search: query || undefined, active: true, limit: 8 });
         if (!cancelled) setResults(data.customers || []);
@@ -35,7 +37,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
     }, 250);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [query, open, online, canView]);
 
@@ -49,7 +51,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
 
   const create = async () => {
     if (!form.name.trim()) {
-      setError('Name is required');
+      setError(t('customer.nameRequired'));
       return;
     }
     setError('');
@@ -59,7 +61,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
       setCreating(false);
       setForm({ name: '', phone: '' });
     } catch (err) {
-      setError(errMsg(err, 'Could not create the customer'));
+      setError(errMsg(err, t('customer.createFailed')));
     }
   };
 
@@ -69,8 +71,8 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
     return (
       <div className={sectionCls}>
         <div className="flex items-center justify-between">
-          <span className={labelCls}>Customer</span>
-          <button type="button" onClick={() => onChange(null)} className="text-slate-400 hover:text-rose-500 cursor-pointer" title="Remove customer">
+          <span className={labelCls}>{t('customer.label')}</span>
+          <button type="button" onClick={() => onChange(null)} className="text-slate-400 hover:text-rose-500 cursor-pointer" title={t('customer.remove')}>
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -83,15 +85,15 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 dark:text-slate-300">
           <span className="inline-flex items-center gap-1">
-            <Wallet className="w-3 h-3" /> Balance <b className="font-mono">{formatMoney(customer.balance || 0)}</b>
+            <Wallet className="w-3 h-3" /> {t('customer.balance')} <b className="font-mono">{formatMoney(customer.balance || 0)}</b>
           </span>
           <span>
-            Limit{' '}
-            <b className="font-mono">{limit === null || limit === undefined ? 'Unlimited' : formatMoney(limit)}</b>
+            {t('customer.limit')}{' '}
+            <b className="font-mono">{limit === null || limit === undefined ? t('customer.unlimited') : formatMoney(limit)}</b>
           </span>
           {available !== null && (
             <span>
-              Available <b className="font-mono">{formatMoney(available)}</b>
+              {t('customer.available')} <b className="font-mono">{formatMoney(available)}</b>
             </span>
           )}
         </div>
@@ -102,10 +104,10 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
   return (
     <div className={sectionCls} ref={boxRef}>
       <div className="flex items-center justify-between">
-        <span className={labelCls}>Customer</span>
+        <span className={labelCls}>{t('customer.label')}</span>
         {canCreate && online && !creating && (
           <button type="button" onClick={() => setCreating(true)} className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-500 cursor-pointer">
-            <UserPlus className="w-3 h-3" /> New
+            <UserPlus className="w-3 h-3" /> {t('customer.new')}
           </button>
         )}
       </div>
@@ -113,13 +115,13 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
       {creating ? (
         <div className="space-y-2">
           <div className="grid grid-cols-2 gap-2">
-            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Name *" className={inputCls} autoFocus />
-            <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="Phone" className={`${inputCls} font-mono`} />
+            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder={t('customer.namePlaceholder')} className={inputCls} autoFocus />
+            <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder={t('customer.phone')} className={`${inputCls} font-mono`} />
           </div>
           {error && <p className="text-[11px] text-rose-600">{error}</p>}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => setCreating(false)} className="text-[11px] text-slate-500 cursor-pointer">Cancel</button>
-            <button type="button" onClick={create} className="text-[11px] font-semibold text-emerald-600 cursor-pointer">Create & select</button>
+            <button type="button" onClick={() => setCreating(false)} className="text-[11px] text-slate-500 cursor-pointer">{t('common:buttons.cancel')}</button>
+            <button type="button" onClick={create} className="text-[11px] font-semibold text-emerald-600 cursor-pointer">{t('customer.createSelect')}</button>
           </div>
         </div>
       ) : (
@@ -134,7 +136,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
                   setOpen(true);
                 }}
                 onFocus={() => setOpen(true)}
-                placeholder="Find customer account…"
+                placeholder={t('customer.find')}
                 className={`${inputCls} pl-8`}
               />
               {open && results.length > 0 && (
@@ -152,7 +154,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
                       >
                         <div className="text-xs font-semibold text-slate-900 dark:text-white">{c.name}</div>
                         <div className="text-[10px] text-slate-500 font-mono">
-                          {c.phone || '—'} · bal {formatMoney(c.balance || 0)}
+                          {t('customer.resultMeta', { phone: c.phone || '—', balance: formatMoney(c.balance || 0) })}
                         </div>
                       </button>
                     </li>
@@ -167,7 +169,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
               <input
                 value={walkIn.name}
                 onChange={(e) => onWalkIn({ ...walkIn, name: e.target.value })}
-                placeholder="Walk-in name"
+                placeholder={t('customer.walkInName')}
                 className={`${inputCls} pl-8`}
               />
             </div>
@@ -176,7 +178,7 @@ const CustomerSection = ({ customer, onChange, walkIn, onWalkIn, online }) => {
               <input
                 value={walkIn.phone}
                 onChange={(e) => onWalkIn({ ...walkIn, phone: e.target.value })}
-                placeholder="Phone"
+                placeholder={t('customer.phone')}
                 className={`${inputCls} pl-8 font-mono`}
               />
             </div>

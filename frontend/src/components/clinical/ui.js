@@ -1,4 +1,5 @@
 // Shared Tailwind class strings and helpers for the clinical components/pages.
+import i18n from '../../i18n';
 
 export const inputCls =
   'w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition';
@@ -29,7 +30,8 @@ export const SEVERITY_STYLES = {
 
 export const severityCls = (s) => SEVERITY_STYLES[s] || SEVERITY_STYLES.unknown;
 
-export const errMsg = (err, fallback = 'Something went wrong') => err?.response?.data?.message || fallback;
+export const errMsg = (err, fallback) =>
+  err?.response?.data?.message || fallback || i18n.t('patients:errors.generic');
 
 // Age in years from dateOfBirth, falling back to the stored age.
 export const patientAge = (p) => {

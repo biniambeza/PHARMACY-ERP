@@ -1,0 +1,115 @@
+{
+  "ranges": { "today": "ዛሬ", "7d": "7 ቀናት", "monthly": "30 ቀናት", "yearly": "ዓመት" },
+  "error": {
+    "title": "የመረጃ ግንኙነት ማሳሰቢያ",
+    "fetchFailed": "የቀጥታ የመረጃ ቋት አጠቃላይ እይታ ማምጣት አልተቻለም። እባክዎ ግንኙነትዎን ያረጋግጡ።",
+    "noData": "አገልጋዩ ምንም አጠቃላይ እይታ መረጃ አልመለሰም።",
+    "retry": "ግንኙነቱን እንደገና ሞክር"
+  },
+  "export": {
+    "csv": "CSV",
+    "pdf": "PDF",
+    "exporting": "በመላክ ላይ...",
+    "salesExcel": "ሽያጭ Excel",
+    "title": "የዳሽቦርድ ማጠቃለያ",
+    "subtitle": "ቁልፍ አሃዞች እና የቅርብ ጊዜ ሽያጮች",
+    "metric": "መለኪያ",
+    "value": "እሴት"
+  },
+  "summary": {
+    "revenue": "ገቢ ({{range}})",
+    "cogs": "የተሸጡ ዕቃዎች ወጪ",
+    "grossProfit": "ጠቅላላ ትርፍ",
+    "orders": "ትዕዛዞች",
+    "refunds": "ተመላሽ ገንዘቦች",
+    "tax": "የተሰበሰበ ግብር",
+    "revenueGrowth": "የገቢ ዕድገት",
+    "allTimeRevenue": "የምንጊዜም ገቢ",
+    "allTimeGrossProfit": "የምንጊዜም ጠቅላላ ትርፍ",
+    "activeBatches": "ንቁ ባችዎች",
+    "stockUnits": "የክምችት ብዛት"
+  },
+  "salesColumns": {
+    "invoice": "ደረሰኝ",
+    "customer": "ደንበኛ",
+    "status": "ሁኔታ",
+    "walkIn": "ቀጥታ ደንበኛ",
+    "voided": "የተሰረዘ",
+    "returned": "የተመለሰ ({{status}})"
+  },
+  "kpi": {
+    "salesRevenue": "የሽያጭ ገቢ ({{range}})",
+    "period": "ጊዜ",
+    "revenueSub": "ከቀዳሚው ጊዜ ጋር · የምንጊዜም {{amount}}",
+    "inflows": "ገቢዎች",
+    "cogs": "የተሸጡ ዕቃዎች ወጪ",
+    "cogsSub": "ትክክለኛ የባች ወጪዎች · የምንጊዜም {{amount}}",
+    "outflows": "ወጪዎች",
+    "grossProfit": "ጠቅላላ ትርፍ",
+    "profitSub": "{{margin}}% የትርፍ ህዳግ · የምንጊዜም {{amount}}",
+    "profitable": "አትራፊ",
+    "loss": "ኪሳራ",
+    "activeBatches": "ንቁ የክምችት ባችዎች",
+    "lots": "{{count}} ሎቶች",
+    "lots_one": "{{count}} ሎት",
+    "lots_other": "{{count}} ሎቶች",
+    "unitsInInventory": "በክምችት ውስጥ {{count}} ፍሬዎች",
+    "unitsInInventory_one": "በክምችት ውስጥ {{count}} ፍሬ",
+    "unitsInInventory_other": "በክምችት ውስጥ {{count}} ፍሬዎች",
+    "skus": "{{count}} SKU",
+    "skus_one": "{{count}} SKU",
+    "skus_other": "{{count}} SKU"
+  },
+  "recentSales": {
+    "title": "የቅርብ ጊዜ የሽያጭ ግብይቶች",
+    "subtitle": "የቅርብ ጊዜ የደንበኛ የመድኃኒት ትዕዛዞች እና ሊታተሙ የሚችሉ ደረሰኞች",
+    "viewLedger": "መዝገቡን ይመልከቱ →",
+    "empty": "ዛሬ እስካሁን ምንም ሽያጭ አልተመዘገበም።",
+    "invoiceNo": "ደረሰኝ #",
+    "customer": "ደንበኛ",
+    "status": "ሁኔታ",
+    "receipt": "ደረሰኝ",
+    "walkInPatient": "ቀጥታ ታካሚ",
+    "voided": "የተሰረዘ",
+    "returned": "የተመለሰ",
+    "partReturned": "በከፊል የተመለሰ",
+    "credit": "ዱቤ",
+    "printReceipt": "ደረሰኝ አትም",
+    "terminal": "ተርሚናል፡ POS መዝገብ #01",
+    "openPos": "+ POS ገንዘብ ተቀባይ ክፈት"
+  },
+  "chart": {
+    "title": "ሽያጭ ከግዢ ጋር",
+    "subtitle": "የደንበኛ ገቢን ከአቅራቢ ወጪዎች ጋር የሚያነጻጽር ባለሁለት መስመር አዝማሚያ",
+    "revenue": "ገቢ",
+    "procurement": "ግዢ",
+    "footer": "የተጠቃለሉ ክፍተቶች፡ የቀጥታ የመረጃ ቋት መዝገቦች",
+    "grossProfit": "ጠቅላላ ትርፍ፡ {{amount}}"
+  },
+  "expiry": {
+    "title": "የFEFO የማብቂያ ጊዜ ጤንነት",
+    "monitored": "ክትትል የሚደረግባቸው ባችዎች",
+    "healthy": "ጤናማ (>60 ቀን)",
+    "warning": "ማስጠንቀቂያ (30-60 ቀን)",
+    "critical": "አሳሳቢ (<30 ቀን)",
+    "audit": "የክምችት ባችዎችን ኦዲት አድርግ →"
+  },
+  "suppliers": {
+    "title": "ከፍተኛ አቅራቢዎች ደረጃ",
+    "directory": "ማውጫ →",
+    "empty": "እስካሁን ምንም አቅራቢ አልተመዘገበም።",
+    "ordersFulfilled": "{{count}} ትዕዛዞች ተፈጽመዋል",
+    "ordersFulfilled_one": "{{count}} ትዕዛዝ ተፈጽሟል",
+    "ordersFulfilled_other": "{{count}} ትዕዛዞች ተፈጽመዋል",
+    "rating": "{{rating}} ደረጃ",
+    "issuePo": "የግዢ ትዕዛዝ አውጣ"
+  },
+  "alerts": {
+    "title": "የቀጥታ ያልተለመዱ ሁኔታዎች ማንቂያዎች",
+    "actionRequired": "እርምጃ ያስፈልጋል",
+    "allClear": "ሁሉም የሥራ ጉዳዮች ተጠናቀዋል",
+    "footer": "ተለዋዋጭ የመረጃ ቋት ፍተሻዎች",
+    "open": "{{count}} ክፍት",
+    "priority": { "High": "ከፍተኛ", "Medium": "መካከለኛ", "Low": "ዝቅተኛ" }
+  }
+}

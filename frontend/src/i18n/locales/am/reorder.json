@@ -1,0 +1,45 @@
+{
+  "badge": "ግዥ",
+  "title": "የድጋሚ ትዕዛዝ ጥቆማዎች",
+  "subtitle": "በአማካይ የዕለት ሽያጭ × (የማድረሻ ጊዜ + የጥንቃቄ ቀናት) ላይ ተመሥርቶ፣ የሚሸጥ ክምችት እና ክፍት ትዕዛዞች ተቀንሰው",
+  "days_one": "{{count}} ቀን",
+  "days_other": "{{count}} ቀናት",
+  "viewPOs": "የግዢ ትዕዛዞችን ይመልከቱ",
+  "created": "የግዢ ትዕዛዞች ተፈጥረዋል",
+  "empty": {
+    "title": "እንደገና የሚታዘዝ ነገር የለም",
+    "hint_one": "ክምችት እና ክፍት ትዕዛዞች ያለፈው {{count}} ቀን ሽያጭ የሚጠበቀውን ፍላጎት ይሸፍናሉ።",
+    "hint_other": "ክምችት እና ክፍት ትዕዛዞች ያለፉት {{count}} ቀናት ሽያጭ የሚጠበቀውን ፍላጎት ይሸፍናሉ።"
+  },
+  "noPreferredSupplier": "ተመራጭ አቅራቢ የለም",
+  "itemCount_one": "{{count}} ዕቃ",
+  "itemCount_other": "{{count}} ዕቃዎች",
+  "orderFrom": "እነዚህን ከ… እዘዝ",
+  "selectAllInGroup": "በቡድኑ ያሉትን ሁሉ ምረጥ",
+  "selectItem": "{{name}}ን ምረጥ",
+  "belowMinimum": "ከዝቅተኛው በታች ({{min}})",
+  "leadSafetyValue": "{{lead}} + {{safety}}ቀ",
+  "table": {
+    "medicine": "መድኃኒት",
+    "avgPerDay": "አማካይ / ቀን",
+    "leadSafety": "ማድረሻ + ጥንቃቄ",
+    "stock": "ክምችት",
+    "onOrder": "በትዕዛዝ ላይ",
+    "suggested": "የተጠቆመ",
+    "orderQty": "የትዕዛዝ ብዛት",
+    "unitCost": "የአንድ ዋጋ",
+    "lineTotal": "የመስመር ድምር"
+  },
+  "itemsSelected_one": "ዕቃ ተመርጧል",
+  "itemsSelected_other": "ዕቃዎች ተመርጠዋል",
+  "createAsDrafts": "እንደ ረቂቅ ፍጠር",
+  "creating": "በመፍጠር ላይ…",
+  "createPOs": "የግዢ ትዕዛዞችን ፍጠር",
+  "errors": {
+    "loadFailed": "የድጋሚ ትዕዛዝ ጥቆማዎችን መጫን አልተሳካም",
+    "selectOne": "ቢያንስ አንድ ዕቃ ይምረጡ።",
+    "badQuantity": "\"{{name}}\"፦ ብዛት አዎንታዊ ሙሉ ቁጥር መሆን አለበት።",
+    "chooseSupplier": "ተመራጭ አቅራቢ ለሌላቸው ዕቃዎች አቅራቢ ይምረጡ።",
+    "createFailed": "የግዢ ትዕዛዞችን መፍጠር አልተሳካም"
+  }
+}

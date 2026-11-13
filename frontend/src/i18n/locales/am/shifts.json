@@ -1,0 +1,88 @@
+{
+  "open": "ክፍት",
+  "xReport": "X-ሪፖርት",
+  "zReport": "Z-ሪፖርት",
+  "errors": {
+    "load": "ፈረቃዎችን መጫን አልተሳካም"
+  },
+  "methods": {
+    "cash": "ጥሬ ገንዘብ",
+    "card": "ካርድ",
+    "mobile_money": "የሞባይል ገንዘብ",
+    "credit": "ዱቤ"
+  },
+  "page": {
+    "badge": "የገንዘብ መሳቢያ",
+    "title": "ፈረቃዎች",
+    "subtitle": "ፈረቃን በመነሻ ገንዘብ ይክፈቱ፣ በተቆጠረ መጠን ይዝጉ እና የZ-ሪፖርቱን ያትሙ።",
+    "requireShift": "ይህ መድኃኒት ቤት ለመሸጥ ክፍት ፈረቃ ይፈልጋል።",
+    "pos": "ሽያጭ"
+  },
+  "current": {
+    "since": "ከ{{date}} ጀምሮ · መነሻ ገንዘብ {{amount}}",
+    "closeShift": "ፈረቃ ዝጋ",
+    "openShift": "ፈረቃ ክፈት",
+    "none": "ክፍት ፈረቃ የለዎትም።",
+    "sales": "ሽያጮች",
+    "expectedCash": "የሚጠበቅ ጥሬ ገንዘብ"
+  },
+  "history": {
+    "allStaff": "የፈረቃ ታሪክ (ሁሉም ሰራተኞች)",
+    "mine": "የእኔ ፈረቃዎች",
+    "all": "ሁሉም",
+    "open": "ክፍት",
+    "closed": "የተዘጋ",
+    "shift": "ፈረቃ",
+    "cashier": "ገንዘብ ተቀባይ",
+    "opened": "የተከፈተበት",
+    "float": "መነሻ ገንዘብ",
+    "countedCash": "የተቆጠረ ጥሬ ገንዘብ",
+    "loading": "በመጫን ላይ…",
+    "empty": "እስካሁን ምንም ፈረቃ የለም።"
+  },
+  "close": {
+    "title": "ፈረቃ {{number}} ዝጋ",
+    "closing": "በመዝጋት ላይ…",
+    "submit": "ፈረቃ ዝጋ እና Z-ሪፖርት አትም",
+    "instructions": "መሳቢያውን ቆጥረው ድምሮቹን ያስገቡ። የሚጠበቁት መጠኖች መነሻ ገንዘብን፣ የጥሬ ገንዘብ ሽያጮችን፣ የተቀበሏቸውን የደንበኛ ክፍያዎች እና የከፈሏቸውን የጥሬ ገንዘብ ተመላሾች ያካትታሉ።",
+    "method": "ዘዴ",
+    "expected": "የሚጠበቅ",
+    "counted": "የተቆጠረ",
+    "variance": "ልዩነት",
+    "labels": {
+      "cash": "በመሳቢያ ያለ ጥሬ ገንዘብ",
+      "card": "ካርድ (የተርሚናል ድምር)",
+      "mobile_money": "የሞባይል ገንዘብ"
+    },
+    "notesPlaceholder": "ማስታወሻ (ለምሳሌ የልዩነቱ ምክንያት)",
+    "errors": {
+      "failed": "ፈረቃውን መዝጋት አልተቻለም"
+    }
+  },
+  "report": {
+    "title": "የፈረቃ ሪፖርት",
+    "printTitle": "Z-ሪፖርት {{number}}",
+    "xTitle": "X-ሪፖርት (ፈረቃ ክፍት)",
+    "zTitle": "Z-ሪፖርት",
+    "closedBy": "የዘጋው",
+    "sales": "ሽያጮች ({{count}})",
+    "discounts": "ቅናሾች",
+    "tax": "ግብር",
+    "netSales": "የተጣራ ሽያጭ",
+    "voids": "የተሰረዙ ({{count}})",
+    "returns": "ተመላሾች ({{count}})",
+    "payments": "ክፍያዎች",
+    "customerPayments": "የደንበኛ ክፍያዎች ({{count}})",
+    "openingFloat": "መነሻ ገንዘብ",
+    "cashSales": "+ የጥሬ ገንዘብ ሽያጮች",
+    "plusCustomerPayments": "+ የደንበኛ ክፍያዎች",
+    "cashRefunds": "- የጥሬ ገንዘብ ተመላሾች",
+    "countedVariance": "የተቆጠረ / ልዩነት",
+    "countedLine": "{{method}}፦ {{counted}} (የሚጠበቅ {{expected}})",
+    "topItems": "ከፍተኛ ዕቃዎች",
+    "generated": "የተዘጋጀው {{date}}",
+    "errors": {
+      "load": "ሪፖርቱን መጫን አልተቻለም"
+    }
+  }
+}

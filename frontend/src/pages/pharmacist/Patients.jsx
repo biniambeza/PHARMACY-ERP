@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   HeartPulse, Plus, Search, Edit3, Archive, FileText, History, User, AlertTriangle, Bell, Paperclip, X,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   getPatients, getPatientHistory, archivePatient, getRefillsDue,
 } from '../../api/clinicalApi';
@@ -16,12 +17,13 @@ import { cardCls, inputCls, primaryBtn, iconBtn, severityCls, patientAge, errMsg
 import { formatDate, formatDateTime } from '../../utils/format';
 
 const TABS = [
-  { id: 'overview', label: 'Overview', icon: User },
-  { id: 'prescriptions', label: 'Prescriptions', icon: FileText },
-  { id: 'history', label: 'Medication History', icon: History },
+  { id: 'overview', label: 'tabs.overview', icon: User },
+  { id: 'prescriptions', label: 'tabs.prescriptions', icon: FileText },
+  { id: 'history', label: 'tabs.history', icon: History },
 ];
 
 const Patients = () => {
+  const { t } = useTranslation('patients');
   const { can } = useAuth();
   const [patients, setPatients] = useState([]);
   const [search, setSearch] = useState('');
@@ -41,15 +43,15 @@ const Patients = () => {
       const data = await getPatients({ search: search || undefined, limit: 100 });
       setPatients(data.patients || []);
     } catch (err) {
-      setError(errMsg(err, 'Failed to load patients'));
+      setError(errMsg(err, t('page.errors.loadList')));
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, t]);
 
   useEffect(() => {
-    const t = setTimeout(loadPatients, 250);
-    return () => clearTimeout(t);
+    const timer = setTimeout(loadPatients, 250);
+    return () => clearTimeout(timer);
   }, [loadPatients]);
 
   useEffect(() => {
@@ -62,11 +64,11 @@ const Patients = () => {
     try {
       setDetail(await getPatientHistory(id));
     } catch (err) {
-      setError(errMsg(err, 'Failed to load patient'));
+      setError(errMsg(err, t('page.errors.loadOne')));
     } finally {
       setDetailLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const selectPatient = (id) => {
     setSelectedId(id);
@@ -76,14 +78,14 @@ const Patients = () => {
   };
 
   const handleArchive = async (p) => {
-    if (!window.confirm(`Archive patient "${p.name}"? Their records are kept.`)) return;
+    if (!window.confirm(t('page.confirmArchive', { name: p.name }))) return;
     try {
       await archivePatient(p._id);
       setSelectedId(null);
       setDetail(null);
       loadPatients();
     } catch (err) {
-      setError(errMsg(err, 'Failed to archive patient'));
+      setError(errMsg(err, t('page.errors.archive')));
     }
   };
 
@@ -95,14 +97,14 @@ const Patients = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div>
           <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 uppercase tracking-wider">
-            Clinical
+            {t('page.badge')}
           </span>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">Patients &amp; Prescriptions</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Patient records, allergies, prescriptions and medication history</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight mt-1">{t('page.title')}</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('page.subtitle')}</p>
         </div>
         <Can perm="patient:manage">
           <button onClick={() => setModal({ patient: null })} className={`${primaryBtn} self-start sm:self-auto`}>
-            <Plus className="w-4 h-4" /> New Patient
+            <Plus className="w-4 h-4" /> {t('page.newPatient')}
           </button>
         </Can>
       </div>
@@ -110,19 +112,19 @@ const Patients = () => {
       {error && (
         <div className="flex items-center justify-between p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 text-xs border border-rose-200 dark:border-rose-900/50">
           {error}
-          <button onClick={() => setError('')} className="cursor-pointer"><X className="w-4 h-4" /></button>
+          <button onClick={() => setError('')} aria-label={t('common:buttons.close')} className="cursor-pointer"><X className="w-4 h-4" /></button>
         </div>
       )}
 
       {refills.length > 0 && (
         <div className={`${cardCls} p-4`}>
           <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
-            <Bell className="w-4 h-4 text-amber-500" /> Refills due in the next 7 days ({refills.length})
+            <Bell className="w-4 h-4 text-amber-500" /> {t('refills.title', { count: refills.length })}
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="text-[11px] uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                <tr><th className="py-2">Patient</th><th>Phone</th><th>Medicine</th><th>Last dispensed</th><th>Due</th><th>Rx</th></tr>
+                <tr><th className="py-2">{t('rx.patient')}</th><th>{t('fields.phone')}</th><th>{t('rx.medicine')}</th><th>{t('refills.lastDispensed')}</th><th>{t('refills.due')}</th><th>{t('refills.rx')}</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
                 {refills.slice(0, 20).map((r) => (
@@ -136,7 +138,7 @@ const Patients = () => {
                     <td>{r.name}</td>
                     <td>{formatDate(r.lastDispensedAt)}</td>
                     <td className={r.overdue ? 'text-rose-600 font-semibold' : ''}>
-                      {formatDate(r.nextDue)} {r.overdue ? '(overdue)' : ''}
+                      {formatDate(r.nextDue)} {r.overdue ? t('refills.overdue') : ''}
                     </td>
                     <td className="font-mono">{r.prescriptionNumber}</td>
                   </tr>
@@ -152,14 +154,14 @@ const Patients = () => {
         <div className={`${cardCls} p-4 lg:col-span-1`}>
           <div className="relative mb-3">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or phone..." className={`${inputCls} pl-9`} />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('page.searchPlaceholder')} className={`${inputCls} pl-9`} />
           </div>
           {loading ? (
             <CardSkeleton height="h-64" />
           ) : patients.length === 0 ? (
             <div className="py-12 text-center">
               <HeartPulse className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-              <p className="text-xs text-slate-500">{search ? 'No matching patients' : 'No patients registered yet'}</p>
+              <p className="text-xs text-slate-500">{search ? t('page.noMatch') : t('page.none')}</p>
             </div>
           ) : (
             <ul className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[60vh] overflow-y-auto custom-scrollbar">
@@ -173,9 +175,9 @@ const Patients = () => {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{p.name}</span>
-                      {p.allergies?.length > 0 && <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" title="Has allergies" />}
+                      {p.allergies?.length > 0 && <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" title={t('page.hasAllergies')} />}
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{p.phone || 'No phone'}</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{p.phone || t('page.noPhone')}</span>
                   </button>
                 </li>
               ))}
@@ -188,7 +190,7 @@ const Patients = () => {
           {!selectedId ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-16">
               <User className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-2" />
-              <p className="text-xs text-slate-500">Select a patient to see their record</p>
+              <p className="text-xs text-slate-500">{t('page.selectPrompt')}</p>
             </div>
           ) : detailLoading && !patient ? (
             <CardSkeleton height="h-64" />
@@ -198,31 +200,31 @@ const Patients = () => {
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white">{patient.name}</h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {[age !== null && age !== undefined ? `${age} years` : null, patient.sex !== 'unknown' ? patient.sex : null, patient.phone]
+                    {[age !== null && age !== undefined ? t('page.ageYears', { age }) : null, patient.sex !== 'unknown' ? t(`sex.${patient.sex}`, { defaultValue: patient.sex }) : null, patient.phone]
                       .filter(Boolean)
                       .join(' · ')}
                   </p>
                 </div>
                 <Can perm="patient:manage">
                   <div className="flex gap-1">
-                    <button onClick={() => setModal({ patient })} className={iconBtn} title="Edit patient"><Edit3 className="w-4 h-4" /></button>
-                    <button onClick={() => handleArchive(patient)} className={iconBtn} title="Archive patient"><Archive className="w-4 h-4" /></button>
+                    <button onClick={() => setModal({ patient })} className={iconBtn} title={t('page.editPatient')}><Edit3 className="w-4 h-4" /></button>
+                    <button onClick={() => handleArchive(patient)} className={iconBtn} title={t('page.archivePatient')}><Archive className="w-4 h-4" /></button>
                   </div>
                 </Can>
               </div>
 
               <div className="flex gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl w-fit">
-                {TABS.map((t) => (
+                {TABS.map((tb) => (
                   <button
-                    key={t.id}
-                    onClick={() => setTab(t.id)}
+                    key={tb.id}
+                    onClick={() => setTab(tb.id)}
                     className={`px-3 py-1.5 rounded-lg text-[11px] inline-flex items-center gap-1 cursor-pointer ${
-                      tab === t.id
+                      tab === tb.id
                         ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
                         : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    <t.icon className="w-3.5 h-3.5" /> {t.label}
+                    <tb.icon className="w-3.5 h-3.5" /> {t(tb.label)}
                   </button>
                 ))}
               </div>
@@ -230,28 +232,28 @@ const Patients = () => {
               {tab === 'overview' && (
                 <div className="space-y-4 text-xs text-slate-700 dark:text-slate-300">
                   <div>
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Allergies</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">{t('fields.allergies')}</h3>
                     {patient.allergies?.length ? (
                       <div className="flex flex-wrap gap-2">
                         {patient.allergies.map((a) => (
                           <span key={a._id} className={`px-2 py-1 rounded-lg border ${severityCls(a.severity)}`}>
                             <strong>{a.substance}</strong>
-                            {a.reaction && ` — ${a.reaction}`} <span className="uppercase text-[10px]">({a.severity})</span>
+                            {a.reaction && ` — ${a.reaction}`} <span className="uppercase text-[10px]">({t(`allergySeverity.${a.severity}`, { defaultValue: a.severity })})</span>
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <p className="italic text-slate-400">No known allergies</p>
+                      <p className="italic text-slate-400">{t('page.noAllergies')}</p>
                     )}
                   </div>
                   <div>
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Conditions</h3>
-                    <p>{patient.conditions?.length ? patient.conditions.join(', ') : <span className="italic text-slate-400">None recorded</span>}</p>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">{t('fields.conditions')}</h3>
+                    <p>{patient.conditions?.length ? patient.conditions.join(', ') : <span className="italic text-slate-400">{t('page.noneRecorded')}</span>}</p>
                   </div>
-                  {patient.dateOfBirth && <p><span className="text-slate-400">Date of birth: </span>{formatDate(patient.dateOfBirth)}</p>}
-                  {patient.notes && <p><span className="text-slate-400">Notes: </span>{patient.notes}</p>}
+                  {patient.dateOfBirth && <p><span className="text-slate-400">{t('page.dobPrefix')} </span>{formatDate(patient.dateOfBirth)}</p>}
+                  {patient.notes && <p><span className="text-slate-400">{t('rx.notesPrefix')} </span>{patient.notes}</p>}
                   <p className="text-slate-400">
-                    {detail.prescriptions.length} prescription(s) · {detail.medications.length} dispensed line(s)
+                    {t('page.rxCount', { count: detail.prescriptions.length })} · {t('page.lineCount', { count: detail.medications.length })}
                   </p>
                 </div>
               )}
@@ -259,7 +261,7 @@ const Patients = () => {
               {tab === 'prescriptions' && (
                 <div className="space-y-3">
                   {can('prescription:manage') && !showRxForm && (
-                    <button onClick={() => setShowRxForm(true)} className={primaryBtn}><Plus className="w-4 h-4" /> New Prescription</button>
+                    <button onClick={() => setShowRxForm(true)} className={primaryBtn}><Plus className="w-4 h-4" /> {t('page.newRx')}</button>
                   )}
                   {showRxForm && (
                     <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50">
@@ -274,11 +276,11 @@ const Patients = () => {
                     </div>
                   )}
                   {detail.prescriptions.length === 0 ? (
-                    <p className="text-xs italic text-slate-400">No prescriptions recorded</p>
+                    <p className="text-xs italic text-slate-400">{t('page.noRx')}</p>
                   ) : (
                     <table className="w-full text-left text-xs">
                       <thead className="text-[11px] uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                        <tr><th className="py-2">Number</th><th>Issued</th><th>Prescriber</th><th>Items</th><th>Status</th><th /></tr>
+                        <tr><th className="py-2">{t('page.cols.number')}</th><th>{t('rx.issued')}</th><th>{t('rx.prescriber')}</th><th>{t('page.cols.items')}</th><th>{t('rx.status')}</th><th /></tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
                         {detail.prescriptions.map((rx) => (
@@ -290,9 +292,9 @@ const Patients = () => {
                             <td>{formatDate(rx.issueDate)}</td>
                             <td>{rx.prescriberName}</td>
                             <td className="max-w-[200px] truncate">{rx.items.map((i) => i.name).join(', ')}</td>
-                            <td><StatusBadge status={rx.status} label={rx.status} /></td>
+                            <td><StatusBadge status={rx.status} label={t(`rxStatus.${rx.status}`, { defaultValue: rx.status })} /></td>
                             <td className="text-right">
-                              <button onClick={() => setViewRxId(rx._id)} className="text-emerald-600 font-semibold cursor-pointer">View</button>
+                              <button onClick={() => setViewRxId(rx._id)} className="text-emerald-600 font-semibold cursor-pointer">{t('common:buttons.view')}</button>
                             </td>
                           </tr>
                         ))}
@@ -304,11 +306,11 @@ const Patients = () => {
 
               {tab === 'history' && (
                 detail.medications.length === 0 ? (
-                  <p className="text-xs italic text-slate-400">No medicines dispensed to this patient yet</p>
+                  <p className="text-xs italic text-slate-400">{t('page.noHistory')}</p>
                 ) : (
                   <table className="w-full text-left text-xs">
                     <thead className="text-[11px] uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                      <tr><th className="py-2">Date</th><th>Medicine</th><th>Qty</th><th>Batch</th><th>Invoice</th><th>Rx</th></tr>
+                      <tr><th className="py-2">{t('common:labels.date')}</th><th>{t('rx.medicine')}</th><th>{t('page.cols.qty')}</th><th>{t('page.cols.batch')}</th><th>{t('page.cols.invoice')}</th><th>{t('refills.rx')}</th></tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
                       {detail.medications.map((m, i) => (

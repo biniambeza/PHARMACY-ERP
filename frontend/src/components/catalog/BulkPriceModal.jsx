@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Percent, Eye, CheckCircle } from 'lucide-react';
+import { useTranslation, Trans } from 'react-i18next';
 import CatalogModal from './CatalogModal';
 import MarginBadge from './MarginBadge';
 import { previewBulkPrice, applyBulkPrice } from '../../api/medicineApi';
@@ -8,6 +9,7 @@ import { inputCls, labelCls, primaryBtn, secondaryBtn, errorBox, theadCls, thCls
 
 // Bulk price update by category, by selected medicines, or for the whole catalog.
 const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess }) => {
+  const { t } = useTranslation('medicines');
   const [target, setTarget] = useState(selectedIds.length ? 'selected' : 'category');
   const [category, setCategory] = useState(categories[0] || '');
   const [field, setField] = useState('price');
@@ -35,14 +37,14 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
   const handlePreview = async () => {
     setError('');
     if (value === '' || !Number.isFinite(Number(value))) {
-      setError('Enter a value.');
+      setError(t('bulk.errValue'));
       return;
     }
     setLoading(true);
     try {
       setPreview(await previewBulkPrice(body()));
     } catch (err) {
-      setError(err.response?.data?.message || 'Preview failed');
+      setError(err.response?.data?.message || t('bulk.errPreview'));
     } finally {
       setLoading(false);
     }
@@ -50,7 +52,7 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
 
   const handleApply = async () => {
     if (!preview) return;
-    if (!window.confirm(`Update ${preview.changedCount} price(s)?`)) return;
+    if (!window.confirm(t('bulk.confirm', { count: preview.changedCount }))) return;
     setLoading(true);
     setError('');
     try {
@@ -59,7 +61,7 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Bulk update failed');
+      setError(err.response?.data?.message || t('bulk.errApply'));
     } finally {
       setLoading(false);
     }
@@ -67,8 +69,8 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
 
   return (
     <CatalogModal
-      title="Bulk Price Update"
-      subtitle="Change prices by percentage or to a fixed value. Every change is recorded in price history."
+      title={t('bulk.title')}
+      subtitle={t('bulk.subtitle')}
       icon={Percent}
       onClose={onClose}
       maxWidth="max-w-3xl"
@@ -76,16 +78,16 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
       {error && <div className={`${errorBox} mb-4`}>{error}</div>}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className={labelCls}>Apply to</label>
+          <label className={labelCls}>{t('bulk.applyTo')}</label>
           <select className={inputCls} value={target} onChange={resetPreview(setTarget)}>
-            {selectedIds.length > 0 && <option value="selected">Selected medicines ({selectedIds.length})</option>}
-            <option value="category">A category</option>
-            <option value="all">All medicines</option>
+            {selectedIds.length > 0 && <option value="selected">{t('bulk.selected', { n: selectedIds.length })}</option>}
+            <option value="category">{t('bulk.aCategory')}</option>
+            <option value="all">{t('bulk.all')}</option>
           </select>
         </div>
         {target === 'category' && (
           <div>
-            <label className={labelCls}>Category</label>
+            <label className={labelCls}>{t('bulk.category')}</label>
             <select className={inputCls} value={category} onChange={resetPreview(setCategory)}>
               {categories.map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -94,42 +96,42 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
           </div>
         )}
         <div>
-          <label className={labelCls}>Price field</label>
+          <label className={labelCls}>{t('bulk.priceField')}</label>
           <select className={inputCls} value={field} onChange={resetPreview(setField)}>
-            <option value="price">Selling price</option>
-            <option value="costPrice">Cost price</option>
+            <option value="price">{t('bulk.sellingPrice')}</option>
+            <option value="costPrice">{t('bulk.costPrice')}</option>
           </select>
         </div>
         <div>
-          <label className={labelCls}>Mode</label>
+          <label className={labelCls}>{t('bulk.mode')}</label>
           <select className={inputCls} value={mode} onChange={resetPreview(setMode)}>
-            <option value="percent">Change by %</option>
-            <option value="set">Set to amount</option>
+            <option value="percent">{t('bulk.modePercent')}</option>
+            <option value="set">{t('bulk.modeSet')}</option>
           </select>
         </div>
         <div>
-          <label className={labelCls}>{mode === 'percent' ? 'Percent (e.g. 10 or -5)' : 'New price'}</label>
+          <label className={labelCls}>{mode === 'percent' ? t('bulk.percentLabel') : t('bulk.newPrice')}</label>
           <input className={`${inputCls} font-mono`} type="number" step="0.01" value={value} onChange={resetPreview(setValue)} />
         </div>
         <div>
-          <label className={labelCls}>Round to (optional)</label>
+          <label className={labelCls}>{t('bulk.roundTo')}</label>
           <input
             className={`${inputCls} font-mono`}
             type="number"
             step="0.01"
             min="0"
-            placeholder="e.g. 0.5 or 1"
+            placeholder={t('bulk.roundPlaceholder')}
             value={roundTo}
             onChange={resetPreview(setRoundTo)}
           />
         </div>
         <div className="sm:col-span-3">
-          <label className={labelCls}>Reason</label>
+          <label className={labelCls}>{t('bulk.reason')}</label>
           <input
             className={inputCls}
             value={reason}
             maxLength={300}
-            placeholder="e.g. Supplier price increase"
+            placeholder={t('bulk.reasonPlaceholder')}
             onChange={(e) => setReason(e.target.value)}
           />
         </div>
@@ -138,9 +140,9 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
       {preview && (
         <div className="mt-5">
           <p className="text-xs text-slate-600 dark:text-slate-300 mb-2">
-            {preview.count} medicine(s) match, <strong>{preview.changedCount}</strong> will change
+            <Trans t={t} i18nKey="bulk.summary" values={{ count: preview.count, changed: preview.changedCount }} components={{ 1: <strong /> }} />
             {preview.warningCount > 0 && (
-              <span className="text-amber-600 dark:text-amber-400">, {preview.warningCount} with margin warnings</span>
+              <span className="text-amber-600 dark:text-amber-400">{t('bulk.warnings', { count: preview.warningCount })}</span>
             )}
             .
           </p>
@@ -148,10 +150,10 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
             <table className="w-full text-xs">
               <thead className={theadCls}>
                 <tr>
-                  <th className={thCls}>Medicine</th>
-                  <th className={thCls}>Old</th>
-                  <th className={thCls}>New</th>
-                  <th className={thCls}>Margin</th>
+                  <th className={thCls}>{t('bulk.colMedicine')}</th>
+                  <th className={thCls}>{t('bulk.colOld')}</th>
+                  <th className={thCls}>{t('bulk.colNew')}</th>
+                  <th className={thCls}>{t('bulk.colMargin')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
@@ -171,7 +173,7 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
 
       <div className="flex items-center justify-end gap-3 pt-4 mt-5 border-t border-slate-100 dark:border-slate-800/80">
         <button type="button" className={secondaryBtn} onClick={handlePreview} disabled={loading}>
-          <Eye className="w-4 h-4" /> Preview
+          <Eye className="w-4 h-4" /> {t('bulk.preview')}
         </button>
         <button
           type="button"
@@ -179,7 +181,7 @@ const BulkPriceModal = ({ categories = [], selectedIds = [], onClose, onSuccess 
           onClick={handleApply}
           disabled={loading || !preview || preview.changedCount === 0}
         >
-          <CheckCircle className="w-4 h-4" /> Apply
+          <CheckCircle className="w-4 h-4" /> {t('bulk.apply')}
         </button>
       </div>
     </CatalogModal>

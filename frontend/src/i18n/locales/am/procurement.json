@@ -1,0 +1,158 @@
+{
+  "page": {
+    "badge": "ግዥ እና የአቅርቦት ሰንሰለት",
+    "title": "የግዢ ትዕዛዞች እና ርክክቦች",
+    "subtitle": "የክምችት መሙያ ዕቃዎችን ከመድኃኒት አቅራቢዎች ይግዙ እና የሚገቡ ሎቶችን ይረከቡ",
+    "create": "የግዢ ትዕዛዝ ፍጠር",
+    "searchPlaceholder": "በግዢ ትዕዛዝ ቁጥር ወይም በአቅራቢ ስም ይፈልጉ..."
+  },
+  "filters": {
+    "all": "ሁሉም ትዕዛዞች",
+    "draft": "ረቂቆች",
+    "ordered": "ርክክብ በመጠባበቅ ላይ",
+    "partial": "ከፊል",
+    "received": "የደረሱ",
+    "closed": "በጎደለ የተዘጉ",
+    "cancelled": "የተሰረዙ"
+  },
+  "status": {
+    "pendingDelivery": "ርክክብ በመጠባበቅ ላይ",
+    "partiallyReceived": "በከፊል ደርሷል",
+    "closedShort": "በጎደለ ተዘግቷል"
+  },
+  "metrics": {
+    "totalRequisitions": "ጠቅላላ ጥያቄዎች",
+    "totalRequisitionsSub": "የተፈጠሩ ሁሉም የግዢ ትዕዛዞች",
+    "totalPOs": "ጠቅላላ ትዕዛዞች",
+    "pendingDeliveries": "በመጠባበቅ ላይ ያሉ ርክክቦች",
+    "pendingDeliveriesSub": "ከአቅራቢ መቀበልን በመጠባበቅ ላይ",
+    "inTransit": "በመጓጓዝ ላይ",
+    "clear": "ምንም የለም",
+    "receivedDeliveries": "የደረሱ ርክክቦች",
+    "receivedDeliveriesSub": "ወደ ንቁ ክምችት ገብቷል",
+    "fulfilled": "ተሟልቷል",
+    "procurementSpend": "የግዥ ወጪ",
+    "procurementSpendSub": "ንቁ የመሙያ ካፒታል",
+    "capital": "ካፒታል"
+  },
+  "empty": {
+    "noMatchTitle": "የሚዛመድ የግዢ ትዕዛዝ የለም",
+    "noneTitle": "ምንም የግዢ ትዕዛዝ አልተዘጋጀም",
+    "noMatchHint": "የፍለጋ መስፈርቶችን ወይም ማጣሪያዎችን ለማስተካከል ይሞክሩ",
+    "noneHint": "ከተመዘገቡ አቅራቢዎች የመድኃኒት ክምችት ለመጠየቅ የግዢ ትዕዛዝ ያዘጋጁ",
+    "createFirst": "የመጀመሪያውን ትዕዛዝ ፍጠር"
+  },
+  "table": {
+    "poId": "የትዕዛዝ መለያ",
+    "vendor": "የመድኃኒት አቅራቢ",
+    "orderDate": "የትዕዛዝ ቀን",
+    "summary": "የጥያቄ ማጠቃለያ",
+    "orderTotal": "የትዕዛዝ ድምር",
+    "deliveryStatus": "የርክክብ ሁኔታ",
+    "showDetails": "መስመሮችን እና የርክክብ ታሪክን አሳይ",
+    "verifiedSupplier": "የተረጋገጠ አቅራቢ",
+    "expected": "የሚጠበቀው፦ {{date}}",
+    "productSummary_one": "{{count}} ምርት ({{units}} ክፍሎች)",
+    "productSummary_other": "{{count}} ምርቶች ({{units}} ክፍሎች)",
+    "receivedOf": "ከ{{ordered}} {{received}} ደርሷል",
+    "receiveStock": "ክምችት ተቀበል",
+    "receiveMore": "ተጨማሪ ተቀበል",
+    "closeShortTitle": "በጎደለ ዝጋ (ቀሪው አይደርስም)",
+    "cancelTitle": "የግዢ ትዕዛዝ ሰርዝ",
+    "receivedOn": "ደርሷል {{date}}",
+    "closedOn": "ተዘግቷል {{date}}"
+  },
+  "footer": {
+    "showingPrefix": "እየታዩ ያሉ",
+    "showingSuffix": "የግዢ ትዕዛዞች",
+    "spend": "የግዥ ወጪ፦ {{amount}}"
+  },
+  "confirm": {
+    "cancel": "የግዢ ትዕዛዝ \"{{poNumber}}\"ን መሰረዝ እንደሚፈልጉ እርግጠኛ ነዎት?",
+    "closeShort": "\"{{poNumber}}\" በጎደለ ይዘጋ? ቀሪዎቹ መጠኖች እንደማይመጡ ይመዘገባሉ።\nምክንያት (አማራጭ)፦"
+  },
+  "errors": {
+    "cancelFailed": "ትዕዛዙን መሰረዝ አልተሳካም",
+    "submitFailed": "ትዕዛዙን ማስገባት አልተሳካም",
+    "closeFailed": "ትዕዛዙን መዝጋት አልተሳካም"
+  },
+  "details": {
+    "lines": "መስመሮች",
+    "item": "ዕቃ",
+    "ordered": "የታዘዘ",
+    "received": "የደረሰ",
+    "bonus": "ጉርሻ",
+    "unitCost": "የአንድ ዋጋ",
+    "closedShort": "በጎደለ ተዘግቷል",
+    "closedShortReason": "በጎደለ ተዘግቷል፦ {{reason}}",
+    "receiptHistory": "የርክክብ ታሪክ",
+    "noDeliveries": "እስካሁን ምንም ርክክብ አልተመዘገበም።",
+    "by": "በ{{name}}",
+    "supplierInvoice": "የአቅራቢ ደረሰኝ",
+    "plusBonus": "+ {{qty}} ጉርሻ"
+  },
+  "create": {
+    "title": "የግዢ ትዕዛዝ ረቂቅ",
+    "subtitle": "ለመድኃኒት ክምችት መሙያ የአቅራቢ የግዥ ጥያቄ ይጀምሩ",
+    "vendor": "የመድኃኒት አቅራቢ ይምረጡ",
+    "loadingVendors": "አቅራቢዎችን በመጫን ላይ...",
+    "noSuppliers": "ንቁ አቅራቢ የለም። መጀመሪያ አቅራቢዎችን ያክሉ።",
+    "expectedDelivery": "የሚጠበቅ የርክክብ ቀን",
+    "lineItems": "የትዕዛዝ መስመር ዕቃዎች",
+    "addLine": "የምርት መስመር ጨምር",
+    "unit": "ክፍል",
+    "qtyPlaceholder": "ብዛት",
+    "costPlaceholder": "ወጪ",
+    "removeLine": "ምርቱን አስወግድ",
+    "notes": "የግዥ ማስታወሻዎች እና የርክክብ ውሎች",
+    "notesPlaceholder": "ለምሳሌ፦ መደበኛ ቀዝቃዛ ሰንሰለት ያስፈልጋል፣ ደረሰኝ በ30 ቀናት ውስጥ ይከፈላል...",
+    "estimatedTotal": "የሚገመት የትዕዛዝ ድምር፦",
+    "productLines_one": "{{count}} የምርት መስመር",
+    "productLines_other": "{{count}} የምርት መስመሮች",
+    "saveDraft": "እንደ ረቂቅ አስቀምጥ",
+    "generating": "ትዕዛዝ በመፍጠር ላይ...",
+    "issue": "የግዢ ትዕዛዝ አውጣ",
+    "errors": {
+      "loadFailed": "ንቁ አቅራቢዎችን እና የመድኃኒት ካታሎግን መጫን አልተሳካም።",
+      "selectSupplier": "እባክዎ የተረጋገጠ አቅራቢ ይምረጡ።",
+      "noItems": "የግዢ ትዕዛዝ ቢያንስ አንድ የዕቃ መስመር ሊኖረው ይገባል።",
+      "invalidLines": "እባክዎ የሁሉንም የምርት መስመሮች ብዛት እና የግዢ ዋጋ ያረጋግጡ።",
+      "createFailed": "የግዢ ትዕዛዝ መፍጠር አልተሳካም"
+    }
+  },
+  "receive": {
+    "title": "ርክክብ ተቀበል",
+    "subtitle": "የደረሰውን ያስገቡ። ከፊል ርክክብ፣ ለአንድ ዕቃ ብዙ ሎቶች እና የጉርሻ ክፍሎች ይደገፋሉ።",
+    "itemN": "ዕቃ #{{n}}",
+    "supplierLabel": "አቅራቢ፦",
+    "supplierFallback": "አቅራቢ",
+    "fillExpiry": "ባዶ የማብቂያ ቀኖችን ሙላ (+2 ዓመት)",
+    "invoiceNo": "የአቅራቢ ደረሰኝ ቁ.",
+    "optional": "አማራጭ",
+    "invoiceDate": "የደረሰኝ ቀን",
+    "notes": "ማስታወሻዎች",
+    "items_one": "ዕቃዎች ({{count}})",
+    "items_other": "ዕቃዎች ({{count}})",
+    "ordered": "የታዘዘ",
+    "received": "የደረሰ",
+    "now": "አሁን",
+    "fullyReceived": "ሙሉ በሙሉ ደርሷል።",
+    "lotNumber": "የሎት ቁጥር",
+    "expiryDate": "የማብቂያ ቀን",
+    "receivedQty": "የደረሰ ብዛት",
+    "bonus": "ጉርሻ",
+    "removeLot": "ሎቱን አስወግድ",
+    "addLot": "ሌላ ሎት ጨምር",
+    "addBonusLot": "የጉርሻ ሎት ጨምር",
+    "receiptCost": "የዚህ ርክክብ ወጪ (ጉርሻ ነፃ ነው)፦",
+    "saving": "ርክክቡን በማስቀመጥ ላይ...",
+    "submit": "ተቀበል እና ወደ ክምችት ጨምር",
+    "errors": {
+      "overOutstanding": "\"{{name}}\"፦ የደረሰው ብዛት ቀሪ ካለው {{outstanding}} ይበልጣል። ነፃ ክፍሎችን እንደ ጉርሻ ይመዝግቡ።",
+      "wholeNumbers": "\"{{name}}\"፦ ብዛቶች ዜሮ ወይም ከዚያ በላይ የሆኑ ሙሉ ቁጥሮች መሆን አለባቸው።",
+      "lotAndExpiry": "እባክዎ ለ\"{{name}}\" የሎት ቁጥር እና የማብቂያ ቀን ያስገቡ።",
+      "nothingEntered": "ቢያንስ ለአንድ ዕቃ የደረሰ ወይም የጉርሻ ብዛት ያስገቡ።",
+      "receiveFailed": "የግዢ ትዕዛዝ ርክክብን መቀበል አልተሳካም"
+    }
+  }
+}
