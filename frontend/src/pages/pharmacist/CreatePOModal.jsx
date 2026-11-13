@@ -12,6 +12,7 @@ import {
 import { getSuppliers } from '../../api/supplierApi';
 import { getMedicines } from '../../api/medicineApi';
 import { createPurchaseOrder } from '../../api/procurementApi';
+import { formatMoney } from '../../utils/format';
 
 const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
   const [suppliers, setSuppliers] = useState([]);
@@ -109,7 +110,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
     return sum + q * c;
   }, 0);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e, asDraft = false) => {
     e.preventDefault();
     setError('');
 
@@ -140,6 +141,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
         })),
         expectedDelivery: expectedDelivery || undefined,
         notes: notes.trim() || undefined,
+        status: asDraft ? 'draft' : 'ordered',
       });
 
       setLoading(false);
@@ -347,7 +349,7 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
                 ({items.length} product lines)
               </span>
               <span className="font-mono font-bold text-base text-emerald-600 dark:text-emerald-400">
-                ${calculatedTotal.toFixed(2)}
+                {formatMoney(calculatedTotal)}
               </span>
             </div>
           </div>
@@ -361,6 +363,14 @@ const CreatePOModal = ({ isOpen, onClose, onSuccess }) => {
               className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
             >
               Cancel
+            </button>
+            <button
+              type="button"
+              onClick={(e) => handleSubmit(e, true)}
+              disabled={loading || suppliers.length === 0 || medicines.length === 0}
+              className="px-4 py-2 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 disabled:opacity-50 text-xs font-semibold rounded-xl transition cursor-pointer"
+            >
+              Save as Draft
             </button>
             <button
               type="submit"

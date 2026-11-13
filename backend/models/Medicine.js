@@ -6,6 +6,20 @@ const emptyToUndefined = (v) => {
   return str === '' ? undefined : str;
 };
 
+const DOSAGE_FORMS = [
+  'Tablet',
+  'Capsule',
+  'Syrup',
+  'Suspension',
+  'Injection',
+  'Ointment',
+  'Cream',
+  'Gel',
+  'Drops',
+  'Inhaler',
+  'Other',
+];
+
 const packUnitSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true }, // e.g. 'strip', 'box'
@@ -41,7 +55,7 @@ const medicineSchema = new mongoose.Schema(
     },
     dosageForm: {
       type: String,
-      enum: ['Tablet', 'Capsule', 'Syrup', 'Injection', 'Ointment', 'Drops', 'Inhaler', 'Other'],
+      enum: DOSAGE_FORMS,
       default: 'Tablet',
     },
     strength: {
@@ -145,5 +159,9 @@ medicineSchema.index(
   { unique: true, partialFilterExpression: { barcode: { $type: 'string' } } }
 );
 medicineSchema.index({ pharmacyId: 1, 'packUnits.barcode': 1 });
+medicineSchema.index({ pharmacyId: 1, sku: 1 });
 
-module.exports = mongoose.model('Medicine', medicineSchema);
+const Medicine = mongoose.model('Medicine', medicineSchema);
+Medicine.DOSAGE_FORMS = DOSAGE_FORMS;
+
+module.exports = Medicine;

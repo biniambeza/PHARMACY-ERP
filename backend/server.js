@@ -49,6 +49,16 @@ const start = async () => {
     }
   }
 
+  // Scheduled jobs (expiry checks, notifications, subscription checks).
+  // Controlled by ENABLE_JOBS; never runs under NODE_ENV=test.
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      require('./jobs').startJobs();
+    } catch (error) {
+      console.warn(`Warning: scheduled jobs failed to start: ${error.message}`);
+    }
+  }
+
   app.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
   });

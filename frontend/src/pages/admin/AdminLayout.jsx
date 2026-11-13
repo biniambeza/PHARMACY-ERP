@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
@@ -12,9 +12,6 @@ import {
   Sun,
   LogOut,
   X,
-  Search,
-  Bell,
-  Menu,
   ChevronLeft,
   ChevronRight,
   PanelLeftClose,
@@ -35,7 +32,6 @@ const AdminLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('erp_admin_sidebar_collapsed') === 'true';
   });
-  const navigate = useNavigate();
 
   const toggleSidebarCollapse = () => {
     setSidebarCollapsed((prev) => {

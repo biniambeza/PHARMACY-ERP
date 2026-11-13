@@ -1,0 +1,37 @@
+import { X } from 'lucide-react';
+
+// Modal shell used by catalog dialogs (same look as MedicineModal).
+const CatalogModal = ({ title, subtitle, icon: Icon, onClose, children, maxWidth = 'max-w-2xl' }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fade-in">
+    <div
+      className={`bg-white dark:bg-[#161c26] border border-slate-200/90 dark:border-slate-800 rounded-2xl ${maxWidth} w-full p-6 sm:p-7 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar transition-colors`}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800/80 mb-5">
+        <div className="flex items-center gap-3">
+          {Icon && (
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+              <Icon className="w-5 h-5" />
+            </div>
+          )}
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">{title}</h2>
+            {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+      {children}
+    </div>
+  </div>
+);
+
+export default CatalogModal;

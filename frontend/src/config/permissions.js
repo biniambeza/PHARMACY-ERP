@@ -59,7 +59,7 @@ export const ALL_PERMISSIONS = [
   'notifications:view',
 ];
 
-const OWNER_ONLY = ['staff:manage', 'settings:manage', 'audit:view', 'branch:manage'];
+const OWNER_ONLY = ['staff:manage', 'settings:manage', 'audit:view', 'branch:manage', 'sales:void'];
 
 export const PERMISSIONS = {
   owner: [...ALL_PERMISSIONS],
@@ -68,6 +68,8 @@ export const PERMISSIONS = {
     'sales:create',
     'sales:view',
     'customer:view',
+    // Patient lookup at the POS (view only)
+    'patient:view',
     'shift:own',
     'medicine:view',
     'notifications:view',

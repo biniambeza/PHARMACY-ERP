@@ -25,6 +25,45 @@ const poItemSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
+  // Paid units received so far (never more than quantityOrdered).
+  quantityReceived: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  // Free / bonus units received on top of the order (added to stock at zero cost).
+  bonusQuantity: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+});
+
+const receiptLineSchema = new mongoose.Schema(
+  {
+    medicineId: { type: mongoose.Schema.Types.ObjectId, ref: 'Medicine', required: true },
+    name: { type: String, default: '' },
+    batchId: { type: mongoose.Schema.Types.ObjectId, ref: 'StockBatch' },
+    batchNo: { type: String, required: true, trim: true },
+    expiryDate: { type: Date, required: true },
+    quantity: { type: Number, default: 0, min: 0 },
+    bonusQuantity: { type: Number, default: 0, min: 0 },
+    unitCost: { type: Number, default: 0, min: 0 },
+  },
+  { _id: false }
+);
+
+// One goods-received note (GRN) per delivery.
+const receiptSchema = new mongoose.Schema({
+  receiptNo: { type: String, required: true, trim: true },
+  date: { type: Date, default: Date.now },
+  receivedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  supplierInvoiceNo: { type: String, default: '', trim: true },
+  supplierInvoiceDate: { type: Date, default: null },
+  notes: { type: String, default: '', trim: true },
+  // Cost of the paid units in this receipt (bonus units are free).
+  totalCost: { type: Number, default: 0, min: 0 },
+  lines: [receiptLineSchema],
 });
 
 const purchaseOrderSchema = new mongoose.Schema(
@@ -60,9 +99,20 @@ const purchaseOrderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['ordered', 'received', 'cancelled'],
+      // draft -> ordered -> partially_received -> received
+      // closed = partially received and the rest will not come ("close short").
+      enum: ['draft', 'ordered', 'partially_received', 'received', 'closed', 'cancelled'],
       default: 'ordered',
     },
+    receipts: [receiptSchema],
+    // Bumped on every receive; used as an optimistic-concurrency guard.
+    receiveVersion: {
+      type: Number,
+      default: 0,
+    },
+    closedAt: { type: Date },
+    closedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    closeReason: { type: String, default: '', trim: true },
     orderDate: {
       type: Date,
       default: Date.now,
@@ -88,5 +138,6 @@ purchaseOrderSchema.index({ pharmacyId: 1, createdAt: -1 });
 purchaseOrderSchema.index({ pharmacyId: 1, poNumber: 1 }, { unique: true });
 purchaseOrderSchema.index({ pharmacyId: 1, 'items.medicineId': 1 });
 purchaseOrderSchema.index({ pharmacyId: 1, supplierId: 1 });
+purchaseOrderSchema.index({ pharmacyId: 1, status: 1 });
 
 module.exports = mongoose.model('PurchaseOrder', purchaseOrderSchema);

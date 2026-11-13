@@ -1,14 +1,17 @@
 // Mounted at /api/controlled: controlled substances register (#17). Owner: Clinical agent.
-// Scaffolded by Foundation: every route is authenticated and tenant-scoped
-// (req.pharmacyId, req.membershipRole). Gate each route with
-// requirePermission('module:action') from middleware/permission.js.
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
+const { authorize } = require('../middleware/roleMiddleware');
 const pharmacyScope = require('../middleware/pharmacyScope');
-// eslint-disable-next-line no-unused-vars
 const { requirePermission } = require('../middleware/permission');
+const { getRegister, getControlledMedicines } = require('../controllers/controlledController');
 
-router.use(protect, pharmacyScope);
+router.use(protect, authorize('pharmacist'), pharmacyScope);
+
+const canView = requirePermission('controlled:view');
+
+router.get('/register', canView, getRegister);
+router.get('/medicines', canView, getControlledMedicines);
 
 module.exports = router;

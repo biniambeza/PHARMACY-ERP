@@ -10,7 +10,9 @@ import {
   Layers,
   Clock,
   Pill,
+  History,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getStockBatches, getInventorySummary, deleteStockBatch } from '../../api/stockApi';
 import StockInModal from './StockInModal';
 import StockAdjustModal from './StockAdjustModal';
@@ -411,6 +413,13 @@ const Stock = () => {
                       {/* Actions */}
                       <td className="py-3.5 px-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            to={`/pharmacy/movements?batchId=${batch._id}`}
+                            title="Batch movement history"
+                            className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-950/30 rounded-lg transition"
+                          >
+                            <History className="w-4 h-4" />
+                          </Link>
                           {!isDepleted && (
                             <button
                               onClick={() => handleOpenAdjust(batch)}

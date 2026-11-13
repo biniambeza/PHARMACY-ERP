@@ -6,6 +6,8 @@ const {
   createPurchaseOrder,
   receivePurchaseOrder,
   cancelPurchaseOrder,
+  submitPurchaseOrder,
+  closePurchaseOrder,
 } = require('../controllers/purchaseOrderController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
@@ -21,5 +23,7 @@ router.route('/orders')
 router.route('/orders/:id').get(requirePermission('po:view'), getPurchaseOrderById);
 router.patch('/orders/:id/receive', requirePermission('po:receive'), receivePurchaseOrder);
 router.patch('/orders/:id/cancel', requirePermission('po:manage'), cancelPurchaseOrder);
+router.patch('/orders/:id/submit', requirePermission('po:manage'), submitPurchaseOrder);
+router.post('/orders/:id/close', requirePermission('po:manage'), closePurchaseOrder);
 
 module.exports = router;

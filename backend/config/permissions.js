@@ -57,7 +57,7 @@ const ALL_PERMISSIONS = [
   'notifications:view',
 ];
 
-const OWNER_ONLY = ['staff:manage', 'settings:manage', 'audit:view', 'branch:manage'];
+const OWNER_ONLY = ['staff:manage', 'settings:manage', 'audit:view', 'branch:manage', 'sales:void'];
 
 const PERMISSIONS = {
   owner: [...ALL_PERMISSIONS],
@@ -66,6 +66,8 @@ const PERMISSIONS = {
     'sales:create',
     'sales:view',
     'customer:view',
+    // Patient lookup at the POS (view only)
+    'patient:view',
     'shift:own',
     // Needed by the POS screen (medicine search)
     'medicine:view',

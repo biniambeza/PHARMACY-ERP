@@ -1,26 +1,25 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Building2,
   Plus,
   Search,
-  Phone,
-  Mail,
-  MapPin,
   User,
   Edit3,
   Trash2,
   CheckCircle,
   AlertCircle,
-  FileText,
 } from 'lucide-react';
 import { getSuppliers, deleteSupplier } from '../../api/supplierApi';
+import { formatMoney } from '../../utils/format';
+import { useAuth } from '../../context/AuthContext';
 import SupplierModal from './SupplierModal';
 import MetricCard from '../../components/common/MetricCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
 
 const Suppliers = () => {
+  const { can } = useAuth();
   const [suppliers, setSuppliers] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -103,6 +102,7 @@ const Suppliers = () => {
           </p>
         </div>
 
+        {can('supplier:manage') && (
         <button
           onClick={handleOpenCreate}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
@@ -110,6 +110,7 @@ const Suppliers = () => {
           <Plus className="w-4 h-4" />
           <span>Add Supplier</span>
         </button>
+        )}
       </div>
 
       {/* Metrics Cards */}
@@ -248,6 +249,7 @@ const Suppliers = () => {
                   <th className="py-3.5 px-4">Telephone</th>
                   <th className="py-3.5 px-4">Email Address</th>
                   <th className="py-3.5 px-4">Warehouse Address</th>
+                  <th className="py-3.5 px-4 text-right">Outstanding</th>
                   <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-5 text-right">Actions</th>
                 </tr>
@@ -298,6 +300,28 @@ const Suppliers = () => {
 
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 max-w-xs truncate">
                       {item.address || 'N/A'}
+                    </td>
+
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      {item.outstandingBalance > 0 ? (
+                        <Link
+                          to={`/pharmacy/payables?supplierId=${item._id}`}
+                          title="Open in payables"
+                          className={`font-bold hover:underline ${
+                            item.overdueBalance > 0
+                              ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-amber-600 dark:text-amber-400'
+                          }`}
+                        >
+                          {formatMoney(item.outstandingBalance)}
+                        </Link>
+                      ) : (
+                        <span className="text-slate-400">{formatMoney(0)}</span>
+                      )}
+                      {item.overdueBalance > 0 && (
+                        <span className="block text-[10px] text-rose-500">{formatMoney(item.overdueBalance)} overdue</span>
+                      )}
+                      <span className="block text-[10px] text-slate-400">{item.paymentTermsDays ?? 30}-day terms</span>
                     </td>
 
                     <td className="py-3.5 px-4">

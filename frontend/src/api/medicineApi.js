@@ -29,3 +29,30 @@ export const getCategories = async () => {
   const res = await api.get('/medicines/categories');
   return res.data;
 };
+
+// Barcode / pack barcode / SKU lookup -> { medicine, unit: { name, factor, price } }
+export const lookupMedicine = async (code) => {
+  const res = await api.get('/medicines/lookup', { params: { code } });
+  return res.data;
+};
+
+export const generateBarcode = async (id, packUnitId) => {
+  const res = await api.post(`/medicines/${id}/generate-barcode`, packUnitId ? { packUnitId } : {});
+  return res.data;
+};
+
+export const getPriceHistory = async (id, params = {}) => {
+  const res = await api.get(`/medicines/${id}/price-history`, { params });
+  return res.data;
+};
+
+// body: { filter: { category?, ids?, all? }, mode: 'percent'|'set', value, roundTo?, reason, field? }
+export const previewBulkPrice = async (body) => {
+  const res = await api.post('/medicines/bulk-price/preview', body);
+  return res.data;
+};
+
+export const applyBulkPrice = async (body) => {
+  const res = await api.post('/medicines/bulk-price', body);
+  return res.data;
+};

@@ -1,0 +1,16 @@
+{
+  "groups": { "sales": "Sales", "inventory": "Inventory", "procurement": "Procurement", "clinical": "Clinical", "admin": "Admin" },
+  "items": {
+    "overview": "Overview", "pos": "Point of Sale", "sales": "Sales History", "returns": "Returns",
+    "shifts": "Shifts", "customers": "Customers", "medicines": "Medicines", "stock": "Stock",
+    "stock-take": "Stock Take", "movements": "Movements", "expiry": "Expiry", "transfers": "Transfers",
+    "import": "Import", "suppliers": "Suppliers", "procurement": "Purchase Orders", "reorder": "Reorder",
+    "payables": "Payables", "patients": "Patients", "controlled": "Controlled Register",
+    "interactions": "Interactions", "reports": "Reports", "audit": "Audit Log", "staff": "Staff",
+    "settings": "Settings", "notifications": "Notifications", "admin": "Admin Dashboard"
+  },
+  "quickActions": {
+    "create-purchase": "Create Purchase", "new-sale-pos": "New Sale (POS)",
+    "record-stock": "Record Stock", "add-supplier": "Add Supplier"
+  }
+}

@@ -5,6 +5,23 @@ import MetricCard from '../../components/common/MetricCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { MetricCardSkeleton, CardSkeleton } from '../../components/common/SkeletonLoader';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
+import { useAuth } from '../../context/AuthContext';
+import { formatMoney } from '../../utils/format';
+import { exportCSV, exportPDF } from '../../utils/export';
+import { downloadExport } from '../../api/exportApi';
+
+const DASH_RANGES = [
+  { id: 'today', label: 'Today' },
+  { id: '7d', label: '7 Days' },
+  { id: 'monthly', label: '30 Days' },
+  { id: 'yearly', label: 'Year' },
+];
+
+const growthType = (g, invert = false) => {
+  if (!g || g === 'n/a') return 'neutral';
+  const up = !String(g).startsWith('-');
+  return (invert ? !up : up) ? 'positive' : 'negative';
+};
 
 const PharmacistDashboard = () => {
   const navigate = useNavigate();
@@ -16,12 +33,15 @@ const PharmacistDashboard = () => {
   const [tasksState, setTasksState] = useState({});
   const [selectedSale, setSelectedSale] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [range, setRange] = useState('7d');
+  const [exportingSales, setExportingSales] = useState(false);
+  const { can, activePharmacy, user } = useAuth();
 
-  const fetchOverview = async () => {
+  const fetchOverview = async (selectedRange = range) => {
     try {
       setLoading(true);
       setError('');
-      const res = await getDashboardOverview();
+      const res = await getDashboardOverview(selectedRange);
       if (res.success && res.overview) {
         setOverview(res.overview);
       }
@@ -34,8 +54,9 @@ const PharmacistDashboard = () => {
   };
 
   useEffect(() => {
-    fetchOverview();
-  }, []);
+    fetchOverview(range);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range]);
 
   const toggleTask = (taskId) => {
     setTasksState((prev) => ({ ...prev, [taskId]: !prev[taskId] }));
@@ -90,7 +111,7 @@ const PharmacistDashboard = () => {
           {error || 'No overview data was returned by the server.'}
         </p>
         <button
-          onClick={fetchOverview}
+          onClick={() => fetchOverview()}
           className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition cursor-pointer"
         >
           Retry Connection
@@ -107,6 +128,55 @@ const PharmacistDashboard = () => {
     topSuppliers = [],
     recentSales = [],
   } = overview;
+  const period = kpis.period || {};
+
+  const summaryRows = [
+    { metric: `Revenue (${period.rangeLabel || ''})`, value: formatMoney(period.revenue) },
+    { metric: 'Cost of goods sold', value: formatMoney(period.cogs) },
+    { metric: 'Gross profit', value: formatMoney(period.grossProfit) },
+    { metric: 'Orders', value: period.orders ?? 0 },
+    { metric: 'Refunds', value: formatMoney(period.refunds) },
+    { metric: 'Tax collected', value: formatMoney(period.tax) },
+    { metric: 'Revenue growth', value: kpis.revenueGrowth },
+    { metric: 'All-time revenue', value: formatMoney(kpis.totalRevenue) },
+    { metric: 'All-time gross profit', value: formatMoney(kpis.netProfit) },
+    { metric: 'Active batches', value: kpis.activeBatches },
+    { metric: 'Stock units', value: kpis.totalStockUnits },
+  ];
+  const salesColumns = [
+    { key: 'invoiceNumber', header: 'Invoice' },
+    { key: 'createdAt', header: 'Date', format: (v) => new Date(v).toLocaleString() },
+    { key: 'customer', header: 'Customer', format: (v) => v?.name || 'Walk-in' },
+    { key: 'grandTotal', header: 'Total', align: 'right', format: (v) => formatMoney(v) },
+    { key: 'voided', header: 'Status', format: (v, r) => (v ? 'Voided' : r.returnStatus && r.returnStatus !== 'none' ? `Returned (${r.returnStatus})` : 'Paid') },
+  ];
+  const handleExportCSV = () => exportCSV(summaryRows, [{ key: 'metric', header: 'Metric' }, { key: 'value', header: 'Value' }], `dashboard-${range}`);
+  const handleExportPDF = () =>
+    exportPDF({
+      title: 'Dashboard Summary',
+      filename: `dashboard-${range}`,
+      columns: salesColumns,
+      rows: recentSales,
+      meta: {
+        pharmacy: activePharmacy?.name,
+        period: period.rangeLabel,
+        generatedBy: user?.name,
+        subtitle: 'Key figures and most recent sales',
+        summary: summaryRows.map((r) => [r.metric, r.value]),
+      },
+    });
+  const handleExportSalesXlsx = async () => {
+    setExportingSales(true);
+    try {
+      await downloadExport('sales', { format: 'xlsx', range });
+    } catch (err) {
+      console.error('Sales export failed:', err);
+    } finally {
+      setExportingSales(false);
+    }
+  };
+  const exportBtnCls =
+    'inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-[11px] font-semibold rounded-xl transition cursor-pointer disabled:opacity-50';
 
   // Sparkline data sequences derived from real trend points
   const revTrendData =
@@ -134,17 +204,48 @@ const PharmacistDashboard = () => {
       {/* ------------------------------------------------------------- */}
       {/* 1. TOP EXECUTIVE KPI CARDS ROW                                */}
       {/* ------------------------------------------------------------- */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs font-medium self-start">
+          {DASH_RANGES.map((r) => (
+            <button
+              key={r.id}
+              onClick={() => setRange(r.id)}
+              className={`px-3 py-1.5 rounded-lg transition cursor-pointer text-[11px] ${
+                range === r.id
+                  ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={handleExportCSV} className={exportBtnCls}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+            CSV
+          </button>
+          <button onClick={handleExportPDF} className={exportBtnCls}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+            PDF
+          </button>
+          {can('data:export') && (
+            <button onClick={handleExportSalesXlsx} disabled={exportingSales} className={exportBtnCls}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M10 3v18M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" /></svg>
+              {exportingSales ? 'Exporting...' : 'Sales Excel'}
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {/* Card 1: Total Revenue */}
+        {/* Card 1: Revenue for the selected period */}
         <MetricCard
-          title="Total Sales Revenue"
-          value={`$${Number(kpis.totalRevenue || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`}
-          change={kpis.revenueGrowth || '+12.6%'}
-          changeType="positive"
-          subValue="vs last 30 days"
+          title={`Sales Revenue (${period.rangeLabel || 'period'})`}
+          value={formatMoney(period.revenue ?? kpis.totalRevenue)}
+          change={kpis.revenueGrowth}
+          changeType={growthType(kpis.revenueGrowth)}
+          subValue={`vs previous period · all-time ${formatMoney(kpis.totalRevenue)}`}
           badgeText="Inflows"
           badgeVariant="emerald"
           icon={
@@ -159,14 +260,11 @@ const PharmacistDashboard = () => {
 
         {/* Card 2: Operating Expenses */}
         <MetricCard
-          title="Operating Expenses"
-          value={`$${Number(kpis.totalExpenses || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`}
-          change={kpis.expenseGrowth || '+8.4%'}
-          changeType="negative"
-          subValue="COGS & Procurement"
+          title="Cost of Goods Sold"
+          value={formatMoney(period.cogs ?? kpis.totalExpenses)}
+          change={kpis.expenseGrowth}
+          changeType={growthType(kpis.expenseGrowth, true)}
+          subValue={`Actual batch costs · all-time ${formatMoney(kpis.totalCOGS ?? kpis.totalExpenses)}`}
           badgeText="Outflows"
           badgeVariant="amber"
           icon={
@@ -181,16 +279,13 @@ const PharmacistDashboard = () => {
 
         {/* Card 3: Net Profit */}
         <MetricCard
-          title="Net Gross Margin"
-          value={`$${Number(kpis.netProfit || 0).toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}`}
-          change={kpis.profitGrowth || '+15.3%'}
-          changeType="positive"
-          subValue="Net Operating Profit"
-          badgeText="Profitable"
-          badgeVariant="emerald"
+          title="Gross Profit"
+          value={formatMoney(period.grossProfit ?? kpis.netProfit)}
+          change={kpis.profitGrowth}
+          changeType={growthType(kpis.profitGrowth)}
+          subValue={`${period.profitMargin ?? 0}% margin · all-time ${formatMoney(kpis.netProfit)}`}
+          badgeText={(period.grossProfit ?? kpis.netProfit) >= 0 ? 'Profitable' : 'Loss'}
+          badgeVariant={(period.grossProfit ?? kpis.netProfit) >= 0 ? 'emerald' : 'rose'}
           icon={
             <svg className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -290,10 +385,18 @@ const PharmacistDashboard = () => {
                           </span>
                         </td>
                         <td className="py-3 font-bold text-slate-900 dark:text-white">
-                          ${Number(sale.grandTotal).toFixed(2)}
+                          {formatMoney(sale.grandTotal)}
                         </td>
                         <td className="py-3">
-                          <StatusBadge status="paid" label="Paid" size="sm" />
+                          {sale.voided ? (
+                            <StatusBadge status="critical" label="Voided" size="sm" />
+                          ) : sale.returnStatus && sale.returnStatus !== 'none' ? (
+                            <StatusBadge status="warning" label={sale.returnStatus === 'full' ? 'Returned' : 'Part returned'} size="sm" />
+                          ) : Number(sale.balanceDue) > 0 ? (
+                            <StatusBadge status="warning" label="Credit" size="sm" />
+                          ) : (
+                            <StatusBadge status="paid" label="Paid" size="sm" />
+                          )}
                         </td>
                         <td className="py-3 text-right">
                           <button
@@ -450,7 +553,7 @@ const PharmacistDashboard = () => {
           <div className="pt-3 mt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
             <span>Aggregated intervals: Real-time DB records</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-              Net Spread: +${Number(kpis.netProfit || 0).toFixed(2)}
+              Gross profit: {formatMoney(period.grossProfit ?? kpis.netProfit)}
             </span>
           </div>
         </div>
@@ -603,10 +706,7 @@ const PharmacistDashboard = () => {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="font-extrabold text-slate-900 dark:text-white">
-                        ${Number(sup.spend || 0).toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {formatMoney(sup.spend)}
                       </span>
                       <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>

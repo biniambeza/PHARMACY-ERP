@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, User, Phone, Mail, MapPin, X, CheckCircle, FileText, AlertCircle } from 'lucide-react';
+import { Building2, User, Phone, Mail, MapPin, X, CheckCircle, FileText, AlertCircle, Calendar } from 'lucide-react';
 import { createSupplier, updateSupplier } from '../../api/supplierApi';
 
 const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
@@ -11,6 +11,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
     address: '',
     status: 'active',
     notes: '',
+    paymentTermsDays: '30',
   });
 
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
         address: supplier.address || '',
         status: supplier.status || 'active',
         notes: supplier.notes || '',
+        paymentTermsDays: String(supplier.paymentTermsDays ?? 30),
       });
     } else {
       setFormData({
@@ -36,6 +38,7 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
         address: '',
         status: 'active',
         notes: '',
+        paymentTermsDays: '30',
       });
     }
     setError('');
@@ -56,13 +59,19 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
       return setError('Supplier or company name is required.');
     }
 
+    const terms = Number(formData.paymentTermsDays);
+    if (!Number.isInteger(terms) || terms < 0 || terms > 365) {
+      return setError('Payment terms must be a whole number of days between 0 and 365.');
+    }
+
     setLoading(true);
 
     try {
+      const payload = { ...formData, paymentTermsDays: terms };
       if (supplier) {
-        await updateSupplier(supplier._id, formData);
+        await updateSupplier(supplier._id, payload);
       } else {
-        await createSupplier(formData);
+        await createSupplier(payload);
       }
 
       setLoading(false);
@@ -201,6 +210,27 @@ const SupplierModal = ({ isOpen, onClose, onSuccess, supplier }) => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Payment terms */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Payment Terms (days)
+            </label>
+            <div className="relative">
+              <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+              <input
+                type="number"
+                min="0"
+                max="365"
+                step="1"
+                name="paymentTermsDays"
+                value={formData.paymentTermsDays}
+                onChange={handleChange}
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1">Supplier invoices are due this many days after the invoice date (0 = on receipt).</p>
           </div>
 
           {/* Physical Address */}

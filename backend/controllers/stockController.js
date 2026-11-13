@@ -4,6 +4,7 @@ const Medicine = require('../models/Medicine');
 const Sale = require('../models/Sale');
 const AppError = require('../utils/AppError');
 const { recordMovement } = require('../utils/stockMovement');
+const { recordControlledReceipt, recordControlledMovement } = require('../services/clinical');
 
 const ADJUSTMENT_TYPES = ['damaged', 'expired', 'correction'];
 const ADJUSTMENT_MOVEMENT = {
@@ -34,7 +35,7 @@ const getStockBatches = async (req, res) => {
   }
 
   const batches = await StockBatch.find(query)
-    .populate('medicineId', 'name genericName category dosageForm strength price minStockLevel')
+    .populate('medicineId', 'name genericName category dosageForm strength price minStockLevel barcode baseUnit packUnits')
     .sort({ expiryDate: 1 });
 
   return res.status(200).json({
@@ -48,7 +49,9 @@ const getStockBatches = async (req, res) => {
 // @route   POST /api/stock
 // @access  Private (Pharmacist only)
 const addStockBatch = async (req, res) => {
-  const { medicineId, batchNo, quantity, expiryDate, purchasePrice } = req.body;
+  // Optional `unitName`: quantity (and purchasePrice) are then per pack unit and
+  // converted to base units (stock is always stored in the base unit).
+  const { medicineId, batchNo, quantity, expiryDate, purchasePrice, unitName } = req.body;
 
   if (!medicineId || typeof batchNo !== 'string' || !batchNo.trim() || quantity === undefined || !expiryDate) {
     throw new AppError('Please provide medicine, batch number, quantity, and expiry date', 400);
@@ -57,8 +60,8 @@ const addStockBatch = async (req, res) => {
     throw new AppError('Invalid medicine id', 400);
   }
 
-  const qty = Number(quantity);
-  if (!Number.isInteger(qty) || qty <= 0) {
+  const qtyEntered = Number(quantity);
+  if (!Number.isInteger(qtyEntered) || qtyEntered <= 0) {
     throw new AppError('Quantity must be a positive whole number', 400);
   }
 
@@ -67,10 +70,10 @@ const addStockBatch = async (req, res) => {
     throw new AppError('Expiry date must be a valid future date', 400);
   }
 
-  let price;
+  let priceEntered;
   if (purchasePrice !== undefined && purchasePrice !== null && purchasePrice !== '') {
-    price = Number(purchasePrice);
-    if (!Number.isFinite(price) || price < 0) {
+    priceEntered = Number(purchasePrice);
+    if (!Number.isFinite(priceEntered) || priceEntered < 0) {
       throw new AppError('Purchase price must be a non-negative number', 400);
     }
   }
@@ -92,6 +95,16 @@ const addStockBatch = async (req, res) => {
       if (medicine.isArchived) {
         throw new AppError('Medicine is archived', 400);
       }
+
+      let factor = 1;
+      const unit = typeof unitName === 'string' ? unitName.trim().toLowerCase() : '';
+      if (unit && unit !== String(medicine.baseUnit || 'unit').toLowerCase()) {
+        const pack = (medicine.packUnits || []).find((p) => p.name.toLowerCase() === unit);
+        if (!pack) throw new AppError(`Unknown unit "${unitName}" for this medicine`, 400);
+        factor = pack.factor;
+      }
+      const qty = qtyEntered * factor;
+      const price = priceEntered === undefined ? undefined : Math.round((priceEntered / factor) * 10000) / 10000;
 
       let batch = await StockBatch.findOne({
         pharmacyId: req.pharmacyId,
@@ -138,6 +151,18 @@ const addStockBatch = async (req, res) => {
           quantityChange: qty,
           balanceAfter: batch.quantity,
           userId: req.user?._id,
+        },
+        { session }
+      );
+      // Controlled substances register (no-op for non-controlled medicines)
+      await recordControlledReceipt(
+        {
+          pharmacyId: req.pharmacyId,
+          medicineId: medicine._id,
+          batchId: batch._id,
+          quantity: qty,
+          userId: req.user?._id,
+          refId: batch._id,
         },
         { session }
       );
@@ -222,6 +247,19 @@ const adjustStock = async (req, res) => {
           balanceAfter: updated.quantity,
           reason: typeof reason === 'string' ? reason.trim() : '',
           userId: req.user?._id,
+        },
+        { session }
+      );
+      await recordControlledMovement(
+        {
+          pharmacyId: req.pharmacyId,
+          medicineId: updated.medicineId,
+          batchId: updated._id,
+          entryType: 'adjust',
+          quantityOut: qtyToReduce,
+          userId: req.user?._id,
+          refId: updated._id,
+          notes: `Stock adjustment (${adjustmentType})`,
         },
         { session }
       );
@@ -353,6 +391,21 @@ const deleteStockBatch = async (req, res) => {
       );
 
       await batch.deleteOne({ session });
+      if (batch.quantity > 0) {
+        await recordControlledMovement(
+          {
+            pharmacyId: req.pharmacyId,
+            medicineId: batch.medicineId,
+            batchId: batch._id,
+            entryType: 'adjust',
+            quantityOut: batch.quantity,
+            userId: req.user?._id,
+            refId: batch._id,
+            notes: `Batch ${batch.batchNo} deleted`,
+          },
+          { session }
+        );
+      }
     });
   } finally {
     await session.endSession();

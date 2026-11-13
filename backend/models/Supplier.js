@@ -43,6 +43,13 @@ const supplierSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    // Days after the invoice date until a supplier invoice is due (accounts payable)
+    paymentTermsDays: {
+      type: Number,
+      default: 30,
+      min: [0, 'Payment terms cannot be negative'],
+      max: [365, 'Payment terms cannot exceed 365 days'],
+    },
     // Soft-delete flag: suppliers referenced by purchase orders are archived
     // instead of deleted so that procurement history stays intact.
     isArchived: {

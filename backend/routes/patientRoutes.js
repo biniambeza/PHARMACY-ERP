@@ -1,14 +1,22 @@
 // Mounted at /api/patients: patients (#16). Owner: Clinical agent.
-// Scaffolded by Foundation: every route is authenticated and tenant-scoped
-// (req.pharmacyId, req.membershipRole). Gate each route with
-// requirePermission('module:action') from middleware/permission.js.
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
+const { authorize } = require('../middleware/roleMiddleware');
 const pharmacyScope = require('../middleware/pharmacyScope');
-// eslint-disable-next-line no-unused-vars
 const { requirePermission } = require('../middleware/permission');
+const {
+  getPatients, getPatient, createPatient, updatePatient, archivePatient, getPatientHistory,
+} = require('../controllers/patientController');
 
-router.use(protect, pharmacyScope);
+// Patient records are tenant data: platform admins are kept out.
+router.use(protect, authorize('pharmacist'), pharmacyScope);
+
+const canView = requirePermission('patient:view');
+const canManage = requirePermission('patient:manage');
+
+router.route('/').get(canView, getPatients).post(canManage, createPatient);
+router.get('/:id/history', canView, getPatientHistory);
+router.route('/:id').get(canView, getPatient).put(canManage, updatePatient).delete(canManage, archivePatient);
 
 module.exports = router;

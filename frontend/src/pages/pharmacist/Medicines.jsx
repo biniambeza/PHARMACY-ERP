@@ -8,9 +8,21 @@ import {
   ShieldAlert,
   ShieldCheck,
   DollarSign,
+  Barcode,
+  Percent,
+  History,
+  ArrowLeftRight,
+  AlertTriangle,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { getMedicines, getCategories, deleteMedicine } from '../../api/medicineApi';
 import MedicineModal from './MedicineModal';
+import Can from '../../components/common/Can';
+import MarginBadge from '../../components/catalog/MarginBadge';
+import BarcodeLabelsModal from '../../components/catalog/BarcodeLabelsModal';
+import BulkPriceModal from '../../components/catalog/BulkPriceModal';
+import PriceHistoryModal from '../../components/catalog/PriceHistoryModal';
+import { formatMoney } from '../../utils/format';
 import MetricCard from '../../components/common/MetricCard';
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
 
@@ -24,6 +36,11 @@ const Medicines = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [labelsOpen, setLabelsOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [historyFor, setHistoryFor] = useState(null);
+  const [marginOnly, setMarginOnly] = useState(false);
 
   const loadMedicines = useCallback(async () => {
     try {
@@ -91,11 +108,32 @@ const Medicines = () => {
   // Filter medicines by Rx / OTC tab
   const filteredMedicines = useMemo(() => {
     return medicines.filter((m) => {
-      if (rxFilter === 'rx') return !!m.requiresPrescription;
-      if (rxFilter === 'otc') return !m.requiresPrescription;
+      if (rxFilter === 'rx' && !m.requiresPrescription) return false;
+      if (rxFilter === 'otc' && m.requiresPrescription) return false;
+      if (marginOnly && !m.marginWarning) return false;
       return true;
     });
-  }, [medicines, rxFilter]);
+  }, [medicines, rxFilter, marginOnly]);
+
+  const toggleSelected = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const allVisibleSelected = filteredMedicines.length > 0 && filteredMedicines.every((m) => selectedIds.has(m._id));
+  const toggleAllVisible = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) filteredMedicines.forEach((m) => next.delete(m._id));
+      else filteredMedicines.forEach((m) => next.add(m._id));
+      return next;
+    });
+  };
+  const selectedMedicines = medicines.filter((m) => selectedIds.has(m._id));
+  const marginWarningCount = medicines.filter((m) => m.marginWarning).length;
 
   // Executive KPI summary calculations
   const totalProducts = medicines.length;
@@ -123,13 +161,35 @@ const Medicines = () => {
           </p>
         </div>
 
-        <button
-          onClick={handleOpenCreate}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Medicine</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => setLabelsOpen(true)}
+            disabled={selectedIds.size === 0}
+            title={selectedIds.size ? 'Print barcode labels for the selected medicines' : 'Select medicines first'}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 text-xs font-semibold rounded-xl transition cursor-pointer"
+          >
+            <Barcode className="w-4 h-4" />
+            <span>Labels{selectedIds.size ? ` (${selectedIds.size})` : ''}</span>
+          </button>
+          <Can perm="price:manage">
+            <button
+              onClick={() => setBulkOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-xl transition cursor-pointer"
+            >
+              <Percent className="w-4 h-4" />
+              <span>Bulk Price</span>
+            </button>
+          </Can>
+          <Can perm="medicine:manage">
+            <button
+              onClick={handleOpenCreate}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Medicine</span>
+            </button>
+          </Can>
+        </div>
       </div>
 
       {/* KPI Metric Cards */}
@@ -172,7 +232,7 @@ const Medicines = () => {
 
         <MetricCard
           title="Average Unit Price"
-          value={`$${avgPrice.toFixed(2)}`}
+          value={formatMoney(avgPrice)}
           subValue={`Across ${categories.length} categories`}
           badgeText="Pricing"
           badgeVariant="indigo"
@@ -248,12 +308,27 @@ const Medicines = () => {
               ))}
             </select>
 
-            {(search || selectedCategory || rxFilter !== 'all') && (
+            {marginWarningCount > 0 && (
+              <button
+                onClick={() => setMarginOnly((v) => !v)}
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition cursor-pointer ${
+                  marginOnly
+                    ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                    : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/60'
+                }`}
+              >
+                <AlertTriangle className="w-3 h-3" />
+                {marginWarningCount} margin warning{marginWarningCount === 1 ? '' : 's'}
+              </button>
+            )}
+
+            {(search || selectedCategory || rxFilter !== 'all' || marginOnly) && (
               <button
                 onClick={() => {
                   setSearch('');
                   setSelectedCategory('');
                   setRxFilter('all');
+                  setMarginOnly(false);
                 }}
                 className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-medium cursor-pointer"
               >
@@ -297,7 +372,16 @@ const Medicines = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/75 dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[11px]">
                 <tr>
-                  <th className="py-3.5 px-5">Medicine & Formula</th>
+                  <th className="py-3.5 pl-5 pr-1 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all"
+                      checked={allVisibleSelected}
+                      onChange={toggleAllVisible}
+                      className="accent-emerald-600 cursor-pointer"
+                    />
+                  </th>
+                  <th className="py-3.5 px-4">Medicine & Formula</th>
                   <th className="py-3.5 px-4">Category</th>
                   <th className="py-3.5 px-4">Dosage & Strength</th>
                   <th className="py-3.5 px-4">Retail Price</th>
@@ -318,8 +402,17 @@ const Medicines = () => {
                       key={item._id}
                       className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition group"
                     >
+                      <td className="py-3.5 pl-5 pr-1">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${item.name}`}
+                          checked={selectedIds.has(item._id)}
+                          onChange={() => toggleSelected(item._id)}
+                          className="accent-emerald-600 cursor-pointer"
+                        />
+                      </td>
                       {/* Name & Generic */}
-                      <td className="py-3.5 px-5">
+                      <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/50">
                             <Pill className="w-4 h-4" />
@@ -336,6 +429,9 @@ const Medicines = () => {
                               <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">
                                 Generic formulation
                               </span>
+                            )}
+                            {item.barcode && (
+                              <span className="block text-[10px] text-slate-400 font-mono">{item.barcode}</span>
                             )}
                           </div>
                         </div>
@@ -363,11 +459,17 @@ const Medicines = () => {
                       {/* Retail Price */}
                       <td className="py-3.5 px-4">
                         <span className="font-bold text-slate-900 dark:text-white font-mono text-sm block">
-                          ${Number(item.price || 0).toFixed(2)}
+                          {formatMoney(item.price)}
                         </span>
-                        {item.costPrice > 0 && (
+                        {item.costPrice > 0 && !item.marginWarning && (
                           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
                             +{marginPct}% margin
+                          </span>
+                        )}
+                        <MarginBadge warning={item.marginWarning} />
+                        {item.packUnits?.length > 0 && (
+                          <span className="block text-[10px] text-slate-400 mt-0.5">
+                            {item.packUnits.map((p) => `${p.name} x${p.factor}`).join(', ')}
                           </span>
                         )}
                       </td>
@@ -375,7 +477,7 @@ const Medicines = () => {
                       {/* Cost Price */}
                       <td className="py-3.5 px-4">
                         <span className="text-slate-500 dark:text-slate-400 font-mono text-xs">
-                          ${Number(item.costPrice || 0).toFixed(2)}
+                          {formatMoney(item.costPrice)}
                         </span>
                       </td>
 
@@ -398,6 +500,23 @@ const Medicines = () => {
                       <td className="py-3.5 px-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
+                            onClick={() => setHistoryFor(item)}
+                            title="Price history"
+                            className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                          >
+                            <History className="w-4 h-4" />
+                          </button>
+                          <Can perm="stock:view">
+                            <Link
+                              to={`/pharmacy/movements?medicineId=${item._id}`}
+                              title="Stock movements"
+                              className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-indigo-400 dark:hover:bg-slate-800 rounded-lg transition"
+                            >
+                              <ArrowLeftRight className="w-4 h-4" />
+                            </Link>
+                          </Can>
+                          <Can perm="medicine:manage">
+                          <button
                             onClick={() => handleEdit(item)}
                             title="Edit product"
                             className="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
@@ -412,6 +531,7 @@ const Medicines = () => {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
+                          </Can>
                         </div>
                       </td>
                     </tr>
@@ -449,6 +569,23 @@ const Medicines = () => {
         }}
         medicine={selectedMedicine}
       />
+
+      {labelsOpen && (
+        <BarcodeLabelsModal
+          medicines={selectedMedicines}
+          onClose={() => setLabelsOpen(false)}
+          onChanged={loadMedicines}
+        />
+      )}
+      {bulkOpen && (
+        <BulkPriceModal
+          categories={categories}
+          selectedIds={[...selectedIds]}
+          onClose={() => setBulkOpen(false)}
+          onSuccess={loadMedicines}
+        />
+      )}
+      {historyFor && <PriceHistoryModal medicine={historyFor} onClose={() => setHistoryFor(null)} />}
     </div>
   );
 };

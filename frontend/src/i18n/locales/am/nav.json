@@ -1,0 +1,16 @@
+{
+  "groups": { "sales": "ሽያጭ", "inventory": "ክምችት", "procurement": "ግዥ", "clinical": "ክሊኒካዊ", "admin": "አስተዳደር" },
+  "items": {
+    "overview": "አጠቃላይ እይታ", "pos": "የሽያጭ ቦታ", "sales": "የሽያጭ ታሪክ", "returns": "ተመላሾች",
+    "shifts": "ፈረቃዎች", "customers": "ደንበኞች", "medicines": "መድሃኒቶች", "stock": "ክምችት",
+    "stock-take": "የክምችት ቆጠራ", "movements": "የክምችት እንቅስቃሴዎች", "expiry": "የማብቂያ ቀን", "transfers": "ዝውውሮች",
+    "import": "ከፋይል አስገባ", "suppliers": "አቅራቢዎች", "procurement": "የግዢ ትዕዛዞች", "reorder": "ዳግም ማዘዝ",
+    "payables": "የሚከፈሉ ሂሳቦች", "patients": "ታካሚዎች", "controlled": "የቁጥጥር መድሃኒቶች መዝገብ",
+    "interactions": "የመድሃኒት መስተጋብሮች", "reports": "ሪፖርቶች", "audit": "የኦዲት መዝገብ", "staff": "ሰራተኞች",
+    "settings": "ቅንብሮች", "notifications": "ማሳወቂያዎች", "admin": "የአስተዳዳሪ ዳሽቦርድ"
+  },
+  "quickActions": {
+    "create-purchase": "ግዢ ፍጠር", "new-sale-pos": "አዲስ ሽያጭ (POS)",
+    "record-stock": "ክምችት መዝግብ", "add-supplier": "አቅራቢ ጨምር"
+  }
+}

@@ -6,6 +6,7 @@ const StockBatch = require('../models/StockBatch');
 const Organization = require('../models/Organization');
 const AppError = require('../utils/AppError');
 const { audit } = require('../utils/audit');
+const { createNotification } = require('../services/notify');
 
 const OWNER_FIELDS = 'name email role';
 
@@ -152,6 +153,18 @@ const togglePharmacyStatus = async (req, res) => {
 
   pharmacy.status = pharmacy.status === 'active' ? 'suspended' : 'active';
   await pharmacy.save();
+
+  const suspended = pharmacy.status === 'suspended';
+  // Never throws
+  await createNotification({
+    pharmacyId: pharmacy._id,
+    type: suspended ? 'pharmacy_suspended' : 'pharmacy_reactivated',
+    severity: suspended ? 'critical' : 'info',
+    title: suspended ? 'Pharmacy suspended' : 'Pharmacy reactivated',
+    message: suspended
+      ? `${pharmacy.name} has been suspended by the platform administrator. Please contact support.`
+      : `${pharmacy.name} has been reactivated. All features are available again.`,
+  });
   await pharmacy.populate('owner', OWNER_FIELDS);
 
   return res.status(200).json({

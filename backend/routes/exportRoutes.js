@@ -1,14 +1,15 @@
 // Mounted at /api/export: export and print (#20). Owner: Insights agent.
-// Scaffolded by Foundation: every route is authenticated and tenant-scoped
-// (req.pharmacyId, req.membershipRole). Gate each route with
-// requirePermission('module:action') from middleware/permission.js.
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const pharmacyScope = require('../middleware/pharmacyScope');
-// eslint-disable-next-line no-unused-vars
 const { requirePermission } = require('../middleware/permission');
+const { exportEntity, EXPORT_ENTITIES } = require('../controllers/exportController');
 
 router.use(protect, pharmacyScope);
+
+// GET /api/export/:entity?format=xlsx|csv&from=YYYY-MM-DD&to=YYYY-MM-DD
+router.get('/', requirePermission('data:export'), (req, res) => res.json({ success: true, entities: EXPORT_ENTITIES }));
+router.get('/:entity', requirePermission('data:export'), exportEntity);
 
 module.exports = router;

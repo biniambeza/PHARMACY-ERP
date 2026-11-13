@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { PackagePlus, X, Calendar, DollarSign, Layers, Hash, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
-import { getMedicines } from '../../api/medicineApi';
+import { PackagePlus, X, Calendar, DollarSign, Layers, Hash, CheckCircle, AlertCircle, Sparkles, ScanBarcode } from 'lucide-react';
+import { getMedicines, lookupMedicine } from '../../api/medicineApi';
+import { formatMoney } from '../../utils/format';
 import { addStockBatch } from '../../api/stockApi';
 
 const StockInModal = ({ isOpen, onClose, onSuccess }) => {
@@ -11,7 +12,10 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
     quantity: '',
     expiryDate: '',
     purchasePrice: '',
+    unitName: '',
   });
+  const [scanCode, setScanCode] = useState('');
+  const [scanMessage, setScanMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetchingMeds, setFetchingMeds] = useState(false);
   const [error, setError] = useState('');
@@ -45,7 +49,10 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
         quantity: '',
         expiryDate: '',
         purchasePrice: '',
+        unitName: '',
       });
+      setScanCode('');
+      setScanMessage('');
     }
   }, [isOpen]);
 
@@ -57,12 +64,46 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
       const updated = { ...prev, [name]: value };
       if (name === 'medicineId') {
         const selected = medicines.find((m) => m._id === value);
+        updated.unitName = '';
         if (selected && selected.costPrice) {
           updated.purchasePrice = selected.costPrice;
         }
       }
+      if (name === 'unitName') {
+        // Keep the cost consistent with the chosen unit (cost is per entered unit)
+        const selected = medicines.find((m) => m._id === prev.medicineId);
+        const factorOf = (u) => selected?.packUnits?.find((p) => p.name === u)?.factor || 1;
+        const cost = parseFloat(prev.purchasePrice);
+        if (Number.isFinite(cost) && cost > 0) {
+          updated.purchasePrice = Number(((cost / factorOf(prev.unitName)) * factorOf(value)).toFixed(4));
+        }
+      }
       return updated;
     });
+  };
+
+  // USB scanners type the code and press Enter
+  const handleScan = async (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const code = scanCode.trim();
+    if (!code) return;
+    try {
+      const res = await lookupMedicine(code);
+      const med = res.medicine;
+      if (!medicines.some((m) => m._id === med._id)) setMedicines((prev) => [...prev, med]);
+      const isPack = res.unit && res.unit.factor > 1;
+      setFormData((prev) => ({
+        ...prev,
+        medicineId: med._id,
+        unitName: isPack ? res.unit.name : '',
+        purchasePrice: med.costPrice ? Number((med.costPrice * (isPack ? res.unit.factor : 1)).toFixed(4)) : prev.purchasePrice,
+      }));
+      setScanMessage(`${med.name}${isPack ? ` (${res.unit.name} of ${res.unit.factor})` : ''}`);
+      setScanCode('');
+    } catch (err) {
+      setScanMessage(err.response?.data?.message || 'No medicine found for this code');
+    }
   };
 
   const handleGenerateBatchNo = () => {
@@ -73,6 +114,10 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
     }));
   };
 
+  const selectedMedForUnits = medicines.find((m) => m._id === formData.medicineId);
+  const packUnits = selectedMedForUnits?.packUnits || [];
+  const unitFactor = packUnits.find((p) => p.name === formData.unitName)?.factor || 1;
+  const baseUnitName = selectedMedForUnits?.baseUnit || 'unit';
   const qtyNum = parseInt(formData.quantity, 10) || 0;
   const costNum = parseFloat(formData.purchasePrice) || 0;
   const totalValuation = qtyNum * costNum;
@@ -103,6 +148,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
         quantity: qtyNum,
         expiryDate: formData.expiryDate,
         purchasePrice: costNum,
+        ...(formData.unitName ? { unitName: formData.unitName } : {}),
       });
 
       setLoading(false);
@@ -150,6 +196,27 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Barcode scan */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Scan Barcode (optional)
+            </label>
+            <div className="relative">
+              <ScanBarcode className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+              <input
+                type="text"
+                value={scanCode}
+                onChange={(e) => setScanCode(e.target.value)}
+                onKeyDown={handleScan}
+                placeholder="Scan or type a barcode / SKU and press Enter"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
+              />
+            </div>
+            {scanMessage && (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 px-1">{scanMessage}</p>
+            )}
+          </div>
+
           {/* Medicine Selector */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -171,7 +238,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
               >
                 {medicines.map((m) => (
                   <option key={m._id} value={m._id}>
-                    {m.name} {m.dosageForm ? `(${m.dosageForm})` : ''} - Retail: ${Number(m.price || 0).toFixed(2)}
+                    {m.name} {m.dosageForm ? `(${m.dosageForm})` : ''} - Retail: {formatMoney(m.price)}
                   </option>
                 ))}
               </select>
@@ -216,8 +283,23 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
             {/* Units Received */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Quantity Received (Units) <span className="text-rose-500">*</span>
+                Quantity Received <span className="text-rose-500">*</span>
               </label>
+              {packUnits.length > 0 && (
+                <select
+                  name="unitName"
+                  value={formData.unitName}
+                  onChange={handleChange}
+                  className="w-full mb-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
+                >
+                  <option value="">{baseUnitName} (base unit)</option>
+                  {packUnits.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name} ({p.factor} {baseUnitName})
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="relative">
                 <Layers className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
                 <input
@@ -255,7 +337,7 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
           {/* Unit Cost Price */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Purchase Cost Per Unit (Optional)
+              Purchase Cost Per {formData.unitName || baseUnitName} (Optional)
             </label>
             <div className="relative">
               <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
@@ -272,12 +354,18 @@ const StockInModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
 
+          {unitFactor > 1 && qtyNum > 0 && (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
+              Stock will be recorded as <strong>{qtyNum * unitFactor}</strong> {baseUnitName} ({qtyNum} {formData.unitName} x {unitFactor}).
+            </p>
+          )}
+
           {/* Valuation calculation preview */}
           {qtyNum > 0 && costNum > 0 && (
             <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/80 dark:border-emerald-900/40 flex items-center justify-between text-xs">
               <span className="text-slate-600 dark:text-slate-300">Total Batch Valuation:</span>
               <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-sm">
-                ${totalValuation.toFixed(2)}
+                {formatMoney(totalValuation)}
               </span>
             </div>
           )}

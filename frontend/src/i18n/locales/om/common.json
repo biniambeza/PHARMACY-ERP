@@ -1,0 +1,26 @@
+{
+  "appName": "Pharmacy ERP",
+  "language": "Afaan",
+  "languages": { "en": "English", "am": "አማርኛ", "om": "Afaan Oromoo" },
+  "buttons": {
+    "save": "Olkaa'i", "cancel": "Dhiisi", "delete": "Haqi", "edit": "Gulaali", "add": "Dabali",
+    "create": "Uumi", "update": "Haaromsi", "close": "Cufi", "confirm": "Mirkaneessi",
+    "search": "Barbaadi", "filter": "Calali", "export": "Ala ergi", "print": "Maxxansi",
+    "refresh": "Irra deebi'ii fe'i", "back": "Duubatti", "next": "Itti aanu", "previous": "Kan duraa",
+    "submit": "Galchi", "view": "Ilaali", "download": "Buufadhu", "reset": "Jalqabatti deebisi",
+    "clear": "Qulqulleessi", "yes": "Eeyyee", "no": "Lakki"
+  },
+  "status": {
+    "active": "Hojii irra", "inactive": "Hojii ala", "pending": "Eeggachaa jira", "completed": "Xumurameera",
+    "cancelled": "Haqameera", "failed": "Hin milkoofne", "refunded": "Maallaqni deebi'eera", "suspended": "Dhaabbateera",
+    "archived": "Kuufameera", "draft": "Wixinee", "received": "Fudhatameera", "partial": "Gartokkee",
+    "expired": "Yeroon isaa darbeera", "lowStock": "Kuusaa xiqqaa", "outOfStock": "Kuusaan dhumeera",
+    "paid": "Kaffalameera", "unpaid": "Hin kaffalamne"
+  },
+  "labels": {
+    "actions": "Gochaalee", "loading": "Fe'aa jira...", "noData": "Daataan hin argamne", "error": "Dogoggora",
+    "success": "Milkaa'eera", "total": "Ida'ama", "date": "Guyyaa", "amount": "Hanga",
+    "quantity": "Baay'ina", "price": "Gatii", "theme": "Haala mul'ataa", "logout": "Ba'i",
+    "profile": "Piroofaayilii", "somethingWentWrong": "Rakkoon uumameera. Maaloo irra deebi'aa yaalaa."
+  }
+}

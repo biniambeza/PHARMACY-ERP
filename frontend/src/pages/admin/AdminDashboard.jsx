@@ -10,6 +10,21 @@ import StatusBadge from '../../components/common/StatusBadge';
 import DataTable from '../../components/common/DataTable';
 import { MetricCardSkeleton, CardSkeleton } from '../../components/common/SkeletonLoader';
 import CreatePharmacyModal from './CreatePharmacyModal';
+import SubscriptionModal from './SubscriptionModal';
+import SupportView from './SupportView';
+import ResetPasswordModal from './ResetPasswordModal';
+import PlatformMetrics from './PlatformMetrics';
+import AnnouncementsManager from './AnnouncementsManager';
+import { formatDate } from '../../utils/format';
+
+const TABS = [
+  { id: 'pharmacies', label: 'Pharmacies' },
+  { id: 'metrics', label: 'Platform metrics' },
+  { id: 'announcements', label: 'Announcements' },
+];
+
+const SUB_BADGE = { trial: 'pending', active: 'active', past_due: 'warning', cancelled: 'cancelled' };
+const SUB_LABEL = { trial: 'Trial', active: 'Paid', past_due: 'Past due', cancelled: 'Cancelled' };
 
 const AdminDashboard = () => {
   const [pharmacies, setPharmacies] = useState([]);
@@ -28,6 +43,10 @@ const AdminDashboard = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedPharmacy, setSelectedPharmacy] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [tab, setTab] = useState('pharmacies');
+  const [billingPharmacy, setBillingPharmacy] = useState(null);
+  const [supportPharmacy, setSupportPharmacy] = useState(null);
+  const [resetUser, setResetUser] = useState(null);
 
   const loadData = async () => {
     try {
@@ -205,6 +224,32 @@ The pharmacy will be closed and its pharmacist will no longer be able to sign in
       ),
     },
     {
+      header: 'Subscription',
+      key: 'subscription',
+      render: (item) => {
+        const sub = item.subscription || {};
+        const end = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
+        const overdue = end && end.getTime() < Date.now();
+        return (
+          <button
+            onClick={() => setBillingPharmacy(item)}
+            title="Edit subscription"
+            className="text-left cursor-pointer group"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="font-semibold text-slate-800 dark:text-slate-200 capitalize group-hover:text-emerald-600">
+                {sub.plan || 'standard'}
+              </span>
+              <StatusBadge status={SUB_BADGE[sub.status] || 'active'} label={SUB_LABEL[sub.status] || 'Paid'} size="sm" dot={false} />
+            </span>
+            <span className={`text-[10px] block mt-0.5 ${overdue ? 'text-rose-500 font-semibold' : 'text-slate-400'}`}>
+              {end ? `${overdue ? 'Ended' : 'Renews'} ${formatDate(end)}` : 'No expiry'}
+            </span>
+          </button>
+        );
+      },
+    },
+    {
       header: 'Status',
       key: 'status',
       render: (item) => (
@@ -232,6 +277,19 @@ The pharmacy will be closed and its pharmacist will no longer be able to sign in
             className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg transition cursor-pointer"
           >
             Details
+          </button>
+          <button
+            onClick={() => setBillingPharmacy(item)}
+            className="px-2.5 py-1 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-800/60 rounded-lg transition cursor-pointer"
+          >
+            Billing
+          </button>
+          <button
+            onClick={() => setSupportPharmacy(item)}
+            title="Open a read-only support view of this pharmacy"
+            className="px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 hover:bg-sky-100 border border-sky-200 dark:border-sky-800/60 rounded-lg transition cursor-pointer"
+          >
+            View as support
           </button>
           <button
             onClick={() => handleToggleStatus(item._id)}
@@ -364,9 +422,30 @@ The pharmacy will be closed and its pharmacist will no longer be able to sign in
         />
       </div>
 
+      {/* Section tabs */}
+      <div className="flex flex-wrap gap-2">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+              tab === t.id
+                ? 'bg-emerald-600 text-white border-emerald-600'
+                : 'bg-white dark:bg-[#161c26] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'metrics' && <PlatformMetrics />}
+      {tab === 'announcements' && <AnnouncementsManager pharmacies={pharmacies} />}
+
       {/* ------------------------------------------------------------- */}
       {/* 2. MAIN MULTI-TENANT MANAGEMENT TABLE (Consuming DataTable)    */}
       {/* ------------------------------------------------------------- */}
+      {tab === 'pharmacies' && (
       <DataTable
         title="Registered Pharmacy Tenants"
         subtitle="Manage licensed organizations, operational status, and primary pharmacist credentials"
@@ -401,6 +480,7 @@ The pharmacy will be closed and its pharmacist will no longer be able to sign in
         emptyMessage="No pharmacies found"
         emptySubtext="Provision a new branch or adjust your search filter to display tenant organizations."
       />
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* 3. TENANT DETAILS MODAL                                        */}
@@ -478,9 +558,28 @@ The pharmacy will be closed and its pharmacist will no longer be able to sign in
               <span className="text-[10px] text-slate-400 uppercase font-bold block">
                 Primary Operator Account
               </span>
-              <p className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">
-                {selectedPharmacy.owner?.name} ({selectedPharmacy.owner?.email})
-              </p>
+              <div className="flex items-center justify-between gap-2 mt-0.5">
+                <p className="font-semibold text-slate-800 dark:text-slate-200">
+                  {selectedPharmacy.owner?.name} ({selectedPharmacy.owner?.email})
+                </p>
+                {selectedPharmacy.owner?._id && (
+                  <button
+                    onClick={() => setResetUser(selectedPharmacy.owner)}
+                    className="px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg cursor-pointer shrink-0"
+                  >
+                    Reset password
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setIsDetailsOpen(false);
+                  setSupportPharmacy(selectedPharmacy);
+                }}
+                className="mt-2 text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:underline cursor-pointer"
+              >
+                Other staff: open the support view to reset their passwords
+              </button>
             </div>
 
             <div className="flex justify-end pt-2">
@@ -494,6 +593,20 @@ The pharmacy will be closed and its pharmacist will no longer be able to sign in
           </div>
         </div>
       )}
+
+      {billingPharmacy && (
+        <SubscriptionModal
+          key={billingPharmacy._id}
+          pharmacy={billingPharmacy}
+          onClose={() => setBillingPharmacy(null)}
+          onSaved={loadData}
+        />
+      )}
+      {supportPharmacy && (
+        <SupportView key={supportPharmacy._id} pharmacy={supportPharmacy} onClose={() => setSupportPharmacy(null)} />
+      )}
+
+      {resetUser && <ResetPasswordModal key={resetUser._id} user={resetUser} onClose={() => setResetUser(null)} />}
 
       {/* Provision Pharmacy Modal */}
       <CreatePharmacyModal

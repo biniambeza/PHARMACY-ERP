@@ -59,7 +59,7 @@ export const navGroups = [
     items: [
       { name: 'Suppliers', to: '/pharmacy/suppliers', icon: Building2, perm: 'supplier:view' },
       { name: 'Purchase Orders', to: '/pharmacy/procurement', icon: ShoppingCart, perm: 'po:view' },
-      { name: 'Reorder', to: '/pharmacy/reorder', icon: RefreshCcw, perm: 'po:manage' },
+      { name: 'Reorder', to: '/pharmacy/reorder', icon: RefreshCcw, perm: 'po:view' },
       { name: 'Payables', to: '/pharmacy/payables', icon: Wallet, perm: 'supplier:pay' },
     ],
   },

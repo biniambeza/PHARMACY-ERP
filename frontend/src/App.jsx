@@ -1,40 +1,59 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import RoleRoute from './routes/RoleRoute';
-import Login from './pages/auth/Login';
-import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminLayout from './pages/admin/AdminLayout';
-import PharmacistDashboard from './pages/pharmacist/Dashboard';
 import PharmacyLayout from './pages/pharmacist/PharmacyLayout';
-import Medicines from './pages/pharmacist/Medicines';
-import Stock from './pages/pharmacist/Stock';
-import POS from './pages/pharmacist/POS';
-import SalesHistory from './pages/pharmacist/SalesHistory';
-import Suppliers from './pages/pharmacist/Suppliers';
-import PurchaseOrders from './pages/pharmacist/PurchaseOrders';
-import Reports from './pages/pharmacist/Reports';
-import Settings from './pages/pharmacist/Settings';
-import Staff from './pages/pharmacist/Staff';
-import Returns from './pages/pharmacist/Returns';
-import Expiry from './pages/pharmacist/Expiry';
-import Notifications from './pages/pharmacist/Notifications';
-import Customers from './pages/pharmacist/Customers';
-import Payables from './pages/pharmacist/Payables';
-import Reorder from './pages/pharmacist/Reorder';
-import StockTake from './pages/pharmacist/StockTake';
-import Movements from './pages/pharmacist/Movements';
-import Import from './pages/pharmacist/Import';
-import Patients from './pages/pharmacist/Patients';
-import ControlledRegister from './pages/pharmacist/ControlledRegister';
-import Interactions from './pages/pharmacist/Interactions';
-import AuditLog from './pages/pharmacist/AuditLog';
-import Transfers from './pages/pharmacist/Transfers';
-import Shifts from './pages/pharmacist/Shifts';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
 import PermissionRoute from './routes/PermissionRoute';
+import { MetricCardSkeleton, TableSkeleton } from './components/common/SkeletonLoader';
+
+// Pages are lazy-loaded (route-level code splitting, #30); layouts stay in the main chunk.
+const Login = lazy(() => import('./pages/auth/Login'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const PharmacistDashboard = lazy(() => import('./pages/pharmacist/Dashboard'));
+const Medicines = lazy(() => import('./pages/pharmacist/Medicines'));
+const Stock = lazy(() => import('./pages/pharmacist/Stock'));
+const POS = lazy(() => import('./pages/pharmacist/POS'));
+const SalesHistory = lazy(() => import('./pages/pharmacist/SalesHistory'));
+const Suppliers = lazy(() => import('./pages/pharmacist/Suppliers'));
+const PurchaseOrders = lazy(() => import('./pages/pharmacist/PurchaseOrders'));
+const Reports = lazy(() => import('./pages/pharmacist/Reports'));
+const Settings = lazy(() => import('./pages/pharmacist/Settings'));
+const Staff = lazy(() => import('./pages/pharmacist/Staff'));
+const Returns = lazy(() => import('./pages/pharmacist/Returns'));
+const Expiry = lazy(() => import('./pages/pharmacist/Expiry'));
+const Notifications = lazy(() => import('./pages/pharmacist/Notifications'));
+const Customers = lazy(() => import('./pages/pharmacist/Customers'));
+const Payables = lazy(() => import('./pages/pharmacist/Payables'));
+const Reorder = lazy(() => import('./pages/pharmacist/Reorder'));
+const StockTake = lazy(() => import('./pages/pharmacist/StockTake'));
+const Movements = lazy(() => import('./pages/pharmacist/Movements'));
+const Import = lazy(() => import('./pages/pharmacist/Import'));
+const Patients = lazy(() => import('./pages/pharmacist/Patients'));
+const ControlledRegister = lazy(() => import('./pages/pharmacist/ControlledRegister'));
+const Interactions = lazy(() => import('./pages/pharmacist/Interactions'));
+const AuditLog = lazy(() => import('./pages/pharmacist/AuditLog'));
+const Transfers = lazy(() => import('./pages/pharmacist/Transfers'));
+const Shifts = lazy(() => import('./pages/pharmacist/Shifts'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+
+// Suspense fallback shown while a page chunk downloads.
+const PageFallback = () => (
+  <div className="p-6 space-y-6" role="status" aria-busy="true" aria-live="polite">
+    <span className="sr-only">Loading...</span>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <MetricCardSkeleton key={i} />
+      ))}
+    </div>
+    <TableSkeleton rows={6} cols={5} />
+  </div>
+);
+
+const lazyPage = (element) => <Suspense fallback={<PageFallback />}>{element}</Suspense>;
 
 // Pharmacy portal pages and the permission each one requires (null = any staff).
 const pharmacyPages = [
@@ -72,16 +91,16 @@ function App() {
         <BrowserRouter>
         <Routes>
           {/* Public Auth Route */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/login" element={lazyPage(<Login />)} />
+          <Route path="/forgot-password" element={lazyPage(<ForgotPassword />)} />
+          <Route path="/reset-password" element={lazyPage(<ResetPassword />)} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
             {/* Admin Portal */}
             <Route element={<RoleRoute allowedRoles={['admin']} />}>
               <Route element={<AdminLayout />}>
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin" element={lazyPage(<AdminDashboard />)} />
               </Route>
             </Route>
 
@@ -90,7 +109,7 @@ function App() {
               <Route element={<PharmacyLayout />}>
                 {pharmacyPages.map(({ path, element, perm }) => (
                   <Route key={path} element={<PermissionRoute perm={perm} />}>
-                    <Route path={path} element={element} />
+                    <Route path={path} element={lazyPage(element)} />
                   </Route>
                 ))}
               </Route>

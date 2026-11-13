@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Pill } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Pill, Info, CheckCircle2 } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +10,9 @@ const Login = () => {
   const [error, setError] = useState('');
   const { login, loading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get('session') === 'expired';
+  const passwordReset = searchParams.get('reset') === 'success';
 
   if (isAuthenticated) {
     return <Navigate to={user?.role === 'admin' ? '/admin' : '/pharmacy'} replace />;
@@ -57,6 +60,20 @@ const Login = () => {
           </p>
         </div>
 
+        {/* Session / reset notices */}
+        {passwordReset && !error && (
+          <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs animate-fade-in">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+            <span className="flex-1">Your password has been reset. Sign in with your new password.</span>
+          </div>
+        )}
+        {sessionExpired && !passwordReset && !error && (
+          <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-xs animate-fade-in">
+            <Info className="w-4 h-4 shrink-0 text-amber-500" />
+            <span className="flex-1">Your session has expired. Please sign in again.</span>
+          </div>
+        )}
+
         {/* Error Alert */}
         {error && (
           <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs animate-fade-in">
@@ -88,9 +105,17 @@ const Login = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Password
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input

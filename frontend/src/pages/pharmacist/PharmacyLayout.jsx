@@ -18,9 +18,15 @@ import { navGroups, quickActions as allQuickActions } from '../../config/navigat
 import { ROLE_LABELS } from '../../config/permissions';
 import NotificationBell from '../../components/layout/NotificationBell';
 import BranchSwitcher from '../../components/layout/BranchSwitcher';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import AnnouncementBanner from '../../components/announcements/AnnouncementBanner';
+import LocaleSync from '../../i18n/LocaleSync';
+import { useTranslation } from 'react-i18next';
+import { tNav, tNavGroup, tQuickAction } from '../../i18n/nav';
 
 const PharmacyLayout = () => {
   const { user, logout, can, membershipRole } = useAuth();
+  const { t } = useTranslation();
   const roleLabel = ROLE_LABELS[membershipRole] || 'Staff';
   const visibleGroups = navGroups
     .map((group) => ({ ...group, items: group.items.filter((item) => !item.perm || can(item.perm)) }))
@@ -140,7 +146,7 @@ const PharmacyLayout = () => {
                   groupIndex > 0 && <div className="mx-2 my-1 border-t border-slate-100 dark:border-slate-800/80" />
                 ) : (
                   <div className="px-3 pt-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    {group.label}
+                    {tNavGroup(t, group.label)}
                   </div>
                 ))}
               {group.items.map((item) => {
@@ -151,7 +157,7 @@ const PharmacyLayout = () => {
                       to={item.to}
                       end={item.end}
                       onClick={() => setMobileOpen(false)}
-                      title={sidebarCollapsed ? item.name : undefined}
+                      title={sidebarCollapsed ? tNav(t, item) : undefined}
                       className={({ isActive }) =>
                         `group relative flex items-center ${
                           sidebarCollapsed
@@ -178,7 +184,7 @@ const PharmacyLayout = () => {
 
                           {!sidebarCollapsed ? (
                             <>
-                              <span className="flex-1 truncate">{item.name}</span>
+                              <span className="flex-1 truncate">{tNav(t, item)}</span>
                               {item.badge && (
                                 <span
                                   className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
@@ -194,7 +200,7 @@ const PharmacyLayout = () => {
                           ) : (
                             /* Tooltip for collapsed mode */
                             <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 items-center gap-2 border border-slate-700/60">
-                              <span>{item.name}</span>
+                              <span>{tNav(t, item)}</span>
                               {item.badge && (
                                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
                                   {item.badge}
@@ -233,7 +239,7 @@ const PharmacyLayout = () => {
                         <span className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition">
                           <ActionIcon className="w-3.5 h-3.5" />
                         </span>
-                        <span className="truncate">{action.name}</span>
+                        <span className="truncate">{tQuickAction(t, action)}</span>
                       </button>
                     );
                   })}
@@ -250,13 +256,13 @@ const PharmacyLayout = () => {
                         navigate(action.to);
                         setMobileOpen(false);
                       }}
-                      title={action.name}
+                      title={tQuickAction(t, action)}
                       className="group relative w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-[#1a2230]/70 dark:hover:bg-[#222c3e] border border-slate-200/70 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer shadow-2xs"
                     >
                       <ActionIcon className="w-4 h-4" />
                       {/* Tooltip */}
                       <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 border border-slate-700/60">
-                        {action.name}
+                        {tQuickAction(t, action)}
                       </div>
                     </button>
                   );
@@ -405,6 +411,9 @@ const PharmacyLayout = () => {
             {/* Branch switcher (hidden with a single branch) */}
             <BranchSwitcher />
 
+            {/* Language switcher */}
+            <LanguageSwitcher />
+
             {/* Date Pill */}
             <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -453,6 +462,8 @@ const PharmacyLayout = () => {
 
         {/* Scrollable Page Body with Cool Gray Canvas */}
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
+          <LocaleSync />
+          <AnnouncementBanner />
           <ErrorBoundary>
             <Outlet context={{ pharmacy, globalSearch }} />
           </ErrorBoundary>

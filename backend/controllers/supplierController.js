@@ -1,5 +1,6 @@
 const Supplier = require('../models/Supplier');
 const PurchaseOrder = require('../models/PurchaseOrder');
+const SupplierInvoice = require('../models/SupplierInvoice');
 const AppError = require('../utils/AppError');
 const escapeRegex = require('../utils/escapeRegex');
 
@@ -20,6 +21,45 @@ const parsePagination = (query) => {
 const exactNameRegex = (name) => new RegExp(`^${escapeRegex(String(name).trim())}$`, 'i');
 
 const trimStr = (v) => (v === undefined || v === null ? '' : String(v).trim());
+
+// Payment terms in days (0-365). undefined/'' keeps the default.
+const parseTerms = (v) => {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(v);
+  if (!Number.isInteger(n) || n < 0 || n > 365) {
+    throw new AppError('Payment terms must be a whole number of days between 0 and 365', 400);
+  }
+  return n;
+};
+
+// Adds outstandingBalance / overdueBalance (unpaid supplier invoices) to each supplier.
+const withBalances = async (pharmacyId, suppliers) => {
+  if (!suppliers.length) return [];
+  const now = new Date();
+  const rows = await SupplierInvoice.aggregate([
+    {
+      $match: {
+        pharmacyId,
+        supplierId: { $in: suppliers.map((s) => s._id) },
+        status: { $in: ['open', 'partial'] },
+      },
+    },
+    { $addFields: { due: { $subtract: ['$amount', '$amountPaid'] } } },
+    {
+      $group: {
+        _id: '$supplierId',
+        outstanding: { $sum: '$due' },
+        overdue: { $sum: { $cond: [{ $lt: ['$dueDate', now] }, '$due', 0] } },
+      },
+    },
+  ]);
+  const map = new Map(rows.map((r) => [String(r._id), r]));
+  const r2 = (n) => Math.round((n || 0) * 100) / 100;
+  return suppliers.map((s) => {
+    const row = map.get(String(s._id));
+    return { ...s.toObject(), outstandingBalance: r2(row?.outstanding), overdueBalance: r2(row?.overdue) };
+  });
+};
 
 // @desc    Get all suppliers for logged-in pharmacy
 // @route   GET /api/suppliers
@@ -51,7 +91,8 @@ const getSuppliers = async (req, res) => {
     findQuery = findQuery.skip(pagination.skip).limit(pagination.limit);
   }
 
-  const [suppliers, total] = await Promise.all([findQuery, Supplier.countDocuments(query)]);
+  const [docs, total] = await Promise.all([findQuery, Supplier.countDocuments(query)]);
+  const suppliers = await withBalances(req.pharmacyId, docs);
 
   const response = {
     success: true,
@@ -94,7 +135,8 @@ const getSupplierById = async (req, res) => {
 // @route   POST /api/suppliers
 // @access  Private (Pharmacist only)
 const createSupplier = async (req, res) => {
-  const { name, contactPerson, email, phone, address, status, notes } = req.body;
+  const { name, contactPerson, email, phone, address, status, notes, paymentTermsDays } = req.body;
+  const terms = parseTerms(paymentTermsDays);
 
   if (!trimStr(name) || !trimStr(phone)) {
     return res.status(400).json({
@@ -126,6 +168,7 @@ const createSupplier = async (req, res) => {
     address: trimStr(address),
     status: status || 'active',
     notes: trimStr(notes),
+    ...(terms !== undefined ? { paymentTermsDays: terms } : {}),
   });
 
   return res.status(201).json({
@@ -151,7 +194,8 @@ const updateSupplier = async (req, res) => {
     });
   }
 
-  const { name, contactPerson, email, phone, address, status, notes } = req.body || {};
+  const { name, contactPerson, email, phone, address, status, notes, paymentTermsDays } = req.body || {};
+  const terms = parseTerms(paymentTermsDays);
 
   if (name !== undefined && trimStr(name)) {
     const newName = trimStr(name);
@@ -173,6 +217,7 @@ const updateSupplier = async (req, res) => {
   if (address !== undefined) supplier.address = trimStr(address);
   if (status) supplier.status = status;
   if (notes !== undefined) supplier.notes = trimStr(notes);
+  if (terms !== undefined) supplier.paymentTermsDays = terms;
 
   await supplier.save();
 
@@ -209,7 +254,12 @@ const deleteSupplier = async (req, res) => {
     );
   }
 
-  const anyOrder = await PurchaseOrder.exists(scope);
+  const unpaid = await SupplierInvoice.exists({ ...scope, status: { $in: ['open', 'partial'] } });
+  if (unpaid) {
+    throw new AppError('This supplier has unpaid invoices. Settle them before removing the supplier.', 409);
+  }
+
+  const anyOrder = (await PurchaseOrder.exists(scope)) || (await SupplierInvoice.exists(scope));
   if (anyOrder) {
     supplier.isArchived = true;
     supplier.status = 'inactive';

@@ -3,25 +3,25 @@ import { Link } from 'react-router-dom';
 import {
   Receipt,
   ShoppingCart,
-  Calendar,
   DollarSign,
   TrendingUp,
   Search,
   Eye,
-  CreditCard,
-  Building2,
-  FileText,
-  User,
-  Phone,
-  ArrowUpRight,
   RotateCw,
   AlertCircle,
+  Undo2,
+  Ban,
 } from 'lucide-react';
 import { getSales, getSalesSummary } from '../../api/salesApi';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
+import { formatMoney } from '../../utils/format';
 import MetricCard from '../../components/common/MetricCard';
-import StatusBadge from '../../components/common/StatusBadge';
-import { CardSkeleton, MetricCardSkeleton } from '../../components/common/SkeletonLoader';
+import { MetricCardSkeleton } from '../../components/common/SkeletonLoader';
+import ReturnModal from '../../components/returns/ReturnModal';
+import VoidSaleModal from '../../components/returns/VoidSaleModal';
+import { useAuth } from '../../context/AuthContext';
+
+const isToday = (d) => d && new Date(d).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
 
 const SalesHistory = () => {
   const [sales, setSales] = useState([]);
@@ -33,6 +33,12 @@ const SalesHistory = () => {
   // Receipt Modal
   const [selectedSale, setSelectedSale] = useState(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+
+  // Returns & voids (#2)
+  const { can } = useAuth();
+  const [returnSale, setReturnSale] = useState(null);
+  const [voidingSale, setVoidingSale] = useState(null);
+  const [notice, setNotice] = useState('');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -114,6 +120,13 @@ const SalesHistory = () => {
           <span>Open POS Terminal</span>
         </Link>
       </div>
+
+      {notice && (
+        <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl flex items-center justify-between gap-3 text-xs text-emerald-700 dark:text-emerald-300">
+          <span>{notice}</span>
+          <button onClick={() => setNotice('')} className="font-semibold cursor-pointer">Dismiss</button>
+        </div>
+      )}
 
       {/* Error Notice */}
       {error && (
@@ -269,6 +282,16 @@ const SalesHistory = () => {
                         <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400">
                           {sale.invoiceNumber}
                         </span>
+                        {sale.voided && (
+                          <span title={sale.voidReason || ''} className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                            Voided
+                          </span>
+                        )}
+                        {!sale.voided && sale.returnStatus && sale.returnStatus !== 'none' && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                            {sale.returnStatus === 'full' ? 'Returned' : 'Part returned'}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">
@@ -308,6 +331,7 @@ const SalesHistory = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-right">
+                      <div className="inline-flex items-center gap-1.5 justify-end flex-wrap">
                       <button
                         onClick={() => handleOpenReceipt(sale)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-300 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
@@ -315,6 +339,27 @@ const SalesHistory = () => {
                         <Eye className="w-3.5 h-3.5" />
                         <span>View Receipt</span>
                       </button>
+                      {!sale.voided && sale.returnStatus !== 'full' && can('sales:return') && (
+                        <button
+                          onClick={() => setReturnSale(sale)}
+                          title="Return items from this sale"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                        >
+                          <Undo2 className="w-3.5 h-3.5" />
+                          <span>Return</span>
+                        </button>
+                      )}
+                      {!sale.voided && (!sale.returnStatus || sale.returnStatus === 'none') && isToday(sale.createdAt) && can('sales:void') && (
+                        <button
+                          onClick={() => setVoidingSale(sale)}
+                          title="Void this sale (same day only)"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          <span>Void</span>
+                        </button>
+                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -333,6 +378,40 @@ const SalesHistory = () => {
         }}
         sale={selectedSale}
       />
+
+      {returnSale && (
+        <ReturnModal
+          sale={returnSale}
+          onClose={() => setReturnSale(null)}
+          onDone={(res) => {
+            setReturnSale(null);
+            setNotice(
+              `Return ${res.return?.returnNumber} recorded. Refund ${formatMoney(res.return?.refundTotal)}` +
+                (res.return?.creditReversed > 0
+                  ? ` (${formatMoney(res.return.creditReversed)} off credit account, ${formatMoney(res.return.refundDue)} to pay out).`
+                  : '.') +
+                (res.warning ? ` ${res.warning}.` : '')
+            );
+            loadData();
+          }}
+        />
+      )}
+      {voidingSale && (
+        <VoidSaleModal
+          sale={voidingSale}
+          onClose={() => setVoidingSale(null)}
+          onDone={(res) => {
+            setVoidingSale(null);
+            setNotice(
+              `${res.message}.` +
+                (res.creditReversed > 0 ? ` ${formatMoney(res.creditReversed)} taken off credit account.` : '') +
+                ` Refund due: ${formatMoney(res.refundDue)}.` +
+                (res.warning ? ` ${res.warning}.` : '')
+            );
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 };
