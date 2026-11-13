@@ -128,7 +128,6 @@ const saleSchema = new mongoose.Schema(
     invoiceNumber: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     customer: {
