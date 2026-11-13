@@ -25,6 +25,8 @@ import {
   ScrollText,
   UserCog,
   Settings,
+  ShieldCheck,
+  FileCheck2,
 } from 'lucide-react';
 
 export const navGroups = [
@@ -40,6 +42,7 @@ export const navGroups = [
       { name: 'Returns', to: '/pharmacy/returns', icon: Undo2, perm: 'sales:return' },
       { name: 'Shifts', to: '/pharmacy/shifts', icon: Clock, perm: 'shift:own' },
       { name: 'Customers', to: '/pharmacy/customers', icon: Users, perm: 'customer:view' },
+      { name: 'Insurance', to: '/pharmacy/insurance', icon: ShieldCheck, perm: 'insurance:manage' },
     ],
   },
   {
@@ -75,6 +78,7 @@ export const navGroups = [
     label: 'Admin',
     items: [
       { name: 'Reports', to: '/pharmacy/reports', icon: BarChart3, perm: 'reports:view' },
+      { name: 'E-Invoicing', to: '/pharmacy/einvoice', icon: FileCheck2, perm: 'einvoice:view' },
       { name: 'Audit Log', to: '/pharmacy/audit', icon: ScrollText, perm: 'audit:view' },
       { name: 'Staff', to: '/pharmacy/staff', icon: UserCog, perm: 'staff:manage' },
       // Visible to everyone: holds the personal profile / password form

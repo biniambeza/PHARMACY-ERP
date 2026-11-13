@@ -6,7 +6,7 @@
     "stock-take": "Stock Take", "movements": "Movements", "expiry": "Expiry", "transfers": "Transfers",
     "import": "Import", "suppliers": "Suppliers", "procurement": "Purchase Orders", "reorder": "Reorder",
     "payables": "Payables", "patients": "Patients", "controlled": "Controlled Register",
-    "interactions": "Interactions", "reports": "Reports", "audit": "Audit Log", "staff": "Staff",
+    "interactions": "Interactions", "insurance": "Insurance", "einvoice": "E-Invoicing", "reports": "Reports", "audit": "Audit Log", "staff": "Staff",
     "settings": "Settings", "notifications": "Notifications", "admin": "Admin Dashboard"
   },
   "quickActions": {

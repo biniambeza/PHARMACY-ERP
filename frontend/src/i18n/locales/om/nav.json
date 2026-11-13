@@ -6,7 +6,7 @@
     "stock-take": "Lakkoofsa Kuusaa", "movements": "Sochii Kuusaa", "expiry": "Guyyaa Itti Darbu", "transfers": "Dabarsa",
     "import": "Galchuu", "suppliers": "Dhiyeessitoota", "procurement": "Ajaja Bittaa", "reorder": "Irra Deebiin Ajajuu",
     "payables": "Idaa Kaffalamuu Qabu", "patients": "Dhukkubsattoota", "controlled": "Galmee Qorichoota To'atamoo",
-    "interactions": "Walitti Bu'iinsa Qorichaa", "reports": "Gabaasota", "audit": "Galmee Odiitii", "staff": "Hojjettoota",
+    "interactions": "Walitti Bu'iinsa Qorichaa", "insurance": "Inshuraansii", "einvoice": "Nagahee Elektirooniksii", "reports": "Gabaasota", "audit": "Galmee Odiitii", "staff": "Hojjettoota",
     "settings": "Qindaa'ina", "notifications": "Beeksisa", "admin": "Daashboordii Bulchaa"
   },
   "quickActions": {

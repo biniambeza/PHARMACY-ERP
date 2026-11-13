@@ -6,7 +6,7 @@
     "stock-take": "የክምችት ቆጠራ", "movements": "የክምችት እንቅስቃሴዎች", "expiry": "የማብቂያ ቀን", "transfers": "ዝውውሮች",
     "import": "ከፋይል አስገባ", "suppliers": "አቅራቢዎች", "procurement": "የግዢ ትዕዛዞች", "reorder": "ዳግም ማዘዝ",
     "payables": "የሚከፈሉ ሂሳቦች", "patients": "ታካሚዎች", "controlled": "የቁጥጥር መድሃኒቶች መዝገብ",
-    "interactions": "የመድሃኒት መስተጋብሮች", "reports": "ሪፖርቶች", "audit": "የኦዲት መዝገብ", "staff": "ሰራተኞች",
+    "interactions": "የመድሃኒት መስተጋብሮች", "insurance": "ኢንሹራንስ", "einvoice": "ኤሌክትሮኒክ ደረሰኝ", "reports": "ሪፖርቶች", "audit": "የኦዲት መዝገብ", "staff": "ሰራተኞች",
     "settings": "ቅንብሮች", "notifications": "ማሳወቂያዎች", "admin": "የአስተዳዳሪ ዳሽቦርድ"
   },
   "quickActions": {

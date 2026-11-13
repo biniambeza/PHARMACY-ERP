@@ -55,9 +55,16 @@ const ALL_PERMISSIONS = [
   'staff:manage',
   'branch:manage',
   'notifications:view',
+  // Insurance / credit-scheme billing
+  'insurance:view',
+  'insurance:manage',
+  'claim:manage',
+  // Fiscal e-invoicing
+  'einvoice:view',
+  'einvoice:manage',
 ];
 
-const OWNER_ONLY = ['staff:manage', 'settings:manage', 'audit:view', 'branch:manage', 'sales:void'];
+const OWNER_ONLY = ['staff:manage', 'settings:manage', 'audit:view', 'branch:manage', 'sales:void', 'einvoice:manage'];
 
 const PERMISSIONS = {
   owner: [...ALL_PERMISSIONS],
@@ -72,6 +79,8 @@ const PERMISSIONS = {
     // Needed by the POS screen (medicine search)
     'medicine:view',
     'notifications:view',
+    // Insurance sales at the POS (look up schemes/members)
+    'insurance:view',
   ],
   storekeeper: [
     'dashboard:view',

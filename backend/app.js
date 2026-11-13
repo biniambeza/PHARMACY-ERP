@@ -39,6 +39,10 @@ const announcementRoutes = require('./routes/announcementRoutes');
 const shiftRoutes = require('./routes/shiftRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const paymentWebhookRoutes = require('./routes/paymentWebhookRoutes');
+const insuranceRoutes = require('./routes/insuranceRoutes');
+const receiptRoutes = require('./routes/receiptRoutes');
+const einvoiceRoutes = require('./routes/einvoiceRoutes');
+const onboardingRoutes = require('./routes/onboardingRoutes');
 
 const app = express();
 
@@ -176,6 +180,10 @@ app.use('/api/export', exportRoutes);
 app.use('/api/transfers', transferRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/shifts', shiftRoutes);
+app.use('/api/insurance', insuranceRoutes);
+app.use('/api/receipts', receiptRoutes);
+app.use('/api/einvoice', einvoiceRoutes);
+app.use('/api/onboarding', onboardingRoutes);
 // Public provider webhook (shared-secret header, no JWT) must be mounted before the protected router
 app.use('/api/payments/webhook', paymentWebhookRoutes);
 app.use('/api/payments', paymentRoutes);

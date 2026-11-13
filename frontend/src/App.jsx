@@ -37,6 +37,8 @@ const Interactions = lazy(() => import('./pages/pharmacist/Interactions'));
 const AuditLog = lazy(() => import('./pages/pharmacist/AuditLog'));
 const Transfers = lazy(() => import('./pages/pharmacist/Transfers'));
 const Shifts = lazy(() => import('./pages/pharmacist/Shifts'));
+const Insurance = lazy(() => import('./pages/pharmacist/Insurance'));
+const EInvoicing = lazy(() => import('./pages/pharmacist/EInvoicing'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 
@@ -82,6 +84,8 @@ const pharmacyPages = [
   { path: '/pharmacy/audit', element: <AuditLog />, perm: 'audit:view' },
   { path: '/pharmacy/transfers', element: <Transfers />, perm: 'transfer:manage' },
   { path: '/pharmacy/shifts', element: <Shifts />, perm: 'shift:own' },
+  { path: '/pharmacy/insurance', element: <Insurance />, perm: 'insurance:manage' },
+  { path: '/pharmacy/einvoice', element: <EInvoicing />, perm: 'einvoice:view' },
 ];
 
 function App() {
