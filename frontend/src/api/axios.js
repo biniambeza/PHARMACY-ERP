@@ -11,12 +11,19 @@ const api = axios.create({
   },
 });
 
+export const ACTIVE_PHARMACY_KEY = 'activePharmacyId';
+
 // Automatically attach JWT token to requests if available
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // Active branch for tenant users (see AuthContext.switchPharmacy)
+    const activePharmacyId = localStorage.getItem(ACTIVE_PHARMACY_KEY);
+    if (activePharmacyId && !config.headers['x-pharmacy-id']) {
+      config.headers['x-pharmacy-id'] = activePharmacyId;
     }
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -35,7 +42,9 @@ api.interceptors.request.use(
 // Global auth failure handling: an expired/revoked token (401) or a pharmacy
 // that was suspended/archived (403 with a PHARMACY_* code) ends the session.
 // The login request itself is excluded so a wrong password just shows an error.
-const SESSION_ENDING_CODES = ['PHARMACY_SUSPENDED', 'PHARMACY_ARCHIVED'];
+const SESSION_ENDING_CODES = ['PHARMACY_SUSPENDED', 'PHARMACY_ARCHIVED', 'ACCOUNT_DEACTIVATED'];
+// Codes caused by the selected branch only: fall back to the default branch.
+const BRANCH_CODES = ['NO_BRANCH_ACCESS', 'PHARMACY_SUSPENDED', 'PHARMACY_ARCHIVED'];
 
 api.interceptors.response.use(
   (response) => response,
@@ -44,6 +53,14 @@ api.interceptors.response.use(
     const code = error.response?.data?.code;
     const url = error.config?.url || '';
     const isLoginRequest = url.includes('/auth/login');
+    const sentBranch = error.config?.headers?.['x-pharmacy-id'];
+
+    // The selected branch is no longer usable: forget it and reload with the default one.
+    if (status === 403 && BRANCH_CODES.includes(code) && sentBranch && localStorage.getItem(ACTIVE_PHARMACY_KEY)) {
+      localStorage.removeItem(ACTIVE_PHARMACY_KEY);
+      window.location.assign('/pharmacy');
+      return Promise.reject(error);
+    }
 
     const sessionEnded =
       status === 401 || (status === 403 && SESSION_ENDING_CODES.includes(code));
@@ -51,6 +68,8 @@ api.interceptors.response.use(
     if (sessionEnded && !isLoginRequest && localStorage.getItem('token')) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('memberships');
+      localStorage.removeItem(ACTIVE_PHARMACY_KEY);
       if (window.location.pathname !== '/login') {
         // Full reload resets in-memory auth state in AuthContext.
         window.location.assign('/login?session=expired');

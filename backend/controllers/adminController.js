@@ -3,7 +3,9 @@ const Pharmacy = require('../models/Pharmacy');
 const User = require('../models/User');
 const Sale = require('../models/Sale');
 const StockBatch = require('../models/StockBatch');
+const Organization = require('../models/Organization');
 const AppError = require('../utils/AppError');
+const { audit } = require('../utils/audit');
 
 const OWNER_FIELDS = 'name email role';
 
@@ -35,21 +37,39 @@ const createPharmacy = async (req, res) => {
     throw new AppError('Pharmacy with this license number already exists', 409);
   }
 
-  // User + pharmacy are created atomically: if the pharmacy insert fails
-  // (validation, duplicate license...), the user is rolled back too.
+  // User + organization + pharmacy are created atomically: if the pharmacy
+  // insert fails (validation, duplicate license...), everything is rolled back.
+  // The pharmacist gets an 'owner' membership of the new pharmacy.
   const session = await mongoose.startSession();
-  let pharmacyId;
+  const pharmacyId = new mongoose.Types.ObjectId();
+  const userId = new mongoose.Types.ObjectId();
+  const organizationId = new mongoose.Types.ObjectId();
   try {
     await session.withTransaction(async () => {
-      const [pharmacist] = await User.create(
-        [{ name: pharmacistName, email, password: pharmacistPassword, role: 'pharmacist' }],
+      await User.create(
+        [
+          {
+            _id: userId,
+            name: pharmacistName,
+            email,
+            password: pharmacistPassword,
+            role: 'pharmacist',
+            organizationId,
+            memberships: [{ pharmacyId, role: 'owner', active: true }],
+          },
+        ],
         { session }
       );
-      const [pharmacy] = await Pharmacy.create(
-        [{ name, address, phone, licenseNo, owner: pharmacist._id }],
+      await Organization.create([{ _id: organizationId, name, ownerId: userId }], { session });
+      await Pharmacy.create(
+        [{ _id: pharmacyId, name, address, phone, licenseNo, owner: userId, organizationId }],
         { session }
       );
-      pharmacyId = pharmacy._id;
+      await audit(
+        req,
+        { action: 'pharmacy.create', entity: 'Pharmacy', entityId: pharmacyId, pharmacyId, meta: { name, licenseNo } },
+        { session }
+      );
     });
   } finally {
     await session.endSession();
@@ -156,8 +176,11 @@ const deletePharmacy = async (req, res) => {
     pharmacy.status = 'archived';
     pharmacy.archivedAt = new Date();
     await pharmacy.save();
-    // Revoke the pharmacist's outstanding tokens
-    await User.updateOne({ _id: pharmacy.owner }, { $inc: { tokenVersion: 1 } });
+    // Revoke the outstanding tokens of the owner and every staff member
+    await User.updateMany(
+      { $or: [{ _id: pharmacy.owner }, { 'memberships.pharmacyId': pharmacy._id }] },
+      { $inc: { tokenVersion: 1 } }
+    );
   }
 
   await pharmacy.populate('owner', OWNER_FIELDS);

@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Pharmacy = require('../models/Pharmacy');
 const AppError = require('../utils/AppError');
 const generateToken = require('../utils/generateToken');
+const { ensureMemberships, activeMemberships, describeMemberships } = require('../utils/membership');
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -10,6 +11,7 @@ const publicUser = (user) => ({
   name: user.name,
   email: user.email,
   role: user.role,
+  organizationId: user.organizationId || null,
 });
 
 // Verifies currentPassword, sets newPassword and bumps tokenVersion so every
@@ -53,19 +55,32 @@ const login = async (req, res) => {
     });
   }
 
-  // Pharmacists of suspended or archived pharmacies cannot sign in
+  // Tenant users: legacy owners are migrated to memberships here. Users whose
+  // memberships are all deactivated, or whose pharmacies are all suspended /
+  // archived, cannot sign in.
+  let pharmacies;
   if (user.role === 'pharmacist') {
-    const pharmacy = await Pharmacy.findOne({ owner: user._id });
-    if (pharmacy && pharmacy.status === 'suspended') {
+    const memberships = await ensureMemberships(user);
+    const active = activeMemberships(memberships);
+    if (memberships.length && !active.length) {
       return res.status(403).json({
         success: false,
-        message: 'This pharmacy account has been suspended. Please contact the administrator.',
+        code: 'ACCOUNT_DEACTIVATED',
+        message: 'Your staff account has been deactivated. Please contact the pharmacy owner.',
       });
     }
-    if (pharmacy && pharmacy.status === 'archived') {
+    pharmacies = await Pharmacy.find({ _id: { $in: memberships.map((m) => m.pharmacyId) } })
+      .select('name status organizationId address phone')
+      .lean();
+    const usable = pharmacies.filter((p) => active.some((m) => String(m.pharmacyId) === String(p._id)));
+    if (usable.length && !usable.some((p) => p.status === 'active')) {
+      const archived = usable.every((p) => p.status === 'archived');
       return res.status(403).json({
         success: false,
-        message: 'This pharmacy account has been closed. Please contact the administrator.',
+        code: archived ? 'PHARMACY_ARCHIVED' : 'PHARMACY_SUSPENDED',
+        message: archived
+          ? 'This pharmacy account has been closed. Please contact the administrator.'
+          : 'This pharmacy account has been suspended. Please contact the administrator.',
       });
     }
   }
@@ -74,6 +89,7 @@ const login = async (req, res) => {
     success: true,
     token: generateToken(user._id, user.role, user.tokenVersion || 0),
     user: publicUser(user),
+    memberships: await describeMemberships(user, pharmacies),
   });
 };
 
@@ -84,6 +100,7 @@ const getMe = async (req, res) => {
   return res.status(200).json({
     success: true,
     user: req.user,
+    memberships: await describeMemberships(req.user, req.userPharmacies),
   });
 };
 

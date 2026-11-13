@@ -8,6 +8,13 @@ const MOVEMENT_TYPES = [
   'adjust_expired',
   'correction',
   'delete',
+  'return',
+  'void',
+  'transfer_out',
+  'transfer_in',
+  'stock_take',
+  'expire',
+  'unit_conversion',
 ];
 
 const stockMovementSchema = new mongoose.Schema(
@@ -68,6 +75,7 @@ const stockMovementSchema = new mongoose.Schema(
 
 stockMovementSchema.index({ pharmacyId: 1, createdAt: -1 });
 stockMovementSchema.index({ batchId: 1, createdAt: -1 });
+stockMovementSchema.index({ pharmacyId: 1, medicineId: 1, createdAt: -1 });
 
 const StockMovement = mongoose.model('StockMovement', stockMovementSchema);
 StockMovement.MOVEMENT_TYPES = MOVEMENT_TYPES;

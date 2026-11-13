@@ -1,5 +1,30 @@
 const mongoose = require('mongoose');
 
+const settingsSchema = new mongoose.Schema(
+  {
+    tax: {
+      enabled: { type: Boolean, default: false },
+      name: { type: String, default: 'VAT', trim: true },
+      rate: { type: Number, default: 15, min: 0, max: 100 },
+      inclusive: { type: Boolean, default: false },
+      registrationNo: { type: String, default: '', trim: true },
+    },
+    currency: { type: String, default: 'ETB', trim: true, uppercase: true },
+    locale: { type: String, default: 'en', trim: true },
+    receiptFooter: { type: String, default: '', trim: true },
+    receiptWidth: { type: String, enum: ['58mm', '80mm', 'A4'], default: '80mm' },
+    expiryAlertDays: { type: [Number], default: () => [30, 60, 90] },
+    notify: {
+      email: { type: Boolean, default: false },
+      sms: { type: Boolean, default: false },
+      dailySummary: { type: Boolean, default: false },
+    },
+    // 100 = no limit
+    maxDiscountPercent: { type: Number, default: 100, min: 0, max: 100 },
+  },
+  { _id: false }
+);
+
 const pharmacySchema = new mongoose.Schema(
   {
     name: {
@@ -27,7 +52,16 @@ const pharmacySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'Pharmacy must be assigned to a pharmacist user'],
-      unique: true,
+      // Not unique: an owner can run several branches (see #23). Access is
+      // governed by User.memberships; `owner` is kept for legacy data.
+      index: true,
+    },
+    // Branch of an organization (null for legacy single pharmacies)
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      default: null,
+      index: true,
     },
     status: {
       type: String,
@@ -42,6 +76,19 @@ const pharmacySchema = new mongoose.Schema(
     archivedAt: {
       type: Date,
       default: null,
+    },
+    settings: {
+      type: settingsSchema,
+      default: () => ({}),
+    },
+    subscription: {
+      plan: { type: String, default: 'standard', trim: true },
+      status: {
+        type: String,
+        enum: ['trial', 'active', 'past_due', 'cancelled'],
+        default: 'active',
+      },
+      currentPeriodEnd: { type: Date, default: null },
     },
   },
   {

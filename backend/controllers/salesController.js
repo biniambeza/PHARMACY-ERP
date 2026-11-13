@@ -195,6 +195,7 @@ const createSale = async (req, res) => {
       const saleDoc = {
         pharmacyId: req.pharmacyId,
         pharmacistId: req.user._id,
+        staffId: req.user._id,
         invoiceNumber,
         customer: {
           name: cleanString(customer?.name) || 'Walk-in Customer',

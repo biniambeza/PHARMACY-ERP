@@ -17,6 +17,27 @@ const salesRoutes = require('./routes/salesRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const procurementRoutes = require('./routes/procurementRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const platformAdminRoutes = require('./routes/platformAdminRoutes');
+const staffRoutes = require('./routes/staffRoutes');
+const branchRoutes = require('./routes/branchRoutes');
+const returnRoutes = require('./routes/returnRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const customerRoutes = require('./routes/customerRoutes');
+const payableRoutes = require('./routes/payableRoutes');
+const reorderRoutes = require('./routes/reorderRoutes');
+const stockTakeRoutes = require('./routes/stockTakeRoutes');
+const movementRoutes = require('./routes/movementRoutes');
+const importRoutes = require('./routes/importRoutes');
+const patientRoutes = require('./routes/patientRoutes');
+const prescriptionRoutes = require('./routes/prescriptionRoutes');
+const controlledRoutes = require('./routes/controlledRoutes');
+const interactionRoutes = require('./routes/interactionRoutes');
+const auditRoutes = require('./routes/auditRoutes');
+const exportRoutes = require('./routes/exportRoutes');
+const transferRoutes = require('./routes/transferRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
+const shiftRoutes = require('./routes/shiftRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
@@ -121,6 +142,7 @@ app.get('/api/health', (req, res) => {
 
 // ---------- API routes (mounted under /api only) ----------
 app.use('/api/auth', authRoutes);
+app.use('/api/admin/platform', platformAdminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/medicines', medicineRoutes);
@@ -129,6 +151,26 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/procurement', procurementRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/staff', staffRoutes);
+app.use('/api/branches', branchRoutes);
+app.use('/api/returns', returnRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/payables', payableRoutes);
+app.use('/api/reorder', reorderRoutes);
+app.use('/api/stock-takes', stockTakeRoutes);
+app.use('/api/movements', movementRoutes);
+app.use('/api/import', importRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/controlled', controlledRoutes);
+app.use('/api/interactions', interactionRoutes);
+app.use('/api/audit', auditRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/transfers', transferRoutes);
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/shifts', shiftRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // ---------- 404 + central error handler (must be last) ----------
 app.use(notFound);

@@ -5,50 +5,27 @@ import { useTheme } from '../../context/ThemeContext';
 import { getMyPharmacy } from '../../api/pharmacyApi';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import {
-  Home,
-  Receipt,
-  Boxes,
-  ShoppingCart,
-  TrendingUp,
-  Pill,
-  Building2,
-  BarChart3,
-  Settings,
-  PackagePlus,
   Moon,
   Sun,
   LogOut,
   X,
-  Search,
-  Bell,
-  Menu,
   ChevronLeft,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
-
-const navItems = [
-  { name: 'Overview', to: '/pharmacy', end: true, icon: Home },
-  { name: 'Point of Sale', to: '/pharmacy/pos', end: false, icon: Receipt, badge: 'POS' },
-  { name: 'Inventory', to: '/pharmacy/stock', end: false, icon: Boxes, badge: 'FEFO' },
-  { name: 'Procurement', to: '/pharmacy/procurement', end: false, icon: ShoppingCart },
-  { name: 'Sales Ledger', to: '/pharmacy/sales', end: false, icon: TrendingUp },
-  { name: 'Medicine Catalog', to: '/pharmacy/medicines', end: false, icon: Pill },
-  { name: 'Suppliers', to: '/pharmacy/suppliers', end: false, icon: Building2 },
-  { name: 'Reports', to: '/pharmacy/reports', end: false, icon: BarChart3 },
-  { name: 'Settings', to: '/pharmacy/settings', end: false, icon: Settings },
-];
-
-const quickActions = [
-  { name: 'Create Purchase', to: '/pharmacy/procurement', icon: ShoppingCart },
-  { name: 'New Sale (POS)', to: '/pharmacy/pos', icon: Receipt },
-  { name: 'Record Stock', to: '/pharmacy/stock', icon: PackagePlus },
-  { name: 'Add Supplier', to: '/pharmacy/suppliers', icon: Building2 },
-];
+import { navGroups, quickActions as allQuickActions } from '../../config/navigation';
+import { ROLE_LABELS } from '../../config/permissions';
+import NotificationBell from '../../components/layout/NotificationBell';
+import BranchSwitcher from '../../components/layout/BranchSwitcher';
 
 const PharmacyLayout = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, can, membershipRole } = useAuth();
+  const roleLabel = ROLE_LABELS[membershipRole] || 'Staff';
+  const visibleGroups = navGroups
+    .map((group) => ({ ...group, items: group.items.filter((item) => !item.perm || can(item.perm)) }))
+    .filter((group) => group.items.length > 0);
+  const quickActions = allQuickActions.filter((action) => !action.perm || can(action.perm));
   const { toggleTheme, isDark } = useTheme();
   const [pharmacy, setPharmacy] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -156,74 +133,85 @@ const PharmacyLayout = () => {
 
         {/* Unified Navigation List */}
         <div className={`flex-1 overflow-y-auto ${sidebarCollapsed ? 'px-2.5 py-3 space-y-3' : 'px-3.5 py-4 space-y-4'} custom-scrollbar`}>
-          <div className="space-y-1">
-            {navItems.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  onClick={() => setMobileOpen(false)}
-                  title={sidebarCollapsed ? item.name : undefined}
-                  className={({ isActive }) =>
-                    `group relative flex items-center ${
-                      sidebarCollapsed
-                        ? 'justify-center p-2.5 rounded-xl'
-                        : 'gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-[13px]'
-                    } transition-all duration-150 ${
-                      isActive
-                        ? 'bg-emerald-50/90 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold shadow-2xs'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60 font-medium'
-                    }`
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {isActive ? (
-                        <span className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-7 h-7'} rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs shadow-emerald-500/20`}>
-                          <IconComponent className="w-4 h-4" />
-                        </span>
-                      ) : (
-                        <span className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-7 h-7'} flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors`}>
-                          <IconComponent className="w-4.5 h-4.5" />
-                        </span>
-                      )}
-
-                      {!sidebarCollapsed ? (
+          {visibleGroups.map((group, groupIndex) => (
+            <div key={group.label || 'main'} className="space-y-1">
+              {group.label &&
+                (sidebarCollapsed ? (
+                  groupIndex > 0 && <div className="mx-2 my-1 border-t border-slate-100 dark:border-slate-800/80" />
+                ) : (
+                  <div className="px-3 pt-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    {group.label}
+                  </div>
+                ))}
+              {group.items.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      onClick={() => setMobileOpen(false)}
+                      title={sidebarCollapsed ? item.name : undefined}
+                      className={({ isActive }) =>
+                        `group relative flex items-center ${
+                          sidebarCollapsed
+                            ? 'justify-center p-2.5 rounded-xl'
+                            : 'gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-[13px]'
+                        } transition-all duration-150 ${
+                          isActive
+                            ? 'bg-emerald-50/90 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 font-semibold shadow-2xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60 font-medium'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
                         <>
-                          <span className="flex-1 truncate">{item.name}</span>
-                          {item.badge && (
-                            <span
-                              className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                isActive
-                                  ? 'bg-emerald-100/90 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
-                                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                              }`}
-                            >
-                              {item.badge}
+                          {isActive ? (
+                            <span className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-7 h-7'} rounded-lg bg-emerald-600 dark:bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs shadow-emerald-500/20`}>
+                              <IconComponent className="w-4 h-4" />
                             </span>
+                          ) : (
+                            <span className={`${sidebarCollapsed ? 'w-8 h-8' : 'w-7 h-7'} flex items-center justify-center shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors`}>
+                              <IconComponent className="w-4.5 h-4.5" />
+                            </span>
+                          )}
+
+                          {!sidebarCollapsed ? (
+                            <>
+                              <span className="flex-1 truncate">{item.name}</span>
+                              {item.badge && (
+                                <span
+                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                    isActive
+                                      ? 'bg-emerald-100/90 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
+                                      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                                  }`}
+                                >
+                                  {item.badge}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            /* Tooltip for collapsed mode */
+                            <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 items-center gap-2 border border-slate-700/60">
+                              <span>{item.name}</span>
+                              {item.badge && (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </>
-                      ) : (
-                        /* Tooltip for collapsed mode */
-                        <div className="hidden lg:flex absolute left-full ml-3 px-2.5 py-1.5 bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none whitespace-nowrap z-50 items-center gap-2 border border-slate-700/60">
-                          <span>{item.name}</span>
-                          {item.badge && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
-                              {item.badge}
-                            </span>
-                          )}
-                        </div>
                       )}
-                    </>
-                  )}
-                </NavLink>
-              );
-            })}
-          </div>
+                    </NavLink>
+                  );
+              })}
+            </div>
+          ))}
 
           {/* Quick Actions Shortcuts */}
+          {quickActions.length > 0 && (
           <div className={`pt-3 pb-1 border-t border-slate-100 dark:border-slate-800/80 ${sidebarCollapsed ? 'flex flex-col items-center' : ''}`}>
             {!sidebarCollapsed ? (
               <>
@@ -276,6 +264,7 @@ const PharmacyLayout = () => {
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Sidebar Footer with Theme Switch & User Bar */}
@@ -328,7 +317,7 @@ const PharmacyLayout = () => {
                     {user?.name || 'Pharmacist'}
                   </p>
                   <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold capitalize truncate">
-                    {user?.role || 'Pharmacist'}
+                    {roleLabel}
                   </p>
                 </div>
               </div>
@@ -343,7 +332,7 @@ const PharmacyLayout = () => {
           ) : (
             <div className="flex flex-col items-center gap-2 pt-1">
               <div
-                title={`${user?.name || 'Pharmacist'} (${user?.role || 'Staff'})`}
+                title={`${user?.name || 'Pharmacist'} (${roleLabel})`}
                 className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-default"
               >
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'P'}
@@ -413,6 +402,9 @@ const PharmacyLayout = () => {
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* Branch switcher (hidden with a single branch) */}
+            <BranchSwitcher />
+
             {/* Date Pill */}
             <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -421,16 +413,8 @@ const PharmacyLayout = () => {
               <span>{new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             </div>
 
-            {/* Notification Bell with Badge */}
-            <button
-              title="Notifications"
-              className="relative p-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
-            </button>
+            {/* Notifications (owned by the Notify module) */}
+            <NotificationBell />
 
             {/* Quick Dark/Light Toggle */}
             <button
@@ -460,7 +444,7 @@ const PharmacyLayout = () => {
                   <span className="text-slate-400 text-[10px]">▼</span>
                 </div>
                 <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block leading-tight capitalize">
-                  {user?.role || 'Staff'}
+                  {roleLabel}
                 </span>
               </div>
             </div>

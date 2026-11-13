@@ -1,6 +1,31 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const MEMBERSHIP_ROLES = ['owner', 'pharmacist', 'cashier', 'storekeeper'];
+
+const membershipSchema = new mongoose.Schema(
+  {
+    pharmacyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Pharmacy',
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: {
+        values: MEMBERSHIP_ROLES,
+        message: '{VALUE} is not a valid staff role',
+      },
+      required: true,
+    },
+    active: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -38,6 +63,20 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Tenant access: one entry per pharmacy (branch) the user works in.
+    // Users with role 'pharmacist' and no memberships who own a pharmacy
+    // (Pharmacy.owner) are migrated lazily to an 'owner' membership
+    // (see utils/membership.js).
+    memberships: {
+      type: [membershipSchema],
+      default: [],
+    },
+    // Optional organization grouping several branches
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -58,4 +97,9 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+userSchema.index({ 'memberships.pharmacyId': 1 });
+
+const User = mongoose.model('User', userSchema);
+User.MEMBERSHIP_ROLES = MEMBERSHIP_ROLES;
+
+module.exports = User;

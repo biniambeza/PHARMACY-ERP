@@ -29,12 +29,21 @@ const start = async () => {
   // invoiceNumber / poNumber are unique per pharmacy (compound indexes). Older
   // deployments still carry global unique indexes (invoiceNumber_1, poNumber_1)
   // that would cause cross-pharmacy 409s; syncIndexes drops them and builds the
-  // new ones. Non-fatal: log and keep starting.
+  // new ones. Pharmacy.owner is no longer unique (an owner can run several
+  // branches), so the old owner_1 unique index is replaced as well.
+  // Non-fatal: log and keep starting.
   if (process.env.NODE_ENV !== 'test') {
     try {
       const Sale = require('./models/Sale');
       const PurchaseOrder = require('./models/PurchaseOrder');
-      await Promise.all([Sale.syncIndexes(), PurchaseOrder.syncIndexes()]);
+      const Pharmacy = require('./models/Pharmacy');
+      const Medicine = require('./models/Medicine');
+      await Promise.all([
+        Sale.syncIndexes(),
+        PurchaseOrder.syncIndexes(),
+        Pharmacy.syncIndexes(),
+        Medicine.syncIndexes(),
+      ]);
     } catch (error) {
       console.warn(`Warning: index sync failed: ${error.message}`);
     }
