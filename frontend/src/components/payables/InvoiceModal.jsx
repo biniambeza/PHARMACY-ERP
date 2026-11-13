@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { createSupplierInvoice } from '../../api/payableApi';
 import { PayablesModal, ErrorBox } from './PayablesModal';
 import { inputCls, labelCls, btnPrimary, btnGhost, errMsg, today } from './payablesUtils';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 
 const InvoiceModal = ({ suppliers, defaultSupplierId, onClose, onSaved }) => {
   const { t } = useTranslation('payables');
@@ -45,8 +46,8 @@ const InvoiceModal = ({ suppliers, defaultSupplierId, onClose, onSaved }) => {
       <ErrorBox error={error} />
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label className={labelCls}>{t('fields.supplier')}</label>
-          <select className={inputCls} value={form.supplierId} onChange={set('supplierId')}>
+          <label htmlFor="payable-invoice-supplier" className={labelCls}>{t('fields.supplier')}</label>
+          <select id="payable-invoice-supplier" className={inputCls} value={form.supplierId} onChange={set('supplierId')}>
             <option value="">{t('invoiceModal.selectSupplier')}</option>
             {suppliers.map((s) => (
               <option key={s._id} value={s._id}>
@@ -57,22 +58,24 @@ const InvoiceModal = ({ suppliers, defaultSupplierId, onClose, onSaved }) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>{t('fields.invoiceNo')}</label>
-            <input className={inputCls} value={form.invoiceNo} onChange={set('invoiceNo')} />
+            <label htmlFor="payable-invoice-invoice-no" className={labelCls}>{t('fields.invoiceNo')}</label>
+            <input id="payable-invoice-invoice-no" className={inputCls} value={form.invoiceNo} onChange={set('invoiceNo')} />
           </div>
           <div>
-            <label className={labelCls}>{t('fields.amount')}</label>
-            <input type="number" min="0.01" step="0.01" className={inputCls} value={form.amount} onChange={set('amount')} />
+            <label htmlFor="payable-invoice-amount" className={labelCls}>{t('fields.amount')}</label>
+            <input id="payable-invoice-amount" type="number" min="0.01" step="0.01" className={inputCls} value={form.amount} onChange={set('amount')} />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>{t('fields.invoiceDate')}</label>
-            <input type="date" className={inputCls} value={form.invoiceDate} onChange={set('invoiceDate')} />
+            <label htmlFor="payable-invoice-date" className={labelCls}>{t('fields.invoiceDate')}</label>
+            <input id="payable-invoice-date" type="date" className={inputCls} value={form.invoiceDate} onChange={set('invoiceDate')} aria-describedby="payable-invoice-date-eth" />
+            <EthiopianDateHint value={form.invoiceDate} id="payable-invoice-date-eth" />
           </div>
           <div>
-            <label className={labelCls}>{t('fields.dueDate')}</label>
-            <input type="date" className={inputCls} value={form.dueDate} onChange={set('dueDate')} />
+            <label htmlFor="payable-due-date" className={labelCls}>{t('fields.dueDate')}</label>
+            <input id="payable-due-date" type="date" className={inputCls} value={form.dueDate} onChange={set('dueDate')} aria-describedby="payable-due-date-eth" />
+            <EthiopianDateHint value={form.dueDate} id="payable-due-date-eth" />
             <p className="text-[10px] text-slate-400 mt-1">
               {supplier
                 ? t('invoiceModal.dueHintWithTerms', { count: supplier.paymentTermsDays ?? 30 })
@@ -81,8 +84,8 @@ const InvoiceModal = ({ suppliers, defaultSupplierId, onClose, onSaved }) => {
           </div>
         </div>
         <div>
-          <label className={labelCls}>{t('fields.notes')}</label>
-          <input className={inputCls} value={form.notes} onChange={set('notes')} />
+          <label htmlFor="payable-invoice-notes" className={labelCls}>{t('fields.notes')}</label>
+          <input id="payable-invoice-notes" className={inputCls} value={form.notes} onChange={set('notes')} />
         </div>
         <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/80">
           <button type="button" onClick={onClose} className={btnGhost}>

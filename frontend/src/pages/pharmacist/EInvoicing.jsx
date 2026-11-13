@@ -9,6 +9,7 @@ import FiscalInvoiceDetailModal from '../../components/einvoice/FiscalInvoiceDet
 import BatchActions from '../../components/einvoice/BatchActions';
 import { secondaryBtn } from '../../components/pos/PosModal';
 import { cardCls, inputCls, errMsg } from '../../components/pos/posUtils';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 const LIMIT = 20;
 const STATUSES = ['', 'unsubmitted', 'pending', 'submitted', 'accepted', 'rejected', 'failed', 'not_required'];
@@ -154,8 +155,14 @@ const EInvoicing = () => {
             <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('filters.search')} className={`${inputCls} pl-8 w-56`} />
           </form>
-          <input type="date" value={from} onChange={changeFilter(setFrom)} aria-label={t('filters.from')} className={`${inputCls} w-40`} />
-          <input type="date" value={to} onChange={changeFilter(setTo)} aria-label={t('filters.to')} className={`${inputCls} w-40`} />
+          <div className="relative">
+            <input type="date" value={from} onChange={changeFilter(setFrom)} aria-label={t('filters.from')} aria-describedby="einvoice-from-eth" className={`${inputCls} w-40`} />
+            <EthiopianDateHint value={from} id="einvoice-from-eth" className="absolute left-0 top-full whitespace-nowrap" />
+          </div>
+          <div className="relative">
+            <input type="date" value={to} onChange={changeFilter(setTo)} aria-label={t('filters.to')} aria-describedby="einvoice-to-eth" className={`${inputCls} w-40`} />
+            <EthiopianDateHint value={to} id="einvoice-to-eth" className="absolute left-0 top-full whitespace-nowrap" />
+          </div>
         </div>
 
         <FiscalInvoiceTable

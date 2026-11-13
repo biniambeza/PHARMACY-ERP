@@ -98,5 +98,9 @@
     "share": "አጋራ",
     "shareTitle": "ደረሰኝ {{number}}",
     "shareFailed": "ደረሰኙን ማጋራት አልተቻለም።"
+  },
+  "qr": {
+    "fiscalNo": "የፊስካል ቁጥር: {{value}}",
+    "verify": "ለማረጋገጥ ይቃኙ"
   }
 }

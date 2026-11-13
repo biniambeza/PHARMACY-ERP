@@ -95,13 +95,13 @@ const Login = () => {
         <>
         {/* Session / reset notices */}
         {passwordReset && !error && (
-          <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs animate-fade-in">
+          <div role="status" className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs animate-fade-in">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
             <span className="flex-1">{t('passwordResetSuccess')}</span>
           </div>
         )}
         {sessionExpired && !passwordReset && !error && (
-          <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-xs animate-fade-in">
+          <div role="status" className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-xs animate-fade-in">
             <Info className="w-4 h-4 shrink-0 text-amber-500" />
             <span className="flex-1">{t('sessionExpired')}</span>
           </div>
@@ -109,8 +109,8 @@ const Login = () => {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs animate-fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+          <div id="login-error" role="alert" className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs animate-fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" aria-hidden="true" />
             <span className="flex-1">{error}</span>
           </div>
         )}
@@ -118,13 +118,17 @@ const Login = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label htmlFor="login-email" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               {t('emailLabel')}
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
               <input
+                id="login-email"
                 type="email"
+                autoComplete="username"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? 'login-error' : undefined}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -139,7 +143,7 @@ const Login = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label htmlFor="login-password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {t('password')}
               </label>
               <Link
@@ -150,9 +154,13 @@ const Login = () => {
               </Link>
             </div>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" aria-hidden="true" />
               <input
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? 'login-error' : undefined}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);

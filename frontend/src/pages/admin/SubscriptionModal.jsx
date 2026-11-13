@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, CreditCard, Loader2 } from 'lucide-react';
 import { updateSubscription } from '../../api/adminApi';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 const STATUSES = ['trial', 'active', 'past_due', 'cancelled'];
 
@@ -81,16 +82,20 @@ const SubscriptionModal = ({ pharmacy, onClose, onSaved }) => {
               ))}
             </select>
           </label>
-          <label className="block">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{t('shared.periodEnds')}</span>
-            <input
-              type="date"
-              value={periodEnd}
-              disabled={Boolean(extendDays)}
-              onChange={(e) => setPeriodEnd(e.target.value)}
-              className={`${inputClass} disabled:opacity-50`}
-            />
-          </label>
+          <div>
+            <label className="block">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{t('shared.periodEnds')}</span>
+              <input
+                type="date"
+                value={periodEnd}
+                disabled={Boolean(extendDays)}
+                onChange={(e) => setPeriodEnd(e.target.value)}
+                className={`${inputClass} disabled:opacity-50`}
+                aria-describedby="subscription-period-end-eth"
+              />
+            </label>
+            <EthiopianDateHint value={periodEnd} id="subscription-period-end-eth" />
+          </div>
           <label className="block">
             <span className="font-semibold text-slate-700 dark:text-slate-300">{t('subscription.extendBy')}</span>
             <select value={extendDays} onChange={(e) => setExtendDays(e.target.value)} className={inputClass}>

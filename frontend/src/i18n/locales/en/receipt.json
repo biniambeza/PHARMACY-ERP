@@ -98,5 +98,9 @@
     "share": "Share",
     "shareTitle": "Receipt {{number}}",
     "shareFailed": "Could not share the receipt."
+  },
+  "qr": {
+    "fiscalNo": "Fiscal No: {{value}}",
+    "verify": "Scan to verify"
   }
 }

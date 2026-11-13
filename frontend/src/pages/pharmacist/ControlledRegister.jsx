@@ -5,6 +5,7 @@ import { getControlledRegister, getControlledMedicines } from '../../api/clinica
 import { CardSkeleton } from '../../components/common/SkeletonLoader';
 import { cardCls, inputCls, labelCls, primaryBtn, secondaryBtn, errMsg } from '../../components/clinical/ui';
 import { formatDate, formatDateTime } from '../../utils/format';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 // Labels are i18n keys in the `controlled` namespace (entryTypes.<type>).
 const ENTRY_TYPES = ['dispense', 'receive', 'return', 'adjust'];
@@ -147,13 +148,15 @@ const ControlledRegister = () => {
             ))}
           </select>
         </div>
-        <div>
-          <label className={labelCls}>{t('filters.from')}</label>
-          <input type="date" className={inputCls} value={filters.from} onChange={set('from')} />
+        <div className="relative">
+          <label htmlFor="controlled-from" className={labelCls}>{t('filters.from')}</label>
+          <input id="controlled-from" type="date" className={inputCls} value={filters.from} onChange={set('from')} aria-describedby="controlled-from-eth" />
+          <EthiopianDateHint value={filters.from} id="controlled-from-eth" className="absolute left-0 top-full whitespace-nowrap" />
         </div>
-        <div>
-          <label className={labelCls}>{t('filters.to')}</label>
-          <input type="date" className={inputCls} value={filters.to} onChange={set('to')} />
+        <div className="relative">
+          <label htmlFor="controlled-to" className={labelCls}>{t('filters.to')}</label>
+          <input id="controlled-to" type="date" className={inputCls} value={filters.to} onChange={set('to')} aria-describedby="controlled-to-eth" />
+          <EthiopianDateHint value={filters.to} id="controlled-to-eth" className="absolute left-0 top-full whitespace-nowrap" />
         </div>
         <button onClick={load} className={secondaryBtn}><RefreshCw className="w-3.5 h-3.5" /> {t('filters.apply')}</button>
       </div>

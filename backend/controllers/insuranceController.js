@@ -94,6 +94,7 @@ const schemeFields = async (req, body, { partial = false } = {}) => {
   }
   if (has('notes')) out.notes = str(body.notes, 1000);
   if (has('active')) out.active = body.active === true || body.active === 'true';
+  if (has('autoClaim')) out.autoClaim = body.autoClaim === true || body.autoClaim === 'true';
   if (has('excludedCategories')) {
     const list = Array.isArray(body.excludedCategories)
       ? body.excludedCategories
@@ -266,6 +267,8 @@ const getMembers = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .populate('schemeId', 'name type')
+      .populate('patientId', 'name phone')
+      .populate('customerId', 'name phone')
       .lean(),
     InsuranceMember.countDocuments(query),
   ]);

@@ -7,6 +7,7 @@ import { CardSkeleton } from '../common/SkeletonLoader';
 import { formatMoney, formatDate } from '../../utils/format';
 import { Modal, ErrorBox } from './CustomerModal';
 import { inputCls, labelCls, btnPrimary, errMsg, escapeHtml } from './customerUi';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 
 // ---------- Statement ----------
 const CustomerStatementModal = ({ customer, onClose }) => {
@@ -78,13 +79,15 @@ ${rows}<tr class="tot"><td></td><td>${h('statement.closing')}</td><td></td><td c
   return (
     <Modal title={t('statement.title')} subtitle={customer.name} icon={FileText} onClose={onClose} wide>
       <div className="flex flex-wrap items-end gap-3 mb-4">
-        <div>
-          <label className={labelCls}>{t('statement.from')}</label>
-          <input type="date" className={inputCls} value={from} onChange={(e) => setFrom(e.target.value)} />
+        <div className="relative">
+          <label htmlFor="statement-from" className={labelCls}>{t('statement.from')}</label>
+          <input id="statement-from" type="date" className={inputCls} value={from} onChange={(e) => setFrom(e.target.value)} aria-describedby="statement-from-eth" />
+          <EthiopianDateHint value={from} id="statement-from-eth" className="absolute left-0 top-full whitespace-nowrap" />
         </div>
-        <div>
-          <label className={labelCls}>{t('statement.to')}</label>
-          <input type="date" className={inputCls} value={to} onChange={(e) => setTo(e.target.value)} />
+        <div className="relative">
+          <label htmlFor="statement-to" className={labelCls}>{t('statement.to')}</label>
+          <input id="statement-to" type="date" className={inputCls} value={to} onChange={(e) => setTo(e.target.value)} aria-describedby="statement-to-eth" />
+          <EthiopianDateHint value={to} id="statement-to-eth" className="absolute left-0 top-full whitespace-nowrap" />
         </div>
         <button onClick={print} disabled={!data} className={`${btnPrimary} ml-auto`}>
           <Printer className="w-4 h-4" /> {t('common:buttons.print')}

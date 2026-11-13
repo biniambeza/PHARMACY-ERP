@@ -13,6 +13,7 @@ import SlowTab from '../../components/reports/SlowTab';
 import ExpiryTab from '../../components/reports/ExpiryTab';
 import TaxTab from '../../components/reports/TaxTab';
 import CompareTab from '../../components/reports/CompareTab';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 const TABS = [
   { id: 'overview', icon: BarChart3 },
@@ -127,9 +128,15 @@ const Reports = () => {
           )}
           {tab !== 'slow' && rangeId === 'custom' && (
             <div className="flex items-center gap-1.5 text-xs">
-              <input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)} className={dateInput} aria-label={t('fromDate')} />
+              <div className="relative">
+                <input type="date" value={customFrom} max={customTo} onChange={(e) => setCustomFrom(e.target.value)} className={dateInput} aria-label={t('fromDate')} aria-describedby="reports-from-eth" />
+                <EthiopianDateHint value={customFrom} id="reports-from-eth" className="absolute left-0 top-full whitespace-nowrap" />
+              </div>
               <span className="text-slate-400">{t('to')}</span>
-              <input type="date" value={customTo} min={customFrom} max={todayIso()} onChange={(e) => setCustomTo(e.target.value)} className={dateInput} aria-label={t('toDate')} />
+              <div className="relative">
+                <input type="date" value={customTo} min={customFrom} max={todayIso()} onChange={(e) => setCustomTo(e.target.value)} className={dateInput} aria-label={t('toDate')} aria-describedby="reports-to-eth" />
+                <EthiopianDateHint value={customTo} id="reports-to-eth" className="absolute left-0 top-full whitespace-nowrap" />
+              </div>
             </div>
           )}
           <button onClick={handleCSV} disabled={!exportSpec} className={btn} title={t('exportCsvTitle')}>

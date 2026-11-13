@@ -21,6 +21,7 @@ const SchemeFormModal = ({ scheme, onClose, onSaved }) => {
     excludedCategories: (scheme?.excludedCategories || []).join(', '),
     notes: scheme?.notes || '',
     active: scheme ? scheme.active : true,
+    autoClaim: scheme ? scheme.autoClaim !== false : true,
     payer: {
       name: scheme?.payer?.name || '',
       contactPerson: scheme?.payer?.contactPerson || '',
@@ -193,6 +194,13 @@ const SchemeFormModal = ({ scheme, onClose, onSaved }) => {
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
           <input type="checkbox" checked={form.active} onChange={set('active')} /> {t('fields.active')}
         </label>
+        <div>
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+            <input type="checkbox" checked={form.autoClaim} onChange={set('autoClaim')} aria-describedby="scheme-auto-claim-hint" />
+            {t('fields.autoClaim')}
+          </label>
+          <p id="scheme-auto-claim-hint" className="mt-1 ml-6 text-[11px] text-slate-500 dark:text-slate-400">{t('schemes.autoClaimHint')}</p>
+        </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className={btnGhost}>{t('common:buttons.cancel')}</button>

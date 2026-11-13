@@ -5,6 +5,7 @@ import { getAuditLogs, getAuditFacets } from '../../api/auditApi';
 import useAsync from '../../hooks/useAsync';
 import { formatDateTime } from '../../utils/format';
 import { exportCSV } from '../../utils/export';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 // Audit log viewer (#19). Read-only; owner (audit:view) only.
 
@@ -255,8 +256,14 @@ const AuditLog = () => {
             <option key={en} value={en}>{en}</option>
           ))}
         </select>
-        <input type="date" value={filters.from} onChange={setField('from')} className={inputCls} aria-label={t('from')} />
-        <input type="date" value={filters.to} onChange={setField('to')} className={inputCls} aria-label={t('to')} />
+        <div>
+          <input type="date" value={filters.from} onChange={setField('from')} className={`${inputCls} w-full`} aria-label={t('from')} aria-describedby="audit-from-eth" />
+          <EthiopianDateHint value={filters.from} id="audit-from-eth" />
+        </div>
+        <div>
+          <input type="date" value={filters.to} onChange={setField('to')} className={`${inputCls} w-full`} aria-label={t('to')} aria-describedby="audit-to-eth" />
+          <EthiopianDateHint value={filters.to} id="audit-to-eth" />
+        </div>
         <div className="flex gap-2 sm:col-span-2 lg:col-span-7 justify-end">
           <button type="button" onClick={resetFilters} className="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer">
             {t('common:buttons.reset')}

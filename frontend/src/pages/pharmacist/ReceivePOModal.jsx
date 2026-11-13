@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { receivePurchaseOrder } from '../../api/procurementApi';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, ethiopianDateHint } from '../../utils/format';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 const inputCls =
   'w-full px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition';
@@ -185,8 +186,8 @@ const ReceivePOModalBody = ({ onClose, onSuccess, order }) => {
         </div>
 
         {error && (
-          <div className="p-3 mb-5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+          <div role="alert" className="p-3 mb-5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" aria-hidden="true" />
             <span>{error}</span>
           </div>
         )}
@@ -211,10 +212,11 @@ const ReceivePOModalBody = ({ onClose, onSuccess, order }) => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className={labelCls}>{t('receive.invoiceNo')}</label>
+                <label htmlFor="receive-invoice-no" className={labelCls}>{t('receive.invoiceNo')}</label>
                 <div className="relative">
-                  <FileText className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                  <FileText className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" aria-hidden="true" />
                   <input
+                    id="receive-invoice-no"
                     type="text"
                     value={supplierInvoiceNo}
                     onChange={(e) => setSupplierInvoiceNo(e.target.value)}
@@ -225,17 +227,21 @@ const ReceivePOModalBody = ({ onClose, onSuccess, order }) => {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>{t('receive.invoiceDate')}</label>
+                <label htmlFor="receive-invoice-date" className={labelCls}>{t('receive.invoiceDate')}</label>
                 <input
+                  id="receive-invoice-date"
                   type="date"
                   value={supplierInvoiceDate}
                   onChange={(e) => setSupplierInvoiceDate(e.target.value)}
+                  aria-describedby="receive-invoice-date-eth"
                   className={`${inputCls} cursor-pointer`}
                 />
+                <EthiopianDateHint value={supplierInvoiceDate} id="receive-invoice-date-eth" />
               </div>
               <div>
-                <label className={labelCls}>{t('receive.notes')}</label>
+                <label htmlFor="receive-notes" className={labelCls}>{t('receive.notes')}</label>
                 <input
+                  id="receive-notes"
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -248,9 +254,9 @@ const ReceivePOModalBody = ({ onClose, onSuccess, order }) => {
           </div>
 
           <div className="space-y-3">
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <h3 className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
               {t('receive.items', { count: lines.length })}
-            </label>
+            </h3>
 
             {lines.map((l, lineIdx) => {
               const entered = lineEntered(l);
@@ -278,54 +284,79 @@ const ReceivePOModalBody = ({ onClose, onSuccess, order }) => {
                     <p className="text-[11px] text-emerald-600 dark:text-emerald-400">{t('receive.fullyReceived')}</p>
                   )}
 
-                  {l.batches.map((b, batchIdx) => (
-                    <div key={batchIdx} className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end">
+                  {l.batches.map((b, batchIdx) => {
+                    // Per-lot inputs repeat for every item, so each gets an accessible name that
+                    // says which medicine (and lot) it belongs to, e.g. "Lot number for Amoxicillin (lot 1)".
+                    const idBase = `receive-${lineIdx}-${batchIdx}`;
+                    const nameFor = (field) => t('receive.a11y.fieldFor', { field, name: lineName(l), n: batchIdx + 1 });
+                    const needsLot = (Number(b.quantity) || 0) + (Number(b.bonusQuantity) || 0) > 0;
+                    return (
+                    <div
+                      key={batchIdx}
+                      className={`grid grid-cols-2 sm:grid-cols-12 gap-2 items-end ${ethiopianDateHint(b.expiryDate) ? 'pb-5' : ''}`}
+                    >
                       <div className="col-span-2 sm:col-span-4">
-                        <label className={labelCls}>{t('receive.lotNumber')}</label>
+                        <label htmlFor={`${idBase}-lot`} className={labelCls}>{t('receive.lotNumber')}</label>
                         <div className="relative">
-                          <Hash className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                          <Hash className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" aria-hidden="true" />
                           <input
+                            id={`${idBase}-lot`}
                             type="text"
                             value={b.batchNo}
                             onChange={(e) => updateBatch(lineIdx, batchIdx, 'batchNo', e.target.value)}
                             placeholder="LOT-2026-XXXX"
+                            aria-label={nameFor(t('receive.lotNumber'))}
+                            aria-required={needsLot}
                             className={`${inputCls} pl-8 font-mono`}
                           />
                         </div>
                       </div>
                       <div className="col-span-2 sm:col-span-3">
-                        <label className={labelCls}>{t('receive.expiryDate')}</label>
+                        <label htmlFor={`${idBase}-expiry`} className={labelCls}>{t('receive.expiryDate')}</label>
                         <div className="relative">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" />
+                          <Calendar className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" aria-hidden="true" />
                           <input
+                            id={`${idBase}-expiry`}
                             type="date"
                             value={b.expiryDate}
                             onChange={(e) => updateBatch(lineIdx, batchIdx, 'expiryDate', e.target.value)}
+                            aria-label={nameFor(t('receive.expiryDate'))}
+                            aria-required={needsLot}
+                            aria-describedby={`${idBase}-expiry-eth`}
                             className={`${inputCls} pl-8 cursor-pointer`}
+                          />
+                          <EthiopianDateHint
+                            value={b.expiryDate}
+                            id={`${idBase}-expiry-eth`}
+                            className="absolute left-0 top-full whitespace-nowrap"
                           />
                         </div>
                       </div>
                       <div className="sm:col-span-2">
-                        <label className={labelCls}>{t('receive.receivedQty')}</label>
+                        <label htmlFor={`${idBase}-qty`} className={labelCls}>{t('receive.receivedQty')}</label>
                         <input
+                          id={`${idBase}-qty`}
                           type="number"
                           min="0"
                           step="1"
                           value={b.quantity}
                           onChange={(e) => updateBatch(lineIdx, batchIdx, 'quantity', e.target.value)}
+                          aria-label={nameFor(t('receive.receivedQty'))}
                           className={`${inputCls} font-mono`}
                         />
                       </div>
                       <div className="sm:col-span-2">
-                        <label className={`${labelCls} flex items-center gap-1`}>
-                          <Gift className="w-3 h-3" /> {t('receive.bonus')}
+                        <label htmlFor={`${idBase}-bonus`} className={`${labelCls} flex items-center gap-1`}>
+                          <Gift className="w-3 h-3" aria-hidden="true" /> {t('receive.bonus')}
                         </label>
                         <input
+                          id={`${idBase}-bonus`}
                           type="number"
                           min="0"
                           step="1"
                           value={b.bonusQuantity}
                           onChange={(e) => updateBatch(lineIdx, batchIdx, 'bonusQuantity', e.target.value)}
+                          aria-label={nameFor(t('receive.bonus'))}
                           className={`${inputCls} font-mono`}
                         />
                       </div>
@@ -335,12 +366,14 @@ const ReceivePOModalBody = ({ onClose, onSuccess, order }) => {
                           onClick={() => removeBatch(lineIdx, batchIdx)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition cursor-pointer"
                           title={t('receive.removeLot')}
+                          aria-label={nameFor(t('receive.removeLot'))}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
 
                   <button
                     type="button"

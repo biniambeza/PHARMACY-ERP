@@ -62,8 +62,8 @@ const TwoFactorLoginStep = ({ onSuccess, onExpired }) => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+        <div id="twofa-error" role="alert" className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" aria-hidden="true" />
           <span className="flex-1">{error}</span>
         </div>
       )}
@@ -76,6 +76,9 @@ const TwoFactorLoginStep = ({ onSuccess, onExpired }) => {
             </label>
             <input
               id="twofa-recovery"
+              aria-required="true"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'twofa-error' : undefined}
               type="text"
               autoComplete="off"
               autoCapitalize="none"
@@ -94,6 +97,9 @@ const TwoFactorLoginStep = ({ onSuccess, onExpired }) => {
             </label>
             <input
               id="twofa-code"
+              aria-required="true"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? 'twofa-error' : undefined}
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"

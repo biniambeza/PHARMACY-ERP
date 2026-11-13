@@ -153,6 +153,9 @@
       "lotAndExpiry": "Maaloo \"{{name}}\"f lakkoofsa lootii fi guyyaa dhumaa lachuu galchi.",
       "nothingEntered": "Yoo xiqqaate meeshaa tokkoof baay'ina fudhatame ykn kennaa galchi.",
       "receiveFailed": "Geessituu ajaja bittaa fudhachuun hin milkoofne"
+    },
+    "a11y": {
+      "fieldFor": "{{field}} — {{name}} (lootii {{n}})"
     }
   }
 }

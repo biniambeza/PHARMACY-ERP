@@ -35,6 +35,8 @@ const insuranceSchemeSchema = new mongoose.Schema(
     // Medicine categories (case-insensitive) that the scheme does not cover
     excludedCategories: [{ type: String, trim: true, maxlength: 100 }],
     claimCycle: { type: String, enum: CLAIM_CYCLES, default: 'monthly' },
+    // Monthly job (jobs/insuranceClaimsJob.js) builds a draft claim for last month's unclaimed sales
+    autoClaim: { type: Boolean, default: true },
     notes: { type: String, default: '', trim: true, maxlength: 1000 },
     active: { type: Boolean, default: true },
   },

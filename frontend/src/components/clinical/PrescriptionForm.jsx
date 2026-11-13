@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { createPrescription, MAX_RX_IMAGE_BYTES, RX_IMAGE_TYPES } from '../../api/clinicalApi';
 import { getMedicines } from '../../api/medicineApi';
 import { inputCls, labelCls, primaryBtn, secondaryBtn, errMsg, readFileAsDataUrl } from './ui';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const emptyItem = () => ({
@@ -160,28 +161,30 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className={labelCls}>{t('rx.prescriberName')} *</label>
-          <input className={inputCls} value={form.prescriberName} onChange={set('prescriberName')} />
+          <label htmlFor="rx-prescriber-name" className={labelCls}>{t('rx.prescriberName')} *</label>
+          <input id="rx-prescriber-name" aria-required="true" className={inputCls} value={form.prescriberName} onChange={set('prescriberName')} />
         </div>
         <div>
-          <label className={labelCls}>{t('rx.prescriberLicense')}</label>
-          <input className={inputCls} value={form.prescriberLicense} onChange={set('prescriberLicense')} />
+          <label htmlFor="rx-prescriber-license" className={labelCls}>{t('rx.prescriberLicense')}</label>
+          <input id="rx-prescriber-license" className={inputCls} value={form.prescriberLicense} onChange={set('prescriberLicense')} />
         </div>
         <div>
-          <label className={labelCls}>{t('rx.facility')}</label>
-          <input className={inputCls} value={form.facility} onChange={set('facility')} />
+          <label htmlFor="rx-facility" className={labelCls}>{t('rx.facility')}</label>
+          <input id="rx-facility" className={inputCls} value={form.facility} onChange={set('facility')} />
         </div>
         <div>
-          <label className={labelCls}>{t('rx.paperNumber')}</label>
-          <input className={inputCls} value={form.externalNumber} onChange={set('externalNumber')} />
+          <label htmlFor="rx-paper-number" className={labelCls}>{t('rx.paperNumber')}</label>
+          <input id="rx-paper-number" className={inputCls} value={form.externalNumber} onChange={set('externalNumber')} />
         </div>
         <div>
-          <label className={labelCls}>{t('rx.issueDate')} *</label>
-          <input type="date" className={inputCls} value={form.issueDate} onChange={set('issueDate')} />
+          <label htmlFor="rx-issue-date" className={labelCls}>{t('rx.issueDate')} *</label>
+          <input id="rx-issue-date" type="date" className={inputCls} value={form.issueDate} onChange={set('issueDate')} aria-required="true" aria-describedby="rx-issue-date-eth" />
+          <EthiopianDateHint value={form.issueDate} id="rx-issue-date-eth" />
         </div>
         <div>
-          <label className={labelCls}>{t('rx.expiryDate')}</label>
-          <input type="date" className={inputCls} value={form.expiryDate} onChange={set('expiryDate')} />
+          <label htmlFor="rx-expiry-date" className={labelCls}>{t('rx.expiryDate')}</label>
+          <input id="rx-expiry-date" type="date" className={inputCls} value={form.expiryDate} onChange={set('expiryDate')} aria-describedby="rx-expiry-date-eth" />
+          <EthiopianDateHint value={form.expiryDate} id="rx-expiry-date-eth" />
         </div>
       </div>
 
@@ -206,8 +209,8 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
                   onSelect={(m) => setItem(i, { name: m.name, medicineId: m._id })}
                 />
               </div>
-              <input className={`${inputCls} sm:col-span-2`} placeholder={t('rx.dose')} value={it.dose} onChange={(e) => setItem(i, { dose: e.target.value })} />
-              <input className={`${inputCls} sm:col-span-2`} placeholder={t('rx.frequency')} value={it.frequency} onChange={(e) => setItem(i, { frequency: e.target.value })} />
+              <input className={`${inputCls} sm:col-span-2`} aria-label={t('rx.dose')} placeholder={t('rx.dose')} value={it.dose} onChange={(e) => setItem(i, { dose: e.target.value })} />
+              <input className={`${inputCls} sm:col-span-2`} aria-label={t('rx.frequency')} placeholder={t('rx.frequency')} value={it.frequency} onChange={(e) => setItem(i, { frequency: e.target.value })} />
               <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder={t('rx.days')} title={t('rx.durationTitle')} value={it.durationDays} onChange={(e) => setItem(i, { durationDays: e.target.value })} />
               <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder={t('rx.qty')} title={t('rx.qtyTitle')} value={it.quantityPrescribed} onChange={(e) => setItem(i, { quantityPrescribed: e.target.value })} />
               <input type="number" min="0" className={`${inputCls} sm:col-span-1`} placeholder={t('rx.refills')} title={t('rx.refillsTitle')} value={it.refillsAllowed} onChange={(e) => setItem(i, { refillsAllowed: e.target.value })} />
@@ -247,8 +250,8 @@ const PrescriptionForm = ({ patientId, onCreated, onCancel, initialItems }) => {
           )}
         </div>
         <div>
-          <label className={labelCls}>{t('fields.notes')}</label>
-          <textarea rows={2} className={inputCls} value={form.notes} onChange={set('notes')} />
+          <label htmlFor="rx-notes" className={labelCls}>{t('fields.notes')}</label>
+          <textarea id="rx-notes" rows={2} className={inputCls} value={form.notes} onChange={set('notes')} />
         </div>
       </div>
 

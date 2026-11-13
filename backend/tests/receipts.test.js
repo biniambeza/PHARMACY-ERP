@@ -5,6 +5,8 @@ const {
 const Sale = require('../models/Sale');
 const Pharmacy = require('../models/Pharmacy');
 const AuditLog = require('../models/AuditLog');
+const ReceiptSendLog = require('../models/ReceiptSendLog');
+const FiscalInvoice = require('../models/FiscalInvoice');
 const notify = require('../services/notify');
 const receipts = require('../services/receipts');
 
@@ -53,9 +55,9 @@ beforeAll(async () => {
 });
 
 afterAll(disconnectTestDb);
-afterEach(() => {
+afterEach(async () => {
   jest.restoreAllMocks();
-  receipts.resetSendRate();
+  await receipts.resetSendRate();
 });
 
 describe('services/receipts', () => {
@@ -103,6 +105,40 @@ describe('services/receipts', () => {
   });
 });
 
+describe('services/receipts checkSendRate (MongoDB-backed)', () => {
+  test('enforces the limit and reports retryAfterMs from the oldest send', async () => {
+    const t0 = Date.now();
+    const opts = (offset) => ({ limit: 3, windowMs: 60000, now: t0 + offset });
+    expect(await receipts.checkSendRate('k1', opts(0))).toEqual({ allowed: true, remaining: 2 });
+    expect(await receipts.checkSendRate('k1', opts(1000))).toEqual({ allowed: true, remaining: 1 });
+    expect(await receipts.checkSendRate('k1', opts(2000))).toEqual({ allowed: true, remaining: 0 });
+    const blocked = await receipts.checkSendRate('k1', opts(10000));
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.retryAfterMs).toBe(50000);
+    expect(await ReceiptSendLog.countDocuments({ key: 'k1' })).toBe(3);
+    // Once the oldest send leaves the window a new one is allowed
+    expect((await receipts.checkSendRate('k1', opts(60001))).allowed).toBe(true);
+  });
+
+  test('separate keys are independent', async () => {
+    const opts = { limit: 1, windowMs: 60000 };
+    expect((await receipts.checkSendRate('a', opts)).allowed).toBe(true);
+    expect((await receipts.checkSendRate('a', opts)).allowed).toBe(false);
+    expect((await receipts.checkSendRate('b', opts)).allowed).toBe(true);
+    await receipts.resetSendRate('a');
+    expect((await receipts.checkSendRate('a', opts)).allowed).toBe(true);
+    expect((await receipts.checkSendRate('b', opts)).allowed).toBe(false);
+  });
+
+  test('send log has a TTL index on createdAt', async () => {
+    await ReceiptSendLog.syncIndexes();
+    const indexes = await ReceiptSendLog.collection.indexes();
+    const ttl = indexes.find((i) => i.key && i.key.createdAt === 1 && Object.keys(i.key).length === 1);
+    expect(ttl).toBeDefined();
+    expect(ttl.expireAfterSeconds).toBe(receipts.SEND_WINDOW_MS / 1000);
+  });
+});
+
 describe('GET /api/receipts/:saleId/text', () => {
   test('returns the plain-text receipt with pharmacy settings', async () => {
     const res = await request(app).get(`/api/receipts/${saleA._id}/text`).set(auth(A.token));
@@ -110,6 +146,28 @@ describe('GET /api/receipts/:saleId/text', () => {
     expect(res.body.text).toContain(saleA.invoiceNumber);
     expect(res.body.text).toContain('TIN: TIN-0099');
     expect(res.body.text).toContain('Get well soon');
+  });
+
+  test('includes fiscal identifiers once the sale has a fiscal invoice', async () => {
+    const sale = await makeSale(A);
+    const none = await request(app).get(`/api/receipts/${sale._id}/text`).set(auth(A.token));
+    expect(none.status).toBe(200);
+    expect(none.body.fiscal).toBeNull();
+
+    await FiscalInvoice.create({
+      pharmacyId: A.pharmacy._id,
+      saleId: sale._id,
+      invoiceNumber: sale.invoiceNumber,
+      status: 'accepted',
+      provider: 'mock',
+      fiscalNumber: 'FN-123',
+      irn: 'IRN-abc',
+      qrPayload: 'https://verify.example/FN-123',
+    });
+    const res = await request(app).get(`/api/receipts/${sale._id}/text`).set(auth(A.token));
+    expect(res.body.fiscal).toEqual({
+      status: 'accepted', fiscalNumber: 'FN-123', irn: 'IRN-abc', qrPayload: 'https://verify.example/FN-123',
+    });
   });
 
   test('is tenant-scoped', async () => {
@@ -185,7 +243,7 @@ describe('POST /api/receipts/:saleId/send', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  test('rate-limits sends per sale', async () => {
+  test('rate-limits sends per sale (429 + Retry-After), other sales unaffected', async () => {
     const spy = jest.spyOn(notify, 'sendSms').mockResolvedValue({ sent: true });
     const send = () => request(app).post(`/api/receipts/${saleA._id}/send`).set(auth(A.token))
       .send({ channel: 'sms', to: '0911223344' });
@@ -194,14 +252,39 @@ describe('POST /api/receipts/:saleId/send', () => {
     }
     const blocked = await send();
     expect(blocked.status).toBe(429);
-    expect(blocked.headers['retry-after']).toBeDefined();
+    const retryAfter = Number(blocked.headers['retry-after']);
+    expect(retryAfter).toBeGreaterThan(0);
+    expect(retryAfter).toBeLessThanOrEqual(receipts.SEND_WINDOW_MS / 1000);
     expect(spy).toHaveBeenCalledTimes(receipts.SEND_LIMIT);
+    // The window lives in MongoDB, not in process memory; the refused send is not recorded
+    expect(await ReceiptSendLog.countDocuments({ key: `${A.pharmacy._id}:${saleA._id}` })).toBe(receipts.SEND_LIMIT);
 
     // Other sales are not affected
     const other = await makeSale(A);
     const res = await request(app).post(`/api/receipts/${other._id}/send`).set(auth(A.token))
       .send({ channel: 'sms', to: '0911223344' });
     expect(res.status).toBe(200);
+  });
+
+  test('the limit survives a server restart (DB-backed, not in-process state)', async () => {
+    jest.spyOn(notify, 'sendSms').mockResolvedValue({ sent: true });
+    const key = `${A.pharmacy._id}:${saleA._id}`;
+    for (let i = 0; i < receipts.SEND_LIMIT; i += 1) {
+      expect((await receipts.checkSendRate(key)).allowed).toBe(true);
+    }
+    // A freshly loaded copy of the service (as on another instance / after a restart)
+    let fresh;
+    jest.isolateModules(() => {
+      jest.doMock('../models/ReceiptSendLog', () => ReceiptSendLog);
+      fresh = require('../services/receipts');
+    });
+    expect(fresh).not.toBe(receipts);
+    const r = await fresh.checkSendRate(key);
+    expect(r.allowed).toBe(false);
+    // ... and the HTTP endpoint refuses too
+    const res = await request(app).post(`/api/receipts/${saleA._id}/send`).set(auth(A.token))
+      .send({ channel: 'sms', to: '0911223344' });
+    expect(res.status).toBe(429);
   });
 
   test('requires sales:view (storekeeper is forbidden)', async () => {

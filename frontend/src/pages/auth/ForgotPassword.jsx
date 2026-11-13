@@ -59,8 +59,8 @@ const ForgotPassword = () => {
         </div>
 
         {error && (
-          <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs animate-fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+          <div id="forgot-error" role="alert" className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs animate-fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" aria-hidden="true" />
             <span className="flex-1">{error}</span>
           </div>
         )}
@@ -97,6 +97,8 @@ const ForgotPassword = () => {
                   placeholder="name@pharmacy.com"
                   autoComplete="email"
                   required
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? 'forgot-error' : undefined}
                   className={inputClass}
                 />
               </div>

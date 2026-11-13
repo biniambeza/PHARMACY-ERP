@@ -14,6 +14,7 @@ import { getSuppliers } from '../../api/supplierApi';
 import { getMedicines } from '../../api/medicineApi';
 import { createPurchaseOrder } from '../../api/procurementApi';
 import { formatMoney, getDefaultCurrency } from '../../utils/format';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 // Sentinel so the load error is translated at render time (keeps the effect deps unchanged).
 const LOAD_FAILED = '__loadFailed__';
@@ -209,18 +210,21 @@ const CreatePOModalBody = ({ onClose, onSuccess }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="po-expected-delivery" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 {t('create.expectedDelivery')}
               </label>
               <div className="relative">
                 <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
                 <input
+                  id="po-expected-delivery"
                   type="date"
                   value={expectedDelivery}
                   onChange={(e) => setExpectedDelivery(e.target.value)}
+                  aria-describedby="po-expected-delivery-eth"
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition cursor-pointer"
                 />
               </div>
+              <EthiopianDateHint value={expectedDelivery} id="po-expected-delivery-eth" />
             </div>
           </div>
 

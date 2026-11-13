@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { FileText, Send, RefreshCw, Trash2, Download, Printer, Banknote, Ban } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../../context/useAuth';
 import { formatMoney, formatDate } from '../../utils/format';
 import { Modal, ErrorBox } from '../customers/CustomerModal';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 import { printClaim } from './claimPrint';
 import { inputCls, labelCls, btnPrimary, btnGhost, errMsg, toDateInput, claimStatusCls, pillCls, thCls, tdCls } from './insuranceUi';
 
@@ -15,6 +16,7 @@ import { inputCls, labelCls, btnPrimary, btnGhost, errMsg, toDateInput, claimSta
 const ClaimDetailModal = ({ claimId, onClose, onChanged }) => {
   const { t } = useTranslation('insurance');
   const { activePharmacy } = useAuth();
+  const payDateId = `${useId()}-pay-date`;
   const [claim, setClaim] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -109,7 +111,11 @@ const ClaimDetailModal = ({ claimId, onClose, onChanged }) => {
           className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3 mb-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20"
         >
           <div><label className={labelCls}>{t('fields.amount')}</label><input type="number" min="0.01" step="0.01" required className={`${inputCls} font-mono`} value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} /></div>
-          <div><label className={labelCls}>{t('fields.date')}</label><input type="date" className={inputCls} value={pay.date} onChange={(e) => setPay({ ...pay, date: e.target.value })} /></div>
+          <div>
+            <label htmlFor={payDateId} className={labelCls}>{t('fields.date')}</label>
+            <input id={payDateId} type="date" className={inputCls} value={pay.date} onChange={(e) => setPay({ ...pay, date: e.target.value })} aria-describedby={`${payDateId}-eth`} />
+            <EthiopianDateHint value={pay.date} id={`${payDateId}-eth`} />
+          </div>
           <div><label className={labelCls}>{t('fields.reference')}</label><input className={inputCls} value={pay.reference} onChange={(e) => setPay({ ...pay, reference: e.target.value })} /></div>
           <div className="flex items-end gap-2">
             <button type="submit" disabled={busy} className={btnPrimary}>{t('save')}</button>

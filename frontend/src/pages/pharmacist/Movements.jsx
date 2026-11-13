@@ -8,6 +8,7 @@ import { formatDateTime, formatDate } from '../../utils/format';
 import { toCSV, downloadCSV } from '../../components/catalog/csv';
 import { MOVEMENT_TYPE_LABELS } from '../../components/catalog/catalogUtils';
 import { inputCls, labelCls, cardCls, secondaryBtn, theadCls, errorBox } from '../../components/catalog/styles';
+import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 const PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 500;
@@ -157,12 +158,14 @@ const Movements = () => {
           </select>
         </div>
         <div>
-          <label className={labelCls}>{t('filters.from')}</label>
-          <input type="date" className={inputCls} value={filters.from} onChange={(e) => setFilter('from', e.target.value)} />
+          <label htmlFor="movements-from" className={labelCls}>{t('filters.from')}</label>
+          <input id="movements-from" type="date" className={inputCls} value={filters.from} onChange={(e) => setFilter('from', e.target.value)} aria-describedby="movements-from-eth" />
+          <EthiopianDateHint value={filters.from} id="movements-from-eth" />
         </div>
         <div>
-          <label className={labelCls}>{t('filters.to')}</label>
-          <input type="date" className={inputCls} value={filters.to} onChange={(e) => setFilter('to', e.target.value)} />
+          <label htmlFor="movements-to" className={labelCls}>{t('filters.to')}</label>
+          <input id="movements-to" type="date" className={inputCls} value={filters.to} onChange={(e) => setFilter('to', e.target.value)} aria-describedby="movements-to-eth" />
+          <EthiopianDateHint value={filters.to} id="movements-to-eth" />
         </div>
         {filters.batchId && (
           <div className="sm:col-span-2 lg:col-span-5">

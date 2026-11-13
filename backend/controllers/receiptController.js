@@ -2,6 +2,7 @@
 const mongoose = require('mongoose');
 const Sale = require('../models/Sale');
 const Pharmacy = require('../models/Pharmacy');
+const FiscalInvoice = require('../models/FiscalInvoice');
 const AppError = require('../utils/AppError');
 const { audit } = require('../utils/audit');
 // Accessed as notify.sendSms / notify.sendEmail (not destructured) so tests can stub them.
@@ -23,11 +24,26 @@ const loadPharmacy = async (req) => {
   return Pharmacy.findById(req.pharmacyId).select('name address phone licenseNo tin settings').lean();
 };
 
-// GET /api/receipts/:saleId/text -> { text }
+// Fiscal identifiers for the printed receipt's QR code: only once the tax authority
+// (or the mock provider) has issued them. null when the sale has no fiscal invoice yet.
+const loadFiscal = async (req, sale) => {
+  const inv = await FiscalInvoice.findOne({ pharmacyId: req.pharmacyId, saleId: sale._id, type: 'invoice' })
+    .select('status fiscalNumber irn qrPayload invoiceNumber')
+    .lean();
+  if (!inv || !(inv.qrPayload || inv.fiscalNumber || inv.irn)) return null;
+  return {
+    status: inv.status,
+    fiscalNumber: inv.fiscalNumber || '',
+    irn: inv.irn || '',
+    qrPayload: inv.qrPayload || '',
+  };
+};
+
+// GET /api/receipts/:saleId/text -> { text, fiscal }
 const getReceiptText = async (req, res) => {
   const sale = await loadSale(req);
-  const pharmacy = await loadPharmacy(req);
-  res.json({ success: true, text: receipts.buildReceiptText({ sale, pharmacy }) });
+  const [pharmacy, fiscal] = await Promise.all([loadPharmacy(req), loadFiscal(req, sale)]);
+  res.json({ success: true, text: receipts.buildReceiptText({ sale, pharmacy }), fiscal });
 };
 
 // POST /api/receipts/:saleId/send { channel: 'sms'|'email', to }
@@ -42,7 +58,7 @@ const sendReceipt = async (req, res) => {
   const sale = await loadSale(req);
   const pharmacy = await loadPharmacy(req);
 
-  const rate = receipts.checkSendRate(`${req.pharmacyId}:${sale._id}`);
+  const rate = await receipts.checkSendRate(`${req.pharmacyId}:${sale._id}`);
   if (!rate.allowed) {
     res.set('Retry-After', String(Math.ceil(rate.retryAfterMs / 1000)));
     throw new AppError('Too many receipt sends for this sale. Try again later.', 429);

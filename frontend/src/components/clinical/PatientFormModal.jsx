@@ -3,6 +3,7 @@ import { X, Plus, Trash2, UserPlus, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { createPatient, updatePatient } from '../../api/clinicalApi';
 import { inputCls, labelCls, primaryBtn, secondaryBtn, errMsg } from './ui';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 
 const toInputDate = (d) => (d ? new Date(d).toISOString().slice(0, 10) : '');
 
@@ -92,20 +93,21 @@ const PatientFormModal = ({ isOpen, patient = null, onClose, onSaved }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
-              <label className={labelCls}>{t('form.fullName')} *</label>
-              <input className={inputCls} value={form.name} onChange={set('name')} autoFocus />
+              <label htmlFor="patient-full-name" className={labelCls}>{t('form.fullName')} *</label>
+              <input id="patient-full-name" aria-required="true" className={inputCls} value={form.name} onChange={set('name')} autoFocus />
             </div>
             <div>
-              <label className={labelCls}>{t('fields.dateOfBirth')}</label>
-              <input type="date" className={inputCls} value={form.dateOfBirth} onChange={set('dateOfBirth')} max={toInputDate(new Date())} />
+              <label htmlFor="patient-dob" className={labelCls}>{t('fields.dateOfBirth')}</label>
+              <input id="patient-dob" type="date" className={inputCls} value={form.dateOfBirth} onChange={set('dateOfBirth')} max={toInputDate(new Date())} aria-describedby="patient-dob-eth" />
+              <EthiopianDateHint value={form.dateOfBirth} id="patient-dob-eth" />
             </div>
             <div>
-              <label className={labelCls}>{t('form.ageIfUnknown')}</label>
-              <input type="number" min="0" max="150" className={inputCls} value={form.age} onChange={set('age')} disabled={Boolean(form.dateOfBirth)} />
+              <label htmlFor="patient-age-if-unknown" className={labelCls}>{t('form.ageIfUnknown')}</label>
+              <input id="patient-age-if-unknown" type="number" min="0" max="150" className={inputCls} value={form.age} onChange={set('age')} disabled={Boolean(form.dateOfBirth)} />
             </div>
             <div>
-              <label className={labelCls}>{t('fields.sex')}</label>
-              <select className={inputCls} value={form.sex} onChange={set('sex')}>
+              <label htmlFor="patient-sex" className={labelCls}>{t('fields.sex')}</label>
+              <select id="patient-sex" className={inputCls} value={form.sex} onChange={set('sex')}>
                 <option value="unknown">{t('sex.unknown')}</option>
                 <option value="female">{t('sex.female')}</option>
                 <option value="male">{t('sex.male')}</option>
@@ -113,12 +115,12 @@ const PatientFormModal = ({ isOpen, patient = null, onClose, onSaved }) => {
               </select>
             </div>
             <div>
-              <label className={labelCls}>{t('fields.phone')}</label>
-              <input className={inputCls} value={form.phone} onChange={set('phone')} />
+              <label htmlFor="patient-phone" className={labelCls}>{t('fields.phone')}</label>
+              <input id="patient-phone" className={inputCls} value={form.phone} onChange={set('phone')} />
             </div>
             <div className="sm:col-span-2">
-              <label className={labelCls}>{t('form.conditions')}</label>
-              <input className={inputCls} value={form.conditions} onChange={set('conditions')} placeholder={t('form.conditionsPlaceholder')} />
+              <label htmlFor="patient-conditions" className={labelCls}>{t('form.conditions')}</label>
+              <input id="patient-conditions" className={inputCls} value={form.conditions} onChange={set('conditions')} placeholder={t('form.conditionsPlaceholder')} />
             </div>
           </div>
 
@@ -159,8 +161,8 @@ const PatientFormModal = ({ isOpen, patient = null, onClose, onSaved }) => {
           </div>
 
           <div>
-            <label className={labelCls}>{t('fields.notes')}</label>
-            <textarea rows={2} className={inputCls} value={form.notes} onChange={set('notes')} />
+            <label htmlFor="patient-notes" className={labelCls}>{t('fields.notes')}</label>
+            <textarea id="patient-notes" rows={2} className={inputCls} value={form.notes} onChange={set('notes')} />
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

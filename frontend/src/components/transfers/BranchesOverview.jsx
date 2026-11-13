@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useTranslation } from 'react-i18next';
 import { getConsolidatedReport } from '../../api/transferApi';
 import { formatMoney } from '../../utils/format';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 
 const toInput = (d) => d.toISOString().slice(0, 10);
 
@@ -23,14 +24,20 @@ const BranchesOverview = () => {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end gap-3">
-        <label className="text-xs">
-          <span className="block font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('overview.from')}</span>
-          <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={inputClass} />
-        </label>
-        <label className="text-xs">
-          <span className="block font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('overview.to')}</span>
-          <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className={inputClass} />
-        </label>
+        <div className="relative">
+          <label className="block text-xs">
+            <span className="block font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('overview.from')}</span>
+            <input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} className={inputClass} aria-describedby="branches-from-eth" />
+          </label>
+          <EthiopianDateHint value={from} id="branches-from-eth" className="absolute left-0 top-full whitespace-nowrap" />
+        </div>
+        <div className="relative">
+          <label className="block text-xs">
+            <span className="block font-semibold text-slate-600 dark:text-slate-400 mb-1">{t('overview.to')}</span>
+            <input type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className={inputClass} aria-describedby="branches-to-eth" />
+          </label>
+          <EthiopianDateHint value={to} id="branches-to-eth" className="absolute left-0 top-full whitespace-nowrap" />
+        </div>
         <button
           onClick={load}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"

@@ -2,6 +2,7 @@
 // buildReceiptText({ sale, pharmacy, compact?, locale? }) -> string
 // Texts follow the pharmacy language (settings.locale: en | am | om), see backend/i18n.
 const { t, pharmacyLocale, normalizeLocale, localDate } = require('../i18n/messages');
+const ReceiptSendLog = require('../models/ReceiptSendLog');
 
 const METHODS = ['cash', 'card', 'mobile_money', 'credit', 'store_credit', 'insurance'];
 
@@ -139,30 +140,36 @@ const normalizeEmail = (value) => {
 
 // ------------------------------------------------------------- rate limit
 
-// In-memory sliding window per sale: max `limit` sends per `windowMs`.
+// Sliding window per key (pharmacy + sale): max `limit` sends per `windowMs`.
+// Backed by MongoDB (models/ReceiptSendLog, TTL-expired) so the limit survives restarts
+// and is shared by every server instance.
 const SEND_LIMIT = 5;
 const SEND_WINDOW_MS = 60 * 60 * 1000;
-const sendLog = new Map(); // key -> [timestamps]
 
-const checkSendRate = (key, { limit = SEND_LIMIT, windowMs = SEND_WINDOW_MS, now = Date.now() } = {}) => {
-  const recent = (sendLog.get(key) || []).filter((ts) => now - ts < windowMs);
-  if (recent.length >= limit) {
-    sendLog.set(key, recent);
-    const retryAfterMs = windowMs - (now - recent[0]);
-    return { allowed: false, retryAfterMs };
-  }
-  recent.push(now);
-  sendLog.set(key, recent);
-  // Opportunistic cleanup so the map doesn't grow forever.
-  if (sendLog.size > 5000) {
-    for (const [k, list] of sendLog) {
-      if (!list.some((ts) => now - ts < windowMs)) sendLog.delete(k);
-    }
-  }
-  return { allowed: true, remaining: limit - recent.length };
+// Insert-then-count: the send is recorded first and rolled back when it pushed the key
+// over the limit. Concurrent requests can at worst both be refused, never both allowed
+// past the limit.
+const checkSendRate = async (key, { limit = SEND_LIMIT, windowMs = SEND_WINDOW_MS, now = Date.now() } = {}) => {
+  const k = String(key);
+  const at = new Date(now);
+  const since = new Date(now - windowMs);
+  const entry = await ReceiptSendLog.create({ key: k, createdAt: at });
+  const count = await ReceiptSendLog.countDocuments({ key: k, createdAt: { $gt: since, $lte: at } });
+  if (count <= limit) return { allowed: true, remaining: limit - count };
+
+  await ReceiptSendLog.deleteOne({ _id: entry._id });
+  const oldest = await ReceiptSendLog.findOne({ key: k, createdAt: { $gt: since, $lte: at } })
+    .sort({ createdAt: 1 })
+    .select('createdAt')
+    .lean();
+  const oldestAt = oldest ? new Date(oldest.createdAt).getTime() : now;
+  return { allowed: false, retryAfterMs: Math.max(1000, windowMs - (now - oldestAt)) };
 };
 
-const resetSendRate = () => sendLog.clear();
+// Clears the send log (all keys, or one key). Used by tests.
+const resetSendRate = async (key) => {
+  await ReceiptSendLog.deleteMany(key === undefined ? {} : { key: String(key) });
+};
 
 module.exports = {
   buildReceiptText,

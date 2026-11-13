@@ -5,6 +5,7 @@ import { recordSupplierPayment } from '../../api/payableApi';
 import { formatMoney } from '../../utils/format';
 import { PayablesModal, ErrorBox } from './PayablesModal';
 import { inputCls, labelCls, btnPrimary, btnGhost, METHODS, errMsg, balanceOf, today } from './payablesUtils';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 
 // `target` = { supplierId, supplierName, outstanding, invoice? }
 const PaymentModal = ({ target, onClose, onSaved }) => {
@@ -49,12 +50,12 @@ const PaymentModal = ({ target, onClose, onSaved }) => {
       <form onSubmit={submit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>{t('fields.amount')}</label>
-            <input type="number" min="0.01" step="0.01" className={inputCls} value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <label htmlFor="payable-payment-amount" className={labelCls}>{t('fields.amount')}</label>
+            <input id="payable-payment-amount" type="number" min="0.01" step="0.01" className={inputCls} value={amount} onChange={(e) => setAmount(e.target.value)} />
           </div>
           <div>
-            <label className={labelCls}>{t('fields.method')}</label>
-            <select className={inputCls} value={method} onChange={(e) => setMethod(e.target.value)}>
+            <label htmlFor="payable-payment-method" className={labelCls}>{t('fields.method')}</label>
+            <select id="payable-payment-method" className={inputCls} value={method} onChange={(e) => setMethod(e.target.value)}>
               {METHODS.map((m) => (
                 <option key={m} value={m}>
                   {t(`methods.${m}`)}
@@ -65,8 +66,8 @@ const PaymentModal = ({ target, onClose, onSaved }) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>{t('fields.reference')}</label>
-            <input
+            <label htmlFor="payable-payment-reference" className={labelCls}>{t('fields.reference')}</label>
+            <input id="payable-payment-reference"
               className={inputCls}
               value={reference}
               onChange={(e) => setReference(e.target.value)}
@@ -74,13 +75,14 @@ const PaymentModal = ({ target, onClose, onSaved }) => {
             />
           </div>
           <div>
-            <label className={labelCls}>{t('fields.paymentDate')}</label>
-            <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} />
+            <label htmlFor="payable-payment-date" className={labelCls}>{t('fields.paymentDate')}</label>
+            <input id="payable-payment-date" type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} aria-describedby="payable-payment-date-eth" />
+            <EthiopianDateHint value={date} id="payable-payment-date-eth" />
           </div>
         </div>
         <div>
-          <label className={labelCls}>{t('fields.note')}</label>
-          <input className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} />
+          <label htmlFor="payable-payment-note" className={labelCls}>{t('fields.note')}</label>
+          <input id="payable-payment-note" className={inputCls} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
         <p className="text-[11px] text-slate-500 dark:text-slate-400">
           {target.invoice ? t('paymentModal.allocationInvoice') : t('paymentModal.allocationOldest')}

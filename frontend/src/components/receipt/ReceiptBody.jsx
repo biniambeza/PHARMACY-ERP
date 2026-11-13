@@ -1,7 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
 import { useTranslation } from 'react-i18next';
 import { formatMoney } from '../../utils/format';
+import { getReceiptText } from '../../api/receiptApi';
+import ReceiptQr from './ReceiptQr';
+import { buildReceiptQrText, usableFiscal } from './qrCode';
 
 // Printable receipt (thermal 58mm / 80mm or A4). Styles come from RECEIPT_CSS in utils/printReceipt.js.
 // Props: { sale, pharmacy, width, prefs }
@@ -32,6 +35,39 @@ const InvoiceBarcode = ({ value, narrow }) => {
   return <svg ref={ref} className="bc" />;
 };
 
+const isServerId = (id) => typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
+
+// Fiscal e-invoice identifiers for the QR code. Uses sale.fiscal when the caller already has
+// it; otherwise, when e-invoicing is enabled and we are online, asks the receipt endpoint.
+// Offline / not yet fiscalised: null (the QR then encodes TIN, invoice no, date and total).
+const useFiscal = (sale, pharmacy) => {
+  const given = sale?.fiscal || null;
+  const saleId = sale?._id;
+  const shouldFetch =
+    !given &&
+    Boolean(pharmacy?.einvoice?.enabled) &&
+    isServerId(saleId) &&
+    !sale?.voided &&
+    (typeof navigator === 'undefined' || navigator.onLine !== false);
+  const [loaded, setLoaded] = useState({ saleId: null, fiscal: null });
+  useEffect(() => {
+    if (!shouldFetch) return undefined;
+    let cancelled = false;
+    getReceiptText(saleId)
+      .then((res) => {
+        if (!cancelled) setLoaded({ saleId, fiscal: res?.fiscal || null });
+      })
+      .catch(() => {
+        // offline / no permission: keep the fallback QR
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [shouldFetch, saleId]);
+  if (given) return given;
+  return loaded.saleId === saleId ? loaded.fiscal : null;
+};
+
 const Row = ({ label, value, className = '' }) => (
   <div className={`row ${className}`}>
     <span>{label}</span>
@@ -48,6 +84,8 @@ const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
   const narrow = width !== 'A4';
   const tin = pharmacy?.tin || settings.tax?.registrationNo;
   const logoUrl = pharmacy?.logoUrl || pharmacy?.logo;
+  const fiscal = usableFiscal(useFiscal(sale, pharmacy));
+  const qrText = buildReceiptQrText({ sale, pharmacy, fiscal });
 
   const taxLines = sale.taxLines?.length
     ? sale.taxLines
@@ -85,7 +123,7 @@ const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
   const unitPrice = (item) => Number(item.unitPrice) * (Number(item.unitFactor) || 1);
 
   return (
-    <div className={`rcpt w${width}`}>
+    <div className={`rcpt w${String(width).replace('mm', '')}`}>
       <div className="c">
         {prefs.showLogo !== false &&
           (logoUrl ? (
@@ -223,6 +261,12 @@ const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
         <div className="c">
           <InvoiceBarcode value={sale.invoiceNumber} narrow={narrow} />
         </div>
+      )}
+      {qrText && (
+        <ReceiptQr
+          text={qrText}
+          label={fiscal?.fiscalNumber ? t('qr.fiscalNo', { value: fiscal.fiscalNumber }) : fiscal ? t('qr.verify') : ''}
+        />
       )}
     </div>
   );

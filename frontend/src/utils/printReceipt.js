@@ -79,6 +79,10 @@ export const RECEIPT_CSS = `
 .rcpt .logo { display: block; margin: 0 auto 3px; max-height: 40px; max-width: 70%; }
 .rcpt .mono-logo { display: inline-block; border: 2px solid #000; border-radius: 50%; width: 30px; height: 30px; line-height: 26px; font-weight: 700; font-size: 15px; margin-bottom: 3px; }
 .rcpt .bc { display: block; margin: 4px auto 0; max-width: 100%; height: auto; }
+.rcpt .qr { display: block; margin: 4px auto 0; width: 25mm; height: 25mm; }
+.rcpt.w58 .qr { width: 20mm; height: 20mm; }
+.rcpt.wA4 .qr { width: 28mm; height: 28mm; }
+.rcpt .qr-label { margin-top: 1px; }
 .rcpt-copy + .rcpt-copy { break-before: page; page-break-before: always; }
 `;
 

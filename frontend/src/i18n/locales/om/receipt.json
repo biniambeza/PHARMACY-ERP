@@ -98,5 +98,9 @@
     "share": "Qoodi",
     "shareTitle": "Nagahee {{number}}",
     "shareFailed": "Nagahee qooduun hin danda'amne."
+  },
+  "qr": {
+    "fiscalNo": "Lakk. Faayinaansii: {{value}}",
+    "verify": "Mirkaneessuuf iskaan godhaa"
   }
 }

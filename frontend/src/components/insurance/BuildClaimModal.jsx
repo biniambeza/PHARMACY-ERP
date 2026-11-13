@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { FileStack, CheckCircle, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getUnclaimed, createClaim } from '../../api/insuranceApi';
 import { formatMoney, formatDate } from '../../utils/format';
 import { Modal, ErrorBox } from '../customers/CustomerModal';
+import EthiopianDateHint from '../common/EthiopianDateHint';
 import { inputCls, labelCls, btnPrimary, btnGhost, errMsg, toDateInput, firstOfMonth, thCls, tdCls } from './insuranceUi';
 
 // Builds a claim from the unclaimed insurance sales of a scheme in a period.
 const BuildClaimModal = ({ schemes, onClose, onCreated }) => {
   const { t } = useTranslation('insurance');
+  const uid = useId();
+  const fromId = `${uid}-from`;
+  const toId = `${uid}-to`;
   const [form, setForm] = useState(() => ({
     schemeId: schemes.find((s) => s.active)?._id || schemes[0]?._id || '',
     from: firstOfMonth(),
@@ -71,12 +75,14 @@ const BuildClaimModal = ({ schemes, onClose, onCreated }) => {
             </select>
           </div>
           <div>
-            <label className={labelCls}>{t('fields.from')}</label>
-            <input type="date" className={inputCls} value={form.from} onChange={set('from')} />
+            <label htmlFor={fromId} className={labelCls}>{t('fields.from')}</label>
+            <input id={fromId} type="date" className={inputCls} value={form.from} onChange={set('from')} aria-describedby={`${fromId}-eth`} />
+            <EthiopianDateHint value={form.from} id={`${fromId}-eth`} />
           </div>
           <div>
-            <label className={labelCls}>{t('fields.to')}</label>
-            <input type="date" className={inputCls} value={form.to} onChange={set('to')} />
+            <label htmlFor={toId} className={labelCls}>{t('fields.to')}</label>
+            <input id={toId} type="date" className={inputCls} value={form.to} onChange={set('to')} aria-describedby={`${toId}-eth`} />
+            <EthiopianDateHint value={form.to} id={`${toId}-eth`} />
           </div>
         </div>
 

@@ -75,8 +75,8 @@ const ResetPassword = () => {
 
         {!token ? (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+            <div role="alert" className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" aria-hidden="true" />
               <span className="flex-1">{t('invalidResetLink')}</span>
             </div>
             <Link
@@ -90,8 +90,8 @@ const ResetPassword = () => {
         ) : (
           <>
             {error && (
-              <div className="mb-4 flex items-start gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs animate-fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+              <div id="reset-error" role="alert" className="mb-4 flex items-start gap-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 text-xs animate-fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" aria-hidden="true" />
                 <span className="flex-1">
                   {error}
                   {/expired|invalid/i.test(error) && (
@@ -124,6 +124,8 @@ const ResetPassword = () => {
                     placeholder={t('atLeastChars', { min: MIN_LENGTH })}
                     autoComplete="new-password"
                     required
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={[error && 'reset-error', strength && 'reset-strength'].filter(Boolean).join(' ') || undefined}
                     className={inputClass}
                   />
                   <button
@@ -140,7 +142,7 @@ const ResetPassword = () => {
                     <div className="flex-1 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div className={`h-full ${strength.color} ${strength.width} transition-all`} />
                     </div>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400">{strength.label}</span>
+                    <span id="reset-strength" className="text-[10px] text-slate-500 dark:text-slate-400">{strength.label}</span>
                   </div>
                 )}
               </div>
@@ -162,6 +164,8 @@ const ResetPassword = () => {
                     placeholder={t('repeatNewPassword')}
                     autoComplete="new-password"
                     required
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? 'reset-error' : undefined}
                     className={inputClass}
                   />
                 </div>

@@ -153,6 +153,9 @@
       "lotAndExpiry": "Please provide both lot number and expiry date for \"{{name}}\".",
       "nothingEntered": "Enter a received or bonus quantity for at least one item.",
       "receiveFailed": "Failed to receive purchase order delivery"
+    },
+    "a11y": {
+      "fieldFor": "{{field}} for {{name}} (lot {{n}})"
     }
   }
 }
