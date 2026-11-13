@@ -84,8 +84,13 @@ const allowedOrigins = buildAllowedOrigins();
 // https://pharmacy-erp-git-<anything>.vercel.app but nothing else on vercel.app.
 const vercelPreviewPrefix = (process.env.CORS_ALLOW_VERCEL_PREVIEWS_PREFIX || '').trim();
 
+// Outside production, any local dev server port is allowed (Vite moves to
+// 5174, 5175... when 5173 is already taken).
+const LOCAL_DEV_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
 const isAllowedOrigin = (origin) => {
   if (allowedOrigins.includes(origin)) return true;
+  if (process.env.NODE_ENV !== 'production' && LOCAL_DEV_ORIGIN.test(origin)) return true;
   if (vercelPreviewPrefix) {
     try {
       const { protocol, hostname } = new URL(origin);
