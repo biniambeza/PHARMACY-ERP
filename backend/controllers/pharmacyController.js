@@ -124,7 +124,15 @@ const buildSettingsUpdate = (settings) => {
 
 const auditSnapshot = (p) => {
   const o = typeof p.toObject === 'function' ? p.toObject() : p;
-  return { name: o.name, phone: o.phone, address: o.address, settings: o.settings };
+  return {
+    name: o.name,
+    phone: o.phone,
+    address: o.address,
+    tin: o.tin,
+    vatRegNo: o.vatRegNo,
+    vatRegistered: o.vatRegistered,
+    settings: o.settings,
+  };
 };
 
 // @desc    Update pharmacy details (phone, address) and settings (tax, currency, receipts...)
@@ -149,6 +157,17 @@ const updateMyPharmacy = async (req, res) => {
     if (!v) throw new AppError('Address cannot be empty', 400);
     update.address = v;
   }
+  // Fiscal identity (also editable from the e-invoicing settings)
+  const { tin, vatRegNo, vatRegistered } = req.body || {};
+  if (tin !== undefined) {
+    const v = asString(tin, 'TIN', 20);
+    if (v && !/^[0-9A-Za-z-]{4,20}$/.test(v)) {
+      throw new AppError('TIN may only contain letters, digits and dashes (4-20)', 400);
+    }
+    update.tin = v;
+  }
+  if (vatRegNo !== undefined) update.vatRegNo = asString(vatRegNo, 'VAT registration number', 50);
+  if (vatRegistered !== undefined) update.vatRegistered = asBool(vatRegistered, 'VAT registered');
   if (settings !== undefined) Object.assign(update, buildSettingsUpdate(settings));
 
   if (Object.keys(update).length === 0) {

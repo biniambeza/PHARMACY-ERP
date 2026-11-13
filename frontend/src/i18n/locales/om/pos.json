@@ -57,7 +57,10 @@
     "methodUnavailable": "{{method}} amma hin argamu",
     "creditCustomer": "Liqiif maamila filadhu",
     "waitingMobile": "Mirkaneessa maallaqa moobaayilaa eegaa jira",
-    "mobileRef": "Wabii daldala maallaqa moobaayilaa galchi"
+    "mobileRef": "Wabii daldala maallaqa moobaayilaa galchi",
+    "insuranceOffline": "Gurgurtaan inshuraansii walqunnamtii barbaada",
+    "insuranceMember": "Karoora inshuraansii fi miseensa filadhu",
+    "insurancePreview": "Herrega haguuggii inshuraansii eegaa jira"
   },
   "errors": {
     "loadCatalog": "Kaataaloogii fe'uun hin danda'amne",
@@ -166,7 +169,8 @@
     "cash": "Maallaqa callaa",
     "card": "Kaardii",
     "mobile_money": "Maallaqa moobaayilaa",
-    "credit": "Liqii"
+    "credit": "Liqii",
+    "insurance": "Inshuraansii"
   },
   "shift": {
     "title": "Shiftii bani",
@@ -198,5 +202,23 @@
     "confirmDiscard": "Gurgurtaa toora alaa kana gatuu barbaaddaa? Hin galmaa'u.",
     "syncFailed": "Walsimsiisni hin milkoofne",
     "notProcessed": "Hin adeemsifamne"
+  },
+  "insurance": {
+    "selectScheme": "Karoora inshuraansii filadhu…",
+    "memberSearch": "Lakkoofsa miseensaa, maqaa ykn bilbila",
+    "noMember": "Miseensi hin argamne",
+    "changeMember": "Miseensa jijjiiri",
+    "calculating": "Haguuggii herregaa jira…",
+    "insurerPays": "Inshuraansiin kan kaffalu",
+    "patientPays": "Dhukkubsataan kan kaffalu",
+    "copay": "Kaffaltii waloo",
+    "notCovered": "Kan hin haguugamne: {{names}}",
+    "previewFailed": "Haguuggii inshuraansii herreguun hin danda'amne",
+    "invalid": {
+      "expired": "yeroon isaa darbe",
+      "inactive": "hojii irra hin jiru",
+      "not_yet_valid": "ammallee hin jalqabne",
+      "not_found": "hin argamne"
+    }
   }
 }

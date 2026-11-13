@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, KeyRound, Loader2, Copy, Check } from 'lucide-react';
-import { adminResetUserPassword } from '../../api/authApi';
+import { X, KeyRound, Loader2, Copy, Check, ShieldOff } from 'lucide-react';
+import { adminResetUserPassword, adminResetUserTwoFactor } from '../../api/authApi';
 
 // Admin password reset for a pharmacy user: one-time temporary password or an
 // emailed reset link. The parent mounts it with a `key` per user.
@@ -11,6 +11,8 @@ const ResetPasswordModal = ({ user, onClose }) => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [twoFactorBusy, setTwoFactorBusy] = useState(false);
+  const [twoFactorResult, setTwoFactorResult] = useState(null);
 
   if (!user) return null;
 
@@ -25,6 +27,21 @@ const ResetPasswordModal = ({ user, onClose }) => {
       setError(err.response?.data?.message || t('resetPassword.failed'));
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Turns off the user's two-factor login (lost phone + recovery codes).
+  const resetTwoFactor = async () => {
+    if (!window.confirm(t('adminReset.confirm', { ns: 'security', name: user.name, email: user.email }))) return;
+    setTwoFactorBusy(true);
+    setError('');
+    try {
+      const res = await adminResetUserTwoFactor(user._id);
+      setTwoFactorResult(res.wasEnabled ? t('adminReset.done', { ns: 'security' }) : t('adminReset.notEnabled', { ns: 'security' }));
+    } catch (err) {
+      setError(err.response?.data?.message || t('adminReset.failed', { ns: 'security' }));
+    } finally {
+      setTwoFactorBusy(false);
     }
   };
 
@@ -102,6 +119,30 @@ const ResetPasswordModal = ({ user, onClose }) => {
           </div>
         )}
 
+        {/* Two-factor login reset */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-slate-800 dark:text-slate-200">{t('adminReset.title', { ns: 'security' })}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('adminReset.hint', { ns: 'security' })}</p>
+            </div>
+            <button
+              type="button"
+              disabled={twoFactorBusy || Boolean(twoFactorResult)}
+              onClick={resetTwoFactor}
+              className={`${btn} shrink-0 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 inline-flex items-center gap-1.5`}
+            >
+              {twoFactorBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ShieldOff className="w-3.5 h-3.5" />}
+              {t('adminReset.button', { ns: 'security' })}
+            </button>
+          </div>
+          {twoFactorResult && (
+            <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800/60 dark:text-emerald-200">
+              {twoFactorResult}
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-wrap justify-end gap-2">
           {!result?.tempPassword && (
             <>
@@ -114,7 +155,7 @@ const ResetPasswordModal = ({ user, onClose }) => {
             </>
           )}
           <button onClick={onClose} className={`${btn} bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200`}>
-            {result ? t('resetPassword.done') : t('buttons.cancel', { ns: 'common' })}
+            {result || twoFactorResult ? t('resetPassword.done') : t('buttons.cancel', { ns: 'common' })}
           </button>
         </div>
       </div>

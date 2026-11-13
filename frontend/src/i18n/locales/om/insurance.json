@@ -1,0 +1,192 @@
+{
+  "badge": "Kaffaltii inshuraansii",
+  "title": "Inshuraansii fi Karoora Liqii",
+  "subtitle": "CBHI, karoora hojjechiistotaa fi inshuraansii dhuunfaa: miseensota, gaaffii kaffaltii fi galii inshuraansii irraa",
+  "noAccess": "Kaffaltii inshuraansii ilaaluuf hayyama hin qabdu.",
+  "loading": "Fe'aa jira…",
+  "save": "Olkaa'i",
+  "saving": "Olkaa'aa jira…",
+  "edit": "Gulaali",
+  "remove": "Haqi",
+  "tabs": {
+    "schemes": "Karoorota",
+    "members": "Miseensota",
+    "claims": "Gaaffilee",
+    "receivables": "Galii eegamu"
+  },
+  "fields": {
+    "name": "Maqaa",
+    "code": "Koodii",
+    "type": "Gosa",
+    "coveragePercent": "Haguuggii %",
+    "claimCycle": "Marsaa gaaffii",
+    "copayType": "Kaffaltii waloo",
+    "copayPercent": "Kaffaltii waloo %",
+    "copayAmount": "Kaffaltii waloo gurgurtaa tokkoof",
+    "maxPerSale": "Qooda inshuraansii olaanaa gurgurtaa tokkoof",
+    "excludedCategories": "Ramaddii hin haguugamne",
+    "excludedMedicines": "Qorichoota hin haguugamne",
+    "payerName": "Maqaa kaffalaa / inshuraansii",
+    "contactPerson": "Nama quunnamtii",
+    "phone": "Bilbila",
+    "email": "Imeelii",
+    "address": "Teessoo",
+    "notes": "Yaadannoo",
+    "active": "Hojii irra",
+    "exclusions": "Kan hin haguugamne",
+    "members": "Miseensota",
+    "status": "Haala",
+    "scheme": "Karoora",
+    "memberNo": "Lakk. miseensaa",
+    "group": "Garee / hojjechiisaa",
+    "validFrom": "Irraa jalqabee",
+    "validTo": "Hanga",
+    "validity": "Yeroo hojii",
+    "from": "Irraa",
+    "to": "Hanga",
+    "date": "Guyyaa",
+    "invoice": "Nagahee",
+    "member": "Miseensa",
+    "insurerShare": "Qooda inshuraansii",
+    "returned": "Kan deebi'e",
+    "claimed": "Kan gaafatame",
+    "period": "Yeroo",
+    "total": "Waliigala",
+    "outstanding": "Kan hin kaffalamne",
+    "amount": "Hanga",
+    "reference": "Wabii",
+    "claimNumber": "Lakk. gaaffii",
+    "sales": "Gurgurtaa",
+    "paid": "Kan kaffalame",
+    "saleTotal": "Waliigala gurgurtaa",
+    "submittedAt": "Kan dhiyaate"
+  },
+  "types": {
+    "cbhi": "CBHI (hawaasa irratti hundaa'e)",
+    "employer": "Karoora hojjechiisaa",
+    "private": "Inshuraansii dhuunfaa",
+    "other": "Kan biraa"
+  },
+  "cycles": {
+    "weekly": "Torbanitti",
+    "monthly": "Ji'aan",
+    "quarterly": "Kurmaana waggaatti",
+    "on_demand": "Yeroo barbaachisu"
+  },
+  "copay": {
+    "none": "Kaffaltii waloo hin jiru",
+    "percent": "Dhibbeentaa hanga haguugamee",
+    "fixed": "Hanga murtaa'aa gurgurtaa tokkoof",
+    "percentShort": "{{value}}%",
+    "fixedShort": "{{amount}} / gurgurtaa"
+  },
+  "status": {
+    "active": "Hojii irra",
+    "inactive": "Hojii irra hin jiru"
+  },
+  "errors": {
+    "generic": "Rakkoon uumame. Irra deebi'ii yaali."
+  },
+  "schemes": {
+    "subtitle": "Seerota haguuggii POS irratti gurgurtaa tokkoon tokkoon inshuraansii fi dhukkubsataa gidduutti qooduuf fayyadan.",
+    "new": "Karoora haaraa",
+    "newTitle": "Karoora inshuraansii haaraa",
+    "editTitle": "Karoora inshuraansii gulaali",
+    "formSubtitle": "Haguuggii, kaffaltii waloo, kan hin haguugamne fi quunnamtii kaffalaa",
+    "empty": "Ammaaf karoorri inshuraansii hin jiru.",
+    "confirmDelete": "Karoora \"{{name}}\" haquu? Karoorri miseensota ykn gurgurtaa qabu dhaabsisuun qofa danda'ama.",
+    "exclusionCount": "Qorichoota {{medicines}}, ramaddii {{categories}}",
+    "maxPerSaleHint": "0 = daangaa hin qabu",
+    "rulesHint": "Qooda inshuraansii = meeshaalee haguugaman × haguuggii % − kaffaltii waloo (daangaa gurgurtaa tokkoon). Kan hafe dhukkubsataan POS irratti kaffala.",
+    "categoriesPlaceholder": "fkn. Kosmetiksii, Nyaata dabalataa",
+    "searchMedicine": "Qoricha baasuuf barbaadi…",
+    "payer": "Quunnamtii kaffalaa",
+    "errors": {
+      "nameRequired": "Maqaan karooraa barbaachisaadha",
+      "coverage": "Haguuggiin 0 fi 100 gidduu ta'uu qaba",
+      "copay": "Kaffaltiin waloo sirrii miti",
+      "saveFailed": "Karoora olkaa'uun hin danda'amne"
+    }
+  },
+  "members": {
+    "new": "Miseensa haaraa",
+    "newTitle": "Miseensa karooraa haaraa",
+    "editTitle": "Miseensa gulaali",
+    "empty": "Miseensi hin argamne.",
+    "searchPlaceholder": "Lakk. miseensaa, maqaa ykn bilbilaan barbaadi…",
+    "allSchemes": "Karoorota hunda",
+    "needScheme": "Duraan dursii karoora uumi",
+    "groupPlaceholder": "Ganda, hojjechiisaa, maatii…",
+    "confirmDelete": "Miseensa \"{{name}}\" haquu?",
+    "valid": "Kan hojjetu",
+    "invalid": {
+      "expired": "Yeroon isaa darbe",
+      "inactive": "Hojii irra hin jiru",
+      "not_yet_valid": "Ammallee hin jalqabne",
+      "not_found": "Hin argamne"
+    },
+    "errors": {
+      "schemeRequired": "Karoora filadhu",
+      "required": "Lakkoofsi miseensaa fi maqaan barbaachisu",
+      "dates": "Guyyaan jalqabaa xumura dura ta'uu qaba",
+      "saveFailed": "Miseensa olkaa'uun hin danda'amne"
+    }
+  },
+  "claims": {
+    "new": "Gaaffii qopheessi",
+    "empty": "Ammaaf gaaffiin hin jiru.",
+    "allStatuses": "Haala hunda",
+    "buildTitle": "Gaaffii inshuraansii qopheessi",
+    "buildSubtitle": "Gurgurtaa inshuraansii karooraa yeroo tokko keessatti hin gaafatamne walitti qabi (deebiin hir'ifamee)",
+    "unclaimedCount_one": "Gurgurtaa {{count}} hin gaafatamne",
+    "unclaimedCount_other": "Gurgurtaa {{count}} hin gaafatamne",
+    "nothingToClaim": "Yeroo kana keessatti gurgurtaan inshuraansii hin gaafatamne hin jiru.",
+    "build": "Gaaffii qorannoo uumi",
+    "detailTitle": "Gaaffii",
+    "submit": "Inshuraansiif dhiyeessi",
+    "refresh": "Irra deebi'ii herregi",
+    "delete": "Qorannoo haqi",
+    "confirmDelete": "Gaaffii qorannoo kana haquu? Gurgurtaan isaa ammas kan hin gaafatamne ta'a.",
+    "recordPayment": "Kaffaltii galmeessi",
+    "reject": "Didi",
+    "rejectionNotes": "Sababa diddaa",
+    "rejectPaidHint": "Gaaffiin kun kaffaltii qaba: qoodni hin kaffalamne ni haqama.",
+    "releaseSales": "Gurgurtaa akka irra deebi'ee gaafatamuuf gadhiisi",
+    "rejectedOn": "{{date}} didame:",
+    "salesReleased": "Gurgurtaan gadhiifameera, irra deebi'ee gaafatamuu danda'a.",
+    "salesWrittenOff": "Hangi hin kaffalamne haqameera.",
+    "exportExcel": "Excel",
+    "print": "Maxxansi",
+    "payments": "Kaffaltii argame",
+    "errors": {
+      "buildFailed": "Gaaffii qopheessuun hin danda'amne"
+    }
+  },
+  "claimStatus": {
+    "draft": "Qorannoo",
+    "submitted": "Dhiyaate",
+    "partially_paid": "Gartokkeen kaffalame",
+    "paid": "Kaffalame",
+    "rejected": "Didame"
+  },
+  "receivables": {
+    "outstanding": "Kan hin kaffalamne",
+    "unclaimed": "Ammallee hin gaafatamne",
+    "draft": "Gaaffii qorannoo keessa",
+    "submitted": "Dhiyaate, hin kaffalamne",
+    "unclaimedSales_one": "Gurgurtaa {{count}} hin gaafatamne",
+    "unclaimedSales_other": "Gurgurtaa {{count}} hin gaafatamne"
+  },
+  "aging": {
+    "0_30": "Guyyaa 0–30",
+    "31_60": "Guyyaa 31–60",
+    "61_90": "Guyyaa 61–90",
+    "90_plus": "Guyyaa 90 ol"
+  },
+  "print": {
+    "title": "Gaaffii inshuraansii",
+    "payer": "Kaffalaa",
+    "preparedBy": "Kan qopheesse (faarmaasii)",
+    "receivedBy": "Kan fudhate (inshuraansii)"
+  }
+}

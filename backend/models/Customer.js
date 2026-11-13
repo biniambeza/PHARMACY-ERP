@@ -38,6 +38,9 @@ const customerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // B2B fiscal invoices: buyer Taxpayer Identification Number and registered legal name
+    tin: { type: String, default: '', trim: true, maxlength: 20 },
+    legalName: { type: String, default: '', trim: true, maxlength: 200 },
     active: { type: Boolean, default: true, index: true },
     notes: { type: String, default: '', trim: true },
   },

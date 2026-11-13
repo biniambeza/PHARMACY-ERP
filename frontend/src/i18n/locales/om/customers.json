@@ -7,14 +7,30 @@
   "saving": "Olkaa'aa jira...",
   "confirmRemove": "Maamila \"{{name}}\" haquu?",
   "removeFailed": "Maamila haquun hin danda'amne",
-  "filters": { "all": "Hunda", "withBalance": "Hafaa qaban" },
-  "limit": { "unlimited": "Daangaa malee", "noCredit": "Liqii hin qabu" },
+  "filters": {
+    "all": "Hunda",
+    "withBalance": "Hafaa qaban"
+  },
+  "limit": {
+    "unlimited": "Daangaa malee",
+    "noCredit": "Liqii hin qabu"
+  },
   "paymentMethods": {
-    "cash": "Maallaqa callaa", "card": "Kaardii", "mobile_money": "Maallaqa moobaayilaa",
-    "bank_transfer": "Dabarsa baankii", "cheque": "Cheekii", "other": "Kan biroo"
+    "cash": "Maallaqa callaa",
+    "card": "Kaardii",
+    "mobile_money": "Maallaqa moobaayilaa",
+    "bank_transfer": "Dabarsa baankii",
+    "cheque": "Cheekii",
+    "other": "Kan biroo"
   },
   "fields": {
-    "phone": "Bilbila", "email": "Imeelii", "address": "Teessoo", "creditLimit": "Daangaa liqii", "notes": "Yaadannoo"
+    "phone": "Bilbila",
+    "email": "Imeelii",
+    "address": "Teessoo",
+    "creditLimit": "Daangaa liqii",
+    "notes": "Yaadannoo",
+    "legalName": "Maqaa seeraa daldalaa",
+    "tin": "Lakk. Eenyummaa Kaffalaa Gibiraa (TIN)"
   },
   "form": {
     "editTitle": "Maamila Gulaali",
@@ -62,8 +78,12 @@
     "closing": "Hafaa xumuraa",
     "printed": "Kan maxxanfame {{date}}",
     "cols": {
-      "date": "Guyyaa", "description": "Ibsa", "reference": "Wabii",
-      "charges": "Kaffaltii gaafatame", "payments": "Kaffaltiiwwan", "balance": "Hafaa"
+      "date": "Guyyaa",
+      "description": "Ibsa",
+      "reference": "Wabii",
+      "charges": "Kaffaltii gaafatame",
+      "payments": "Kaffaltiiwwan",
+      "balance": "Hafaa"
     }
   },
   "summary": {
@@ -74,9 +94,19 @@
     "overdue": "{{amount}} guyyaa 30 ol kan turan",
     "bucketDays": "Guyyaa {{bucket}}"
   },
-  "agingTable": { "title": "Umurii herrega argatamuu qabu maamilaan" },
-  "table": { "customer": "Maamila", "balance": "Hafaa", "status": "Haala" },
-  "actions": { "recordPayment": "Kaffaltii galmeessi", "statement": "Ibsa herregaa", "remove": "Haqi" },
+  "agingTable": {
+    "title": "Umurii herrega argatamuu qabu maamilaan"
+  },
+  "table": {
+    "customer": "Maamila",
+    "balance": "Hafaa",
+    "status": "Haala"
+  },
+  "actions": {
+    "recordPayment": "Kaffaltii galmeessi",
+    "statement": "Ibsa herregaa",
+    "remove": "Haqi"
+  },
   "empty": {
     "noMatch": "Maamiltoota walsiman hin jiran",
     "none": "Hanga ammaatti maamiltoonni hin jiran",

@@ -115,6 +115,9 @@ const createCustomer = async (req, res) => {
     email: trimStr(body.email),
     address: trimStr(body.address),
     notes: trimStr(body.notes),
+    // Business buyers (B2B e-invoices)
+    tin: trimStr(body.tin),
+    legalName: trimStr(body.legalName),
     ...(creditLimit !== undefined ? { creditLimit } : {}),
     active: body.active === undefined ? true : Boolean(body.active),
   });
@@ -139,6 +142,8 @@ const updateCustomer = async (req, res) => {
   if (body.email !== undefined) customer.email = trimStr(body.email);
   if (body.address !== undefined) customer.address = trimStr(body.address);
   if (body.notes !== undefined) customer.notes = trimStr(body.notes);
+  if (body.tin !== undefined) customer.tin = trimStr(body.tin);
+  if (body.legalName !== undefined) customer.legalName = trimStr(body.legalName);
   if (body.active !== undefined) customer.active = Boolean(body.active);
   const creditLimit = parseCreditLimit(body.creditLimit);
   if (creditLimit !== undefined) customer.creditLimit = creditLimit;

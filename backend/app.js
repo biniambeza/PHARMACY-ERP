@@ -7,6 +7,9 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 
+const { getSentry, sentryRequestContext } = require('./instrument');
+const { version: APP_VERSION } = require('./package.json');
+
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -66,6 +69,8 @@ if (trustProxy !== '') {
 }
 
 app.use(requestLogger);
+// Sentry request context (pharmacyId tag, user id). No-op unless SENTRY_DSN is set.
+if (getSentry()) app.use(sentryRequestContext);
 
 // ---------- CORS ----------
 // Only the origins listed in CLIENT_URL (comma-separated) are allowed, plus the
@@ -140,11 +145,57 @@ app.get('/api/test', (req, res) => {
   });
 });
 
+// Liveness: cheap, unauthenticated, no DB round trip. Point uptime monitors here.
+const buildInfo = () => ({
+  version: APP_VERSION,
+  commit: process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || null,
+});
+
 app.get('/api/health', (req, res) => {
   const up = mongoose.connection.readyState === 1;
+  res.set('Cache-Control', 'no-store');
   res.status(up ? 200 : 503).json({
     success: up,
     db: up ? 'up' : 'down',
+    ...buildInfo(),
+    uptime: Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Readiness: also pings MongoDB (admin ping) with a short timeout.
+const READY_TIMEOUT_MS = Number(process.env.HEALTH_READY_TIMEOUT_MS) || 2000;
+
+const pingDb = async (timeoutMs = READY_TIMEOUT_MS) => {
+  if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) throw new Error('not connected');
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+  });
+  try {
+    await Promise.race([mongoose.connection.db.admin().command({ ping: 1 }), timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+app.get('/api/health/ready', async (req, res) => {
+  const started = Date.now();
+  let ok = true;
+  let reason;
+  try {
+    await pingDb();
+  } catch (err) {
+    ok = false;
+    reason = err && err.message === 'timeout' ? 'timeout' : 'unreachable';
+  }
+  res.set('Cache-Control', 'no-store');
+  res.status(ok ? 200 : 503).json({
+    success: ok,
+    db: ok ? 'up' : 'down',
+    ...(reason ? { reason } : {}),
+    dbLatencyMs: Date.now() - started,
+    ...buildInfo(),
     uptime: Math.round(process.uptime()),
     timestamp: new Date().toISOString(),
   });
@@ -190,6 +241,9 @@ app.use('/api/payments', paymentRoutes);
 
 // ---------- 404 + central error handler (must be last) ----------
 app.use(notFound);
+// Sentry error capture (only 5xx / unexpected errors are sent; see instrument.js).
+const sentry = getSentry();
+if (sentry) sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
 
 module.exports = app;

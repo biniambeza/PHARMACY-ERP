@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, RotateCw, Home } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { reportError } from '../../utils/monitoring';
 
 const ErrorFallback = ({ error, onReload, onGoHome }) => {
   const { t } = useTranslation('ui');
@@ -47,6 +48,7 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an unhandled error:', error, errorInfo);
+    reportError(error, errorInfo); // Sentry, only when VITE_SENTRY_DSN is set
     this.setState({ errorInfo });
   }
 

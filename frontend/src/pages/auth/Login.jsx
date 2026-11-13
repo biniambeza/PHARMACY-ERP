@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import TwoFactorLoginStep from '../../components/auth/TwoFactorLoginStep';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Pill, Info, CheckCircle2 } from 'lucide-react';
 
 // Demo quick-fill buttons: local development only, credentials come from
@@ -24,7 +25,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const { t } = useTranslation('auth');
-  const { login, loading, isAuthenticated, user } = useAuth();
+  const { login, loading, isAuthenticated, user, twoFactorPending } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionExpired = searchParams.get('session') === 'expired';
@@ -42,7 +43,10 @@ const Login = () => {
       return;
     }
     const res = await login(email, password);
-    if (res.success) {
+    if (res.twoFactorRequired) {
+      // Second step (authenticator code) is rendered below
+      setPassword('');
+    } else if (res.success) {
       navigate(res.user.role === 'admin' ? '/admin' : '/pharmacy');
     } else {
       setError(res.message);
@@ -76,6 +80,13 @@ const Login = () => {
           </p>
         </div>
 
+        {twoFactorPending ? (
+          <TwoFactorLoginStep
+            onSuccess={(signedIn) => navigate(signedIn?.role === 'admin' ? '/admin' : '/pharmacy')}
+            onExpired={setError}
+          />
+        ) : (
+        <>
         {/* Session / reset notices */}
         {passwordReset && !error && (
           <div className="mb-4 flex items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 text-xs animate-fade-in">
@@ -193,6 +204,8 @@ const Login = () => {
             </div>
           )}
         </form>
+        </>
+        )}
       </div>
     </div>
   );

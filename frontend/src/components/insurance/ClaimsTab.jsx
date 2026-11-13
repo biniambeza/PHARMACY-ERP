@@ -1,0 +1,120 @@
+import { useCallback, useEffect, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { getClaims, getSchemes } from '../../api/insuranceApi';
+import { formatMoney, formatDate } from '../../utils/format';
+import BuildClaimModal from './BuildClaimModal';
+import ClaimDetailModal from './ClaimDetailModal';
+import { cardCls, inputCls, btnPrimary, CLAIM_STATUSES, claimStatusCls, pillCls, thCls, tdCls } from './insuranceUi';
+
+const ClaimsTab = () => {
+  const { t } = useTranslation('insurance');
+  const [schemes, setSchemes] = useState([]);
+  const [filters, setFilters] = useState({ schemeId: '', status: '' });
+  const [claims, setClaims] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [building, setBuilding] = useState(false);
+  const [openId, setOpenId] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSchemes()
+      .then((res) => {
+        if (!cancelled) setSchemes(res.schemes || []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const load = useCallback(async () => {
+    try {
+      const params = {};
+      if (filters.schemeId) params.schemeId = filters.schemeId;
+      if (filters.status) params.status = filters.status;
+      const res = await getClaims(params);
+      setClaims(res.claims || []);
+    } catch (err) {
+      console.error('Failed to load claims:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    const timer = setTimeout(load, 0);
+    return () => clearTimeout(timer);
+  }, [load]);
+
+  return (
+    <div className="space-y-4">
+      <div className={`${cardCls} p-4 flex flex-col md:flex-row gap-3 md:items-center`}>
+        <select value={filters.schemeId} onChange={(e) => setFilters((f) => ({ ...f, schemeId: e.target.value }))} className={`${inputCls} md:w-56 cursor-pointer`}>
+          <option value="">{t('members.allSchemes')}</option>
+          {schemes.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+        </select>
+        <select value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))} className={`${inputCls} md:w-48 cursor-pointer`}>
+          <option value="">{t('claims.allStatuses')}</option>
+          {CLAIM_STATUSES.map((s) => <option key={s} value={s}>{t(`claimStatus.${s}`)}</option>)}
+        </select>
+        <div className="flex-1" />
+        <button onClick={() => setBuilding(true)} disabled={schemes.length === 0} className={btnPrimary}>
+          <Plus className="w-4 h-4" /> {t('claims.new')}
+        </button>
+      </div>
+
+      <div className={`${cardCls} overflow-x-auto`}>
+        <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+          <thead>
+            <tr>
+              <th className={thCls}>{t('fields.claimNumber')}</th>
+              <th className={thCls}>{t('fields.scheme')}</th>
+              <th className={thCls}>{t('fields.period')}</th>
+              <th className={thCls}>{t('fields.sales')}</th>
+              <th className={`${thCls} text-right`}>{t('fields.total')}</th>
+              <th className={`${thCls} text-right`}>{t('fields.paid')}</th>
+              <th className={`${thCls} text-right`}>{t('fields.outstanding')}</th>
+              <th className={thCls}>{t('fields.status')}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {loading ? (
+              <tr><td colSpan={8} className={`${tdCls} text-center py-8`}>{t('loading')}</td></tr>
+            ) : claims.length === 0 ? (
+              <tr><td colSpan={8} className={`${tdCls} text-center py-8 text-slate-400`}>{t('claims.empty')}</td></tr>
+            ) : (
+              claims.map((c) => (
+                <tr key={c._id} onClick={() => setOpenId(c._id)} className="cursor-pointer hover:bg-slate-50/60 dark:hover:bg-slate-800/30">
+                  <td className={`${tdCls} font-mono font-semibold text-emerald-600`}>{c.claimNumber}</td>
+                  <td className={tdCls}>{c.schemeName}</td>
+                  <td className={tdCls}>{formatDate(c.periodFrom)} – {formatDate(c.periodTo)}</td>
+                  <td className={`${tdCls} font-mono`}>{c.saleCount}</td>
+                  <td className={`${tdCls} text-right font-mono`}>{formatMoney(c.totalAmount)}</td>
+                  <td className={`${tdCls} text-right font-mono`}>{formatMoney(c.paidAmount)}</td>
+                  <td className={`${tdCls} text-right font-mono font-semibold`}>{c.status === 'rejected' ? '-' : formatMoney(c.outstanding)}</td>
+                  <td className={tdCls}><span className={`${pillCls} ${claimStatusCls[c.status]}`}>{t(`claimStatus.${c.status}`)}</span></td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {building && (
+        <BuildClaimModal
+          schemes={schemes}
+          onClose={() => setBuilding(false)}
+          onCreated={(claim) => {
+            setBuilding(false);
+            load();
+            setOpenId(claim._id);
+          }}
+        />
+      )}
+      {openId && <ClaimDetailModal claimId={openId} onClose={() => setOpenId(null)} onChanged={load} />}
+    </div>
+  );
+};
+
+export default ClaimsTab;

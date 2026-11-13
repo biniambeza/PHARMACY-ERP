@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import ChangePasswordModal from './ChangePasswordModal';
+import SecurityModal from './SecurityModal';
+import TwoFactorNudge from '../../components/settings/TwoFactorNudge';
 import {
   Home,
   PlusCircle,
@@ -18,6 +20,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   KeyRound,
+  ShieldCheck,
 } from 'lucide-react';
 
 const adminNavItems = [
@@ -30,6 +33,7 @@ const AdminLayout = () => {
   const { toggleTheme, isDark } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [securityOpen, setSecurityOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('erp_admin_sidebar_collapsed') === 'true';
@@ -311,6 +315,13 @@ const AdminLayout = () => {
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
               <button
+                onClick={() => setSecurityOpen(true)}
+                title={t('title', { ns: 'security' })}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-500/10 transition cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4" />
+              </button>
+              <button
                 onClick={() => setPasswordOpen(true)}
                 title={t('layout.changePassword')}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition cursor-pointer"
@@ -334,6 +345,13 @@ const AdminLayout = () => {
               >
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
               </div>
+              <button
+                onClick={() => setSecurityOpen(true)}
+                title={t('title', { ns: 'security' })}
+                className="p-2 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:text-indigo-400 dark:hover:bg-indigo-500/10 transition cursor-pointer"
+              >
+                <ShieldCheck className="w-4.5 h-4.5" />
+              </button>
               <button
                 onClick={() => setPasswordOpen(true)}
                 title={t('layout.changePassword')}
@@ -462,11 +480,13 @@ const AdminLayout = () => {
 
         {/* Scrollable Page Body with Cool Gray Canvas */}
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
+          <TwoFactorNudge onAction={() => setSecurityOpen(true)} className="mb-6" />
           <ErrorBoundary>
             <Outlet context={{ globalSearch }} />
           </ErrorBoundary>
         </main>
         <ChangePasswordModal isOpen={passwordOpen} onClose={() => setPasswordOpen(false)} />
+        <SecurityModal isOpen={securityOpen} onClose={() => setSecurityOpen(false)} />
       </div>
     </div>
   );

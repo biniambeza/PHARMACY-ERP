@@ -57,7 +57,10 @@
     "methodUnavailable": "{{method}} is not available now",
     "creditCustomer": "Select a customer for credit",
     "waitingMobile": "Waiting for mobile money confirmation",
-    "mobileRef": "Enter the mobile money transaction reference"
+    "mobileRef": "Enter the mobile money transaction reference",
+    "insuranceOffline": "Insurance sales need a connection",
+    "insuranceMember": "Select the insurance scheme and member",
+    "insurancePreview": "Waiting for the insurance coverage calculation"
   },
   "errors": {
     "loadCatalog": "Failed to load the catalog",
@@ -166,7 +169,8 @@
     "cash": "Cash",
     "card": "Card",
     "mobile_money": "Mobile money",
-    "credit": "Credit"
+    "credit": "Credit",
+    "insurance": "Insurance"
   },
   "shift": {
     "title": "Open shift",
@@ -198,5 +202,23 @@
     "confirmDiscard": "Discard this offline sale? It will not be recorded.",
     "syncFailed": "Sync failed",
     "notProcessed": "Not processed"
+  },
+  "insurance": {
+    "selectScheme": "Select insurance scheme…",
+    "memberSearch": "Member number, name or phone",
+    "noMember": "No member found",
+    "changeMember": "Change member",
+    "calculating": "Calculating coverage…",
+    "insurerPays": "Insurer pays",
+    "patientPays": "Patient pays",
+    "copay": "Copay",
+    "notCovered": "Not covered: {{names}}",
+    "previewFailed": "Could not calculate the insurance coverage",
+    "invalid": {
+      "expired": "expired",
+      "inactive": "inactive",
+      "not_yet_valid": "not valid yet",
+      "not_found": "not found"
+    }
   }
 }

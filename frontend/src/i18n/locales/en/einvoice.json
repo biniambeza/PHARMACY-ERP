@@ -1,0 +1,86 @@
+{
+  "page": {
+    "badge": "Tax compliance",
+    "title": "E-Invoicing",
+    "subtitle": "Fiscal invoices for your sales: settings, submission status, retries and credit notes.",
+    "disabledHint": "E-invoicing is turned off. The table shows your sales, but nothing can be submitted until an owner enables it."
+  },
+  "status": {
+    "accepted": "Accepted",
+    "submitted": "Submitted",
+    "pending": "Pending",
+    "failed": "Failed",
+    "rejected": "Rejected",
+    "not_required": "Not required",
+    "unsubmitted": "Not submitted"
+  },
+  "providers": {
+    "none": "None (no fiscal submission)",
+    "mock": "Mock (test only)",
+    "mor": "Ministry of Revenues (MoR)"
+  },
+  "modes": { "sandbox": "Sandbox", "production": "Production" },
+  "settings": {
+    "title": "Fiscal settings",
+    "readOnly": "Only the owner can change these settings",
+    "morNotice": "The official Ministry of Revenues e-invoicing connection is not active yet. It needs the official API specification and credentials, configured by your system administrator on the server. Until then, invoices cannot be sent to MoR and this system does not make your invoices legally compliant.",
+    "tin": "TIN (Taxpayer Identification Number)",
+    "vatRegNo": "VAT registration number",
+    "vatRegistered": "VAT registered",
+    "provider": "Provider",
+    "mode": "Mode",
+    "enabled": "Enable e-invoicing",
+    "mockNotice": "The mock provider is for testing only. It produces fake MOCK- fiscal numbers and sends nothing to the tax authority.",
+    "morConfigured": "Server credentials for MoR are present, but the official adapter is not implemented yet.",
+    "morNotConfigured": "MoR credentials are not configured on the server. Submissions will fail until they are.",
+    "saveFailed": "Failed to save the settings",
+    "saved": "Settings saved",
+    "saving": "Saving..."
+  },
+  "table": {
+    "empty": "No sales match these filters.",
+    "invoice": "Invoice",
+    "date": "Date",
+    "customer": "Customer",
+    "tax": "Tax",
+    "total": "Total",
+    "status": "Fiscal status",
+    "fiscalNumber": "Fiscal number",
+    "walkIn": "Walk-in",
+    "voided": "Voided",
+    "details": "Details",
+    "count_one": "{{count}} sale",
+    "count_other": "{{count}} sales"
+  },
+  "actions": { "submit": "Submit", "retry": "Retry", "creditNote": "Issue credit note" },
+  "batch": {
+    "title": "Batch submission",
+    "failed": "The batch could not be run",
+    "running": "Submitting...",
+    "submitPending": "Submit pending in range",
+    "retryFailed": "Retry failed",
+    "disabledHint": "Enable e-invoicing to run batches.",
+    "summary": "Processed {{processed}}: {{accepted}} accepted, {{submitted}} submitted, {{rejected}} rejected, {{failed}} failed, {{notRequired}} not required."
+  },
+  "filters": { "from": "From", "to": "To", "all": "All", "search": "Invoice no. or customer" },
+  "detail": {
+    "title": "Fiscal invoice {{number}}",
+    "loadFailed": "Failed to load the fiscal invoice",
+    "creditNoteFailed": "The credit note could not be issued",
+    "provider": "Provider",
+    "attempts": "Attempts",
+    "irn": "IRN",
+    "acceptedAt": "Accepted at",
+    "mockWarning": "TEST ONLY: issued by the mock provider. This number has no legal value.",
+    "qr": "QR content",
+    "lines": "Lines",
+    "item": "Item",
+    "qty": "Qty",
+    "taxable": "Taxable",
+    "taxRate": "Rate",
+    "totals": "Totals",
+    "creditNotes": "Returns and credit notes"
+  },
+  "errors": { "load": "Failed to load e-invoicing data", "submit": "Submission failed" },
+  "notices": { "submitted": "{{number}}: {{status}}" }
+}

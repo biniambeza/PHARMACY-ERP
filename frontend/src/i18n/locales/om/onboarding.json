@@ -1,0 +1,17 @@
+{
+  "title": "Faarmaasii keessan qopheessaa",
+  "progress": "Tarkaanfii {{total}} keessaa {{done}} xumurameera",
+  "dismiss": "Cufi",
+  "optional": "Filannoo",
+  "steps": {
+    "business": { "title": "Odeeffannoo daldalaa guutaa", "hint": "Teessoo, bilbila, lakkoofsa hayyamaa fi TIN" },
+    "currencyTax": { "title": "Maallaqaa fi gibira qindeessaa", "hint": "Maallaqa keessanii fi qindaa'ina VAT filadhaa" },
+    "medicines": { "title": "Qorichoota keessan dabalaa", "hint": "Gabatee galchaa ykn tokko tokkoon dabalaa" },
+    "stock": { "title": "Kuusaa fudhadhaa", "hint": "Baachii kuusaa jalqabaa galmeessaa" },
+    "supplier": { "title": "Dhiyeessaa dabalaa", "hint": "Kan isin irraa bittan" },
+    "staff": { "title": "Hojjettoota keessan affeeraa", "hint": "Faarmaasistoota, kaashiyeroota fi kuusaa eegdota" },
+    "shift": { "title": "Shiftii jalqabaa banaa", "hint": "Faarmaasiin keessan gurguruuf shiftii barbaada" },
+    "sale": { "title": "Gurgurtaa jalqabaa raawwadhaa", "hint": "POS banaa" },
+    "twoFactor": { "title": "Seensa sadarkaa lamaa banaa", "hint": "Herrega abbaa qabeenyaa eegaa" }
+  }
+}

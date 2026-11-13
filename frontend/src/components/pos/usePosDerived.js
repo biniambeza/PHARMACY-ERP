@@ -1,9 +1,10 @@
 // Values derived from the POS catalog, cart and payment rows (memoised).
 import { useCallback, useMemo } from 'react';
-import { round2, baseQtyInCart, computeTotals, paymentStatus } from './posUtils';
+import { round2, baseQtyInCart, computeTotals, paymentStatus, lineGrossAmounts } from './posUtils';
 
 /**
- * Returns { medById, quickPicks, availableOf(med), maxQtyOf(line), totals, effectivePayments, payStatus }.
+ * Returns { medById, quickPicks, availableOf(med), maxQtyOf(line), totals, effectivePayments, payStatus,
+ *           insuranceLines }.
  */
 export const usePosDerived = ({ medicines, topIds, cart, discount, pharmacy, payments }) => {
   const medById = useMemo(() => new Map(medicines.map((m) => [String(m._id), m])), [medicines]);
@@ -22,18 +23,25 @@ export const usePosDerived = ({ medicines, topIds, cart, discount, pharmacy, pay
 
   const totals = useMemo(() => computeTotals(cart, discount, pharmacy), [cart, discount, pharmacy]);
 
-  // A single payment row left empty means "pay the exact total with it"
+  // A single payment row left empty means "pay the exact total with it" (never for insurance:
+  // its amount is the insurer share from the coverage preview)
   const effectivePayments = useMemo(
     () =>
       payments.map((p) => ({
         ...p,
-        amount: payments.length === 1 && p.amount === '' ? totals.grandTotal : round2(Number(p.amount) || 0),
+        amount:
+          payments.length === 1 && p.amount === '' && p.method !== 'insurance'
+            ? totals.grandTotal
+            : round2(Number(p.amount) || 0),
       })),
     [payments, totals.grandTotal]
   );
   const payStatus = useMemo(() => paymentStatus(effectivePayments, totals.grandTotal), [effectivePayments, totals.grandTotal]);
 
-  return { medById, quickPicks, availableOf, maxQtyOf, totals, effectivePayments, payStatus };
+  // Cart lines as the server prices them for insurance (after discount share + exclusive tax)
+  const insuranceLines = useMemo(() => lineGrossAmounts(cart, totals.discount, pharmacy), [cart, totals.discount, pharmacy]);
+
+  return { medById, quickPicks, availableOf, maxQtyOf, totals, effectivePayments, payStatus, insuranceLines };
 };
 
 export default usePosDerived;

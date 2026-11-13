@@ -8,13 +8,19 @@
     "dev": "nodemon server.js",
     "test": "jest --runInBand",
     "backup": "node scripts/backup.js",
-    "restore": "node scripts/restore.js"
+    "restore": "node scripts/restore.js",
+    "backup:verify": "node scripts/verifyRestore.js",
+    "db:clone": "node scripts/cloneDatabase.js",
+    "seed:demo": "node utils/seedPharmacyData.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@otplib/core": "^13.6.0",
+    "@otplib/totp": "^13.6.0",
+    "@otplib/uri": "^13.6.0",
     "@sentry/node": "^11.12.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -28,7 +34,6 @@
     "mongoose": "^9.10.4",
     "node-cron": "^4.6.0",
     "nodemailer": "^10.5.0",
-    "otplib": "^13.6.0",
     "qrcode": "^1.5.4"
   },
   "devDependencies": {

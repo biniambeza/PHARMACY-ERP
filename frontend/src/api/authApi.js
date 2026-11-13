@@ -16,3 +16,39 @@ export const adminResetUserPassword = async (userId, mode = 'temp') => {
   const res = await api.post(`/auth/admin-reset/${userId}`, { mode });
   return res.data;
 };
+
+// Platform admin: turn off a user's two-factor login (also signs them out everywhere).
+export const adminResetUserTwoFactor = async (userId) => {
+  const res = await api.post(`/auth/admin-reset-2fa/${userId}`);
+  return res.data;
+};
+
+// ---- Two-factor login (TOTP) for the signed-in user
+// { enabled, enabledAt, recoveryCodesRemaining, recommended }
+export const getTwoFactorStatus = async () => {
+  const res = await api.get('/auth/2fa/status');
+  return res.data;
+};
+
+// { secret, otpauthUrl, qrCode (PNG data URL), issuer }
+export const startTwoFactorSetup = async (password) => {
+  const res = await api.post('/auth/2fa/setup', { password });
+  return res.data;
+};
+
+// { recoveryCodes: string[] } (shown once)
+export const enableTwoFactor = async (code) => {
+  const res = await api.post('/auth/2fa/enable', { code });
+  return res.data;
+};
+
+// body { password, code } or { password, recoveryCode }
+export const disableTwoFactor = async (body) => {
+  const res = await api.post('/auth/2fa/disable', body);
+  return res.data;
+};
+
+export const regenerateRecoveryCodes = async (password, code) => {
+  const res = await api.post('/auth/2fa/recovery-codes', { password, code });
+  return res.data;
+};

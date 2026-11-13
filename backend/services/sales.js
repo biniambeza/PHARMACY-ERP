@@ -9,14 +9,17 @@
 //   customerId?, customer?: { name, phone }, patientId?, prescriptionId?,
 //   prescription?: { number, prescriber, notes }   (legacy free-text prescription)
 //   discount?, notes?, offlineId?,
-//   payments?: [{ method: cash|card|mobile_money|credit, amount, reference?, provider?, intentId? }]
+//   payments?: [{ method: cash|card|mobile_money|credit|insurance, amount, reference?, provider?, intentId?,
+//                 schemeId?, memberId?, memberNo? }]
+//          insurance: at most one line; its amount is ignored and computed server-side from the
+//          scheme rules (services/insurance.js). The other lines must cover the patient share.
 //   paymentMethod?  (legacy single method; the whole total is paid with it)
 //   amountTendered? (legacy single cash payment: cash handed over)
 // }
 //
 // Without `session` processSale opens its own session + transaction. With a session the
 // caller owns the transaction (processSale only runs the work inside it).
-// `offline: true` (offline sync) only allows cash/card payments and no controlled medicines.
+// `offline: true` (offline sync) only allows cash/card payments (no insurance) and no controlled medicines.
 //
 // Guarantees: everything is validated before the first write; stock is taken FEFO from
 // active, unexpired batches with atomic conditional decrements; a sale with an
@@ -34,8 +37,9 @@ const { recordMovement } = require('../utils/stockMovement');
 const { computeTax, getTaxSettings } = require('./tax');
 const { assertCreditAllowed, applyCreditSale } = require('./credit');
 const { recordControlledDispenses, recordPrescriptionDispense } = require('./clinical');
+const { resolveInsuranceForSale, computeInsuranceSplit } = require('./insurance');
 
-const PAYMENT_METHODS = ['cash', 'card', 'mobile_money', 'credit'];
+const PAYMENT_METHODS = ['cash', 'card', 'mobile_money', 'credit', 'insurance'];
 const OFFLINE_METHODS = ['cash', 'card'];
 const EPS = 0.005;
 const MAX_ITEMS = 200;
@@ -101,8 +105,21 @@ const normalizePayload = (payload = {}, { offline = false } = {}) => {
     if (payload.payments.length > 10) throw new AppError('Too many payment lines', 400);
     payments = payload.payments.map((p) => {
       const method = cleanString(p?.method, 30);
-      const amount = Number(p?.amount);
       if (!PAYMENT_METHODS.includes(method)) throw new AppError('Invalid payment method', 400);
+      if (method === 'insurance') {
+        // The insurer share is computed server-side; the client amount is ignored
+        return {
+          method,
+          amount: 0,
+          reference: cleanString(p.reference, 100),
+          provider: '',
+          intentId: null,
+          schemeId: optionalId(p.schemeId, 'insurance scheme id'),
+          memberId: optionalId(p.memberId, 'insurance member id'),
+          memberNo: cleanString(p.memberNo, 100),
+        };
+      }
+      const amount = Number(p?.amount);
       if (!Number.isFinite(amount) || amount < 0) throw new AppError('Payment amounts must be non-negative numbers', 400);
       return {
         method,
@@ -111,11 +128,17 @@ const normalizePayload = (payload = {}, { offline = false } = {}) => {
         provider: cleanString(p.provider, 30).toLowerCase(),
         intentId: p.intentId ? optionalId(p.intentId, 'payment intent id') : null,
       };
-    }).filter((p) => p.amount > 0);
+    }).filter((p) => p.amount > 0 || p.method === 'insurance');
+    if (payments.filter((p) => p.method === 'insurance').length > 1) {
+      throw new AppError('Only one insurance payment line is allowed', 400);
+    }
     if (payments.length === 0) throw new AppError('At least one payment with an amount is required', 400);
   } else {
     legacyMethod = payload.paymentMethod === undefined ? 'cash' : payload.paymentMethod;
     if (!PAYMENT_METHODS.includes(legacyMethod)) throw new AppError('Invalid payment method', 400);
+    if (legacyMethod === 'insurance') {
+      throw new AppError('Insurance sales need a payments line with the scheme and member', 400);
+    }
   }
 
   let amountTendered = null;
@@ -127,6 +150,9 @@ const normalizePayload = (payload = {}, { offline = false } = {}) => {
   }
 
   const methods = payments ? payments.map((p) => p.method) : [legacyMethod];
+  if (offline && methods.includes('insurance')) {
+    throw codedError('Insurance sales cannot be made offline', 400, 'OFFLINE_INSURANCE_NOT_ALLOWED');
+  }
   if (offline && methods.some((m) => !OFFLINE_METHODS.includes(m))) {
     throw codedError('Offline sales can only be paid in cash or by card', 400, 'OFFLINE_PAYMENT_NOT_ALLOWED');
   }
@@ -366,6 +392,58 @@ const runSale = async (ctx, input, session, { offline }) => {
   const { inclusive } = getTaxSettings(pharmacy);
   const grandTotal = round2(Math.max(0, subtotal - input.discount + (inclusive ? 0 : taxTotal)));
 
+  // Insurance: insurer share computed from the scheme rules (client amounts are never trusted)
+  let insurance = null;
+  let lineInsurer = priced.map(() => 0);
+  const insuranceLine = input.payments ? input.payments.find((p) => p.method === 'insurance') : null;
+  if (insuranceLine) {
+    if (offline) throw codedError('Insurance sales cannot be made offline', 400, 'OFFLINE_INSURANCE_NOT_ALLOWED');
+    if (!can(membershipRole, 'insurance:view')) {
+      throw new AppError('You are not allowed to make insurance sales', 403);
+    }
+    const { scheme, member } = await resolveInsuranceForSale(
+      {
+        pharmacyId,
+        schemeId: insuranceLine.schemeId,
+        memberId: insuranceLine.memberId,
+        memberNo: insuranceLine.memberNo,
+        date: now,
+      },
+      { session }
+    );
+    const split = computeInsuranceSplit({
+      scheme,
+      grandTotal,
+      lines: priced.map((l, i) => ({
+        medicine: l.medicine,
+        gross: round2(l.lineTotal - discountShares[i] + (inclusive ? 0 : lineTaxes[i] || 0)),
+      })),
+    });
+    if (split.insurerAmount <= EPS) {
+      throw codedError(`No item in this sale is covered by "${scheme.name}"`, 400, 'INSURANCE_NOT_COVERED');
+    }
+    insuranceLine.amount = split.insurerAmount;
+    insuranceLine.schemeId = scheme._id;
+    insuranceLine.memberId = member._id;
+    insuranceLine.memberNo = member.memberNo;
+    lineInsurer = split.lineInsurer;
+    insurance = {
+      schemeId: scheme._id,
+      schemeName: scheme.name,
+      memberId: member._id,
+      memberNo: member.memberNo,
+      memberName: member.name,
+      coveragePercent: split.coveragePercent,
+      copayType: scheme.copayType || 'none',
+      copayValue: Number(scheme.copayValue) || 0,
+      eligibleAmount: split.eligibleAmount,
+      copayAmount: split.copayAmount,
+      insurerAmount: split.insurerAmount,
+      patientAmount: split.patientAmount,
+      claimId: null,
+    };
+  }
+
   // Payments
   const settled = settlePayments(input, grandTotal);
   const intentIds = await resolveMobileMoney({ pharmacyId, payments: settled.payments, session });
@@ -442,6 +520,7 @@ const runSale = async (ctx, input, session, { offline }) => {
 
     const subtotals = splitAmount(line.lineTotal, takes.map((t) => t.take));
     const taxes = splitAmount(lineTaxes[li] || 0, takes.map((t) => t.take));
+    const insured = splitAmount(lineInsurer[li] || 0, takes.map((t) => t.take));
     const unitPrice = round2(unit.price / unit.factor);
 
     takes.forEach((t, i) => {
@@ -456,6 +535,7 @@ const runSale = async (ctx, input, session, { offline }) => {
         unitName: unit.name,
         unitFactor: unit.factor,
         taxAmount: taxes[i],
+        insuranceAmount: insured[i],
         costPrice: Number.isFinite(Number(t.batch.purchasePrice)) ? round2(t.batch.purchasePrice) : undefined,
       });
       movements.push({
@@ -496,8 +576,10 @@ const runSale = async (ctx, input, session, { offline }) => {
       amount: p.amount,
       reference: p.reference || '',
       provider: p.provider || '',
-      status: 'completed',
+      // Insurance: receivable from the insurer until the claim is paid
+      status: p.method === 'insurance' ? 'pending' : 'completed',
       intentId: p.intentId || null,
+      ...(p.method === 'insurance' ? { schemeId: p.schemeId, memberId: p.memberId, memberNo: p.memberNo } : {}),
     })),
     amountPaid: settled.paidAmount,
     balanceDue,
@@ -508,6 +590,7 @@ const runSale = async (ctx, input, session, { offline }) => {
     offlineCreatedAt: input.offlineCreatedAt,
   };
   if (input.offlineId) saleDoc.offlineId = input.offlineId;
+  if (insurance) saleDoc.insurance = insurance;
   if (input.prescription.number || input.prescription.prescriber) {
     saleDoc.prescription = input.prescription;
   }
@@ -553,6 +636,10 @@ const runSale = async (ctx, input, session, { offline }) => {
   if (input.prescriptionId) {
     await recordPrescriptionDispense({ pharmacyId, prescriptionId: input.prescriptionId, sale }, { session });
   }
+
+  // Fiscal e-invoicing: queue a 'pending' record in the same transaction when the
+  // pharmacy has e-invoicing enabled (no-op otherwise). Submission stays explicit.
+  await require('./einvoice').queueForSale(sale, { session });
 
   return sale;
 };

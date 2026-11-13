@@ -57,7 +57,10 @@
     "methodUnavailable": "{{method}} አሁን አይገኝም",
     "creditCustomer": "ለዱቤ ደንበኛ ይምረጡ",
     "waitingMobile": "የሞባይል ገንዘብ ማረጋገጫን በመጠበቅ ላይ",
-    "mobileRef": "የሞባይል ገንዘብ ግብይት ማጣቀሻ ያስገቡ"
+    "mobileRef": "የሞባይል ገንዘብ ግብይት ማጣቀሻ ያስገቡ",
+    "insuranceOffline": "የመድን ሽያጭ የኢንተርኔት ግንኙነት ይፈልጋል",
+    "insuranceMember": "የመድን ዕቅዱን እና አባሉን ይምረጡ",
+    "insurancePreview": "የመድን ሽፋን ስሌትን በመጠበቅ ላይ"
   },
   "errors": {
     "loadCatalog": "ካታሎጉን መጫን አልተቻለም",
@@ -166,7 +169,8 @@
     "cash": "ጥሬ ገንዘብ",
     "card": "ካርድ",
     "mobile_money": "የሞባይል ገንዘብ",
-    "credit": "ዱቤ"
+    "credit": "ዱቤ",
+    "insurance": "መድን"
   },
   "shift": {
     "title": "ፈረቃ ክፈት",
@@ -198,5 +202,23 @@
     "confirmDiscard": "ይህን ከመስመር ውጭ ሽያጭ መጣል ይፈልጋሉ? አይመዘገብም።",
     "syncFailed": "ማመሳሰል አልተሳካም",
     "notProcessed": "አልተሰራም"
+  },
+  "insurance": {
+    "selectScheme": "የመድን ዕቅድ ይምረጡ…",
+    "memberSearch": "የአባል ቁጥር፣ ስም ወይም ስልክ",
+    "noMember": "አባል አልተገኘም",
+    "changeMember": "አባል ቀይር",
+    "calculating": "ሽፋን በማስላት ላይ…",
+    "insurerPays": "መድን ሰጪው የሚከፍለው",
+    "patientPays": "ታካሚው የሚከፍለው",
+    "copay": "የጋራ ክፍያ",
+    "notCovered": "ሽፋን የሌላቸው፦ {{names}}",
+    "previewFailed": "የመድን ሽፋኑን ማስላት አልተቻለም",
+    "invalid": {
+      "expired": "ጊዜው ያለፈበት",
+      "inactive": "ንቁ ያልሆነ",
+      "not_yet_valid": "ገና ያልጀመረ",
+      "not_found": "አልተገኘም"
+    }
   }
 }

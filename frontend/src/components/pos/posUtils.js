@@ -115,7 +115,22 @@ export const computeTotals = (cart, discountInput, pharmacy) => {
   };
 };
 
+// Amount of each cart line after its discount share and (exclusive) tax, the way the server
+// computes the insurer share: [{ medicineId, amount }]. Used for the insurance coverage preview.
+export const lineGrossAmounts = (cart, discount, pharmacy) => {
+  const lineTotals = cart.map((l) => round2(l.quantity * l.unit.price));
+  const shares = splitAmount(Number(discount) || 0, lineTotals);
+  const tax = taxSettingsOf(pharmacy);
+  const r = tax.rate / 100;
+  return cart.map((l, i) => {
+    const net = round2(lineTotals[i] - shares[i]);
+    const lineTax = tax.enabled && tax.rate > 0 && !tax.inclusive && !l.taxExempt && net > 0 ? round2(net * r) : 0;
+    return { medicineId: l.medicineId, amount: round2(net + lineTax) };
+  });
+};
+
 // Payment rows: [{ id, method, amount, reference, provider, intentId, intentStatus }]
+// Insurance rows also carry { schemeId, member, preview } (amount = insurer share from the preview).
 export const paymentStatus = (payments, grandTotal) => {
   const amounts = payments.map((p) => round2(Number(p.amount) || 0));
   const total = round2(amounts.reduce((s, v) => s + v, 0));
@@ -128,7 +143,7 @@ export const paymentStatus = (payments, grandTotal) => {
   return { total, cash, change, remaining, invalidExcess, credit, covered: remaining <= EPS && !invalidExcess };
 };
 
-export const METHOD_LABELS = { cash: 'Cash', card: 'Card', mobile_money: 'Mobile money', credit: 'Credit' };
+export const METHOD_LABELS = { cash: 'Cash', card: 'Card', mobile_money: 'Mobile money', credit: 'Credit', insurance: 'Insurance' };
 
 // ---------- Held / parked sales (localStorage, per pharmacy + user) ----------
 
@@ -184,5 +199,9 @@ export const newPaymentRow = (method = 'cash', amount = '') => ({
   intentId: null,
   intentStatus: null,
   error: '',
+  // insurance rows
+  schemeId: '',
+  member: null,
+  preview: null,
 });
 

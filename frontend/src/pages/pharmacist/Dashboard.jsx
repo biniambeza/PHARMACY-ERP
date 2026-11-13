@@ -14,6 +14,7 @@ import SalesTrendChart from '../../components/dashboard/SalesTrendChart';
 import ExpiryHealthCard from '../../components/dashboard/ExpiryHealthCard';
 import TopSuppliersCard from '../../components/dashboard/TopSuppliersCard';
 import AnomalyAlertsCard from '../../components/dashboard/AnomalyAlertsCard';
+import OnboardingChecklist from '../../components/onboarding/OnboardingChecklist';
 
 const PharmacistDashboard = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -147,6 +148,9 @@ const PharmacistDashboard = () => {
         exportingSales={exportingSales}
         onExportSalesXlsx={handleExportSalesXlsx}
       />
+
+      {/* First-run setup checklist (owners only, until complete or dismissed) */}
+      {can('settings:manage') && <OnboardingChecklist />}
 
       <KpiCards kpis={kpis} period={period} revenueVsExpenses={revenueVsExpenses} />
 

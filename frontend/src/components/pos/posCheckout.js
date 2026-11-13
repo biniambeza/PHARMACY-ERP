@@ -28,6 +28,11 @@ export const computeBlockers = ({
   effectivePayments.forEach((p) => {
     if (!allowedMethods.includes(p.method)) list.push(t('blockers.methodUnavailable', { method: t(`methods.${p.method}`) }));
     if (p.method === 'credit' && !customer) list.push(t('blockers.creditCustomer'));
+    if (p.method === 'insurance') {
+      if (!online) list.push(t('blockers.insuranceOffline'));
+      else if (!p.schemeId || !p.member) list.push(t('blockers.insuranceMember'));
+      else if (!p.preview || !(p.amount > 0)) list.push(p.error || t('blockers.insurancePreview'));
+    }
     if (p.method === 'mobile_money' && p.amount > 0) {
       if (p.intentId && p.intentStatus !== 'confirmed') list.push(t('blockers.waitingMobile'));
       if (!p.intentId && !p.reference.trim()) list.push(t('blockers.mobileRef'));
@@ -57,6 +62,8 @@ export const buildSalePayload = ({
       reference: p.reference?.trim() || undefined,
       provider: p.method === 'mobile_money' ? p.provider || 'manual' : undefined,
       intentId: p.intentId || undefined,
+      // Insurance: the server recomputes the insurer share from the scheme rules
+      ...(p.method === 'insurance' ? { schemeId: p.schemeId, memberId: p.member?._id } : {}),
     })),
   offlineId,
 });

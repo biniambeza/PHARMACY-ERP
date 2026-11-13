@@ -81,16 +81,21 @@ const POS = () => {
   });
 
   // ---------- Derived ----------
-  const { medById, quickPicks, availableOf, maxQtyOf, totals, effectivePayments, payStatus } = usePosDerived({
+  const { medById, quickPicks, availableOf, maxQtyOf, totals, effectivePayments, payStatus, insuranceLines } = usePosDerived({
     medicines, topIds, cart, discount, pharmacy, payments,
   });
 
   const needsRx = cart.some((l) => l.medicine.requiresPrescription);
   const hasControlled = cart.some((l) => l.medicine.isControlled);
   const canCredit = can('credit:sell');
+  const canInsurance = can('insurance:view');
+  // Insurance is online only (the server rejects it in offline sync too)
   const allowedMethods = useMemo(
-    () => (online ? ['cash', 'card', 'mobile_money', ...(canCredit && customer ? ['credit'] : [])] : ['cash']),
-    [online, canCredit, customer]
+    () =>
+      online
+        ? ['cash', 'card', 'mobile_money', ...(canCredit && customer ? ['credit'] : []), ...(canInsurance ? ['insurance'] : [])]
+        : ['cash'],
+    [online, canCredit, customer, canInsurance]
   );
 
   const warningKey = `${patient?._id || ''}|${[...new Set(cart.map((l) => l.medicineId))].sort().join(',')}`;
@@ -448,6 +453,7 @@ const POS = () => {
                 allowedMethods={allowedMethods}
                 providers={providers.providers}
                 defaultProvider={providers.default}
+                insuranceLines={insuranceLines}
               />
             </>
           )}
@@ -491,6 +497,7 @@ const POS = () => {
         }}
         sale={completedSale}
         pharmacy={pharmacy || undefined}
+        autoPrint
       />
     </div>
   );

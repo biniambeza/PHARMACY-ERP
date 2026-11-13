@@ -1,0 +1,192 @@
+{
+  "badge": "Insurance billing",
+  "title": "Insurance & Credit Schemes",
+  "subtitle": "CBHI, employer schemes and private insurers: members, claims and insurer receivables",
+  "noAccess": "You do not have access to insurance billing.",
+  "loading": "Loading…",
+  "save": "Save",
+  "saving": "Saving…",
+  "edit": "Edit",
+  "remove": "Remove",
+  "tabs": {
+    "schemes": "Schemes",
+    "members": "Members",
+    "claims": "Claims",
+    "receivables": "Receivables"
+  },
+  "fields": {
+    "name": "Name",
+    "code": "Code",
+    "type": "Type",
+    "coveragePercent": "Coverage %",
+    "claimCycle": "Claim cycle",
+    "copayType": "Copay",
+    "copayPercent": "Copay %",
+    "copayAmount": "Copay amount per sale",
+    "maxPerSale": "Max insurer share per sale",
+    "excludedCategories": "Excluded categories",
+    "excludedMedicines": "Excluded medicines",
+    "payerName": "Payer / insurer name",
+    "contactPerson": "Contact person",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "notes": "Notes",
+    "active": "Active",
+    "exclusions": "Exclusions",
+    "members": "Members",
+    "status": "Status",
+    "scheme": "Scheme",
+    "memberNo": "Member no.",
+    "group": "Group / employer",
+    "validFrom": "Valid from",
+    "validTo": "Valid to",
+    "validity": "Validity",
+    "from": "From",
+    "to": "To",
+    "date": "Date",
+    "invoice": "Invoice",
+    "member": "Member",
+    "insurerShare": "Insurer share",
+    "returned": "Returned",
+    "claimed": "Claimed",
+    "period": "Period",
+    "total": "Total",
+    "outstanding": "Outstanding",
+    "amount": "Amount",
+    "reference": "Reference",
+    "claimNumber": "Claim no.",
+    "sales": "Sales",
+    "paid": "Paid",
+    "saleTotal": "Sale total",
+    "submittedAt": "Submitted"
+  },
+  "types": {
+    "cbhi": "CBHI (community-based)",
+    "employer": "Employer scheme",
+    "private": "Private insurer",
+    "other": "Other"
+  },
+  "cycles": {
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "on_demand": "On demand"
+  },
+  "copay": {
+    "none": "No copay",
+    "percent": "Percent of covered amount",
+    "fixed": "Fixed amount per sale",
+    "percentShort": "{{value}}%",
+    "fixedShort": "{{amount}} / sale"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  },
+  "schemes": {
+    "subtitle": "Coverage rules used at the POS to split each sale between the insurer and the patient.",
+    "new": "New scheme",
+    "newTitle": "New insurance scheme",
+    "editTitle": "Edit insurance scheme",
+    "formSubtitle": "Coverage, copay, exclusions and payer contact",
+    "empty": "No insurance schemes yet.",
+    "confirmDelete": "Delete scheme \"{{name}}\"? Schemes with members or sales can only be deactivated.",
+    "exclusionCount": "{{medicines}} medicines, {{categories}} categories",
+    "maxPerSaleHint": "0 = no limit",
+    "rulesHint": "Insurer share = covered items × coverage % − copay (capped at the max per sale). The patient pays the rest at the POS.",
+    "categoriesPlaceholder": "e.g. Cosmetics, Supplements",
+    "searchMedicine": "Search a medicine to exclude…",
+    "payer": "Payer contact",
+    "errors": {
+      "nameRequired": "Scheme name is required",
+      "coverage": "Coverage must be between 0 and 100",
+      "copay": "Invalid copay value",
+      "saveFailed": "Could not save the scheme"
+    }
+  },
+  "members": {
+    "new": "New member",
+    "newTitle": "New scheme member",
+    "editTitle": "Edit member",
+    "empty": "No members found.",
+    "searchPlaceholder": "Search by member no., name or phone…",
+    "allSchemes": "All schemes",
+    "needScheme": "Create a scheme first",
+    "groupPlaceholder": "Kebele, employer, household…",
+    "confirmDelete": "Delete member \"{{name}}\"?",
+    "valid": "Valid",
+    "invalid": {
+      "expired": "Expired",
+      "inactive": "Inactive",
+      "not_yet_valid": "Not valid yet",
+      "not_found": "Not found"
+    },
+    "errors": {
+      "schemeRequired": "Select a scheme",
+      "required": "Member number and name are required",
+      "dates": "Valid from must be before valid to",
+      "saveFailed": "Could not save the member"
+    }
+  },
+  "claims": {
+    "new": "Build claim",
+    "empty": "No claims yet.",
+    "allStatuses": "All statuses",
+    "buildTitle": "Build insurance claim",
+    "buildSubtitle": "Collect the unclaimed insurance sales of a scheme in a period (net of returns)",
+    "unclaimedCount_one": "{{count}} unclaimed sale",
+    "unclaimedCount_other": "{{count}} unclaimed sales",
+    "nothingToClaim": "No unclaimed insurance sales in this period.",
+    "build": "Create draft claim",
+    "detailTitle": "Claim",
+    "submit": "Submit to insurer",
+    "refresh": "Recalculate",
+    "delete": "Delete draft",
+    "confirmDelete": "Delete this draft claim? Its sales become unclaimed again.",
+    "recordPayment": "Record payment",
+    "reject": "Reject",
+    "rejectionNotes": "Rejection notes",
+    "rejectPaidHint": "This claim has payments: the unpaid part will be written off.",
+    "releaseSales": "Release the sales so they can be claimed again",
+    "rejectedOn": "Rejected on {{date}}:",
+    "salesReleased": "The sales were released and can be claimed again.",
+    "salesWrittenOff": "The unpaid amount was written off.",
+    "exportExcel": "Excel",
+    "print": "Print",
+    "payments": "Payments received",
+    "errors": {
+      "buildFailed": "Could not build the claim"
+    }
+  },
+  "claimStatus": {
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "partially_paid": "Partially paid",
+    "paid": "Paid",
+    "rejected": "Rejected"
+  },
+  "receivables": {
+    "outstanding": "Outstanding",
+    "unclaimed": "Not yet claimed",
+    "draft": "In draft claims",
+    "submitted": "Submitted, unpaid",
+    "unclaimedSales_one": "{{count}} unclaimed sale",
+    "unclaimedSales_other": "{{count}} unclaimed sales"
+  },
+  "aging": {
+    "0_30": "0–30 days",
+    "31_60": "31–60 days",
+    "61_90": "61–90 days",
+    "90_plus": "90+ days"
+  },
+  "print": {
+    "title": "Insurance claim",
+    "payer": "Payer",
+    "preparedBy": "Prepared by (pharmacy)",
+    "receivedBy": "Received by (insurer)"
+  }
+}

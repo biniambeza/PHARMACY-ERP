@@ -7,14 +7,30 @@
   "saving": "Saving...",
   "confirmRemove": "Remove customer \"{{name}}\"?",
   "removeFailed": "Failed to remove customer",
-  "filters": { "all": "All", "withBalance": "With balance" },
-  "limit": { "unlimited": "Unlimited", "noCredit": "No credit" },
+  "filters": {
+    "all": "All",
+    "withBalance": "With balance"
+  },
+  "limit": {
+    "unlimited": "Unlimited",
+    "noCredit": "No credit"
+  },
   "paymentMethods": {
-    "cash": "Cash", "card": "Card", "mobile_money": "Mobile money",
-    "bank_transfer": "Bank transfer", "cheque": "Cheque", "other": "Other"
+    "cash": "Cash",
+    "card": "Card",
+    "mobile_money": "Mobile money",
+    "bank_transfer": "Bank transfer",
+    "cheque": "Cheque",
+    "other": "Other"
   },
   "fields": {
-    "phone": "Phone", "email": "Email", "address": "Address", "creditLimit": "Credit limit", "notes": "Notes"
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "creditLimit": "Credit limit",
+    "notes": "Notes",
+    "legalName": "Business legal name",
+    "tin": "TIN (tax ID)"
   },
   "form": {
     "editTitle": "Edit Customer",
@@ -62,8 +78,12 @@
     "closing": "Closing balance",
     "printed": "Printed {{date}}",
     "cols": {
-      "date": "Date", "description": "Description", "reference": "Reference",
-      "charges": "Charges", "payments": "Payments", "balance": "Balance"
+      "date": "Date",
+      "description": "Description",
+      "reference": "Reference",
+      "charges": "Charges",
+      "payments": "Payments",
+      "balance": "Balance"
     }
   },
   "summary": {
@@ -74,9 +94,19 @@
     "overdue": "{{amount}} older than 30 days",
     "bucketDays": "{{bucket}} days"
   },
-  "agingTable": { "title": "Receivables aging by customer" },
-  "table": { "customer": "Customer", "balance": "Balance", "status": "Status" },
-  "actions": { "recordPayment": "Record payment", "statement": "Statement", "remove": "Remove" },
+  "agingTable": {
+    "title": "Receivables aging by customer"
+  },
+  "table": {
+    "customer": "Customer",
+    "balance": "Balance",
+    "status": "Status"
+  },
+  "actions": {
+    "recordPayment": "Record payment",
+    "statement": "Statement",
+    "remove": "Remove"
+  },
   "empty": {
     "noMatch": "No matching customers",
     "none": "No customers yet",

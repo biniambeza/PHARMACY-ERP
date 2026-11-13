@@ -5,9 +5,12 @@
 //   ENABLE_JOBS        'true' / 'false'. Default: enabled only in production.
 //   EXPIRY_JOB_CRON    cron expression for the daily checks (default '0 1 * * *' = 01:00).
 //   JOBS_TZ            optional IANA timezone for the schedule (default: server time).
+//   BACKUP_CRON        automatic database backups (see jobs/backupJob.js). Independent of
+//                      ENABLE_JOBS: off unless set.
 // Jobs never run under NODE_ENV=test.
 const cron = require('node-cron');
 const { runDailyChecks } = require('./dailyChecks');
+const { startBackupJob, stopBackupJob } = require('./backupJob');
 
 const DEFAULT_CRON = '0 1 * * *';
 let tasks = [];
@@ -20,6 +23,12 @@ const jobsEnabled = () => {
 };
 
 const startJobs = () => {
+  // Automatic backups only depend on BACKUP_CRON (never in tests).
+  try {
+    startBackupJob();
+  } catch (err) {
+    console.warn('[jobs] backup job failed to start:', err && err.message);
+  }
   if (!jobsEnabled()) {
     if (process.env.NODE_ENV !== 'test') console.log('[jobs] background jobs disabled (set ENABLE_JOBS=true to enable)');
     return [];
@@ -90,6 +99,7 @@ const stopJobs = async () => {
     }
   }
   tasks = [];
+  await stopBackupJob();
 };
 
 module.exports = { startJobs, stopJobs, jobsEnabled };

@@ -20,6 +20,7 @@ import NotificationBell from '../../components/layout/NotificationBell';
 import BranchSwitcher from '../../components/layout/BranchSwitcher';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import AnnouncementBanner from '../../components/announcements/AnnouncementBanner';
+import TwoFactorNudge from '../../components/settings/TwoFactorNudge';
 import LocaleSync from '../../i18n/LocaleSync';
 import { useTranslation } from 'react-i18next';
 import { tNav, tNavGroup, tQuickAction } from '../../i18n/nav';
@@ -464,6 +465,7 @@ const PharmacyLayout = () => {
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
           <LocaleSync />
           <AnnouncementBanner />
+          <TwoFactorNudge to="/pharmacy/settings" />
           <ErrorBoundary>
             <Outlet context={{ pharmacy, globalSearch }} />
           </ErrorBoundary>

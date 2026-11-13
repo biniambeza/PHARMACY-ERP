@@ -1,0 +1,17 @@
+{
+  "title": "Get your pharmacy ready",
+  "progress": "{{done}} of {{total}} steps done",
+  "dismiss": "Dismiss",
+  "optional": "Optional",
+  "steps": {
+    "business": { "title": "Complete business details", "hint": "Address, phone, license number and TIN" },
+    "currencyTax": { "title": "Set currency and tax", "hint": "Choose your currency and VAT settings" },
+    "medicines": { "title": "Add your medicines", "hint": "Import a spreadsheet or add them one by one" },
+    "stock": { "title": "Receive stock", "hint": "Record your first stock batch" },
+    "supplier": { "title": "Add a supplier", "hint": "Who you buy from" },
+    "staff": { "title": "Invite your staff", "hint": "Pharmacists, cashiers and storekeepers" },
+    "shift": { "title": "Open the first shift", "hint": "Your pharmacy requires a shift to sell" },
+    "sale": { "title": "Make your first sale", "hint": "Open the POS" },
+    "twoFactor": { "title": "Turn on two-factor sign-in", "hint": "Protect the owner account" }
+  }
+}

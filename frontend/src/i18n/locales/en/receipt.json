@@ -50,5 +50,48 @@
   "status": "Status",
   "returnedStatus": "Returned ({{status}})",
   "pdfTitle": "Invoice {{number}}",
-  "methods": { "cash": "Cash", "card": "Card", "mobile_money": "Mobile money", "credit": "Credit", "store_credit": "Store credit" }
+  "methods": {
+    "cash": "Cash",
+    "card": "Card",
+    "mobile_money": "Mobile money",
+    "credit": "Credit",
+    "store_credit": "Store credit",
+    "insurance": "Insurance",
+    "bank_transfer": "Bank transfer",
+    "cheque": "Cheque",
+    "other": "Other"
+  },
+  "cashierLabel": "Cashier:",
+  "printCopies": "Print ({{count}} copies)",
+  "printer": {
+    "title": "Receipt printer",
+    "hint": "Saved on this device only.",
+    "paperWidth": "Paper width",
+    "usePharmacyDefault": "Pharmacy default ({{width}})",
+    "copies": "Copies",
+    "footer": "Extra footer message",
+    "footerPlaceholder": "e.g. Open 24/7 - call us for delivery",
+    "autoPrint": "Auto-print after sale",
+    "showLogo": "Show logo"
+  },
+  "send": {
+    "title": "Send receipt",
+    "sms": "SMS",
+    "email": "Email",
+    "phonePlaceholder": "Phone number",
+    "emailPlaceholder": "Email address",
+    "send": "Send",
+    "sent": "Receipt sent to {{to}}.",
+    "logged": "Messaging is not configured on the server; the receipt was logged instead of sent.",
+    "failed": "Could not send the receipt.",
+    "rateLimited": "Too many sends for this receipt. Try again later.",
+    "invalidPhone": "Enter a valid phone number.",
+    "invalidEmail": "Enter a valid email address.",
+    "copy": "Copy receipt text",
+    "copied": "Receipt text copied.",
+    "copyFailed": "Could not copy the receipt text.",
+    "share": "Share",
+    "shareTitle": "Receipt {{number}}",
+    "shareFailed": "Could not share the receipt."
+  }
 }

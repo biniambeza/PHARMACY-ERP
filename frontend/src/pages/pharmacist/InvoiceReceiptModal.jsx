@@ -1,14 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Printer, X, Receipt, FileDown } from 'lucide-react';
+import { Printer, X, Receipt, FileDown, Settings2 } from 'lucide-react';
 import { getMyPharmacy } from '../../api/pharmacyApi';
 import { formatMoney } from '../../utils/format';
 import { exportPDF } from '../../utils/export';
+import {
+  RECEIPT_CSS,
+  PAPER_WIDTHS,
+  loadPrinterPrefs,
+  savePrinterPrefs,
+  resolvePaperWidth,
+  printReceiptHtml,
+} from '../../utils/printReceipt';
+import ReceiptBody from '../../components/receipt/ReceiptBody';
+import ReceiptPrinterSettings from '../../components/receipt/ReceiptPrinterSettings';
+import SendReceiptPanel from '../../components/receipt/SendReceiptPanel';
 
-// Receipt / tax invoice (#20, #22). Props: { isOpen, onClose, sale, pharmacy? }.
+// Receipt / tax invoice (#20, #22). Props: { isOpen, onClose, sale, pharmacy?, autoPrint? }.
 // When `pharmacy` is not passed, the active pharmacy (incl. settings) is loaded once and cached.
-// Printing uses a hidden iframe with its own @page size (58mm / 80mm thermal or A4),
-// so the rest of the app is never printed.
+// Printing uses a hidden iframe with its own @page size (58mm / 80mm thermal roll or A4),
+// so the rest of the app is never printed. Printer preferences are per device (localStorage).
+// `autoPrint`: when true and this device has "auto-print after sale" on, the receipt is
+// printed once as soon as it opens (POS passes it after checkout).
 
 let pharmacyCache = null;
 let pharmacyPromise = null;
@@ -34,215 +47,62 @@ export const invalidateReceiptPharmacy = () => {
   pharmacyCache = null;
 };
 
-const METHOD_KEYS = ['cash', 'card', 'mobile_money', 'credit', 'store_credit'];
-const methodLabel = (t, m) => (METHOD_KEYS.includes(m) ? t(`methods.${m}`) : String(m || '').replace(/_/g, ' '));
+const isServerId = (id) => typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
 
-// Self-contained receipt styles: used for the on-screen preview and the print iframe.
-const RECEIPT_CSS = `
-.rcpt { font-family: 'Courier New', ui-monospace, monospace; color: #000; background: #fff; font-size: 12px; line-height: 1.35; margin: 0 auto; }
-.rcpt.w58 { width: 48mm; font-size: 10px; }
-.rcpt.w80 { width: 72mm; font-size: 11.5px; }
-.rcpt.wA4 { width: 100%; max-width: 180mm; font-size: 12px; }
-.rcpt .c { text-align: center; }
-.rcpt .r { text-align: right; }
-.rcpt .b { font-weight: 700; }
-.rcpt .muted { color: #444; }
-.rcpt .sm { font-size: 0.85em; }
-.rcpt .lg { font-size: 1.25em; }
-.rcpt .sep { border-top: 1px dashed #000; margin: 6px 0; }
-.rcpt .row { display: flex; justify-content: space-between; gap: 6px; }
-.rcpt .row > span:last-child { text-align: right; white-space: nowrap; }
-.rcpt table { width: 100%; border-collapse: collapse; }
-.rcpt th { text-align: left; font-weight: 700; border-bottom: 1px solid #000; padding: 2px 0; }
-.rcpt td { padding: 2px 0; vertical-align: top; }
-.rcpt .badge { display: inline-block; border: 2px solid #000; padding: 1px 6px; font-weight: 700; letter-spacing: 1px; margin: 4px 0; }
-.rcpt .void { color: #b91c1c; border-color: #b91c1c; }
-`;
-
-const pageCss = (width) =>
-  width === 'A4'
-    ? '@page { size: A4; margin: 12mm; }'
-    : `@page { size: ${width} auto; margin: 2mm; } html, body { width: ${width}; }`;
-
-const ReceiptBody = ({ sale, pharmacy, width }) => {
-  const { t } = useTranslation('receipt');
-  const settings = pharmacy?.settings || {};
-  const currency = settings.currency;
-  const money = (v) => formatMoney(Number(v) || 0, currency);
-  const inclusive = Boolean(settings.tax?.inclusive);
-  const narrow = width !== 'A4';
-  const taxLines = sale.taxLines?.length
-    ? sale.taxLines
-    : Number(sale.tax) > 0
-      ? [{ name: settings.tax?.name || t('tax'), rate: null, amount: sale.tax }]
-      : [];
-  const payments = sale.payments?.length
-    ? sale.payments.filter((p) => p.status !== 'failed')
-    : [{ method: sale.paymentMethod, amount: sale.amountPaid ?? sale.grandTotal }];
-  const paid = sale.amountPaid ?? payments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-  // POS sales store the applied payment amounts plus `change` / `amountTendered` (Wave 3)
-  const change =
-    sale.change !== undefined && sale.change !== null
-      ? Number(sale.change) || 0
-      : Math.max(0, paid - (Number(sale.grandTotal) || 0) - (Number(sale.balanceDue) || 0));
-  const staffName = sale.staffId?.name || sale.pharmacistId?.name;
-  const customerName = sale.customerId?.name || sale.customer?.name || t('walkIn');
-  const customerPhone = sale.customerId?.phone || sale.customer?.phone;
-  const returnLabel = sale.returnStatus === 'full' ? t('returned') : sale.returnStatus === 'partial' ? t('partiallyReturned') : null;
-
-  return (
-    <div className={`rcpt w${width}`}>
-      <div className="c">
-        <div className="b lg">{pharmacy?.name || t('pharmacy')}</div>
-        {pharmacy?.address && <div className="sm">{pharmacy.address}</div>}
-        {pharmacy?.phone && <div className="sm">{t('tel', { value: pharmacy.phone })}</div>}
-        {pharmacy?.licenseNo && <div className="sm">{t('license', { value: pharmacy.licenseNo })}</div>}
-        {settings.tax?.registrationNo && <div className="sm">{t('tinVatNo', { value: settings.tax.registrationNo })}</div>}
-        <div className="b" style={{ marginTop: 4 }}>{taxLines.length ? t('taxInvoiceHeading') : t('receiptHeading')}</div>
-        {sale.voided && <div className="badge void">{t('voided')}</div>}
-        {!sale.voided && returnLabel && <div className="badge">{returnLabel}</div>}
-      </div>
-
-      <div className="sep" />
-      <div className="row"><span>{t('invoiceLabel')}</span><span className="b">{sale.invoiceNumber}</span></div>
-      <div className="row"><span>{t('dateLabel')}</span><span>{new Date(sale.createdAt).toLocaleString()}</span></div>
-      {staffName && <div className="row"><span>{t('servedBy')}</span><span>{staffName}</span></div>}
-      <div className="row"><span>{t('customerLabel')}</span><span>{customerName}</span></div>
-      {customerPhone && <div className="row"><span>{t('phoneLabel')}</span><span>{customerPhone}</span></div>}
-      {sale.prescription?.number && <div className="row"><span>{t('rxNo')}</span><span>{sale.prescription.number}</span></div>}
-      {sale.voided && sale.voidReason && <div className="row"><span>{t('voidReason')}</span><span>{sale.voidReason}</span></div>}
-
-      <div className="sep" />
-      <table>
-        <thead>
-          <tr>
-            <th>{t('item')}</th>
-            <th className="r">{t('qty')}</th>
-            {!narrow && <th className="r">{t('price')}</th>}
-            <th className="r">{t('total')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sale.items?.map((item, idx) => {
-            const factor = Number(item.unitFactor) || 1;
-            const qty = factor > 1 ? `${item.quantity / factor} ${item.unitName}` : item.quantity;
-            return (
-              <tr key={item._id || idx}>
-                <td>
-                  {item.name}
-                  <div className="sm muted">
-                    {narrow ? `${qty} x ${money(Number(item.unitPrice) * factor)}` : t('batchNo', { batch: item.batchNo })}
-                  </div>
-                </td>
-                <td className="r">{qty}</td>
-                {!narrow && <td className="r">{money(Number(item.unitPrice) * factor)}</td>}
-                <td className="r">{money(item.subtotal)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      <div className="sep" />
-      <div className="row"><span>{t('subtotal')}</span><span>{money(sale.subtotal)}</span></div>
-      {Number(sale.discount) > 0 && <div className="row"><span>{t('discount')}</span><span>-{money(sale.discount)}</span></div>}
-      {taxLines.map((tl, i) => (
-        <div className="row" key={i}>
-          <span>
-            {tl.name}
-            {tl.rate !== null && tl.rate !== undefined ? ` ${tl.rate}%` : ''}
-            {inclusive ? t('incl') : ''}
-          </span>
-          <span>{inclusive ? '' : '+'}{money(tl.amount)}</span>
-        </div>
-      ))}
-      <div className="row b lg" style={{ marginTop: 4 }}><span>{t('totalUpper')}</span><span>{money(sale.grandTotal)}</span></div>
-
-      <div className="sep" />
-      {payments.map((p, i) => (
-        <div className="row" key={p._id || i}>
-          <span>
-            {methodLabel(t, p.method)}
-            {p.reference ? ` (${p.reference})` : ''}
-            {p.status === 'pending' ? t('pendingSuffix') : ''}
-            {p.status === 'refunded' ? t('refundedSuffix') : ''}
-          </span>
-          <span>{money(p.amount)}</span>
-        </div>
-      ))}
-      {change > 0 && Number(sale.amountTendered) > 0 && (
-        <div className="row"><span>{t('cashTendered')}</span><span>{money(sale.amountTendered)}</span></div>
-      )}
-      {change > 0 && <div className="row"><span>{t('change')}</span><span>{money(change)}</span></div>}
-      {Number(sale.balanceDue) > 0 && (
-        <>
-          <div className="row b"><span>{t('balanceDueCredit')}</span><span>{money(sale.balanceDue)}</span></div>
-          {sale.customerId?.balance !== undefined && (
-            <div className="row sm"><span>{t('accountBalance')}</span><span>{money(sale.customerId.balance)}</span></div>
-          )}
-        </>
-      )}
-
-      <div className="sep" />
-      <div className="c sm">
-        {settings.receiptFooter ? (
-          settings.receiptFooter.split('\n').map((line, i) => <div key={i}>{line}</div>)
-        ) : (
-          <div>{t('thankYou')}</div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) => {
+const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp, autoPrint = false }) => {
   const { t } = useTranslation(['receipt', 'common']);
   const [loadedPharmacy, setLoadedPharmacy] = useState(pharmacyCache);
-  const [widthOverride, setWidthOverride] = useState(null);
+  const [loadDone, setLoadDone] = useState(Boolean(pharmacyCache));
+  const [prefs, setPrefs] = useState(loadPrinterPrefs);
+  const [showSettings, setShowSettings] = useState(false);
   const receiptRef = useRef(null);
+  const autoPrintedFor = useRef(null);
   const pharmacy = pharmacyProp || loadedPharmacy;
+  const width = resolvePaperWidth(prefs, pharmacy);
 
   useEffect(() => {
     if (!isOpen || pharmacyProp || loadedPharmacy) return undefined;
     let cancelled = false;
     loadPharmacy().then((p) => {
-      if (!cancelled && p) setLoadedPharmacy(p);
+      if (cancelled) return;
+      if (p) setLoadedPharmacy(p);
+      setLoadDone(true);
     });
     return () => {
       cancelled = true;
     };
   }, [isOpen, pharmacyProp, loadedPharmacy]);
 
-  if (!isOpen || !sale) return null;
-
-  const width = widthOverride || pharmacy?.settings?.receiptWidth || '80mm';
+  const updatePrefs = (next) => setPrefs(savePrinterPrefs(next));
 
   const handlePrint = () => {
-    const html = receiptRef.current?.innerHTML || '';
-    const iframe = document.createElement('iframe');
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
-    document.body.appendChild(iframe);
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(
-      `<!doctype html><html><head><meta charset="utf-8"><title>${sale.invoiceNumber || t('receipt')}</title>` +
-        `<style>${RECEIPT_CSS} ${pageCss(width)} body { margin: 0; background: #fff; }</style></head>` +
-        `<body>${html}</body></html>`
-    );
-    doc.close();
-    const cleanup = () => setTimeout(() => iframe.remove(), 500);
-    iframe.contentWindow.onafterprint = cleanup;
-    setTimeout(() => {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      setTimeout(cleanup, 60000);
-    }, 100);
+    printReceiptHtml(receiptRef.current?.innerHTML || '', {
+      width,
+      copies: prefs.copies,
+      title: sale?.invoiceNumber || t('receipt'),
+    });
   };
+
+  // Auto-print once per sale after checkout, once the pharmacy header is known.
+  const saleKey = sale?._id || sale?.offlineId || sale?.invoiceNumber;
+  const ready = Boolean(pharmacyProp || loadedPharmacy || loadDone);
+  useEffect(() => {
+    if (!isOpen || !autoPrint || !prefs.autoPrint || !saleKey || !ready) return;
+    if (autoPrintedFor.current === saleKey) return;
+    autoPrintedFor.current = saleKey;
+    printReceiptHtml(receiptRef.current?.innerHTML || '', {
+      width,
+      copies: prefs.copies,
+      title: sale?.invoiceNumber || 'Receipt',
+    });
+  }, [isOpen, autoPrint, prefs.autoPrint, prefs.copies, saleKey, ready, width, sale?.invoiceNumber]);
+
+  if (!isOpen || !sale) return null;
 
   const handlePdf = () => {
     const currency = pharmacy?.settings?.currency;
     const money = (v) => formatMoney(Number(v) || 0, currency);
+    const tin = pharmacy?.tin || pharmacy?.settings?.tax?.registrationNo;
     const summary = [
       [t('invoice'), sale.invoiceNumber],
       [t('date'), new Date(sale.createdAt).toLocaleString()],
@@ -263,7 +123,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
       filename: `invoice-${sale.invoiceNumber}`,
       orientation: 'portrait',
       meta: {
-        pharmacy: [pharmacy?.name, pharmacy?.address, pharmacy?.settings?.tax?.registrationNo ? t('tinVat', { value: pharmacy.settings.tax.registrationNo }) : null]
+        pharmacy: [pharmacy?.name, pharmacy?.address, tin ? t('tinVat', { value: tin }) : null]
           .filter(Boolean)
           .join(' | '),
         summary,
@@ -279,6 +139,9 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
     });
   };
 
+  const secondaryBtn =
+    'px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1.5';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs">
       <style>{RECEIPT_CSS}</style>
@@ -293,23 +156,44 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
               <p className="text-[11px] text-slate-500 dark:text-slate-400">{t('subtitle')}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            aria-label={t('common:buttons.close')}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setShowSettings((v) => !v)}
+              aria-label={t('printer.title')}
+              aria-expanded={showSettings}
+              title={t('printer.title')}
+              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                showSettings
+                  ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50'
+                  : 'text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('common:buttons.close')}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+
+        {showSettings && (
+          <ReceiptPrinterSettings prefs={prefs} onChange={updatePrefs} pharmacyWidth={pharmacy?.settings?.receiptWidth} />
+        )}
 
         <div className="flex items-center justify-between mb-3 text-xs">
           <span className="text-slate-500 dark:text-slate-400">{t('paper')}</span>
           <div className="flex items-center p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
-            {['58mm', '80mm', 'A4'].map((w) => (
+            {PAPER_WIDTHS.map((w) => (
               <button
                 key={w}
                 type="button"
-                onClick={() => setWidthOverride(w)}
+                onClick={() => updatePrefs({ ...prefs, paperWidth: w })}
                 className={`px-3 py-1 rounded-lg font-mono text-[11px] cursor-pointer transition ${
                   width === w
                     ? 'bg-white dark:bg-[#161c26] text-emerald-600 dark:text-emerald-400 font-bold shadow-2xs'
@@ -326,27 +210,21 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp }) 
         <div className="bg-slate-100 dark:bg-slate-900/80 rounded-xl p-4 overflow-x-auto">
           <div className="bg-white shadow-sm mx-auto p-3" style={{ width: width === 'A4' ? '100%' : `calc(${width} + 24px)` }}>
             <div ref={receiptRef}>
-              <ReceiptBody sale={sale} pharmacy={pharmacy} width={width} />
+              <ReceiptBody sale={sale} pharmacy={pharmacy} width={width} prefs={prefs} />
             </div>
           </div>
         </div>
 
+        {isServerId(String(sale._id || '')) && <SendReceiptPanel key={sale._id} sale={sale} />}
+
         <div className="flex flex-wrap items-center justify-end gap-3 pt-5 mt-4 border-t border-slate-200/80 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={handlePdf}
-            className="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1.5"
-          >
+          <button type="button" onClick={handlePdf} className={secondaryBtn}>
             <FileDown className="w-3.5 h-3.5" />
             <span>{t('pdf')}</span>
           </button>
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1.5"
-          >
+          <button type="button" onClick={handlePrint} className={secondaryBtn}>
             <Printer className="w-3.5 h-3.5" />
-            <span>{t('printReceipt')}</span>
+            <span>{prefs.copies > 1 ? t('printCopies', { count: prefs.copies }) : t('printReceipt')}</span>
           </button>
           <button
             type="button"

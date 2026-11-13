@@ -59,6 +59,12 @@ const saleItemSchema = new mongoose.Schema({
     type: Number,
     min: 0,
   },
+  // Part of this line's total paid by the insurer (insurance sales only)
+  insuranceAmount: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
 });
 
 const taxLineSchema = new mongoose.Schema(
@@ -83,6 +89,10 @@ const paymentSchema = new mongoose.Schema(
     },
     // Mobile-money payment intent that confirmed this payment (provider flow)
     intentId: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentIntent', default: null },
+    // Insurance lines (method 'insurance', status 'pending' until the insurer pays the claim)
+    schemeId: { type: mongoose.Schema.Types.ObjectId, ref: 'InsuranceScheme', default: undefined },
+    memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'InsuranceMember', default: undefined },
+    memberNo: { type: String, trim: true, default: undefined },
   },
   { _id: true }
 );
@@ -167,7 +177,7 @@ const saleSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ['cash', 'card', 'mobile_money', 'credit'],
+      enum: ['cash', 'card', 'mobile_money', 'credit', 'insurance'],
       default: 'cash',
     },
     paymentStatus: {
@@ -203,6 +213,28 @@ const saleSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
+    },
+    // Insurance sale: insurer share (receivable from the insurer, claimed via InsuranceClaim)
+    insurance: {
+      type: new mongoose.Schema(
+        {
+          schemeId: { type: mongoose.Schema.Types.ObjectId, ref: 'InsuranceScheme', required: true },
+          schemeName: { type: String, default: '', trim: true },
+          memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'InsuranceMember', required: true },
+          memberNo: { type: String, default: '', trim: true },
+          memberName: { type: String, default: '', trim: true },
+          coveragePercent: { type: Number, default: 0 },
+          copayType: { type: String, default: 'none' },
+          copayValue: { type: Number, default: 0 },
+          eligibleAmount: { type: Number, default: 0, min: 0 },
+          copayAmount: { type: Number, default: 0, min: 0 },
+          insurerAmount: { type: Number, default: 0, min: 0 },
+          patientAmount: { type: Number, default: 0, min: 0 },
+          claimId: { type: mongoose.Schema.Types.ObjectId, ref: 'InsuranceClaim', default: null },
+        },
+        { _id: false }
+      ),
+      default: undefined,
     },
     // Offline POS: when the sale was made on the client (createdAt = sync time)
     offlineCreatedAt: {
@@ -268,5 +300,9 @@ saleSchema.index(
 saleSchema.index({ pharmacyId: 1, customerId: 1, createdAt: -1 });
 saleSchema.index({ pharmacyId: 1, staffId: 1, createdAt: -1 });
 saleSchema.index({ pharmacyId: 1, shiftId: 1 });
+saleSchema.index(
+  { pharmacyId: 1, 'insurance.schemeId': 1, 'insurance.claimId': 1, createdAt: 1 },
+  { partialFilterExpression: { 'insurance.schemeId': { $exists: true } } }
+);
 
 module.exports = mongoose.model('Sale', saleSchema);

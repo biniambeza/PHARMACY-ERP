@@ -50,5 +50,48 @@
   "status": "Haala",
   "returnedStatus": "Deebi'eera ({{status}})",
   "pdfTitle": "Nagahee {{number}}",
-  "methods": { "cash": "Maallaqa callaa", "card": "Kaardii", "mobile_money": "Maallaqa moobaayilaa", "credit": "Liqii", "store_credit": "Kireedii suuqii" }
+  "methods": {
+    "cash": "Maallaqa callaa",
+    "card": "Kaardii",
+    "mobile_money": "Maallaqa moobaayilaa",
+    "credit": "Liqii",
+    "store_credit": "Kireedii suuqii",
+    "insurance": "Inshuraansii",
+    "bank_transfer": "Dabarsa baankii",
+    "cheque": "Cheekii",
+    "other": "Kan biraa"
+  },
+  "cashierLabel": "Kaasiyara:",
+  "printCopies": "Maxxansi ({{count}} garagalchaa)",
+  "printer": {
+    "title": "Maxxansaa nagahee",
+    "hint": "Meeshaa kana qofa irratti kuufama.",
+    "paperWidth": "Bal'ina waraqaa",
+    "usePharmacyDefault": "Durtii faarmaasii ({{width}})",
+    "copies": "Garagalchaa",
+    "footer": "Ergaa miila dabalataa",
+    "footerPlaceholder": "Fkn. Guyyaa fi halkan banaa - geejjibaaf nu bilbilaa",
+    "autoPrint": "Gurgurtaa booda ofumaan maxxansi",
+    "showLogo": "Mallattoo agarsiisi"
+  },
+  "send": {
+    "title": "Nagahee ergi",
+    "sms": "SMS",
+    "email": "Imeelii",
+    "phonePlaceholder": "Lakkoofsa bilbilaa",
+    "emailPlaceholder": "Teessoo imeelii",
+    "send": "Ergi",
+    "sent": "Nagaheen gara {{to}} ergameera.",
+    "logged": "Ergaan tajaajilaa irratti hin qindoofne; nagaheen erguu mannaa galmeeffameera.",
+    "failed": "Nagahee erguun hin danda'amne.",
+    "rateLimited": "Nagahee kanaaf yeroo baay'ee ergameera. Booda yaali.",
+    "invalidPhone": "Lakkoofsa bilbilaa sirrii galchi.",
+    "invalidEmail": "Teessoo imeelii sirrii galchi.",
+    "copy": "Barreeffama nagahee garagalchi",
+    "copied": "Barreeffamni nagahee garagalfameera.",
+    "copyFailed": "Barreeffama nagahee garagalchuun hin danda'amne.",
+    "share": "Qoodi",
+    "shareTitle": "Nagahee {{number}}",
+    "shareFailed": "Nagahee qooduun hin danda'amne."
+  }
 }

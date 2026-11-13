@@ -5,6 +5,7 @@ import { getMyPharmacy } from '../../api/pharmacyApi';
 import { useAuth } from '../../context/AuthContext';
 import BusinessInfoCard from '../../components/settings/BusinessInfoCard';
 import AccountCard from '../../components/settings/AccountCard';
+import SecurityCard from '../../components/settings/SecurityCard';
 import PharmacySettingsForm from '../../components/settings/PharmacySettingsForm';
 
 const Settings = () => {
@@ -60,6 +61,8 @@ const Settings = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <BusinessInfoCard pharmacy={pharmacy} onPharmacyChange={setPharmacy} canManage={canManage} />
         <AccountCard />
+        {/* Two-factor login (every role; recommended for owners) */}
+        <SecurityCard className="md:col-span-2" />
       </div>
 
       {/* Pharmacy settings: owner only */}

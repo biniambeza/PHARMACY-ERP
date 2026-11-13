@@ -160,6 +160,10 @@ const createReturn = async (req, res) => {
 
       // Refunds are proportional to what was actually paid (discount/tax included).
       const factor = sale.subtotal > 0 ? sale.grandTotal / sale.subtotal : 0;
+      // Insurance sales: the insurer's share of returned items is never refunded to
+      // the patient; it comes off the insurance claim instead (services/insurance).
+      const insurerShareOf = (si, qty) =>
+        sale.insurance && si.quantity ? ((Number(si.insuranceAmount) || 0) * qty) / si.quantity : 0;
       const returnItems = [];
       const movements = [];
       for (const r of requested.values()) {
@@ -199,7 +203,7 @@ const createReturn = async (req, res) => {
           batchNo: si.batchNo,
           quantity: r.quantity,
           unitPrice: si.unitPrice,
-          refundAmount: toMoney(r.quantity * si.unitPrice * factor),
+          refundAmount: toMoney(Math.max(0, r.quantity * si.unitPrice * factor - insurerShareOf(si, r.quantity))),
           disposition: r.disposition,
           restocked,
           note,
@@ -212,7 +216,12 @@ const createReturn = async (req, res) => {
         return (alreadyReturned.get(key) || 0) + (perItem.get(key) || 0) >= si.quantity;
       });
 
-      const remainingRefundable = toMoney(Math.max(0, sale.grandTotal - refunded));
+      // What the patient actually paid (grand total minus the insurer's share)
+      const insurerTotal = sale.insurance
+        ? sale.items.reduce((s, si) => s + (Number(si.insuranceAmount) || 0), 0)
+        : 0;
+      const patientPaid = toMoney(Math.max(0, sale.grandTotal - insurerTotal));
+      const remainingRefundable = toMoney(Math.max(0, patientPaid - refunded));
       let refundTotal = toMoney(returnItems.reduce((s, i) => s + i.refundAmount, 0));
       // On the final return, refund exactly what is left (absorbs rounding)
       if (isFull || refundTotal > remainingRefundable) refundTotal = remainingRefundable;
@@ -419,7 +428,15 @@ const voidSale = async (req, res) => {
       message: `Sale ${saleAfter.invoiceNumber} voided`,
       sale: saleAfter,
       creditReversed,
-      refundDue: toMoney(Math.max(0, saleAfter.grandTotal - creditReversed)),
+      // Voided insurance sales drop out of claims, so only the patient's share is refunded.
+      refundDue: toMoney(
+        Math.max(
+          0,
+          saleAfter.grandTotal -
+            (saleAfter.insurance ? (saleAfter.items || []).reduce((s, si) => s + (Number(si.insuranceAmount) || 0), 0) : 0) -
+            creditReversed
+        )
+      ),
       ...(creditWarning ? { warning: 'Customer credit balance was not adjusted' } : {}),
     });
   } finally {

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { createPaymentIntent, getPaymentIntent } from '../../api/paymentApi';
 import { formatMoney } from '../../utils/format';
 import { inputCls, round2, errMsg, newPaymentRow } from './posUtils';
+import InsurancePaymentFields from './InsurancePaymentFields';
 
 // Mobile money row: manual reference, or a push request that waits for confirmation (#26).
 const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
@@ -119,9 +120,10 @@ const MobileMoneyFields = ({ row, providers, defaultProvider, onPatch }) => {
  *   status: paymentStatus() result
  *   allowedMethods: string[]
  *   providers, defaultProvider
+ *   insuranceLines: [{ medicineId, amount }] for the insurance coverage preview
  */
 const PaymentPanel = ({
-  totals, discount, onDiscount, payments, onPayments, status, allowedMethods, providers, defaultProvider,
+  totals, discount, onDiscount, payments, onPayments, status, allowedMethods, providers, defaultProvider, insuranceLines = [],
 }) => {
   const { t } = useTranslation('pos');
   const patch = (id, changes) => onPayments((rows) => rows.map((r) => (r.id === id ? { ...r, ...changes } : r)));
@@ -183,25 +185,39 @@ const PaymentPanel = ({
           <div key={row.id} className="grid grid-cols-[1fr_1fr_auto_auto] gap-1.5 items-center">
             <select
               value={row.method}
-              onChange={(e) => patch(row.id, { method: e.target.value, reference: '', intentId: null, intentStatus: null, error: '' })}
+              onChange={(e) =>
+                patch(row.id, {
+                  method: e.target.value,
+                  reference: '',
+                  intentId: null,
+                  intentStatus: null,
+                  error: '',
+                  schemeId: '',
+                  member: null,
+                  preview: null,
+                  ...(e.target.value === 'insurance' || row.method === 'insurance' ? { amount: '' } : {}),
+                })
+              }
               className={`${inputCls} cursor-pointer`}
             >
-              {allowedMethods.map((m) => (
-                <option key={m} value={m}>{t(`methods.${m}`)}</option>
-              ))}
+              {allowedMethods
+                .filter((m) => m !== 'insurance' || row.method === 'insurance' || !payments.some((p) => p.method === 'insurance'))
+                .map((m) => (
+                  <option key={m} value={m}>{t(`methods.${m}`)}</option>
+                ))}
             </select>
             <input
               type="number"
               min="0"
               step="0.01"
               value={row.amount}
-              disabled={row.method === 'mobile_money' && Boolean(row.intentId) && row.intentStatus !== 'failed'}
+              disabled={row.method === 'insurance' || (row.method === 'mobile_money' && Boolean(row.intentId) && row.intentStatus !== 'failed')}
               onChange={(e) => patch(row.id, { amount: e.target.value })}
               placeholder="0.00"
               className={`${inputCls} font-mono`}
               data-pos-payment-amount="true"
             />
-            <button type="button" onClick={() => exact(row.id)} className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" title={t('payment.exactTitle')}>
+            <button type="button" onClick={() => exact(row.id)} disabled={row.method === 'insurance'} className="text-[10px] font-semibold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" title={t('payment.exactTitle')}>
               {t('payment.exact')}
             </button>
             <button type="button" onClick={() => remove(row.id)} disabled={payments.length <= 1} aria-label={t('payment.removeRow')} className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer">
@@ -214,6 +230,9 @@ const PaymentPanel = ({
                 placeholder={t('payment.cardRef')}
                 className={`${inputCls} col-span-full font-mono`}
               />
+            )}
+            {row.method === 'insurance' && (
+              <InsurancePaymentFields row={row} lines={insuranceLines} onPatch={(changes) => patch(row.id, changes)} />
             )}
             {row.method === 'mobile_money' && (
               <MobileMoneyFields

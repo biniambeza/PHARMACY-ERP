@@ -14,6 +14,8 @@ const CustomerFormModal = ({ customer, onClose, onSaved }) => {
     email: customer?.email || '',
     address: customer?.address || '',
     notes: customer?.notes || '',
+    tin: customer?.tin || '',
+    legalName: customer?.legalName || '',
     unlimited: customer ? customer.creditLimit === null : false,
     creditLimit: customer && customer.creditLimit !== null ? String(customer.creditLimit ?? 0) : '0',
     active: customer ? customer.active : true,
@@ -36,6 +38,8 @@ const CustomerFormModal = ({ customer, onClose, onSaved }) => {
       email: form.email,
       address: form.address,
       notes: form.notes,
+      tin: form.tin.trim(),
+      legalName: form.legalName.trim(),
       creditLimit: limit,
       active: form.active,
     };
@@ -79,6 +83,17 @@ const CustomerFormModal = ({ customer, onClose, onSaved }) => {
         <div>
           <label className={labelCls}>{t('fields.address')}</label>
           <input className={inputCls} value={form.address} onChange={set('address')} />
+        </div>
+        {/* Business buyers: used on B2B e-invoices */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>{t('fields.legalName')}</label>
+            <input className={inputCls} value={form.legalName} onChange={set('legalName')} maxLength={200} />
+          </div>
+          <div>
+            <label className={labelCls}>{t('fields.tin')}</label>
+            <input className={inputCls} value={form.tin} onChange={set('tin')} maxLength={20} inputMode="numeric" />
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
           <div>

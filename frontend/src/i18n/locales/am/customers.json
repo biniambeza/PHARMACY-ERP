@@ -7,14 +7,30 @@
   "saving": "በማስቀመጥ ላይ...",
   "confirmRemove": "ደንበኛ \"{{name}}\" ይወገድ?",
   "removeFailed": "ደንበኛውን ማስወገድ አልተቻለም",
-  "filters": { "all": "ሁሉም", "withBalance": "ቀሪ ሂሳብ ያላቸው" },
-  "limit": { "unlimited": "ያልተገደበ", "noCredit": "ብድር የለም" },
+  "filters": {
+    "all": "ሁሉም",
+    "withBalance": "ቀሪ ሂሳብ ያላቸው"
+  },
+  "limit": {
+    "unlimited": "ያልተገደበ",
+    "noCredit": "ብድር የለም"
+  },
   "paymentMethods": {
-    "cash": "ጥሬ ገንዘብ", "card": "ካርድ", "mobile_money": "የሞባይል ገንዘብ",
-    "bank_transfer": "የባንክ ዝውውር", "cheque": "ቼክ", "other": "ሌላ"
+    "cash": "ጥሬ ገንዘብ",
+    "card": "ካርድ",
+    "mobile_money": "የሞባይል ገንዘብ",
+    "bank_transfer": "የባንክ ዝውውር",
+    "cheque": "ቼክ",
+    "other": "ሌላ"
   },
   "fields": {
-    "phone": "ስልክ", "email": "ኢሜይል", "address": "አድራሻ", "creditLimit": "የብድር ገደብ", "notes": "ማስታወሻ"
+    "phone": "ስልክ",
+    "email": "ኢሜይል",
+    "address": "አድራሻ",
+    "creditLimit": "የብድር ገደብ",
+    "notes": "ማስታወሻ",
+    "legalName": "የንግድ ሕጋዊ ስም",
+    "tin": "የግብር ከፋይ መለያ ቁጥር (TIN)"
   },
   "form": {
     "editTitle": "ደንበኛ አርትዕ",
@@ -62,8 +78,12 @@
     "closing": "የመዝጊያ ቀሪ ሂሳብ",
     "printed": "የታተመው {{date}}",
     "cols": {
-      "date": "ቀን", "description": "መግለጫ", "reference": "ማጣቀሻ",
-      "charges": "ክፍያዎች (ዴቢት)", "payments": "የተከፈሉ", "balance": "ቀሪ ሂሳብ"
+      "date": "ቀን",
+      "description": "መግለጫ",
+      "reference": "ማጣቀሻ",
+      "charges": "ክፍያዎች (ዴቢት)",
+      "payments": "የተከፈሉ",
+      "balance": "ቀሪ ሂሳብ"
     }
   },
   "summary": {
@@ -74,9 +94,19 @@
     "overdue": "{{amount}} ከ30 ቀናት በላይ የቆየ",
     "bucketDays": "{{bucket}} ቀናት"
   },
-  "agingTable": { "title": "የተቀባይ ሂሳቦች ዕድሜ በደንበኛ" },
-  "table": { "customer": "ደንበኛ", "balance": "ቀሪ ሂሳብ", "status": "ሁኔታ" },
-  "actions": { "recordPayment": "ክፍያ መዝግብ", "statement": "መግለጫ", "remove": "አስወግድ" },
+  "agingTable": {
+    "title": "የተቀባይ ሂሳቦች ዕድሜ በደንበኛ"
+  },
+  "table": {
+    "customer": "ደንበኛ",
+    "balance": "ቀሪ ሂሳብ",
+    "status": "ሁኔታ"
+  },
+  "actions": {
+    "recordPayment": "ክፍያ መዝግብ",
+    "statement": "መግለጫ",
+    "remove": "አስወግድ"
+  },
   "empty": {
     "noMatch": "የሚዛመዱ ደንበኞች የሉም",
     "none": "እስካሁን ደንበኞች የሉም",

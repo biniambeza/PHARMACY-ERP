@@ -1,0 +1,192 @@
+{
+  "badge": "የመድን ክፍያ",
+  "title": "መድን እና የብድር ዕቅዶች",
+  "subtitle": "የማህበረሰብ ጤና መድን (CBHI)፣ የአሠሪ ዕቅዶች እና የግል መድን ሰጪዎች፦ አባላት፣ የይገባኛል ጥያቄዎች እና ከመድን ሰጪ የሚሰበሰብ ሂሳብ",
+  "noAccess": "የመድን ክፍያን የማየት ፈቃድ የለዎትም።",
+  "loading": "በመጫን ላይ…",
+  "save": "አስቀምጥ",
+  "saving": "በማስቀመጥ ላይ…",
+  "edit": "አስተካክል",
+  "remove": "አስወግድ",
+  "tabs": {
+    "schemes": "ዕቅዶች",
+    "members": "አባላት",
+    "claims": "የይገባኛል ጥያቄዎች",
+    "receivables": "የሚሰበሰብ ሂሳብ"
+  },
+  "fields": {
+    "name": "ስም",
+    "code": "ኮድ",
+    "type": "ዓይነት",
+    "coveragePercent": "ሽፋን %",
+    "claimCycle": "የይገባኛል ዑደት",
+    "copayType": "የጋራ ክፍያ",
+    "copayPercent": "የጋራ ክፍያ %",
+    "copayAmount": "በአንድ ሽያጭ የጋራ ክፍያ መጠን",
+    "maxPerSale": "በአንድ ሽያጭ ከፍተኛ የመድን ድርሻ",
+    "excludedCategories": "ያልተካተቱ ምድቦች",
+    "excludedMedicines": "ያልተካተቱ መድኃኒቶች",
+    "payerName": "ከፋይ / መድን ሰጪ ስም",
+    "contactPerson": "የሚገናኙት ሰው",
+    "phone": "ስልክ",
+    "email": "ኢሜይል",
+    "address": "አድራሻ",
+    "notes": "ማስታወሻ",
+    "active": "ንቁ",
+    "exclusions": "ያልተካተቱ",
+    "members": "አባላት",
+    "status": "ሁኔታ",
+    "scheme": "ዕቅድ",
+    "memberNo": "የአባል ቁ.",
+    "group": "ቡድን / አሠሪ",
+    "validFrom": "ከ (የሚጀምርበት)",
+    "validTo": "እስከ (የሚያበቃበት)",
+    "validity": "የሚያገለግልበት ጊዜ",
+    "from": "ከ",
+    "to": "እስከ",
+    "date": "ቀን",
+    "invoice": "ደረሰኝ",
+    "member": "አባል",
+    "insurerShare": "የመድን ድርሻ",
+    "returned": "የተመለሰ",
+    "claimed": "የተጠየቀ",
+    "period": "ጊዜ",
+    "total": "ጠቅላላ",
+    "outstanding": "ያልተከፈለ",
+    "amount": "መጠን",
+    "reference": "ማጣቀሻ",
+    "claimNumber": "የይገባኛል ቁ.",
+    "sales": "ሽያጮች",
+    "paid": "የተከፈለ",
+    "saleTotal": "የሽያጭ ድምር",
+    "submittedAt": "የቀረበበት"
+  },
+  "types": {
+    "cbhi": "የማህበረሰብ ጤና መድን (CBHI)",
+    "employer": "የአሠሪ ዕቅድ",
+    "private": "የግል መድን ሰጪ",
+    "other": "ሌላ"
+  },
+  "cycles": {
+    "weekly": "በየሳምንቱ",
+    "monthly": "በየወሩ",
+    "quarterly": "በየሩብ ዓመቱ",
+    "on_demand": "በፍላጎት"
+  },
+  "copay": {
+    "none": "የጋራ ክፍያ የለም",
+    "percent": "ከተሸፈነው መጠን በመቶኛ",
+    "fixed": "በአንድ ሽያጭ ቋሚ መጠን",
+    "percentShort": "{{value}}%",
+    "fixedShort": "{{amount}} / ሽያጭ"
+  },
+  "status": {
+    "active": "ንቁ",
+    "inactive": "ንቁ ያልሆነ"
+  },
+  "errors": {
+    "generic": "ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።"
+  },
+  "schemes": {
+    "subtitle": "እያንዳንዱን ሽያጭ በመድን ሰጪው እና በታካሚው መካከል ለመከፋፈል በሽያጭ ቦታ የሚጠቀሙ የሽፋን ደንቦች።",
+    "new": "አዲስ ዕቅድ",
+    "newTitle": "አዲስ የመድን ዕቅድ",
+    "editTitle": "የመድን ዕቅድ አስተካክል",
+    "formSubtitle": "ሽፋን፣ የጋራ ክፍያ፣ ያልተካተቱ እና የከፋይ አድራሻ",
+    "empty": "እስካሁን የመድን ዕቅድ የለም።",
+    "confirmDelete": "\"{{name}}\" ዕቅድ ይሰረዝ? አባላት ወይም ሽያጮች ያሉት ዕቅድ ማቦዘን ብቻ ይቻላል።",
+    "exclusionCount": "{{medicines}} መድኃኒቶች፣ {{categories}} ምድቦች",
+    "maxPerSaleHint": "0 = ገደብ የለም",
+    "rulesHint": "የመድን ድርሻ = የተሸፈኑ ዕቃዎች × የሽፋን % − የጋራ ክፍያ (በአንድ ሽያጭ ከፍተኛው ገደብ)። ቀሪውን ታካሚው በሽያጭ ቦታ ይከፍላል።",
+    "categoriesPlaceholder": "ለምሳሌ፦ ኮስሜቲክስ፣ ተጨማሪ ምግቦች",
+    "searchMedicine": "የሚገለል መድኃኒት ይፈልጉ…",
+    "payer": "የከፋይ አድራሻ",
+    "errors": {
+      "nameRequired": "የዕቅድ ስም ያስፈልጋል",
+      "coverage": "ሽፋን ከ0 እስከ 100 መሆን አለበት",
+      "copay": "ልክ ያልሆነ የጋራ ክፍያ",
+      "saveFailed": "ዕቅዱን ማስቀመጥ አልተቻለም"
+    }
+  },
+  "members": {
+    "new": "አዲስ አባል",
+    "newTitle": "አዲስ የዕቅድ አባል",
+    "editTitle": "አባል አስተካክል",
+    "empty": "አባል አልተገኘም።",
+    "searchPlaceholder": "በአባል ቁ.፣ በስም ወይም በስልክ ይፈልጉ…",
+    "allSchemes": "ሁሉም ዕቅዶች",
+    "needScheme": "መጀመሪያ ዕቅድ ይፍጠሩ",
+    "groupPlaceholder": "ቀበሌ፣ አሠሪ፣ ቤተሰብ…",
+    "confirmDelete": "\"{{name}}\" አባል ይሰረዝ?",
+    "valid": "የሚሰራ",
+    "invalid": {
+      "expired": "ጊዜው ያለፈበት",
+      "inactive": "ንቁ ያልሆነ",
+      "not_yet_valid": "ገና ያልጀመረ",
+      "not_found": "አልተገኘም"
+    },
+    "errors": {
+      "schemeRequired": "ዕቅድ ይምረጡ",
+      "required": "የአባል ቁጥር እና ስም ያስፈልጋሉ",
+      "dates": "የመጀመሪያው ቀን ከማብቂያው በፊት መሆን አለበት",
+      "saveFailed": "አባሉን ማስቀመጥ አልተቻለም"
+    }
+  },
+  "claims": {
+    "new": "የይገባኛል ጥያቄ አዘጋጅ",
+    "empty": "እስካሁን የይገባኛል ጥያቄ የለም።",
+    "allStatuses": "ሁሉም ሁኔታዎች",
+    "buildTitle": "የመድን የይገባኛል ጥያቄ አዘጋጅ",
+    "buildSubtitle": "በአንድ ጊዜ ውስጥ ያልተጠየቁ የዕቅዱን የመድን ሽያጮች ይሰብስቡ (ተመላሾች ተቀንሰው)",
+    "unclaimedCount_one": "{{count}} ያልተጠየቀ ሽያጭ",
+    "unclaimedCount_other": "{{count}} ያልተጠየቁ ሽያጮች",
+    "nothingToClaim": "በዚህ ጊዜ ውስጥ ያልተጠየቀ የመድን ሽያጭ የለም።",
+    "build": "ረቂቅ የይገባኛል ጥያቄ ፍጠር",
+    "detailTitle": "የይገባኛል ጥያቄ",
+    "submit": "ለመድን ሰጪው አቅርብ",
+    "refresh": "እንደገና አስላ",
+    "delete": "ረቂቁን ሰርዝ",
+    "confirmDelete": "ይህ ረቂቅ ይሰረዝ? ሽያጮቹ እንደገና ያልተጠየቁ ይሆናሉ።",
+    "recordPayment": "ክፍያ መዝግብ",
+    "reject": "ውድቅ አድርግ",
+    "rejectionNotes": "የውድቅ ምክንያት",
+    "rejectPaidHint": "ይህ ጥያቄ ክፍያዎች አሉት፦ ያልተከፈለው ክፍል ይሰረዛል።",
+    "releaseSales": "ሽያጮቹ እንደገና እንዲጠየቁ ልቀቅ",
+    "rejectedOn": "{{date}} ውድቅ ተደርጓል፦",
+    "salesReleased": "ሽያጮቹ ተለቀዋል፣ እንደገና ሊጠየቁ ይችላሉ።",
+    "salesWrittenOff": "ያልተከፈለው መጠን ተሰርዟል።",
+    "exportExcel": "ኤክሴል",
+    "print": "አትም",
+    "payments": "የተቀበሉ ክፍያዎች",
+    "errors": {
+      "buildFailed": "የይገባኛል ጥያቄውን ማዘጋጀት አልተቻለም"
+    }
+  },
+  "claimStatus": {
+    "draft": "ረቂቅ",
+    "submitted": "የቀረበ",
+    "partially_paid": "በከፊል የተከፈለ",
+    "paid": "የተከፈለ",
+    "rejected": "ውድቅ የተደረገ"
+  },
+  "receivables": {
+    "outstanding": "ያልተከፈለ",
+    "unclaimed": "ገና ያልተጠየቀ",
+    "draft": "በረቂቅ ጥያቄዎች",
+    "submitted": "የቀረበ፣ ያልተከፈለ",
+    "unclaimedSales_one": "{{count}} ያልተጠየቀ ሽያጭ",
+    "unclaimedSales_other": "{{count}} ያልተጠየቁ ሽያጮች"
+  },
+  "aging": {
+    "0_30": "0–30 ቀናት",
+    "31_60": "31–60 ቀናት",
+    "61_90": "61–90 ቀናት",
+    "90_plus": "ከ90 ቀናት በላይ"
+  },
+  "print": {
+    "title": "የመድን የይገባኛል ጥያቄ",
+    "payer": "ከፋይ",
+    "preparedBy": "ያዘጋጀው (ፋርማሲ)",
+    "receivedBy": "የተቀበለው (መድን ሰጪ)"
+  }
+}

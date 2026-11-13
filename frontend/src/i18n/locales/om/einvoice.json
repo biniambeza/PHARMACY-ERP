@@ -1,0 +1,86 @@
+{
+  "page": {
+    "badge": "Seera gibiraa",
+    "title": "Nagahee Elektirooniksii",
+    "subtitle": "Nagahee faayinaansii gurgurtaa keessaniif: qindaa'ina, haala galmeessaa, irra deebi'uu fi yaadannoo deebii.",
+    "disabledHint": "Nagaheen elektirooniksii cufameera. Gabateen gurgurtaa keessan ni agarsiisa, garuu hanga abbaan qabeenyaa banutti homtuu galmaa'uu hin danda'u."
+  },
+  "status": {
+    "accepted": "Fudhatameera",
+    "submitted": "Ergameera",
+    "pending": "Eegaa jira",
+    "failed": "Hin milkoofne",
+    "rejected": "Didameera",
+    "not_required": "Hin barbaachisu",
+    "unsubmitted": "Hin ergamne"
+  },
+  "providers": {
+    "none": "Hin jiru (galmee faayinaansii hin jiru)",
+    "mock": "Yaalii (qormaata qofaaf)",
+    "mor": "Ministeera Galiiwwanii (MoR)"
+  },
+  "modes": { "sandbox": "Naannoo yaalii", "production": "Naannoo hojii" },
+  "settings": {
+    "title": "Qindaa'ina faayinaansii",
+    "readOnly": "Qindaa'ina kana jijjiiruu kan danda'u abbaa qabeenyaa qofa",
+    "morNotice": "Walqunnamtiin seeraa sirna nagahee elektirooniksii Ministeera Galiiwwanii waliin ammallee hin hojjetu. Ibsa API seeraa fi ragaalee seensaa barbaada; kunis bulchaa sirnaa keessaniin sarvara irratti qindaa'a. Hanga sanaatti nagaheen gara MoR erguu hin danda'u, sirni kunis nagahee keessan seeraan walsimsiisaa hin taasisu.",
+    "tin": "TIN (Lakkoofsa Eenyummaa Kafalaa Gibiraa)",
+    "vatRegNo": "Lakkoofsa galmee VAT",
+    "vatRegistered": "VAT-dhaaf galmaa'eera",
+    "provider": "Dhiyeessaa",
+    "mode": "Haala",
+    "enabled": "Nagahee elektirooniksii dandeessisi",
+    "mockNotice": "Dhiyeessaan yaalii qormaata qofaaf. Lakkoofsa faayinaansii sobaa MOCK- uuma, aangoo gibiraatiif homaa hin ergu.",
+    "morConfigured": "Ragaaleen sarvaraa MoR ni jiru, garuu walsimsiisaan seeraa ammallee hin hojjetamne.",
+    "morNotConfigured": "Ragaaleen MoR sarvara irratti hin qindoofne. Hanga qindaa'anitti galmeen hin milkaa'u.",
+    "saveFailed": "Qindaa'ina olkaa'uun hin danda'amne",
+    "saved": "Qindaa'inni olkaa'ameera",
+    "saving": "Olkaa'aa jira..."
+  },
+  "table": {
+    "empty": "Gurgurtaan calallii kanaan walsimu hin jiru.",
+    "invoice": "Nagahee",
+    "date": "Guyyaa",
+    "customer": "Maamila",
+    "tax": "Gibira",
+    "total": "Waliigala",
+    "status": "Haala faayinaansii",
+    "fiscalNumber": "Lakkoofsa faayinaansii",
+    "walkIn": "Maamila darbaa",
+    "voided": "Haqameera",
+    "details": "Bal'ina",
+    "count_one": "Gurgurtaa {{count}}",
+    "count_other": "Gurgurtaa {{count}}"
+  },
+  "actions": { "submit": "Galchi", "retry": "Irra deebi'i", "creditNote": "Yaadannoo deebii baasi" },
+  "batch": {
+    "title": "Galmee walitti qabaa",
+    "failed": "Hojiin walitti qabaa raawwatamuu hin dandeenye",
+    "running": "Galchaa jira...",
+    "submitPending": "Kan eegaa jiran yeroo kana keessaa galchi",
+    "retryFailed": "Kan hin milkoofne irra deebi'i",
+    "disabledHint": "Hojii walitti qabaa raawwachuuf nagahee elektirooniksii dandeessisi.",
+    "summary": "{{processed}} hojjetameera: {{accepted}} fudhatame, {{submitted}} ergame, {{rejected}} didame, {{failed}} hin milkoofne, {{notRequired}} hin barbaachisu."
+  },
+  "filters": { "from": "Irraa", "to": "Hanga", "all": "Hunda", "search": "Lakk. nagahee ykn maamila" },
+  "detail": {
+    "title": "Nagahee faayinaansii {{number}}",
+    "loadFailed": "Nagahee faayinaansii fe'uun hin danda'amne",
+    "creditNoteFailed": "Yaadannoon deebii baafamuu hin dandeenye",
+    "provider": "Dhiyeessaa",
+    "attempts": "Yaaliiwwan",
+    "irn": "IRN",
+    "acceptedAt": "Yeroo fudhatame",
+    "mockWarning": "QORMAATA QOFA: dhiyeessaa yaaliitiin kan baafame. Lakkoofsi kun gatii seeraa hin qabu.",
+    "qr": "Qabiyyee QR",
+    "lines": "Sararoota",
+    "item": "Meeshaa",
+    "qty": "Baay'ina",
+    "taxable": "Kan gibirri irratti kafalamu",
+    "taxRate": "Sadarkaa",
+    "totals": "Waliigala",
+    "creditNotes": "Deebii fi yaadannoo deebii"
+  },
+  "errors": { "load": "Odeeffannoo nagahee elektirooniksii fe'uun hin danda'amne", "submit": "Galmeen hin milkoofne" },
+  "notices": { "submitted": "{{number}}: {{status}}" }
+}

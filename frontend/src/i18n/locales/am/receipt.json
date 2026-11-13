@@ -50,5 +50,48 @@
   "status": "ሁኔታ",
   "returnedStatus": "ተመልሷል ({{status}})",
   "pdfTitle": "ደረሰኝ {{number}}",
-  "methods": { "cash": "ጥሬ ገንዘብ", "card": "ካርድ", "mobile_money": "የሞባይል ገንዘብ", "credit": "ዱቤ", "store_credit": "የሱቅ ክሬዲት" }
+  "methods": {
+    "cash": "ጥሬ ገንዘብ",
+    "card": "ካርድ",
+    "mobile_money": "የሞባይል ገንዘብ",
+    "credit": "ዱቤ",
+    "store_credit": "የሱቅ ክሬዲት",
+    "insurance": "ኢንሹራንስ",
+    "bank_transfer": "የባንክ ዝውውር",
+    "cheque": "ቼክ",
+    "other": "ሌላ"
+  },
+  "cashierLabel": "ገንዘብ ተቀባይ:",
+  "printCopies": "አትም ({{count}} ቅጂዎች)",
+  "printer": {
+    "title": "የደረሰኝ ማተሚያ",
+    "hint": "በዚህ መሣሪያ ላይ ብቻ ይቀመጣል።",
+    "paperWidth": "የወረቀት ስፋት",
+    "usePharmacyDefault": "የፋርማሲው ነባሪ ({{width}})",
+    "copies": "ቅጂዎች",
+    "footer": "ተጨማሪ የግርጌ መልእክት",
+    "footerPlaceholder": "ለምሳሌ፡ 24/7 ክፍት ነን - ለማድረስ ይደውሉ",
+    "autoPrint": "ከሽያጭ በኋላ በራስ-ሰር አትም",
+    "showLogo": "አርማ አሳይ"
+  },
+  "send": {
+    "title": "ደረሰኝ ላክ",
+    "sms": "SMS",
+    "email": "ኢሜይል",
+    "phonePlaceholder": "ስልክ ቁጥር",
+    "emailPlaceholder": "የኢሜይል አድራሻ",
+    "send": "ላክ",
+    "sent": "ደረሰኙ ወደ {{to}} ተልኳል።",
+    "logged": "በአገልጋዩ ላይ መልእክት መላኪያ አልተዋቀረም፤ ደረሰኙ ከመላክ ይልቅ ተመዝግቧል።",
+    "failed": "ደረሰኙን መላክ አልተቻለም።",
+    "rateLimited": "ለዚህ ደረሰኝ በጣም ብዙ ጊዜ ተልኳል። ቆይተው ይሞክሩ።",
+    "invalidPhone": "ትክክለኛ ስልክ ቁጥር ያስገቡ።",
+    "invalidEmail": "ትክክለኛ የኢሜይል አድራሻ ያስገቡ።",
+    "copy": "የደረሰኝ ጽሑፍ ቅዳ",
+    "copied": "የደረሰኙ ጽሑፍ ተቀድቷል።",
+    "copyFailed": "የደረሰኙን ጽሑፍ መቅዳት አልተቻለም።",
+    "share": "አጋራ",
+    "shareTitle": "ደረሰኝ {{number}}",
+    "shareFailed": "ደረሰኙን ማጋራት አልተቻለም።"
+  }
 }

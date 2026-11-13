@@ -1,6 +1,9 @@
 // Process entrypoint: validate env, connect to MongoDB, then start listening.
 // The Express app itself lives in app.js (importable by tests without side effects).
 require('dotenv').config();
+// Optional Sentry error tracking (no-op unless SENTRY_DSN is set). Must be loaded
+// before express / mongoose so its instrumentation can hook into them.
+require('./instrument');
 
 const REQUIRED_ENV = ['MONGO_URI', 'JWT_SECRET'];
 const missing = REQUIRED_ENV.filter((key) => !process.env[key] || !process.env[key].trim());

@@ -84,6 +84,21 @@ const pharmacySchema = new mongoose.Schema(
       type: settingsSchema,
       default: () => ({}),
     },
+    // Fiscal identity (Ethiopia): Taxpayer Identification Number and VAT registration.
+    tin: { type: String, default: '', trim: true, maxlength: 20 },
+    vatRegNo: { type: String, default: '', trim: true, maxlength: 50 },
+    vatRegistered: { type: Boolean, default: false },
+    // Fiscal e-invoicing settings. Provider credentials are NEVER stored here: they
+    // come from env vars (EINVOICE_MOR_BASE_URL / EINVOICE_MOR_API_KEY).
+    einvoice: {
+      enabled: { type: Boolean, default: false },
+      provider: { type: String, enum: ['none', 'mock', 'mor'], default: 'none' },
+      mode: { type: String, enum: ['sandbox', 'production'], default: 'sandbox' },
+    },
+    // First-run onboarding checklist (dismissed by the owner)
+    onboarding: {
+      dismissedAt: { type: Date, default: null },
+    },
     subscription: {
       plan: { type: String, default: 'standard', trim: true },
       status: {

@@ -72,34 +72,87 @@ export const AuthProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // Second login step: set when the password was right but the account uses
+  // two-factor login. Kept in memory only (expires server-side after ~5 min).
+  const [twoFactorChallenge, setTwoFactorChallenge] = useState(null);
+
+  const loginErrorMessage = (err, fallback) =>
+    !err.response
+      ? 'Cannot reach the server. Make sure the backend is running and VITE_API_URL is correct.'
+      : err.response.data?.message || fallback;
+
+  // Stores a successful login response ({ user, token, memberships }).
+  const applyLoginResponse = (data) => {
+    const { user: userData, token: userToken, memberships: userMemberships } = data;
+
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', userToken);
+
+    if (userData.role === 'pharmacist') {
+      applyMemberships(userMemberships || [], localStorage.getItem(ACTIVE_PHARMACY_KEY));
+    } else {
+      applyMemberships([], null);
+    }
+
+    setUser(userData);
+    setToken(userToken);
+    return userData;
+  };
+
+  // Resolves { success, user } or, for 2FA accounts, { success: true, twoFactorRequired: true };
+  // then call completeTwoFactor({ code } | { recoveryCode }).
   const login = async (email, password) => {
     setLoading(true);
     setError('');
+    setTwoFactorChallenge(null);
     try {
       const res = await api.post('/auth/login', { email, password });
-      const { user: userData, token: userToken, memberships: userMemberships } = res.data;
-
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('token', userToken);
-
-      if (userData.role === 'pharmacist') {
-        applyMemberships(userMemberships || [], localStorage.getItem(ACTIVE_PHARMACY_KEY));
-      } else {
-        applyMemberships([], null);
+      if (res.data?.twoFactorRequired) {
+        setTwoFactorChallenge({ token: res.data.challengeToken, email });
+        setLoading(false);
+        return { success: true, twoFactorRequired: true };
       }
-
-      setUser(userData);
-      setToken(userToken);
+      const userData = applyLoginResponse(res.data);
       setLoading(false);
       return { success: true, user: userData };
     } catch (err) {
       setLoading(false);
-      const message = !err.response
-        ? 'Cannot reach the server. Make sure the backend is running and VITE_API_URL is correct.'
-        : err.response.data?.message || 'Login failed. Please check your credentials.';
+      const message = loginErrorMessage(err, 'Login failed. Please check your credentials.');
       setError(message);
       return { success: false, message };
     }
+  };
+
+  const completeTwoFactor = async ({ code, recoveryCode } = {}) => {
+    if (!twoFactorChallenge) {
+      return { success: false, expired: true, message: 'Your sign-in attempt expired. Please sign in again.' };
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const body = { challengeToken: twoFactorChallenge.token };
+      if (recoveryCode) body.recoveryCode = recoveryCode;
+      else body.code = code;
+      const res = await api.post('/auth/login/2fa', body);
+      setTwoFactorChallenge(null);
+      const userData = applyLoginResponse(res.data);
+      setLoading(false);
+      return { success: true, user: userData, recoveryCodesRemaining: res.data.recoveryCodesRemaining };
+    } catch (err) {
+      setLoading(false);
+      const status = err.response?.status;
+      // An expired / invalid challenge (not a wrong code) sends the user back to step 1.
+      const expired = status === 401 && err.response?.data?.code !== 'INVALID_2FA_CODE';
+      if (expired || status === 403) setTwoFactorChallenge(null);
+      const message = loginErrorMessage(err, 'Verification failed. Please try again.');
+      setError(message);
+      return { success: false, expired, status, message };
+    }
+  };
+
+  const cancelTwoFactor = () => {
+    setTwoFactorChallenge(null);
+    setError('');
   };
 
   const logout = () => {
@@ -169,6 +222,11 @@ export const AuthProvider = ({ children }) => {
         error,
         login,
         logout,
+        // Two-factor login
+        twoFactorPending: Boolean(twoFactorChallenge),
+        twoFactorEmail: twoFactorChallenge?.email || '',
+        completeTwoFactor,
+        cancelTwoFactor,
         clearError,
         setUser,
         updateSession,
