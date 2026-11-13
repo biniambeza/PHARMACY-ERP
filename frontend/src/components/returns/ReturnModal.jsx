@@ -3,6 +3,7 @@ import { Undo2, X, AlertCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { createReturn, getReturns } from '../../api/returnApi';
 import { formatMoney } from '../../utils/format';
+import { saleLineAmounts, previousReturnAmounts, estimateRefund } from './refundEstimate';
 
 const REFUND_METHODS = ['cash', 'card', 'mobile_money', 'store_credit'];
 
@@ -21,12 +22,14 @@ const inputCls =
 // Lets the user pick quantities per sale line, the disposition, a reason and a refund method.
 const ReturnModal = ({ sale, onClose, onDone }) => {
   const { t } = useTranslation('returns');
-  const [returnedByItem, setReturnedByItem] = useState({});
+  const [previousReturns, setPreviousReturns] = useState([]);
   const [lines, setLines] = useState({});
   const [reason, setReason] = useState(REASONS[0].value);
   const [customReason, setCustomReason] = useState('');
   const [refundMethod, setRefundMethod] = useState('cash');
   const [loading, setLoading] = useState(true);
+  // Without the previous returns neither "left" nor the refund is known: no return then
+  const [loadFailed, setLoadFailed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,36 +37,38 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
     let cancelled = false;
     getReturns({ saleId: sale._id, limit: 100 })
       .then((data) => {
-        if (cancelled) return;
-        const map = {};
-        (data.returns || []).forEach((r) =>
-          r.items.forEach((it) => {
-            map[it.saleItemId] = (map[it.saleItemId] || 0) + it.quantity;
-          })
-        );
-        setReturnedByItem(map);
+        if (!cancelled) setPreviousReturns(data.returns || []);
       })
-      .catch(() => !cancelled && setError(t('modal.errors.loadPrevious')))
+      .catch(() => {
+        if (cancelled) return;
+        setLoadFailed(true);
+        setError(t('modal.errors.loadPrevious'));
+      })
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
   }, [sale._id, t]);
 
-  const factor = sale.subtotal > 0 ? sale.grandTotal / sale.subtotal : 0;
+  const lineAmounts = useMemo(() => saleLineAmounts(sale), [sale]);
+  const previous = useMemo(
+    () => previousReturnAmounts(sale, previousReturns, lineAmounts),
+    [sale, previousReturns, lineAmounts]
+  );
 
   const rows = useMemo(
     () =>
       (sale.items || []).map((it) => {
-        const remaining = it.quantity - (returnedByItem[it._id] || 0);
+        const remaining = loadFailed ? 0 : it.quantity - (previous.qty[String(it._id)] || 0);
         const line = lines[it._id] || { quantity: 0, disposition: 'restock' };
         return { item: it, remaining, ...line };
       }),
-    [sale.items, returnedByItem, lines]
+    [sale.items, previous, lines, loadFailed]
   );
 
-  const estimate = rows.reduce((sum, r) => sum + r.quantity * r.item.unitPrice * factor, 0);
   const selected = rows.filter((r) => r.quantity > 0);
+  const estimate = estimateRefund(sale, previous, lineAmounts, selected);
+  const isInsuranceSale = Boolean(sale.insurance?.schemeId || sale.insurance?.schemeName);
 
   const setLine = (id, patch) =>
     setLines((prev) => ({ ...prev, [id]: { quantity: 0, disposition: 'restock', ...prev[id], ...patch } }));
@@ -73,6 +78,7 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
     setError('');
     const finalReason = reason === 'other' ? customReason.trim() : reason;
     if (!finalReason) return setError(t('modal.errors.reason'));
+    if (loadFailed) return setError(t('modal.errors.loadPrevious'));
     if (selected.length === 0) return setError(t('modal.errors.selectItem'));
     setSubmitting(true);
     try {
@@ -150,7 +156,7 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
                       </span>
                     </td>
                     <td className="py-2 px-2 text-right font-mono text-slate-700 dark:text-slate-300">{r.item.quantity}</td>
-                    <td className="py-2 px-2 text-right font-mono text-slate-700 dark:text-slate-300">{r.remaining}</td>
+                    <td className="py-2 px-2 text-right font-mono text-slate-700 dark:text-slate-300">{loadFailed ? '?' : r.remaining}</td>
                     <td className="py-2 px-2 w-24">
                       <input
                         type="number"
@@ -223,12 +229,28 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
         <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
           {t('modal.restockNote')}
           {sale.customerId && sale.balanceDue > 0 && <> {t('modal.creditSaleNote')}</>}
+          {isInsuranceSale && <> {t('modal.insuranceNote')}</>}
         </p>
 
         <div className="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-slate-200/80 dark:border-slate-800">
-          <div className="text-xs text-slate-600 dark:text-slate-300">
-            {t('modal.estimatedRefund')}{' '}
-            <span className="font-bold font-mono text-slate-900 dark:text-white">{formatMoney(estimate)}</span>
+          <div className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+            <div>
+              {t('modal.estimatedRefund')}{' '}
+              <span className="font-bold font-mono text-slate-900 dark:text-white">
+                {loadFailed ? '-' : formatMoney(estimate.refund)}
+              </span>
+            </div>
+            {!loadFailed && estimate.credit > 0 && (
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                {t('modal.estimateCredit', { amount: formatMoney(estimate.credit) })}
+              </div>
+            )}
+            {!loadFailed && estimate.insurer > 0 && (
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                {t('modal.estimateInsurer', { amount: formatMoney(estimate.insurer) })}
+              </div>
+            )}
+            <div className="text-[10px] text-slate-400">{t('modal.estimateHint')}</div>
           </div>
           <div className="flex gap-2">
             <button
@@ -240,7 +262,7 @@ const ReturnModal = ({ sale, onClose, onDone }) => {
             </button>
             <button
               type="submit"
-              disabled={submitting || loading || selected.length === 0}
+              disabled={submitting || loading || loadFailed || selected.length === 0}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
             >
               {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Undo2 className="w-3.5 h-3.5" />}

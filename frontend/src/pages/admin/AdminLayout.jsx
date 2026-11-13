@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 import ChangePasswordModal from './ChangePasswordModal';
 import SecurityModal from './SecurityModal';
@@ -12,6 +12,7 @@ const SIDEBAR_COLLAPSED_KEY = 'erp_admin_sidebar_collapsed';
 // Platform-admin shell: sidebar + top bar around the routed page. The pieces live in
 // components/admin/layout/; this file only owns the shared UI state.
 const AdminLayout = () => {
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
@@ -39,7 +40,7 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#f4f7fa] dark:bg-[#0d1117] text-slate-800 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-200">
+    <div className="flex h-screen supports-[height:100dvh]:h-dvh bg-[#f4f7fa] dark:bg-[#0d1117] text-slate-800 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-200">
       <AdminSidebar
         collapsed={sidebarCollapsed}
         mobileOpen={mobileOpen}
@@ -64,7 +65,8 @@ const AdminLayout = () => {
         {/* Scrollable Page Body with Cool Gray Canvas */}
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
           <TwoFactorNudge onAction={() => setSecurityOpen(true)} className="mb-6" />
-          <ErrorBoundary>
+          {/* Keyed by path so a crashed page's fallback resets when the user navigates away. */}
+          <ErrorBoundary key={location.pathname}>
             <Outlet context={{ globalSearch }} />
           </ErrorBoundary>
         </main>

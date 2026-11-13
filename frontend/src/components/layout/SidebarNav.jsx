@@ -92,7 +92,7 @@ const SidebarNav = ({ visibleGroups, quickActions, collapsed, onNavigate }) => {
         {!collapsed ? (
           <>
             <div className="px-3 pb-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
-              Quick Actions
+              {t('ui:layout.quickActions')}
             </div>
             <div className="space-y-1.5">
               {quickActions.map((action) => {

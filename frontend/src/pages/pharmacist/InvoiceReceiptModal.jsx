@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Printer, X, Receipt, FileDown, Settings2 } from 'lucide-react';
 import { getMyPharmacy } from '../../api/pharmacyApi';
 import { AUTH_LOGOUT_EVENT } from '../../context/authContextObject';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatDateTime } from '../../utils/format';
 import { exportPDF } from '../../utils/export';
 import {
   RECEIPT_CSS,
@@ -54,6 +54,8 @@ if (typeof window !== 'undefined') {
   window.addEventListener(AUTH_LOGOUT_EVENT, invalidateReceiptPharmacy);
 }
 
+const FISCAL_MAX_WAIT_MS = 3000;
+
 const isServerId = (id) => typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
 
 const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp, autoPrint = false }) => {
@@ -90,19 +92,41 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp, au
     });
   };
 
-  // Auto-print once per sale after checkout, once the pharmacy header is known.
+  // Auto-print once per sale after checkout, once the pharmacy header is known and the fiscal
+  // lookup (QR / fiscal number) has settled. If that lookup hangs, print anyway after 3s.
   const saleKey = sale?._id || sale?.offlineId || sale?.invoiceNumber;
   const ready = Boolean(pharmacyProp || loadedPharmacy || loadDone);
+  // ReceiptBody reports from its own effect, which runs before this component's effects in the
+  // same commit: the ref is current there, the state only re-runs the effect when it settles.
+  const fiscalRef = useRef({ key: null, pending: true });
+  const [fiscalState, setFiscalState] = useState(null);
+  const onFiscalPending = useCallback(
+    (pending) => {
+      fiscalRef.current = { key: saleKey, pending };
+      setFiscalState(fiscalRef.current);
+    },
+    [saleKey]
+  );
   useEffect(() => {
-    if (!isOpen || !autoPrint || !prefs.autoPrint || !saleKey || !ready) return;
-    if (autoPrintedFor.current === saleKey) return;
-    autoPrintedFor.current = saleKey;
-    printReceiptHtml(receiptRef.current?.innerHTML || '', {
-      width,
-      copies: prefs.copies,
-      title: sale?.invoiceNumber || 'Receipt',
-    });
-  }, [isOpen, autoPrint, prefs.autoPrint, prefs.copies, saleKey, ready, width, sale?.invoiceNumber]);
+    if (!isOpen || !autoPrint || !prefs.autoPrint || !saleKey || !ready) return undefined;
+    if (autoPrintedFor.current === saleKey) return undefined;
+    const print = () => {
+      if (autoPrintedFor.current === saleKey) return;
+      autoPrintedFor.current = saleKey;
+      printReceiptHtml(receiptRef.current?.innerHTML || '', {
+        width,
+        copies: prefs.copies,
+        title: sale?.invoiceNumber || t('receipt'),
+      });
+    };
+    const fiscalSettled = fiscalRef.current.key === saleKey && !fiscalRef.current.pending;
+    if (fiscalSettled) {
+      print();
+      return undefined;
+    }
+    const timer = setTimeout(print, FISCAL_MAX_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [isOpen, autoPrint, prefs.autoPrint, prefs.copies, saleKey, ready, width, sale?.invoiceNumber, fiscalState, t]);
 
   if (!isOpen || !sale) return null;
 
@@ -112,7 +136,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp, au
     const tin = pharmacy?.tin || pharmacy?.settings?.tax?.registrationNo;
     const summary = [
       [t('invoice'), sale.invoiceNumber],
-      [t('date'), new Date(sale.createdAt).toLocaleString()],
+      [t('date'), formatDateTime(sale.offlineCreatedAt || sale.createdAt)],
       [t('customer'), sale.customerId?.name || sale.customer?.name || t('walkIn')],
       [t('subtotal'), money(sale.subtotal)],
       ...(Number(sale.discount) > 0 ? [[t('discount'), `-${money(sale.discount)}`]] : []),
@@ -217,7 +241,7 @@ const InvoiceReceiptModal = ({ isOpen, onClose, sale, pharmacy: pharmacyProp, au
         <div className="bg-slate-100 dark:bg-slate-900/80 rounded-xl p-4 overflow-x-auto">
           <div className="bg-white shadow-sm mx-auto p-3" style={{ width: width === 'A4' ? '100%' : `calc(${width} + 24px)` }}>
             <div ref={receiptRef}>
-              <ReceiptBody sale={sale} pharmacy={pharmacy} width={width} prefs={prefs} />
+              <ReceiptBody sale={sale} pharmacy={pharmacy} width={width} prefs={prefs} onFiscalPending={onFiscalPending} />
             </div>
           </div>
         </div>

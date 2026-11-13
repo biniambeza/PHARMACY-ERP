@@ -4,7 +4,7 @@ import { getDashboardOverview } from '../../api/reportApi';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
 import { useAuth } from '../../context/useAuth';
 import useAsync from '../../hooks/useAsync';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatDateTime } from '../../utils/format';
 import { exportCSV, exportPDF } from '../../utils/export';
 import { downloadExport } from '../../api/exportApi';
 import { DashboardSkeleton, DashboardError } from '../../components/dashboard/DashboardStates';
@@ -26,6 +26,7 @@ const PharmacistDashboard = () => {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [range, setRange] = useState('7d');
   const [exportingSales, setExportingSales] = useState(false);
+  const [exportError, setExportError] = useState('');
   const { can, activePharmacy, user } = useAuth();
 
   const fetchOverview = useCallback(async () => {
@@ -78,7 +79,7 @@ const PharmacistDashboard = () => {
   ];
   const salesColumns = [
     { key: 'invoiceNumber', header: t('salesColumns.invoice') },
-    { key: 'createdAt', header: t('common:labels.date'), format: (v) => new Date(v).toLocaleString() },
+    { key: 'createdAt', header: t('common:labels.date'), format: (v) => formatDateTime(v) },
     { key: 'customer', header: t('salesColumns.customer'), format: (v) => v?.name || t('salesColumns.walkIn') },
     { key: 'grandTotal', header: t('common:labels.total'), align: 'right', format: (v) => formatMoney(v) },
     {
@@ -117,10 +118,12 @@ const PharmacistDashboard = () => {
     });
   const handleExportSalesXlsx = async () => {
     setExportingSales(true);
+    setExportError('');
     try {
       await downloadExport('sales', { format: 'xlsx', range });
     } catch (err) {
       logApiError('Sales export failed', err);
+      setExportError(err?.response?.data?.message || t('export.salesFailed'));
     } finally {
       setExportingSales(false);
     }
@@ -138,6 +141,15 @@ const PharmacistDashboard = () => {
         exportingSales={exportingSales}
         onExportSalesXlsx={handleExportSalesXlsx}
       />
+
+      {exportError && (
+        <div role="alert" className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl flex items-center justify-between gap-3 text-xs text-rose-700 dark:text-rose-300">
+          <span>{exportError}</span>
+          <button onClick={() => setExportError('')} className="font-semibold cursor-pointer shrink-0">
+            {t('common:buttons.close')}
+          </button>
+        </div>
+      )}
 
       {/* First-run setup checklist (owners only, until complete or dismissed) */}
       {can('settings:manage') && <OnboardingChecklist />}

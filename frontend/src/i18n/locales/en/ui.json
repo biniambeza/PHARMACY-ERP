@@ -69,5 +69,24 @@
     "draft": "Draft",
     "depleted": "Depleted",
     "status": "Status"
+  },
+  "layout": {
+    "portalSubtitle": "Dispensary Portal",
+    "minimizeSidebar": "Minimize Sidebar",
+    "expandSidebar": "Expand Sidebar",
+    "minimizeSidebarLower": "Minimize sidebar",
+    "expandSidebarLower": "Expand sidebar",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "toggle": "Toggle",
+    "switchToLight": "Switch to Light Mode",
+    "switchToDark": "Switch to Dark Mode",
+    "signOut": "Sign Out",
+    "quickActions": "Quick Actions",
+    "searchPlaceholder": "Search medications, invoice numbers, patients or lots...",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "defaultUser": "Pharmacist",
+    "staffRole": "Staff"
   }
 }

@@ -91,7 +91,9 @@ export const pageCss = (width) =>
     ? '@page { size: A4; margin: 12mm; }'
     : `@page { size: ${width} auto; margin: 0; } html, body { width: ${width}; } body { padding: 2mm 0; }`;
 
-const escapeHtml = (s) =>
+const IMAGE_WAIT_MS = 3000;
+
+export const escapeHtml = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 /**
@@ -124,13 +126,29 @@ export const printReceiptHtml = (html, { width = '80mm', copies = 1, title = 'Re
     setTimeout(() => iframe.remove(), 500);
   };
   win.onafterprint = cleanup;
-  setTimeout(() => {
-    try {
-      win.focus();
-      win.print();
-    } finally {
-      setTimeout(cleanup, 60000);
-    }
-  }, 150);
+  // Remote images (pharmacy logo) must finish loading or they print blank: wait for them,
+  // but never longer than IMAGE_WAIT_MS (a broken / slow logo must not block the print).
+  const images = Array.from(doc.images || []);
+  const imagesLoaded = Promise.all(
+    images.map((img) =>
+      img.complete
+        ? null
+        : new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          })
+    )
+  );
+  const timeout = new Promise((resolve) => setTimeout(resolve, IMAGE_WAIT_MS));
+  Promise.race([imagesLoaded, timeout]).then(() => {
+    setTimeout(() => {
+      try {
+        win.focus();
+        win.print();
+      } finally {
+        setTimeout(cleanup, 60000);
+      }
+    }, 150);
+  });
   return true;
 };

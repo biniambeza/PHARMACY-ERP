@@ -3,6 +3,7 @@ import { Percent, Receipt, Bell, Globe, SlidersHorizontal } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../../i18n';
 import { CardHeader, Toggle, OptionButtons } from './SettingsUi';
 import { inputCls, cardCls, labelCls, hintCls } from './settingsStyles';
+import { formatMoney } from '../../utils/format';
 
 const CURRENCIES = ['ETB', 'USD', 'EUR', 'KES', 'GBP'];
 const RECEIPT_WIDTHS = ['58mm', '80mm', 'A4'];
@@ -55,7 +56,7 @@ export const TaxSection = ({ form, setField }) => {
         <Trans
           t={t}
           i18nKey={form.taxInclusive ? 'tax.exampleContains' : 'tax.exampleAdds'}
-          values={{ amount: form.taxEnabled ? previewTax.toFixed(2) : '0.00', name: form.taxName || t('tax.defaultName') }}
+          values={{ amount: formatMoney(form.taxEnabled ? previewTax : 0, ''), name: form.taxName || t('tax.defaultName') }}
           components={{ b: <span className="font-mono font-bold" /> }}
         />
       </p>

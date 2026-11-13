@@ -36,6 +36,23 @@ const findCustomer = async (req, session) => {
   return customer;
 };
 
+// A negative balance is store credit the pharmacy owes the customer. Archiving / deleting such a
+// customer would strand it (inactive customers cannot use credit), so it is refused unless an
+// owner forces it (?force=true or body.force: true). 409 CUSTOMER_HAS_STORE_CREDIT.
+const isForced = (req) => req.query?.force === 'true' || req.query?.force === '1' || req.body?.force === true || req.body?.force === 'true';
+const isOwner = (req) => req.membershipRole === 'owner' || req.user?.role === 'admin';
+const assertNoStoreCredit = (req, customer) => {
+  const credit = round2(-(Number(customer.balance) || 0));
+  if (credit <= EPS) return 0;
+  if (isForced(req) && isOwner(req)) return credit;
+  const err = new AppError(
+    `${customer.name} has ${credit.toFixed(2)} store credit. Use or refund it before removing or deactivating the customer${isOwner(req) ? ', or confirm to remove it anyway' : ' (only an owner can force this)'}.`,
+    409
+  );
+  err.code = 'CUSTOMER_HAS_STORE_CREDIT';
+  throw err;
+};
+
 const openSalesFilter = (pharmacyId, customerId) => ({
   pharmacyId,
   customerId,
@@ -127,8 +144,21 @@ const createCustomer = async (req, res) => {
   return res.status(201).json({ success: true, message: 'Customer created', customer });
 };
 
+// Sends an AppError carrying a machine-readable `code` with that code (the central error
+// handler only sends the message); everything else is rethrown.
+const withCode = (handler) => async (req, res) => {
+  try {
+    return await handler(req, res);
+  } catch (err) {
+    if (err && err.isOperational && typeof err.code === 'string' && !res.headersSent) {
+      return res.status(err.status || 400).json({ success: false, code: err.code, message: err.message });
+    }
+    throw err;
+  }
+};
+
 // @route PUT /api/customers/:id
-const updateCustomer = async (req, res) => {
+const updateCustomer = withCode(async (req, res) => {
   const customer = await findCustomer(req);
   const before = customer.toObject();
   const body = req.body || {};
@@ -144,7 +174,12 @@ const updateCustomer = async (req, res) => {
   if (body.notes !== undefined) customer.notes = trimStr(body.notes);
   if (body.tin !== undefined) customer.tin = trimStr(body.tin);
   if (body.legalName !== undefined) customer.legalName = trimStr(body.legalName);
-  if (body.active !== undefined) customer.active = Boolean(body.active);
+  let forfeitedCredit = 0;
+  if (body.active !== undefined) {
+    const active = body.active === true || body.active === 'true' || (body.active !== false && body.active !== 'false' && Boolean(body.active));
+    if (!active && customer.active) forfeitedCredit = assertNoStoreCredit(req, customer);
+    customer.active = active;
+  }
   const creditLimit = parseCreditLimit(body.creditLimit);
   if (creditLimit !== undefined) customer.creditLimit = creditLimit;
   // `balance` is never set directly: it only changes through sales, payments and reversals
@@ -158,17 +193,19 @@ const updateCustomer = async (req, res) => {
     entityId: customer._id,
     before,
     after: customer,
+    ...(forfeitedCredit > 0 ? { meta: { forcedWithStoreCredit: forfeitedCredit } } : {}),
   });
 
   return res.status(200).json({ success: true, message: 'Customer updated', customer });
-};
+});
 
 // @route DELETE /api/customers/:id  (deactivates when the customer has history)
-const deleteCustomer = async (req, res) => {
+const deleteCustomer = withCode(async (req, res) => {
   const customer = await findCustomer(req);
   if (round2(customer.balance) > 0) {
     throw new AppError('This customer has an outstanding balance. Collect it before removing the customer.', 409);
   }
+  const forfeitedCredit = assertNoStoreCredit(req, customer);
   const scope = { pharmacyId: req.pharmacyId, customerId: customer._id };
   const hasHistory =
     (await Sale.exists(scope)) || (await CustomerPayment.exists(scope)) || (await CustomerLedger.exists(scope));
@@ -176,7 +213,13 @@ const deleteCustomer = async (req, res) => {
   if (hasHistory) {
     customer.active = false;
     await customer.save();
-    await audit(req, { action: 'customer.deactivate', entity: 'Customer', entityId: customer._id, after: customer });
+    await audit(req, {
+      action: 'customer.deactivate',
+      entity: 'Customer',
+      entityId: customer._id,
+      after: customer,
+      ...(forfeitedCredit > 0 ? { meta: { forcedWithStoreCredit: forfeitedCredit } } : {}),
+    });
     return res.status(200).json({
       success: true,
       archived: true,
@@ -187,7 +230,7 @@ const deleteCustomer = async (req, res) => {
   await customer.deleteOne();
   await audit(req, { action: 'customer.delete', entity: 'Customer', entityId: customer._id, before: customer });
   return res.status(200).json({ success: true, archived: false, message: 'Customer deleted' });
-};
+});
 
 // Allocates `amount` to open sales: explicit allocations first, then oldest-first.
 const allocateToSales = async ({ pharmacyId, customerId, amount, requested, session }) => {

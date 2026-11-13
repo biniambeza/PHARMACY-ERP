@@ -67,6 +67,12 @@ const stockMovementSchema = new mongoose.Schema(
     refModel: {
       type: String, // e.g. 'Sale', 'PurchaseOrder'
     },
+    // Optional structured details, e.g. { costBefore, costAfter } when a stock-in into an
+    // existing batch re-averages its unit cost.
+    meta: {
+      type: mongoose.Schema.Types.Mixed,
+      default: undefined,
+    },
   },
   {
     timestamps: true,

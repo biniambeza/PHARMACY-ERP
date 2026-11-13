@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Undo2, Search, RotateCw, AlertCircle, FileText, ChevronLeft, ChevronRight, Receipt } from 'lucide-react';
@@ -19,20 +19,25 @@ const Returns = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(null);
+  // Only the latest request may update the list (an older, slower search must not win).
+  const requestId = useRef(0);
 
   const load = useCallback(async () => {
+    const id = ++requestId.current;
     setLoading(true);
     setError('');
     try {
       const params = { page, limit: LIMIT };
       if (search.trim()) params.search = search.trim();
       const data = await getReturns(params);
+      if (id !== requestId.current) return;
       setReturns(data.returns || []);
       setTotal(data.total || 0);
     } catch (err) {
+      if (id !== requestId.current) return;
       setError(err.response?.data?.message || t('errors.load'));
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [page, search, t]);
 

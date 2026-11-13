@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { getCustomerStatement } from '../../api/customerApi';
 import { useAuth } from '../../context/useAuth';
 import { CardSkeleton } from '../common/SkeletonLoader';
-import { formatMoney, formatDate } from '../../utils/format';
+import { formatMoney, formatDate, formatDateTime } from '../../utils/format';
 import { Modal, ErrorBox } from './CustomerModal';
 import { inputCls, labelCls, btnPrimary, errMsg, escapeHtml } from './customerUi';
 import EthiopianDateHint from '../common/EthiopianDateHint';
@@ -70,7 +70,7 @@ table{width:100%;border-collapse:collapse;margin-top:16px}th,td{border-bottom:1p
 <tbody><tr><td></td><td>${h('statement.opening')}</td><td></td><td></td><td></td><td class="r">${escapeHtml(formatMoney(data.openingBalance))}</td></tr>
 ${rows}<tr class="tot"><td></td><td>${h('statement.closing')}</td><td></td><td class="r">${escapeHtml(formatMoney(data.totals.debit))}</td>
 <td class="r">${escapeHtml(formatMoney(data.totals.credit))}</td><td class="r">${escapeHtml(formatMoney(data.closingBalance))}</td></tr></tbody></table>
-<p class="muted" style="margin-top:24px">${h('statement.printed', { date: new Date().toLocaleString() })}</p></body></html>`);
+<p class="muted" style="margin-top:24px">${h('statement.printed', { date: formatDateTime(new Date()) })}</p></body></html>`);
     w.document.close();
     w.focus();
     w.print();

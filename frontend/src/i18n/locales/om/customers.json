@@ -5,6 +5,7 @@
   "newCustomer": "Maamila Haaraa",
   "searchPlaceholder": "Maqaa, bilbila ykn imeeliin barbaadi...",
   "saving": "Olkaa'aa jira...",
+  "confirmRemoveWithCredit": "Haa ta'u malee haa haqamu? Liqiin kuusaa ni bada. Abbootiin qofa kana gochuu danda'u.",
   "confirmRemove": "Maamila \"{{name}}\" haquu?",
   "removeFailed": "Maamila haquun hin danda'amne",
   "filters": {

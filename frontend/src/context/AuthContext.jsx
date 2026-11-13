@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthContext, AUTH_LOGOUT_EVENT } from './authContextObject';
 import api, { ACTIVE_PHARMACY_KEY } from '../api/axios';
 import { roleCan } from '../config/permissions';
+import i18n from '../i18n';
 
 const MEMBERSHIPS_KEY = 'memberships';
 const LOGOUT_TIMEOUT_MS = 4000;
@@ -95,11 +96,13 @@ export const AuthProvider = ({ children }) => {
   // two-factor login. Kept in memory only (expires server-side after ~5 min).
   const [twoFactorChallenge, setTwoFactorChallenge] = useState(null);
 
-  const loginErrorMessage = (err, fallback) =>
+  // Messages use the auth namespace via the i18n instance (this provider sits outside any
+  // useTranslation consumer). Server messages arrive already translated by the axios
+  // interceptor (errors namespace). The offline message is deliberately generic (no build/env details).
+  const loginErrorMessage = (err, fallbackKey) =>
     !err.response
-      ? // English only: this context has no i18n. Deliberately generic (no build/env details).
-        'Cannot reach the server. Please check your connection and try again.'
-      : err.response.data?.message || fallback;
+      ? i18n.t('auth:cannotReachServer')
+      : err.response.data?.message || i18n.t(fallbackKey);
 
   // Stores a successful login response ({ user, token, memberships }).
   const applyLoginResponse = (data) => {
@@ -137,7 +140,7 @@ export const AuthProvider = ({ children }) => {
       return { success: true, user: userData };
     } catch (err) {
       setLoading(false);
-      const message = loginErrorMessage(err, 'Login failed. Please check your credentials.');
+      const message = loginErrorMessage(err, 'auth:loginFailed');
       setError(message);
       return { success: false, message };
     }
@@ -145,7 +148,7 @@ export const AuthProvider = ({ children }) => {
 
   const completeTwoFactor = async ({ code, recoveryCode } = {}) => {
     if (!twoFactorChallenge) {
-      return { success: false, expired: true, message: 'Your sign-in attempt expired. Please sign in again.' };
+      return { success: false, expired: true, message: i18n.t('auth:twoFactor.expired') };
     }
     setLoading(true);
     setError('');
@@ -164,7 +167,7 @@ export const AuthProvider = ({ children }) => {
       // An expired / invalid challenge (not a wrong code) sends the user back to step 1.
       const expired = status === 401 && err.response?.data?.code !== 'INVALID_2FA_CODE';
       if (expired || status === 403) setTwoFactorChallenge(null);
-      const message = loginErrorMessage(err, 'Verification failed. Please try again.');
+      const message = loginErrorMessage(err, 'auth:verificationFailed');
       setError(message);
       return { success: false, expired, status, message };
     }

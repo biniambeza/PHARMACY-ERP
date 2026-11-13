@@ -5,6 +5,7 @@
   "newCustomer": "አዲስ ደንበኛ",
   "searchPlaceholder": "በስም፣ በስልክ ወይም በኢሜይል ይፈልጉ...",
   "saving": "በማስቀመጥ ላይ...",
+  "confirmRemoveWithCredit": "ቢሆንም ይወገድ? የመደብር ክሬዲቱ ይጠፋል። ይህን ማድረግ የሚችሉት ባለቤቶች ብቻ ናቸው።",
   "confirmRemove": "ደንበኛ \"{{name}}\" ይወገድ?",
   "removeFailed": "ደንበኛውን ማስወገድ አልተቻለም",
   "filters": {

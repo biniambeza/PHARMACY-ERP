@@ -13,6 +13,7 @@ import { cacheShift, loadCachedShift, errMsg } from './posUtils';
 /**
  * Props: { pharmacyId, userId, setError(msg), setShiftModal(bool) }
  * Returns catalog/shift state plus loadCatalogData() and loadShift() to refresh them.
+ * loadCatalogData() resolves to the medicines it loaded (or null when nothing could be loaded).
  */
 export const usePosData = ({ pharmacyId, userId, setError, setShiftModal }) => {
   const [pharmacy, setPharmacy] = useState(null);
@@ -33,7 +34,7 @@ export const usePosData = ({ pharmacyId, userId, setError, setShiftModal }) => {
         setPharmacy(ph.pharmacy || null);
         setCatalogSavedAt(cat.generatedAt || new Date().toISOString());
         saveCatalog(pharmacyId, { medicines: cat.medicines || [], pharmacy: ph.pharmacy || null });
-        return;
+        return cat.medicines || [];
       } catch (err) {
         if (!isNetworkError(err)) setError(errMsg(err, i18n.t('pos:errors.loadCatalog')));
       }
@@ -43,9 +44,10 @@ export const usePosData = ({ pharmacyId, userId, setError, setShiftModal }) => {
       setMedicines(cached.medicines || []);
       setPharmacy(cached.pharmacy || null);
       setCatalogSavedAt(cached.savedAt);
-    } else if (!isOnline) {
-      setError(i18n.t('pos:errors.offlineNoCatalog'));
+      return cached.medicines || [];
     }
+    if (!isOnline) setError(i18n.t('pos:errors.offlineNoCatalog'));
+    return null;
   }, [pharmacyId, setError]);
 
   const loadShift = useCallback(async () => {

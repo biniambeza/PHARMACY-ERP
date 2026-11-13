@@ -26,6 +26,7 @@ const InsuranceClaim = require('../models/InsuranceClaim');
 const Sale = require('../models/Sale');
 const Return = require('../models/Return');
 const { nextSequence, formatSequence } = require('../utils/sequence');
+const tzUtil = require('../utils/timezone');
 
 const EPS = 0.005;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -58,24 +59,15 @@ const splitAmount = (total, weights) => {
 
 // ---------- Members and coverage ----------
 
-const endOfDay = (d) => {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-};
-
-const startOfDay = (d) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
-
-// Why a member can't be used on `date` ('' = valid).
-const memberInvalidReason = (member, date = new Date()) => {
+// Day edges follow the insurance time zone (INSURANCE_CLAIM_TZ / JOBS_TZ / Africa/Addis_Ababa,
+// utils/timezone.js), the same zone as the monthly claims job, never the server's local zone.
+// validFrom / validTo are calendar dates: a member is valid on the whole of both days.
+const memberInvalidReason = (member, date = new Date(), timeZone = tzUtil.insuranceTimeZone()) => {
   if (!member) return 'not_found';
   if (member.active === false) return 'inactive';
-  if (member.validFrom && startOfDay(member.validFrom) > date) return 'not_yet_valid';
-  if (member.validTo && endOfDay(member.validTo) < date) return 'expired';
+  const today = tzUtil.dayKey(date, timeZone);
+  if (member.validFrom && tzUtil.dateOnlyKey(member.validFrom, timeZone) > today) return 'not_yet_valid';
+  if (member.validTo && tzUtil.dateOnlyKey(member.validTo, timeZone) < today) return 'expired';
   return '';
 };
 
@@ -210,14 +202,16 @@ const insuranceShareOfReturn = (sale, items) => {
 
 const SALE_FIELDS ='invoiceNumber createdAt grandTotal items._id items.quantity items.insuranceAmount insurance returnStatus voided';
 
-const parseRange = (from, to) => {
+// Manual claim period: whole calendar days in the insurance time zone. 'YYYY-MM-DD' strings
+// (and dates at UTC midnight) are taken as calendar days; other instants use their day in the zone.
+const parseRange = (from, to, timeZone = tzUtil.insuranceTimeZone()) => {
   const f = from ? new Date(from) : null;
   const t = to ? new Date(to) : null;
   if (!f || Number.isNaN(f.getTime()) || !t || Number.isNaN(t.getTime())) {
     throw new AppError('A valid period (from, to) is required', 400);
   }
-  const periodFrom = startOfDay(f);
-  const periodTo = endOfDay(t);
+  const periodFrom = tzUtil.startOfZonedDay(typeof from === 'string' ? from : f, timeZone);
+  const periodTo = tzUtil.endOfZonedDay(typeof to === 'string' ? to : t, timeZone);
   if (periodFrom > periodTo) throw new AppError('Period start must be before the end', 400);
   return { periodFrom, periodTo };
 };
@@ -309,29 +303,7 @@ const buildClaim = async ({ pharmacyId, schemeId, from, to, notes, userId }, { s
   return buildClaimForPeriod({ pharmacyId, scheme, periodFrom, periodTo, notes, userId }, { session });
 };
 
-// Wall-clock parts of `date` in an IANA time zone.
-const zonedParts = (date, timeZone) => {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-  }).formatToParts(date);
-  const get = (type) => Number(parts.find((p) => p.type === type).value);
-  return { y: get('year'), m: get('month') - 1, d: get('day'), h: get('hour'), mi: get('minute'), s: get('second') };
-};
-
-// The instant at which the wall clock in `timeZone` shows the given time.
-const zonedTime = (y, m, d, h, mi, s, ms, timeZone) => {
-  const guess = Date.UTC(y, m, d, h, mi, s, ms);
-  const p = zonedParts(new Date(guess), timeZone);
-  const offset = Date.UTC(p.y, p.m, p.d, p.h, p.mi, p.s) - Math.floor(guess / 1000) * 1000;
-  return new Date(guess - offset);
-};
+const { zonedParts, zonedTime } = tzUtil;
 
 // First and last instant of the calendar month before `now`. Without a time zone the server's
 // local time is used (like parseRange / manual claims); pass e.g. 'Africa/Addis_Ababa' so the
@@ -350,6 +322,46 @@ const previousMonthRange = (now = new Date(), timeZone = null) => {
     : new Date(prevY, prevM, lastDay, 23, 59, 59, 999);
   const label = `${prevY}-${String(prevM + 1).padStart(2, '0')}`;
   return { periodFrom, periodTo, label };
+};
+
+// Period of the monthly job for one scheme: up to the end of the previous month, starting at the
+// month of the earliest unclaimed (non-voided) sale of the scheme, but at most `maxMonths` calendar
+// months back (the previous month counts as the first). Sales missed by earlier runs (job down,
+// late offline syncs, sales released by a rejected claim) are picked up this way.
+// Returns { periodFrom, periodTo, label } ('YYYY-MM' or 'YYYY-MM..YYYY-MM').
+const MAX_AUTO_CLAIM_MONTHS = 12;
+const autoClaimRange = async (
+  { pharmacyId, schemeId, now = new Date(), timeZone = tzUtil.insuranceTimeZone(), maxMonths = MAX_AUTO_CLAIM_MONTHS },
+  { session } = {}
+) => {
+  const prev = previousMonthRange(now, timeZone);
+  const p = zonedParts(prev.periodFrom, timeZone);
+  const backM = p.m - (Math.max(1, maxMonths) - 1);
+  const capY = p.y + Math.floor(backM / 12);
+  const capM = ((backM % 12) + 12) % 12;
+  const cap = zonedTime(capY, capM, 1, 0, 0, 0, 0, timeZone);
+
+  const earliest = await Sale.findOne({
+    pharmacyId,
+    'insurance.schemeId': schemeId,
+    'insurance.claimId': null,
+    voided: { $ne: true },
+    createdAt: { $gte: cap, $lte: prev.periodTo },
+  })
+    .sort({ createdAt: 1 })
+    .select('createdAt')
+    .session(session || null)
+    .lean();
+
+  let periodFrom = prev.periodFrom;
+  let fromLabel = prev.label;
+  if (earliest && earliest.createdAt < prev.periodFrom) {
+    const e = zonedParts(earliest.createdAt, timeZone);
+    periodFrom = zonedTime(e.y, e.m, 1, 0, 0, 0, 0, timeZone);
+    fromLabel = `${e.y}-${String(e.m + 1).padStart(2, '0')}`;
+  }
+  const label = fromLabel === prev.label ? prev.label : `${fromLabel}..${prev.label}`;
+  return { periodFrom, periodTo: prev.periodTo, label };
 };
 
 const loadClaim = async (pharmacyId, id, { session } = {}) => {
@@ -492,11 +504,22 @@ const rejectClaim = async ({ pharmacyId, id, notes, releaseSales = true }, { ses
   claim.rejectionNotes = text.slice(0, 1000);
   claim.salesReleased = release;
   await claim.save({ session });
+  const saleIds = claim.sales.map((s) => s.saleId);
   if (release) {
+    // Back to the unclaimed pool: the insurer share stays 'pending' (still receivable)
     await Sale.updateMany(
-      { _id: { $in: claim.sales.map((s) => s.saleId) }, pharmacyId, 'insurance.claimId': claim._id },
+      { _id: { $in: saleIds }, pharmacyId, 'insurance.claimId': claim._id },
       { $set: { 'insurance.claimId': null } },
       { session }
+    );
+  } else {
+    // Written off: the insurer will not pay the rest, so the insurer payment lines are no longer
+    // receivable ('failed'; excluded from collected totals like any failed payment). The sales stay
+    // linked to the rejected claim so they are never claimed again.
+    await Sale.updateMany(
+      { _id: { $in: saleIds }, pharmacyId, 'insurance.claimId': claim._id },
+      { $set: { 'payments.$[p].status': 'failed' } },
+      { arrayFilters: [{ 'p.method': 'insurance', 'p.status': 'pending' }], session }
     );
   }
   return claim;
@@ -691,6 +714,8 @@ module.exports = {
   findUnclaimed,
   parseRange,
   previousMonthRange,
+  autoClaimRange,
+  MAX_AUTO_CLAIM_MONTHS,
   buildClaimForPeriod,
   buildClaim,
   loadClaim,

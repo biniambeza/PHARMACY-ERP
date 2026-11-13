@@ -5,6 +5,7 @@ import PosModal, { primaryBtn, secondaryBtn } from './PosModal';
 import { getZReport } from '../../api/shiftApi';
 import { formatMoney, formatDateTime } from '../../utils/format';
 import { METHOD_LABELS, errMsg } from './posUtils';
+import { escapeHtml } from '../../utils/printReceipt';
 
 const CSS = `
 .zr { font-family: 'Courier New', ui-monospace, monospace; color: #000; background: #fff; font-size: 12px; line-height: 1.4; max-width: 80mm; margin: 0 auto; }
@@ -45,6 +46,9 @@ const ZReportBody = ({ z, pharmacyName }) => {
       <Row label={t('report.netSales')} value={m(z.sales?.total)} bold />
       <Row label={t('report.voids', { count: z.voids?.count || 0 })} value={m(z.voids?.total)} />
       <Row label={t('report.returns', { count: z.returns?.count || 0 })} value={m(z.returns?.refundTotal)} />
+      {z.lateSales?.count > 0 && (
+        <Row label={t('report.lateSales', { count: z.lateSales.count })} value={m(z.lateSales.total)} />
+      )}
       <div className="sep" />
       <div className="b">{t('report.payments')}</div>
       {Object.keys(METHOD_LABELS).map((k) => (
@@ -136,7 +140,7 @@ const ZReportModal = ({ shiftId, open, onClose, initial, pharmacyName }) => {
     const doc = iframe.contentDocument;
     doc.open();
     doc.write(
-      `<!doctype html><html><head><title>${t('report.printTitle', { number: report?.shiftNumber || '' })}</title><style>${CSS} @page { size: 80mm auto; margin: 3mm; }</style></head><body>${bodyRef.current.innerHTML}</body></html>`
+      `<!doctype html><html><head><title>${escapeHtml(t('report.printTitle', { number: report?.shiftNumber || '' }))}</title><style>${CSS} @page { size: 80mm auto; margin: 3mm; }</style></head><body>${bodyRef.current.innerHTML}</body></html>`
     );
     doc.close();
     setTimeout(() => {

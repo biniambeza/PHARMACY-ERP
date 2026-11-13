@@ -8,7 +8,8 @@
   "retryLoading": "Retry Loading",
   "errors": {
     "loadSales": "Failed to load sales transactions",
-    "loadLedger": "Unable to load dispensary ledger. Please check your network connection."
+    "loadLedger": "Unable to load dispensary ledger. Please check your network connection.",
+    "loadSummary": "Could not load the sales summary."
   },
   "metrics": {
     "todayRevenue": "Today's Revenue",

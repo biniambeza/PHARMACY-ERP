@@ -227,7 +227,9 @@ of `backend-ci`, `frontend-ci` and `e2e` pass. Deploy jobs never cancel each oth
   only. If the API moves to a custom domain, add it to `connect-src`, otherwise every API call
   is blocked. The `sha256-...` in `script-src` allows the one inline script of the insurance
   claim print window (`frontend/src/components/insurance/claimPrint.js`); if that script
-  changes, update the hash (the browser console prints the new one).
+  changes, update the hash (the browser console prints the new one). Fonts (Inter, JetBrains
+  Mono, Noto Sans Ethiopic) are self-hosted from `/assets` (`@fontsource` packages), so the CSP
+  allows no external font or stylesheet hosts (`font-src 'self' data:`).
 
 ---
 

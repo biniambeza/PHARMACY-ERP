@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -64,7 +63,7 @@
 
 /* Inter has no Ethiopic glyphs, so Amharic text (in any language mode, e.g. the
    "አማርኛ" option or customer names) falls through per glyph to Noto Sans Ethiopic
-   (loaded in index.html) while Latin text keeps Inter. Noto is listed before the
+   (bundled @fontsource files imported in main.jsx) while Latin text keeps Inter. Noto is listed before the
    system fonts so Ethiopic never renders in a system fallback such as Nyala/Ebrima. */
 * {
   font-family: 'Inter', 'Noto Sans Ethiopic', system-ui, -apple-system, sans-serif;

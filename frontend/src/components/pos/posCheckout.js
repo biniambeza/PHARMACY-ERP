@@ -4,13 +4,16 @@ import { round2 } from './posUtils';
 
 export const SEVERE = ['major', 'contraindicated'];
 
+// Identifies the cart lines an insurance coverage preview was computed for (lineGrossAmounts)
+export const insuranceLinesKey = (lines) => JSON.stringify(lines || []);
+
 /**
  * Reasons the current sale cannot be completed yet (deduplicated, in display order).
  * `t` is a translator for the `pos` namespace.
  */
 export const computeBlockers = ({
   t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
-  clinicalStatus = 'ok', warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
+  clinicalStatus = 'ok', warningsAcked, payStatus, effectivePayments, allowedMethods, customer, insuranceKey,
 }) => {
   const list = [];
   if (cart.length === 0) return list;
@@ -36,6 +39,8 @@ export const computeBlockers = ({
       if (!online) list.push(t('blockers.insuranceOffline'));
       else if (!p.schemeId || !p.member) list.push(t('blockers.insuranceMember'));
       else if (!p.preview || !(p.amount > 0)) list.push(p.error || t('blockers.insurancePreview'));
+      // A preview made for an earlier cart (lines, quantities or discount changed) is stale
+      else if (insuranceKey !== undefined && p.previewKey !== insuranceKey) list.push(t('blockers.insurancePreview'));
     }
     if (p.method === 'mobile_money' && p.amount > 0) {
       if (p.intentId && p.intentStatus !== 'confirmed') list.push(t('blockers.waitingMobile'));

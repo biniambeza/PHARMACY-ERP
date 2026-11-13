@@ -6,7 +6,7 @@ const { nextSequence, formatSequence } = require('../../utils/sequence');
 const { recordMovement } = require('../../utils/stockMovement');
 const { audit } = require('../../utils/audit');
 const { recordControlledReceipt } = require('../../services/clinical');
-const { isValidId, sameDay, RECEIVABLE_STATUSES, round2 } = require('./helpers');
+const { isValidId, sameDay, RECEIVABLE_STATUSES, round2, weightedAverageCost } = require('./helpers');
 
 const parseNonNegativeInt = (value, label) => {
   if (value === undefined || value === null || value === '') return 0;
@@ -208,6 +208,7 @@ const receivePurchaseOrder = async (req, res) => {
       const receiptLines = [];
       for (const l of lines) {
         const addQty = l.quantity + l.bonusQuantity;
+        let costChange = null;
         let batch = await StockBatch.findOne({
           pharmacyId: req.pharmacyId,
           medicineId: l.medicineId,
@@ -221,9 +222,20 @@ const receivePurchaseOrder = async (req, res) => {
               409
             );
           }
+          // Re-average the cost over the units on hand plus this delivery (bonus units are free)
+          // instead of revaluing everything already on the shelf at the new price.
+          const costBefore = batch.purchasePrice || 0;
+          const costAfter = weightedAverageCost({
+            onHandQty: batch.quantity,
+            onHandCost: costBefore,
+            paidQty: l.quantity,
+            paidCost: l.unitCost,
+            bonusQty: l.bonusQuantity,
+          });
           batch.quantity += addQty;
           batch.initialQuantity += addQty;
-          if (l.quantity > 0) batch.purchasePrice = l.unitCost;
+          batch.purchasePrice = costAfter;
+          if (costAfter !== costBefore) costChange = { costBefore, costAfter };
           if (batch.quantity > 0) batch.status = 'active';
           await batch.save({ session });
         } else {
@@ -276,6 +288,7 @@ const receivePurchaseOrder = async (req, res) => {
             userId: req.user && req.user._id,
             refId: order._id,
             refModel: 'PurchaseOrder',
+            ...(costChange ? { meta: costChange } : {}),
           },
           { session }
         );

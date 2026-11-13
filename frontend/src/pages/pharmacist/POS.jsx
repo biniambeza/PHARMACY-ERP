@@ -20,7 +20,10 @@ import { usePosSale } from '../../components/pos/usePosSale';
 import { usePosCheckout } from '../../components/pos/usePosCheckout';
 import { useBarcodeScanner, usePosShortcuts } from '../../components/pos/usePosKeyboard';
 import { findUnit, matchCode, cacheShift, errMsg } from '../../components/pos/posUtils';
-import { SEVERE, computeBlockers } from '../../components/pos/posCheckout';
+import { SEVERE, computeBlockers, insuranceLinesKey } from '../../components/pos/posCheckout';
+import { formatDate } from '../../utils/format';
+
+const TIME_ONLY = { hour: '2-digit', minute: '2-digit' };
 
 const POS = () => {
   const { t } = useTranslation('pos');
@@ -108,11 +111,12 @@ const POS = () => {
       computeBlockers({
         t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
         clinicalStatus: clinicalOverride ? 'ok' : clinicalStatus, warningsAcked, payStatus, effectivePayments,
-        allowedMethods, customer,
+        allowedMethods, customer, insuranceKey: insuranceLinesKey(insuranceLines),
       }),
     [
       t, cart, shiftState, requireShiftUi, hasControlled, online, can, patient, prescription, needsRx, legacyRx,
       clinicalStatus, clinicalOverride, warningsAcked, payStatus, effectivePayments, allowedMethods, customer,
+      insuranceLines,
     ]
   );
 
@@ -130,7 +134,14 @@ const POS = () => {
       }
       try {
         const { medicine, unit } = await lookupMedicine(code);
-        const known = medById.get(String(medicine._id));
+        const id = String(medicine._id);
+        let known = medById.get(id);
+        // Not in the cached catalog (e.g. stock received since it loaded): refresh it once
+        // before treating the item as out of stock.
+        if (!known) {
+          const fresh = await loadCatalogData();
+          known = fresh?.find((m) => String(m._id) === id);
+        }
         const med = known || { ...medicine, stock: 0 };
         addToCart(med, findUnit(med, unit?.name));
         return true;
@@ -140,7 +151,7 @@ const POS = () => {
         return false;
       }
     },
-    [medicines, medById, addToCart, t]
+    [medicines, medById, addToCart, loadCatalogData, t]
   );
 
   useBarcodeScanner(handleCode);
@@ -161,7 +172,7 @@ const POS = () => {
 
   const resumeHeld = (entry) => {
     if (!confirmCancelPending()) return;
-    take(entry.id, cart.length > 0 ? sale.snapshot(t('held.autoLabel', { time: new Date().toLocaleTimeString() }), totals.grandTotal) : null);
+    take(entry.id, cart.length > 0 ? sale.snapshot(t('held.autoLabel', { time: formatDate(new Date(), TIME_ONLY) }), totals.grandTotal) : null);
     resetSale();
     sale.restore(entry, medById);
     setHeldOpen(false);
@@ -275,7 +286,7 @@ const POS = () => {
         open={holdOpen}
         onClose={() => setHoldOpen(false)}
         onHold={holdCurrent}
-        suggestion={walkIn.name || customer?.name || t('held.suggestion', { time: new Date().toLocaleTimeString() })}
+        suggestion={walkIn.name || customer?.name || t('held.suggestion', { time: formatDate(new Date(), TIME_ONLY) })}
       />
       <HeldSalesModal open={heldOpen} onClose={() => setHeldOpen(false)} held={held} onResume={resumeHeld} onDelete={deleteHeld} />
 

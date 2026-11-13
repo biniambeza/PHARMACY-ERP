@@ -6,6 +6,7 @@ const AppError = require('../utils/AppError');
 const escapeRegex = require('../utils/escapeRegex');
 const { recordMovement } = require('../utils/stockMovement');
 const { recordControlledReceipt, recordControlledMovement } = require('../services/clinical');
+const { weightedAverageCost } = require('./purchaseOrders/helpers');
 
 const ADJUSTMENT_TYPES = ['damaged', 'expired', 'correction'];
 const ADJUSTMENT_MOVEMENT = {
@@ -172,6 +173,7 @@ const addStockBatch = async (req, res) => {
         medicineId,
         batchNo: trimmedBatchNo,
       }).session(session);
+      let costChange = null;
 
       if (batch) {
         if (!sameDay(batch.expiryDate, exp)) {
@@ -180,9 +182,21 @@ const addStockBatch = async (req, res) => {
             400
           );
         }
+        // Weighted average over the units on hand and the new units (no price given = the new
+        // units are assumed to cost the same as the batch, so its cost is unchanged).
+        if (price !== undefined) {
+          const costBefore = batch.purchasePrice || 0;
+          const costAfter = weightedAverageCost({
+            onHandQty: batch.quantity,
+            onHandCost: costBefore,
+            paidQty: qty,
+            paidCost: price,
+          });
+          batch.purchasePrice = costAfter;
+          if (costAfter !== costBefore) costChange = { costBefore, costAfter };
+        }
         batch.quantity += qty;
         batch.initialQuantity += qty;
-        if (price !== undefined) batch.purchasePrice = price;
         if (batch.quantity > 0 && batch.status === 'depleted') batch.status = 'active';
         await batch.save({ session });
       } else {
@@ -212,6 +226,7 @@ const addStockBatch = async (req, res) => {
           quantityChange: qty,
           balanceAfter: batch.quantity,
           userId: req.user?._id,
+          ...(costChange ? { meta: costChange } : {}),
         },
         { session }
       );
@@ -294,7 +309,10 @@ const adjustStock = async (req, res) => {
       }
 
       if (updated.quantity === 0) {
-        updated.status = adjustmentType === 'expired' ? 'expired' : 'depleted';
+        // 'expired' only for a batch actually past its expiry date: an emptied in-date batch is
+        // 'depleted' so stock added back later (returns, voids, stock-in) can be sold again.
+        const pastExpiry = updated.expiryDate && new Date(updated.expiryDate) <= new Date();
+        updated.status = adjustmentType === 'expired' && pastExpiry ? 'expired' : 'depleted';
         await updated.save({ session });
       }
 

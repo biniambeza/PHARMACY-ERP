@@ -65,6 +65,24 @@ const StockTakeDetail = ({ id, onBack }) => {
 
   const dirtyCount = Object.keys(edits).length;
   const editable = st?.status === 'counting';
+  const hasUnsaved = dirtyCount > 0;
+
+  // Warn before closing / reloading the tab with unsaved counts. (The app uses <BrowserRouter>,
+  // not a data router, so in-app route changes can't be blocked; the Back button asks instead.)
+  useEffect(() => {
+    if (!hasUnsaved) return undefined;
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [hasUnsaved]);
+
+  const handleBack = () => {
+    if (hasUnsaved && !window.confirm(t('detail.confirmLeave', { count: dirtyCount }))) return;
+    onBack();
+  };
 
   const run = async (fn, okMessage) => {
     setBusy(true);
@@ -83,8 +101,10 @@ const StockTakeDetail = ({ id, onBack }) => {
     }
   };
 
+  // Saves pending counts. Resolves to the up-to-date stock take (the one the server returned
+  // after saving, or the current one when nothing was pending), or null when saving failed.
   const saveEdits = async () => {
-    if (!dirtyCount) return true;
+    if (!dirtyCount) return st;
     const counts = Object.entries(edits).map(([lineId, v]) => ({
       lineId,
       countedQty: v === '' ? null : Number(v),
@@ -92,17 +112,24 @@ const StockTakeDetail = ({ id, onBack }) => {
     const bad = counts.find((c) => c.countedQty !== null && (!Number.isInteger(c.countedQty) || c.countedQty < 0));
     if (bad) {
       setError(t('detail.countsInvalid'));
-      return false;
+      return null;
     }
-    const ok = await run(() => saveStockTakeCounts(id, counts), t('detail.saved', { count: counts.length }));
-    if (ok) setEdits({});
-    return ok;
+    let saved = null;
+    const ok = await run(async () => {
+      const res = await saveStockTakeCounts(id, counts);
+      saved = res?.stockTake || null;
+      return res;
+    }, t('detail.saved', { count: counts.length }));
+    if (!ok) return null;
+    setEdits({});
+    return saved || st;
   };
 
   const handleSubmit = async () => {
-    if (!(await saveEdits())) return;
-    if (st.summary.uncountedLines > 0
-      && !window.confirm(t('detail.confirmSubmit', { count: st.summary.uncountedLines }))) return;
+    const latest = await saveEdits();
+    if (!latest) return;
+    const uncounted = latest.summary?.uncountedLines || 0;
+    if (uncounted > 0 && !window.confirm(t('detail.confirmSubmit', { count: uncounted }))) return;
     await run(() => submitStockTake(id), t('detail.submitted'));
   };
 
@@ -144,7 +171,7 @@ const StockTakeDetail = ({ id, onBack }) => {
   if (!st) {
     return (
       <div className="max-w-7xl mx-auto space-y-4">
-        <button type="button" className={secondaryBtn} onClick={onBack}><ArrowLeft className="w-4 h-4" /> {t('common:buttons.back')}</button>
+        <button type="button" className={secondaryBtn} onClick={handleBack}><ArrowLeft className="w-4 h-4" /> {t('common:buttons.back')}</button>
         {error ? <div className={errorBox}>{error}</div> : <p className="text-xs text-slate-500">{t('common:labels.loading')}</p>}
       </div>
     );
@@ -156,7 +183,7 @@ const StockTakeDetail = ({ id, onBack }) => {
     <div className="space-y-6 animate-fade-in max-w-7xl mx-auto">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <button type="button" className={secondaryBtn} onClick={onBack} aria-label={t('common:buttons.back')}><ArrowLeft className="w-4 h-4" /></button>
+          <button type="button" className={secondaryBtn} onClick={handleBack} aria-label={t('common:buttons.back')}><ArrowLeft className="w-4 h-4" /></button>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white font-mono">{st.number}</h1>

@@ -6,6 +6,7 @@ import { formatMoney } from '../../utils/format';
 import SchemeFormModal from './SchemeFormModal';
 import { cardCls, btnPrimary, errMsg, pillCls, thCls, tdCls } from './insuranceUi';
 import { logApiError } from '../../api/logApiError';
+import { ErrorBox } from '../reports/ReportUi';
 
 const copayLabel = (s, t) => {
   if (s.copayType === 'percent') return t('copay.percentShort', { value: s.copayValue });
@@ -19,12 +20,16 @@ const SchemesTab = () => {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(undefined); // undefined = closed, null = new
 
+  const [loadError, setLoadError] = useState(false);
+
   const load = useCallback(async () => {
     try {
       const res = await getSchemes();
       setSchemes(res.schemes || []);
+      setLoadError(false);
     } catch (err) {
       logApiError('Failed to load schemes', err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -70,6 +75,8 @@ const SchemesTab = () => {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading ? (
               <tr><td colSpan={8} className={`${tdCls} text-center py-8`}>{t('loading')}</td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={8} className="p-4"><ErrorBox message={t('common:loadError')} onRetry={load} /></td></tr>
             ) : schemes.length === 0 ? (
               <tr><td colSpan={8} className={`${tdCls} text-center py-8 text-slate-400`}>{t('schemes.empty')}</td></tr>
             ) : (

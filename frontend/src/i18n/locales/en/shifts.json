@@ -69,6 +69,7 @@
     "discounts": "Discounts",
     "tax": "Tax",
     "netSales": "Net sales",
+    "lateSales": "Synced after close ({{count}}, not in totals above)",
     "voids": "Voids ({{count}})",
     "returns": "Returns ({{count}})",
     "payments": "Payments",

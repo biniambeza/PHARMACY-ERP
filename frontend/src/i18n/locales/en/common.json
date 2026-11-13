@@ -85,5 +85,14 @@
     "label": "Pages",
     "pageOf": "Page {{page}} of {{pages}}",
     "showing": "Showing {{shown}} of {{total}}"
-  }
+  },
+  "pdfExport": {
+    "report": "Report",
+    "period": "Period: {{value}}",
+    "generated": "Generated: {{date}}",
+    "generatedBy": "Generated: {{date}} by {{name}}",
+    "page": "Page {{n}}",
+    "noData": "No data for this selection."
+  },
+  "loadError": "Could not load this data. Check your connection and try again."
 }

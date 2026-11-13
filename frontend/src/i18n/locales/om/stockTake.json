@@ -47,7 +47,9 @@
     "expiredSuffix": "(yeroon isaa darbe)",
     "countedAria": "Baay'ina lakkaa'ame {{name}} baachii {{batch}}",
     "noLines": "Sararri walsimu hin jiru.",
-    "footnote": "Yeroo mirkanaa'u garaagarummaan tokkoon tokkoon isaa (kan lakkaa'ame - baay'ina sirnaa jalqabarratti) baay'ina baachii ammaa irratti hojii irra oola, kanaaf gurgurtaan yeroo lakkoofsaa raawwatame ni eegama. Sararoonni hin lakkaa'amne akkuma jiranitti hafu."
+    "footnote": "Yeroo mirkanaa'u garaagarummaan tokkoon tokkoon isaa (kan lakkaa'ame - baay'ina sirnaa jalqabarratti) baay'ina baachii ammaa irratti hojii irra oola, kanaaf gurgurtaan yeroo lakkoofsaa raawwatame ni eegama. Sararoonni hin lakkaa'amne akkuma jiranitti hafu.",
+    "confirmLeave_one": "Lakkoofsi {{count}} hin olkaa'amne jira. Osoo hin olkaa'in baatuu?",
+    "confirmLeave_other": "Lakkoofsonni {{count}} hin olkaa'amne jiru. Osoo hin olkaa'in baatuu?"
   },
   "summary": {
     "counted": "Kan lakkaa'ame",

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getMembers, getSchemes, deleteMember } from '../../api/insuranceApi';
@@ -6,6 +6,7 @@ import { formatDate } from '../../utils/format';
 import MemberFormModal from './MemberFormModal';
 import { cardCls, inputCls, btnPrimary, errMsg, pillCls, thCls, tdCls } from './insuranceUi';
 import { logApiError } from '../../api/logApiError';
+import { ErrorBox } from '../reports/ReportUi';
 
 const PAGE_SIZE = 50;
 
@@ -31,17 +32,25 @@ const MembersTab = () => {
     };
   }, []);
 
+  const [loadError, setLoadError] = useState(false);
+  // Only the latest request may update the list (an older, slower response must not win).
+  const requestId = useRef(0);
+
   const load = useCallback(async () => {
+    const id = ++requestId.current;
     try {
       const params = { page, limit: PAGE_SIZE };
       if (schemeId) params.schemeId = schemeId;
       if (search.trim()) params.search = search.trim();
       const res = await getMembers(params);
+      if (id !== requestId.current) return;
+      setLoadError(false);
       setData({ members: res.members || [], total: res.total || 0 });
     } catch (err) {
       logApiError('Failed to load members', err);
+      if (id === requestId.current) setLoadError(true);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [page, schemeId, search]);
 
@@ -94,6 +103,8 @@ const MembersTab = () => {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading ? (
               <tr><td colSpan={7} className={`${tdCls} text-center py-8`}>{t('loading')}</td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={7} className="p-4"><ErrorBox message={t('common:loadError')} onRetry={load} /></td></tr>
             ) : data.members.length === 0 ? (
               <tr><td colSpan={7} className={`${tdCls} text-center py-8 text-slate-400`}>{t('members.empty')}</td></tr>
             ) : (

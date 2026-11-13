@@ -7,14 +7,27 @@ import StatusBadge from '../common/StatusBadge';
 import { formatDate } from '../../utils/format';
 import { secondaryBtn, errMsg } from './ui';
 
+// Same allowlist and data-URL shape the server accepts (backend/controllers/prescriptionController.js).
+// Anything else (e.g. text/html, image/svg+xml) is never turned into a URL or rendered.
+const FILE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp', 'application/pdf'];
+const DATA_URL_RE = /^data:([a-z]+\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/]+={0,2})$/i;
+
 // Turns a data URL into an object URL (PDFs do not render reliably from data: URLs).
+// Returns { url, type } or null when the data URL is malformed or of a type that isn't allowed.
 const dataUrlToObjectUrl = (dataUrl) => {
-  const [meta, b64] = dataUrl.split(',');
-  const type = meta.slice(5, meta.indexOf(';'));
-  const bin = atob(b64);
+  const m = DATA_URL_RE.exec(String(dataUrl || ''));
+  if (!m) return null;
+  const type = m[1].toLowerCase();
+  if (!FILE_TYPES.includes(type)) return null;
+  let bin;
+  try {
+    bin = atob(m[2]);
+  } catch {
+    return null;
+  }
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
-  return URL.createObjectURL(new Blob([bytes], { type }));
+  return { url: URL.createObjectURL(new Blob([bytes], { type })), type };
 };
 
 /**
@@ -26,6 +39,7 @@ const PrescriptionViewer = ({ prescriptionId, onClose, onChanged }) => {
   const { can } = useAuth();
   const [rx, setRx] = useState(null);
   const [fileUrl, setFileUrl] = useState('');
+  const [fileType, setFileType] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -36,8 +50,12 @@ const PrescriptionViewer = ({ prescriptionId, onClose, onChanged }) => {
         if (cancelled) return;
         setRx(data.prescription);
         if (data.prescription.image) {
-          url = dataUrlToObjectUrl(data.prescription.image);
-          setFileUrl(url);
+          const file = dataUrlToObjectUrl(data.prescription.image);
+          if (file) {
+            url = file.url;
+            setFileUrl(file.url);
+            setFileType(file.type);
+          }
         }
       })
       .catch((err) => !cancelled && setError(errMsg(err, t('rx.errors.loadFailed'))));
@@ -114,7 +132,7 @@ const PrescriptionViewer = ({ prescriptionId, onClose, onChanged }) => {
                     <Download className="w-3.5 h-3.5" /> {t('common:buttons.download')}
                   </a>
                 </div>
-                {rx.imageType === 'application/pdf' ? (
+                {fileType === 'application/pdf' ? (
                   <iframe title={t('rx.pdfTitle')} src={fileUrl} className="w-full h-[60vh] rounded-xl border border-slate-200 dark:border-slate-700" />
                 ) : (
                   <img src={fileUrl} alt={t('rx.scanned')} className="max-h-[60vh] mx-auto rounded-xl border border-slate-200 dark:border-slate-700" />

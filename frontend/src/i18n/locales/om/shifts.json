@@ -69,6 +69,7 @@
     "discounts": "Hir'ina gatii",
     "tax": "Gibira",
     "netSales": "Gurgurtaa qulqulluu",
+    "lateSales": "Erga cufamee booda kan walsimsiifaman ({{count}}, ida'ama olii keessa hin jiran)",
     "voids": "Haqaman ({{count}})",
     "returns": "Deebii ({{count}})",
     "payments": "Kaffaltiiwwan",

@@ -183,7 +183,7 @@
     "notWrittenOffSub": "{{units}} ዕቃዎች በ{{batches}} ባችዎች",
     "period": "ጊዜ",
     "byMonth": "የማብቂያ ኪሳራ በወር",
-    "byMonthSub": "ጊዜው አልፎ የተሰረዘ ክምችት (expire / adjust expired አይነት እንቅስቃሴዎች)",
+    "byMonthSub": "ጊዜው አልፎ የተሰረዘ ክምችት (ጊዜው ያለፈበት ተብለው የተሰረዙ ወይም የተስተካከሉ እንቅስቃሴዎች)",
     "noneWrittenOff": "በዚህ ጊዜ ጊዜው ያለፈ ክምችት አልተሰረዘም።",
     "biggest": "ትልቁ ኪሳራዎች",
     "biggestSub": "በመድኃኒት",

@@ -3,7 +3,7 @@
   "title": "Galmee Qorichoota To'annoo Jalaa",
   "subtitle": "Kennaa fi galii qorichoota to'annoo jalaa hunda hafaa isaa wajjin",
   "printRegister": "Galmee Maxxansi",
-  "entryTypes": { "dispense": "Kenname", "receive": "Fudhatame", "return": "Deebi'e", "adjust": "Sirreeffama" },
+  "entryTypes": { "dispense": "Kenname", "receive": "Fudhatame", "return": "Deebi'e", "adjust": "Sirreeffama", "transfer_out": "Damee biraatti ergame", "transfer_in": "Damee biraa irraa kan gale" },
   "filters": {
     "medicine": "Qoricha",
     "all": "Qorichoota to'annoo jalaa hunda",

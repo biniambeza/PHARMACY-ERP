@@ -25,7 +25,9 @@
     "avgTitle": "Average Unit Price",
     "avgSub_one": "Across {{count}} category",
     "avgSub_other": "Across {{count}} categories",
-    "avgBadge": "Pricing"
+    "avgBadge": "Pricing",
+    "onThisPage": "On this page",
+    "rxSubPage": "{{percent}}% of the medicines on this page"
   },
   "filters": {
     "searchPlaceholder": "Search by brand name or generic chemical name...",
@@ -87,7 +89,7 @@
     "sku": "SKU / Item Code",
     "skuPlaceholder": "Optional internal code",
     "pricingTitle": "Pricing (per {{unit}})",
-    "pricesLocked": "You can't change prices (price:manage)",
+    "pricesLocked": "You can't change prices",
     "costPrice": "Cost Price",
     "retailPrice": "Retail Price",
     "minMargin": "Min Margin %",

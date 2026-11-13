@@ -3,7 +3,7 @@
   "title": "ቁጥጥር የሚደረግባቸው መድኃኒቶች መዝገብ",
   "subtitle": "ቁጥጥር የሚደረግባቸው መድኃኒቶች እያንዳንዱ ስርጭት እና ገቢ ከቀሪ ሚዛን ጋር",
   "printRegister": "መዝገብ አትም",
-  "entryTypes": { "dispense": "የተሰጠ", "receive": "የገባ", "return": "የተመለሰ", "adjust": "ማስተካከያ" },
+  "entryTypes": { "dispense": "የተሰጠ", "receive": "የገባ", "return": "የተመለሰ", "adjust": "ማስተካከያ", "transfer_out": "ወደ ቅርንጫፍ የተላከ", "transfer_in": "ከቅርንጫፍ የገባ" },
   "filters": {
     "medicine": "መድኃኒት",
     "all": "ሁሉም ቁጥጥር የሚደረግባቸው መድኃኒቶች",

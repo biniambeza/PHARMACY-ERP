@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import JsBarcode from 'jsbarcode';
 import { useTranslation } from 'react-i18next';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatDateTime } from '../../utils/format';
 import { getReceiptText } from '../../api/receiptApi';
 import ReceiptQr from './ReceiptQr';
 import { buildReceiptQrText, usableFiscal } from './qrCode';
 
 // Printable receipt (thermal 58mm / 80mm or A4). Styles come from RECEIPT_CSS in utils/printReceipt.js.
-// Props: { sale, pharmacy, width, prefs }
+// Props: { sale, pharmacy, width, prefs, onFiscalPending?(pending) }
+// onFiscalPending is called (after render) whenever the fiscal lookup starts or settles.
 
 const METHOD_KEYS = ['cash', 'card', 'mobile_money', 'credit', 'store_credit', 'insurance', 'bank_transfer', 'cheque'];
 const methodLabel = (t, m) =>
@@ -40,6 +41,8 @@ const isServerId = (id) => typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
 // Fiscal e-invoice identifiers for the QR code. Uses sale.fiscal when the caller already has
 // it; otherwise, when e-invoicing is enabled and we are online, asks the receipt endpoint.
 // Offline / not yet fiscalised: null (the QR then encodes TIN, invoice no, date and total).
+// Returns { fiscal, pending }: `pending` is true while the fetch for this sale is still running
+// (auto-print waits for it so the printed QR carries the fiscal number).
 const useFiscal = (sale, pharmacy) => {
   const given = sale?.fiscal || null;
   const saleId = sale?._id;
@@ -59,13 +62,15 @@ const useFiscal = (sale, pharmacy) => {
       })
       .catch(() => {
         // offline / no permission: keep the fallback QR
+        if (!cancelled) setLoaded({ saleId, fiscal: null });
       });
     return () => {
       cancelled = true;
     };
   }, [shouldFetch, saleId]);
-  if (given) return given;
-  return loaded.saleId === saleId ? loaded.fiscal : null;
+  if (given) return { fiscal: given, pending: false };
+  const settled = loaded.saleId === saleId;
+  return { fiscal: settled ? loaded.fiscal : null, pending: shouldFetch && !settled };
 };
 
 const Row = ({ label, value, className = '' }) => (
@@ -75,8 +80,16 @@ const Row = ({ label, value, className = '' }) => (
   </div>
 );
 
-const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
+const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {}, onFiscalPending }) => {
   const { t } = useTranslation('receipt');
+  const { fiscal: rawFiscal, pending: fiscalPending } = useFiscal(sale, pharmacy);
+  const pendingCb = useRef(onFiscalPending);
+  useEffect(() => {
+    pendingCb.current = onFiscalPending;
+  }, [onFiscalPending]);
+  useEffect(() => {
+    pendingCb.current?.(fiscalPending);
+  }, [fiscalPending, sale?._id]);
   const settings = pharmacy?.settings || {};
   const currency = settings.currency;
   const money = (v) => formatMoney(Number(v) || 0, currency);
@@ -84,7 +97,7 @@ const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
   const narrow = width !== 'A4';
   const tin = pharmacy?.tin || settings.tax?.registrationNo;
   const logoUrl = pharmacy?.logoUrl || pharmacy?.logo;
-  const fiscal = usableFiscal(useFiscal(sale, pharmacy));
+  const fiscal = usableFiscal(rawFiscal);
   const qrText = buildReceiptQrText({ sale, pharmacy, fiscal });
 
   const taxLines = sale.taxLines?.length
@@ -109,7 +122,7 @@ const ReceiptBody = ({ sale, pharmacy, width = '80mm', prefs = {} }) => {
   const returnLabel =
     sale.returnStatus === 'full' ? t('returned') : sale.returnStatus === 'partial' ? t('partiallyReturned') : null;
   const rawDate = sale.offlineCreatedAt || sale.createdAt;
-  const dateText = rawDate ? new Date(rawDate).toLocaleString() : '';
+  const dateText = rawDate ? formatDateTime(rawDate) : '';
   const footerLines = [
     ...(settings.receiptFooter ? String(settings.receiptFooter).split('\n') : [t('thankYou')]),
     ...(prefs.footer ? String(prefs.footer).split('\n') : []),

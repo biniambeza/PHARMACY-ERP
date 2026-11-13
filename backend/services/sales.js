@@ -33,7 +33,21 @@
 //     that the sale is accepted with createdAt = sync time and flagged (offlineTimeFlag). Otherwise
 //     createdAt (what reports use) = offlineCreatedAt = the client time.
 //   - shift: the seller's shift that was open at the client time, else the currently open one;
-//     an offline sale is accepted without a shift even when the pharmacy requires one.
+//     an offline sale is accepted without a shift even when the pharmacy requires one. When that
+//     shift was closed before the sync, the sale is still attached to it (flag shiftLateSync) and
+//     counted in the shift's lateSales (count / total), shown as a "late sync" line on its Z-report.
+//
+// Shift / close race: every sale attached to an open shift increments Shift.salesCount with a
+// write conditional on status 'open', inside the sale transaction. closeShift sets status
+// 'closed' in a transaction too, so the two always conflict: an online sale that loses the race
+// fails with 409 SHIFT_CLOSED ("Shift was closed, open a new shift") instead of landing in a
+// shift whose Z-report is already frozen.
+//
+// Mobile money: a reference (per provider, per pharmacy) can be used by one non-voided sale only
+// (409 PAYMENT_REFERENCE_USED; index on Sale payments provider/reference). The check runs inside
+// the sale transaction; concurrent sales of a pharmacy always conflict on the invoice counter, so
+// two sales with the same reference cannot both commit. A payment intent is locked to the sale
+// atomically (conditional saleId: null -> sale id) before the sale is written (409 PAYMENT_ALREADY_USED).
 //   - the clinical acknowledgement gate is not applied (the sale already happened).
 //
 // Guarantees: everything is validated before the first write; stock is taken FEFO from
@@ -337,8 +351,40 @@ const resolveMobileMoney = async ({ pharmacyId, payments, session }) => {
       p.provider = 'manual';
     }
   }
+
+  // A reference proves one payment: it can back one non-voided sale only (per provider)
+  const seen = new Set();
+  for (const p of payments) {
+    if (p.method !== 'mobile_money' || p.legacy || !p.reference) continue;
+    const key = `${p.provider}|${p.reference}`;
+    if (seen.has(key)) {
+      throw codedError(`Mobile money reference ${p.reference} is used twice in this sale`, 400, 'PAYMENT_REFERENCE_USED');
+    }
+    seen.add(key);
+    const used = await findSaleUsingReference({ pharmacyId, provider: p.provider, reference: p.reference, session });
+    if (used) {
+      throw codedError(
+        `Mobile money reference ${p.reference} was already used for sale ${used.invoiceNumber}`,
+        409,
+        'PAYMENT_REFERENCE_USED'
+      );
+    }
+  }
   return intentsToConsume;
 };
+
+// Non-voided sale of the pharmacy that has a mobile money line with this provider + reference
+// (index: pharmacyId + payments.provider + payments.reference, partial on mobile money sales).
+const findSaleUsingReference = ({ pharmacyId, provider, reference, session = null }) =>
+  Sale.findOne({
+    pharmacyId,
+    'payments.method': 'mobile_money',
+    payments: { $elemMatch: { method: 'mobile_money', provider, reference } },
+    voided: { $ne: true },
+  })
+    .select('_id invoiceNumber')
+    .session(session)
+    .lean();
 
 // ---------- Offline sync helpers ----------
 
@@ -589,6 +635,34 @@ const runSale = async (ctx, input, session, { offline }) => {
   }
 
   // ---- Writes start here ----
+  const saleId = new mongoose.Types.ObjectId();
+
+  // Shift: conditional write so a concurrent close and this sale conflict (see the header)
+  let lateShift = false;
+  if (shift) {
+    const live = await Shift.findOneAndUpdate(
+      { _id: shift._id, pharmacyId, status: 'open' },
+      { $inc: { salesCount: 1 } },
+      { session, projection: { _id: 1 } }
+    );
+    if (!live) {
+      if (!offline) throw codedError('Shift was closed, open a new shift', 409, 'SHIFT_CLOSED');
+      lateShift = true; // offline sale made while the shift was open, synced after the close
+    }
+  }
+
+  // Payment intents: locked to this sale atomically before anything else uses them
+  for (const intentId of intentIds) {
+    const locked = await PaymentIntent.findOneAndUpdate(
+      { _id: intentId, pharmacyId, status: 'confirmed', saleId: null },
+      { $set: { saleId } },
+      { session, projection: { _id: 1 } }
+    );
+    if (!locked) {
+      throw codedError('This mobile money payment was already used for another sale', 409, 'PAYMENT_ALREADY_USED');
+    }
+  }
+
   const saleItems = [];
   const movements = [];
 
@@ -678,6 +752,7 @@ const runSale = async (ctx, input, session, { offline }) => {
 
   const balanceDue = settled.creditAmount;
   const saleDoc = {
+    _id: saleId,
     pharmacyId,
     pharmacistId: user._id,
     staffId: user._id,
@@ -718,6 +793,7 @@ const runSale = async (ctx, input, session, { offline }) => {
     saleDoc.offlineClientCreatedAt = clientTime.raw;
   }
   if (offlinePriceAdjusted) saleDoc.offlinePriceAdjusted = true;
+  if (lateShift) saleDoc.shiftLateSync = true;
   if (clinicalAcknowledged) saleDoc.clinicalAcknowledged = true;
   if (input.offlineId) saleDoc.offlineId = input.offlineId;
   if (insurance) saleDoc.insurance = insurance;
@@ -738,15 +814,12 @@ const runSale = async (ctx, input, session, { offline }) => {
     );
   }
 
-  if (intentIds.length > 0) {
-    const res = await PaymentIntent.updateMany(
-      { _id: { $in: intentIds }, pharmacyId, status: 'confirmed', saleId: null },
-      { $set: { saleId: sale._id } },
+  if (lateShift) {
+    await Shift.updateOne(
+      { _id: shift._id, pharmacyId },
+      { $inc: { 'lateSales.count': 1, 'lateSales.total': grandTotal }, $set: { 'lateSales.lastAt': now } },
       { session }
     );
-    if (res.modifiedCount !== intentIds.length) {
-      throw new AppError('This mobile money payment was already used for another sale', 409);
-    }
   }
 
   // Clinical: controlled register (throws when patient/prescription are missing or invalid)
@@ -830,6 +903,7 @@ module.exports = {
   resolveUnit,
   shiftRequired,
   boundOfflineTime,
+  findSaleUsingReference,
   PAYMENT_METHODS,
   OFFLINE_METHODS,
 };

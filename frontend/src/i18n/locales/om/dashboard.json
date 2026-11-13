@@ -14,7 +14,8 @@
     "title": "Cuunfaa Daashboordii",
     "subtitle": "Lakkoofsota ijoo fi gurgurtaa dhihoo",
     "metric": "Safartuu",
-    "value": "Gatii"
+    "value": "Gatii",
+    "salesFailed": "Gurgurtaa gara alaatti baasuun hin milkoofne. Maaloo irra deebi'aa yaalaa."
   },
   "summary": {
     "revenue": "Galii ({{range}})",
@@ -50,13 +51,10 @@
     "profitable": "Bu'aa qaba",
     "loss": "Kasaaraa",
     "activeBatches": "Baachiiwwan Kuusaa Hojii Irra Jiran",
-    "lots": "Lootii {{count}}",
     "lots_one": "Lootii {{count}}",
     "lots_other": "Lootii {{count}}",
-    "unitsInInventory": "Kuusaa keessa yuunitii {{count}}",
     "unitsInInventory_one": "Kuusaa keessa yuunitii {{count}}",
     "unitsInInventory_other": "Kuusaa keessa yuunitii {{count}}",
-    "skus": "SKU {{count}}",
     "skus_one": "SKU {{count}}",
     "skus_other": "SKU {{count}}"
   },
@@ -98,7 +96,6 @@
     "title": "Sadarkaa Dhiyeessitoota Olaanoo",
     "directory": "Galmee →",
     "empty": "Hanga ammaatti dhiyeessaan hin galmoofne.",
-    "ordersFulfilled": "Ajaja {{count}} raawwatame",
     "ordersFulfilled_one": "Ajaja {{count}} raawwatame",
     "ordersFulfilled_other": "Ajaja {{count}} raawwataman",
     "rating": "Sadarkaa {{rating}}",

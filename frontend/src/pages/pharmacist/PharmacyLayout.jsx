@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
 import { useTheme } from '../../context/useTheme';
 import { getMyPharmacy } from '../../api/pharmacyApi';
@@ -20,6 +20,7 @@ import { logApiError } from '../../api/logApiError';
 const PharmacyLayoutContent = () => {
   const { user, logout, can, membershipRole } = useAuth();
   const offlineSync = useOfflineSyncContext();
+  const location = useLocation();
   // Unsynced offline sales of this user stay on the device: warn before logging out.
   const guardedLogout = async () => {
     if (offlineSync && !(await offlineSync.confirmUnsynced('logout'))) return;
@@ -59,7 +60,7 @@ const PharmacyLayoutContent = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#f4f7fa] dark:bg-[#0d1117] text-slate-800 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-200">
+    <div className="flex h-screen supports-[height:100dvh]:h-dvh bg-[#f4f7fa] dark:bg-[#0d1117] text-slate-800 dark:text-slate-100 font-sans overflow-hidden transition-colors duration-200">
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
@@ -123,7 +124,8 @@ const PharmacyLayoutContent = () => {
           <LocaleSync />
           <AnnouncementBanner />
           <TwoFactorNudge to="/pharmacy/settings" />
-          <ErrorBoundary>
+          {/* Keyed by path so a crashed page's fallback resets when the user navigates away. */}
+          <ErrorBoundary key={location.pathname}>
             <Outlet context={{ pharmacy, globalSearch }} />
           </ErrorBoundary>
         </main>

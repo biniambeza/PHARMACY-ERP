@@ -15,23 +15,26 @@ import {
 } from 'lucide-react';
 import { getSales, getSalesSummary } from '../../api/salesApi';
 import InvoiceReceiptModal from './InvoiceReceiptModal';
-import { formatMoney, formatDate } from '../../utils/format';
+import { formatMoney, formatDate, formatNumber } from '../../utils/format';
 import MetricCard from '../../components/common/MetricCard';
 import { MetricCardSkeleton } from '../../components/common/SkeletonLoader';
 import ReturnModal from '../../components/returns/ReturnModal';
 import VoidSaleModal from '../../components/returns/VoidSaleModal';
 import { useAuth } from '../../context/useAuth';
 import { logApiError } from '../../api/logApiError';
+import Pager from '../../components/common/Pager';
+import useAsync from '../../hooks/useAsync';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
+
+const PAGE_SIZE = 50;
 
 const isToday = (d) => d && new Date(d).toLocaleDateString('en-CA') === new Date().toLocaleDateString('en-CA');
 
 const SalesHistory = () => {
   const { t } = useTranslation('sales');
-  const [sales, setSales] = useState([]);
-  const [summary, setSummary] = useState(null);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
 
   // Receipt Modal
   const [selectedSale, setSelectedSale] = useState(null);
@@ -43,54 +46,37 @@ const SalesHistory = () => {
   const [voidingSale, setVoidingSale] = useState(null);
   const [notice, setNotice] = useState('');
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const params = {};
-      if (search) params.search = search;
-
-      const [salesResult, summaryResult] = await Promise.allSettled([
-        getSales(params),
-        getSalesSummary(),
-      ]);
-
-      let loadedSales = [];
-      if (salesResult.status === 'fulfilled' && salesResult.value?.sales) {
-        loadedSales = salesResult.value.sales;
-        setSales(loadedSales);
-      } else if (salesResult.status === 'rejected') {
-        logApiError('Failed to load sales list', salesResult.reason);
-        setError(salesResult.reason?.response?.data?.message || t('errors.loadSales'));
-      }
-
-      if (summaryResult.status === 'fulfilled' && summaryResult.value?.summary) {
-        setSummary(summaryResult.value.summary);
-      } else if (loadedSales.length > 0) {
-        // Fallback compute summary from sales if summary endpoint fails
-        const todayStr = new Date().toLocaleDateString('en-CA');
-        const today = loadedSales.filter((s) => s.createdAt && new Date(s.createdAt).toLocaleDateString('en-CA') === todayStr);
-        setSummary({
-          todaySalesCount: today.length,
-          todayRevenue: today.reduce((acc, s) => acc + (Number(s.grandTotal) || 0), 0),
-          totalSalesCount: loadedSales.length,
-          totalRevenue: loadedSales.reduce((acc, s) => acc + (Number(s.grandTotal) || 0), 0),
-        });
-      }
-    } catch (err) {
-      logApiError('Failed to load sales history', err);
-      setError(t('errors.loadLedger'));
-    } finally {
-      setLoading(false);
-    }
-  }, [search, t]);
-
+  // Sales list: server-paged; useAsync drops responses from outdated searches/pages.
+  const fetchSales = useCallback(() => {
+    const params = { page, limit: PAGE_SIZE };
+    if (debouncedSearch) params.search = debouncedSearch;
+    return getSales(params);
+  }, [page, debouncedSearch]);
+  const { data: salesData, error: salesError, loading, reload: loadSales } = useAsync(fetchSales);
+  const sales = salesData?.sales || [];
+  const total = Number(salesData?.total) || 0;
+  const error = salesError ? salesError.response?.data?.message || t('errors.loadSales') : '';
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadData();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [loadData]);
+    if (salesError) logApiError('Failed to load sales list', salesError);
+  }, [salesError]);
+
+  // Summary KPIs don't depend on the search or page — fetched on mount, on refresh and after a return/void.
+  const fetchSummary = useCallback(async () => (await getSalesSummary())?.summary || null, []);
+  const { data: summary, error: summaryError, loading: summaryLoading, reload: reloadSummary } = useAsync(fetchSummary);
+  useEffect(() => {
+    if (summaryError) logApiError('Failed to load sales summary', summaryError);
+  }, [summaryError]);
+
+  const loadData = useCallback(() => {
+    loadSales();
+    reloadSummary();
+  }, [loadSales, reloadSummary]);
+
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const changeSearch = (value) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const handleOpenReceipt = (sale) => {
     setSelectedSale(sale);
@@ -162,7 +148,7 @@ const SalesHistory = () => {
           />
           <MetricCard
             title={t('metrics.todayOrders')}
-            value={(summary.todaySalesCount || 0).toString()}
+            value={formatNumber(summary.todaySalesCount || 0)}
             subValue={t('metrics.todayOrdersSub')}
             badgeText={t('metrics.ordersBadge')}
             badgeVariant="emerald"
@@ -182,7 +168,7 @@ const SalesHistory = () => {
           />
           <MetricCard
             title={t('metrics.totalInvoices')}
-            value={(summary.totalSalesCount || 0).toString()}
+            value={formatNumber(summary.totalSalesCount || 0)}
             subValue={t('metrics.totalInvoicesSub')}
             badgeText={t('metrics.receiptsBadge')}
             badgeVariant="emerald"
@@ -190,6 +176,19 @@ const SalesHistory = () => {
             sparklineColor="#10b981"
             sparklineId="sales-total-inv-spark"
           />
+        </div>
+      ) : summaryError && !summaryLoading ? (
+        <div className="p-4 bg-white dark:bg-[#161c26] rounded-2xl border border-rose-200 dark:border-rose-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-300">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+            <span>{t('errors.loadSummary')}</span>
+          </div>
+          <button
+            onClick={reloadSummary}
+            className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl font-semibold transition cursor-pointer self-start sm:self-auto shrink-0"
+          >
+            {t('retryLoading')}
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -207,7 +206,7 @@ const SalesHistory = () => {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => changeSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition"
           />
@@ -216,7 +215,7 @@ const SalesHistory = () => {
         <div className="flex items-center gap-2 self-start sm:self-auto">
           {search && (
             <button
-              onClick={() => setSearch('')}
+              onClick={() => changeSearch('')}
               className="text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white px-2 py-1 transition cursor-pointer"
             >
               {t('clearSearch')}
@@ -240,6 +239,8 @@ const SalesHistory = () => {
         <div className="overflow-x-auto custom-scrollbar">
           {loading ? (
             <div className="p-12 text-center text-xs text-slate-400">{t('loading')}</div>
+          ) : error ? (
+            <div className="p-12 text-center text-xs text-slate-400">{error}</div>
           ) : sales.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
@@ -298,9 +299,7 @@ const SalesHistory = () => {
                     <td className="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">
                       {sale.createdAt ? formatDate(sale.createdAt) : t('na')}
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
-                        {sale.createdAt
-                          ? new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          : ''}
+                        {sale.createdAt ? formatDate(sale.createdAt, { hour: '2-digit', minute: '2-digit' }) : ''}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
@@ -369,6 +368,8 @@ const SalesHistory = () => {
           )}
         </div>
       </div>
+
+      <Pager page={page} pages={pages} total={total} shown={sales.length} onChange={setPage} disabled={loading} />
 
       {/* Invoice Receipt Modal */}
       <InvoiceReceiptModal

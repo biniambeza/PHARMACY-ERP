@@ -25,7 +25,9 @@
     "avgTitle": "አማካይ የአሃድ ዋጋ",
     "avgSub_one": "በ{{count}} ምድብ",
     "avgSub_other": "በ{{count}} ምድቦች",
-    "avgBadge": "ዋጋ"
+    "avgBadge": "ዋጋ",
+    "onThisPage": "በዚህ ገጽ",
+    "rxSubPage": "በዚህ ገጽ ካሉት መድኃኒቶች {{percent}}%"
   },
   "filters": {
     "searchPlaceholder": "በብራንድ ስም ወይም በጄኔሪክ ኬሚካል ስም ይፈልጉ...",
@@ -80,14 +82,14 @@
     "dosageForm": "የመጠን ቅርጽ",
     "strength": "ጥንካሬ / መጠነ ትኩረት",
     "strengthPlaceholder": "ለምሳሌ 500mg, 10mg/ml",
-    "codesTitle": "ባርኮድ እና SKU",
+    "codesTitle": "ባርኮድ እና የእቃ ኮድ",
     "barcode": "ባርኮድ",
     "generateBarcode": "የውስጥ ባርኮድ ፍጠር",
     "barcodePlaceholder": "የምርቱን ባርኮድ ይቃኙ ወይም ይጻፉ",
-    "sku": "SKU / የእቃ ኮድ",
+    "sku": "የእቃ ኮድ",
     "skuPlaceholder": "አማራጭ የውስጥ ኮድ",
     "pricingTitle": "ዋጋ (በ{{unit}})",
-    "pricesLocked": "ዋጋዎችን መቀየር አይችሉም (price:manage)",
+    "pricesLocked": "ዋጋዎችን መቀየር አይችሉም",
     "costPrice": "የግዢ ዋጋ",
     "retailPrice": "የችርቻሮ ዋጋ",
     "minMargin": "ዝቅተኛ ትርፍ %",

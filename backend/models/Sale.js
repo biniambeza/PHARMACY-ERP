@@ -249,6 +249,13 @@ const saleSchema = new mongoose.Schema(
     offlineClientCreatedAt: { type: Date, default: undefined },
     // The pharmacist acknowledged severe allergy / interaction warnings for this sale
     clinicalAcknowledged: { type: Boolean, default: undefined },
+    // Offline sale synced after its shift was closed (counted in Shift.lateSales, not in the Z-report totals)
+    shiftLateSync: { type: Boolean, default: undefined },
+    // Store credit (negative customer balance) that paid part of this sale's credit line
+    // (services/credit.js), and how much of it returns / voids already gave back as store credit.
+    // Undefined on older sales: derived from the customer ledger.
+    storeCreditUsed: { type: Number, min: 0, default: undefined },
+    storeCreditRestored: { type: Number, min: 0, default: undefined },
     // Returns and voids
     returnStatus: {
       type: String,
@@ -308,6 +315,11 @@ saleSchema.index(
 saleSchema.index({ pharmacyId: 1, customerId: 1, createdAt: -1 });
 saleSchema.index({ pharmacyId: 1, staffId: 1, createdAt: -1 });
 saleSchema.index({ pharmacyId: 1, shiftId: 1 });
+// Mobile money reference reuse check (services/sales.js findSaleUsingReference)
+saleSchema.index(
+  { pharmacyId: 1, 'payments.provider': 1, 'payments.reference': 1 },
+  { name: 'mobile_money_reference', partialFilterExpression: { 'payments.method': 'mobile_money' } }
+);
 saleSchema.index(
   { pharmacyId: 1, 'insurance.schemeId': 1, 'insurance.claimId': 1, createdAt: 1 },
   { partialFilterExpression: { 'insurance.schemeId': { $exists: true } } }

@@ -76,7 +76,7 @@
     "errExpiry": "ለFEFO ክምችት ተገዢነት የማብቂያ ቀን ግዴታ ነው።",
     "saveFailed": "የክምችት ገቢን መመዝገብ አልተሳካም",
     "scanLabel": "ባርኮድ ይቃኙ (አማራጭ)",
-    "scanPlaceholder": "ባርኮድ / SKU ይቃኙ ወይም ይጻፉ እና Enter ይጫኑ",
+    "scanPlaceholder": "ባርኮድ / የእቃ ኮድ ይቃኙ ወይም ይጻፉ እና Enter ይጫኑ",
     "medicineLabel": "የመድኃኒት እቃ ይምረጡ",
     "medicineSearchPlaceholder": "መድኃኒት በስም፣ በጀነሪክ ስም ወይም በባርኮድ ይፈልጉ...",
     "loadingCatalog": "ካታሎግ በመጫን ላይ...",

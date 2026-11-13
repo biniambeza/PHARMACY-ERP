@@ -66,7 +66,7 @@ const escapeCell = (v) => {
   if (v === null || v === undefined) return '';
   let s = String(v);
   // Prevent CSV formula injection when opened in a spreadsheet
-  if (/^[=+\-@]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
+  if (/^[=+\-@\t\r]/.test(s) &&!/^-?\d+(\.\d+)?$/.test(s)) s = `'${s}`;
   return /[",\r\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 

@@ -33,7 +33,8 @@
     "fulfilled": "ተሟልቷል",
     "procurementSpend": "የግዥ ወጪ",
     "procurementSpendSub": "ንቁ የመሙያ ካፒታል",
-    "capital": "ካፒታል"
+    "capital": "ካፒታል",
+    "onThisPage": "በዚህ ገጽ"
   },
   "empty": {
     "noMatchTitle": "የሚዛመድ የግዢ ትዕዛዝ የለም",

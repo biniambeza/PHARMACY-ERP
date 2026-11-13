@@ -70,6 +70,10 @@
     "restockNote": "Restocked items go back into the same batch. Expired batches and discarded items are not restocked.",
     "creditSaleNote": "For this credit sale, the refund first reduces what the customer still owes; only the rest is paid out via the refund method.",
     "estimatedRefund": "Estimated refund:",
+    "insuranceNote": "Insurance sale: the insurer's share of returned items is not refunded to the patient; it comes off the insurance claim.",
+    "estimateCredit": "Of which {{amount}} reduces the customer's credit balance",
+    "estimateInsurer": "Insurer's share not refunded: {{amount}}",
+    "estimateHint": "Estimate: the exact refund is calculated when the return is processed.",
     "submit": "Process return",
     "errors": {
       "loadPrevious": "Could not load previous returns for this sale",

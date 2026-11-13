@@ -31,10 +31,26 @@ const RECEIVABLE_STATUSES = ['ordered', 'partially_received'];
 
 const round2 = (n) => Number(Number(n).toFixed(2));
 
+// Unit cost of a batch after merging new units into it (weighted average). Units already on
+// hand keep their cost, paid units come in at `newCost` and bonus units at zero cost:
+//   (qOld * cOld + qPaid * cNew) / (qOld + qPaid + qBonus)
+// Rounded to 4 decimals (the precision used for per-base-unit costs).
+const weightedAverageCost = ({ onHandQty, onHandCost, paidQty, paidCost, bonusQty = 0 }) => {
+  const qOld = Math.max(0, Number(onHandQty) || 0);
+  const cOld = Math.max(0, Number(onHandCost) || 0);
+  const qNew = Math.max(0, Number(paidQty) || 0);
+  const cNew = Math.max(0, Number(paidCost) || 0);
+  const qBonus = Math.max(0, Number(bonusQty) || 0);
+  const totalQty = qOld + qNew + qBonus;
+  if (totalQty <= 0) return cOld;
+  return Math.round(((qOld * cOld + qNew * cNew) / totalQty) * 10000) / 10000;
+};
+
 module.exports = {
   parsePagination,
   isValidId,
   sameDay,
   RECEIVABLE_STATUSES,
   round2,
+  weightedAverageCost,
 };

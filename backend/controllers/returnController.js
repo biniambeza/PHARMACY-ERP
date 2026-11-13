@@ -10,23 +10,14 @@ const { recordMovement } = require('../utils/stockMovement');
 const { audit } = require('../utils/audit');
 const { salePricesIncludeTax, splitAmount } = require('../services/einvoice/payload');
 const { recordClaimAdjustment, ADJUSTABLE_STATUSES } = require('../services/insurance');
+const { recordControlledMovement } = require('../services/clinical');
+const { pharmacyTimeZone } = require('../utils/timezone');
 
 const EPS = 0.005;
 const getCreditService = () => require('../services/credit');
 
 const toMoney = (n) => Number(Number(n || 0).toFixed(2));
 const cleanString = (v, max = 500) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
-
-// Returns a valid IANA timezone name, falling back to UTC.
-const resolveTimeZone = (tz) => {
-  if (typeof tz !== 'string' || !tz.trim()) return 'UTC';
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: tz.trim() });
-    return tz.trim();
-  } catch {
-    return 'UTC';
-  }
-};
 
 const localDay = (date, timeZone) =>
   new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
@@ -252,6 +243,7 @@ const createReturn = async (req, res) => {
         });
         return out;
       };
+      const returnId = new mongoose.Types.ObjectId();
       const returnItems = [];
       const movements = [];
       for (const r of requested.values()) {
@@ -269,6 +261,25 @@ const createReturn = async (req, res) => {
           restocked = result.restocked;
           note = result.restocked ? '' : `not restocked: ${result.note}`;
           if (result.restocked) {
+            // Controlled register: stock back in (no-op for other medicines). Recorded right
+            // after the restock so balanceAfter is the stock at that point.
+            await recordControlledMovement(
+              {
+                pharmacyId: req.pharmacyId,
+                medicineId: si.medicineId,
+                batchId: si.batchId,
+                entryType: 'return',
+                quantityIn: r.quantity,
+                userId: req.user._id,
+                refId: returnId,
+                saleId: sale._id,
+                patientId: sale.patientId || null,
+                prescriptionId: sale.prescriptionId || null,
+                notes: `Return of ${sale.invoiceNumber}: ${reasonText}`.slice(0, 500),
+                date: now,
+              },
+              { session }
+            );
             movements.push({
               pharmacyId: req.pharmacyId,
               batchId: si.batchId,
@@ -334,8 +345,6 @@ const createReturn = async (req, res) => {
       const netTotal = sumOf('netAmount');
       const insurerTotalReturned = sumOf('insurerAmount');
 
-      const returnId = new mongoose.Types.ObjectId();
-
       // Credit sales: take the refund off the customer's balance first. The credit
       // service caps the reversal at what is still owed and updates the sale's
       // balanceDue/paymentStatus itself; the rest is refunded via refundMethod.
@@ -363,10 +372,29 @@ const createReturn = async (req, res) => {
       const seq = await nextSequence(req.pharmacyId, 'return', { session });
       const returnNumber = formatSequence('RET', seq, now);
 
+      // Part of the sale paid with store credit: given back as store credit (never paid out),
+      // up to what that store credit paid and earlier returns did not give back yet.
+      let storeCreditRestored = 0;
+      const afterCredit = toMoney(Math.max(0, refundTotal - creditReversed));
+      if (sale.customerId && afterCredit > 0) {
+        const restored = await getCreditService().restoreStoreCredit(
+          {
+            pharmacyId: req.pharmacyId,
+            customerId: sale.customerId,
+            saleId: sale._id,
+            amount: afterCredit,
+            refId: returnId,
+            note: `Store credit returned by return ${returnNumber}`,
+          },
+          { session }
+        );
+        storeCreditRestored = toMoney(restored?.restored || 0);
+      }
+
       // Store credit: whatever is not taken off the customer's credit balance is credited
       // to the customer's account instead of being paid out.
-      let storeCredited = 0;
-      const refundDue = toMoney(Math.max(0, refundTotal - creditReversed));
+      let storeCredited = storeCreditRestored;
+      const refundDue = toMoney(Math.max(0, afterCredit - storeCreditRestored));
       if (refundMethod === 'store_credit' && refundDue > 0) {
         const result = await getCreditService().issueStoreCredit(
           {
@@ -379,7 +407,7 @@ const createReturn = async (req, res) => {
           },
           { session }
         );
-        storeCredited = toMoney(result?.credited || 0);
+        storeCredited = toMoney(storeCreditRestored + (result?.credited || 0));
       }
 
       // Insurer share of a sale on a submitted / paid claim: booked as a claim adjustment
@@ -450,7 +478,7 @@ const createReturn = async (req, res) => {
           entityId: created._id,
           before: { returnStatus: sale.returnStatus },
           after: created,
-          meta: { saleId: sale._id, invoiceNumber: sale.invoiceNumber, refundTotal, creditReversed },
+          meta: { saleId: sale._id, invoiceNumber: sale.invoiceNumber, refundTotal, creditReversed, storeCreditRestored },
         },
         { session }
       );
@@ -488,13 +516,16 @@ const voidSale = async (req, res) => {
   if (!mongoose.isValidObjectId(saleId)) throw new AppError('Invalid sale id', 400);
   const reasonText = cleanString(req.body?.reason);
   if (!reasonText) throw new AppError('A void reason is required', 400);
-  const timeZone = resolveTimeZone(req.headers['x-timezone']);
+  // Business day of the pharmacy (configured zone, else JOBS_TZ / Africa/Addis_Ababa); the
+  // client's x-timezone header is not trusted here (an extreme zone would stretch "today").
+  const timeZone = pharmacyTimeZone(req.pharmacy);
 
   const session = await mongoose.startSession();
   try {
     let saleAfter;
     let creditWarning = false;
     let creditReversed = 0;
+    let storeCreditRestored = 0;
 
     await session.withTransaction(async () => {
       const now = new Date();
@@ -595,6 +626,24 @@ const voidSale = async (req, res) => {
           },
           { session }
         );
+        // Controlled register: a void puts the dispensed stock back ('return' entry, noted as a void)
+        await recordControlledMovement(
+          {
+            pharmacyId: req.pharmacyId,
+            medicineId: si.medicineId,
+            batchId: si.batchId,
+            entryType: 'return',
+            quantityIn: si.quantity,
+            userId: req.user._id,
+            refId: sale._id,
+            saleId: sale._id,
+            patientId: sale.patientId || null,
+            prescriptionId: sale.prescriptionId || null,
+            notes: `Void of ${sale.invoiceNumber}: ${reasonText}`.slice(0, 500),
+            date: now,
+          },
+          { session }
+        );
       }
 
       const credit = creditPortion(sale);
@@ -612,6 +661,23 @@ const voidSale = async (req, res) => {
           creditWarning = true;
         }
       }
+      // The part of the credit line that store credit paid goes back to store credit
+      storeCreditRestored = 0;
+      if (sale.customerId && credit - creditReversed > EPS) {
+        const restored = await getCreditService().restoreStoreCredit(
+          {
+            pharmacyId: req.pharmacyId,
+            customerId: sale.customerId,
+            saleId: sale._id,
+            amount: toMoney(credit - creditReversed),
+            refId: sale._id,
+            refModel: 'Sale',
+            note: `Store credit returned by void of ${sale.invoiceNumber}`,
+          },
+          { session }
+        );
+        storeCreditRestored = toMoney(restored?.restored || 0);
+      }
 
       saleAfter = await Sale.findOneAndUpdate(
         { _id: sale._id, pharmacyId: req.pharmacyId },
@@ -627,7 +693,7 @@ const voidSale = async (req, res) => {
           entityId: sale._id,
           before: { voided: false },
           after: { voided: true, voidReason: reasonText, voidedAt: now },
-          meta: { invoiceNumber: sale.invoiceNumber, grandTotal: sale.grandTotal, creditReversed },
+          meta: { invoiceNumber: sale.invoiceNumber, grandTotal: sale.grandTotal, creditReversed, storeCreditRestored },
         },
         { session }
       );
@@ -638,13 +704,16 @@ const voidSale = async (req, res) => {
       message: `Sale ${saleAfter.invoiceNumber} voided`,
       sale: saleAfter,
       creditReversed,
+      storeCreditRestored,
       // Voided insurance sales drop out of claims, so only the patient's share is refunded.
+      // Store credit given back is not paid out either.
       refundDue: toMoney(
         Math.max(
           0,
           saleAfter.grandTotal -
             (saleAfter.insurance ? (saleAfter.items || []).reduce((s, si) => s + (Number(si.insuranceAmount) || 0), 0) : 0) -
-            creditReversed
+            creditReversed -
+            storeCreditRestored
         )
       ),
       ...(creditWarning ? { warning: 'Customer credit balance was not adjusted' } : {}),

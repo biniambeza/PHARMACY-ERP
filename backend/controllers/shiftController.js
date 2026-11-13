@@ -28,7 +28,8 @@ const cleanNotes = (v) => (typeof v === 'string' ? v.trim().slice(0, 1000) : '')
 const zeroMethods = () => Object.fromEntries(METHODS.map((m) => [m, 0]));
 
 // Totals of a shift up to `until` (now for an open shift, closedAt for a closed one).
-const computeShiftTotals = async (shift, until = new Date()) => {
+// Pass { session } to read inside a transaction (closeShift).
+const computeShiftTotals = async (shift, until = new Date(), { session = null } = {}) => {
   const pharmacyId = new mongoose.Types.ObjectId(String(shift.pharmacyId));
   const userId = new mongoose.Types.ObjectId(String(shift.userId?._id || shift.userId));
   const window = { $gte: shift.openedAt, $lte: until };
@@ -88,13 +89,13 @@ const computeShiftTotals = async (shift, until = new Date()) => {
         ],
       },
     },
-  ]);
+  ]).session(session);
 
   const [customerPayments, refunds] = await Promise.all([
     CustomerPayment.aggregate([
       { $match: { pharmacyId, receivedBy: userId, createdAt: window } },
       { $group: { _id: '$method', total: { $sum: '$amount' }, count: { $sum: 1 } } },
-    ]),
+    ]).session(session),
     Return.aggregate([
       { $match: { pharmacyId, processedBy: userId, createdAt: window } },
       {
@@ -110,7 +111,7 @@ const computeShiftTotals = async (shift, until = new Date()) => {
           count: { $sum: 1 },
         },
       },
-    ]),
+    ]).session(session),
   ]);
 
   const salesByMethod = zeroMethods();
@@ -185,6 +186,15 @@ const buildZReport = (shift, totals, { generatedAt = new Date() } = {}) => ({
   variance: shift.status === 'closed' ? shift.variance : null,
   generatedAt,
 });
+
+// Offline sales synced after the close (made while the shift was open) are not in the frozen
+// totals: the Z-report shows them as a separate "late sync" line.
+const lateSalesOf = (shift) => ({
+  count: Number(shift?.lateSales?.count) || 0,
+  total: round2(shift?.lateSales?.total || 0),
+  lastAt: shift?.lateSales?.lastAt || null,
+});
+const withLateSales = (zReport, shift) => ({ ...zReport, lateSales: lateSalesOf(shift) });
 
 const loadShift = async (req, id) => {
   if (!mongoose.isValidObjectId(id)) throw new AppError('Shift not found', 404);
@@ -273,38 +283,55 @@ const closeShift = async (req, res) => {
 
   const countedIn = req.body?.counted || {};
   if (typeof countedIn !== 'object' || Array.isArray(countedIn)) throw new AppError('counted must be an object', 400);
-  const counted = Object.fromEntries(COUNTED.map((m) => [m, toMoneyInput(countedIn[m], `Counted ${m.replace('_', ' ')}`)]));
+  const countedValues = Object.fromEntries(COUNTED.map((m) => [m, toMoneyInput(countedIn[m], `Counted ${m.replace('_', ' ')}`)]));
 
-  const closedAt = new Date();
-  const totals = await computeShiftTotals(shift, closedAt);
-  const variance = Object.fromEntries(COUNTED.map((m) => [m, round2(counted[m] - totals.expected[m])]));
+  const notes = cleanNotes(req.body?.notes);
 
-  shift.status = 'closed';
-  shift.closedAt = closedAt;
-  const zReport = buildZReport(shift, totals, { generatedAt: closedAt });
-  zReport.counted = counted;
-  zReport.variance = variance;
-  zReport.closedBy = { _id: req.user._id, name: req.user.name };
+  // The totals and the status change happen in ONE transaction. Every sale increments the
+  // shift's salesCount with a write conditional on status 'open' (services/sales.js), so a sale
+  // committing while we compute makes our write conflict (the transaction retries and the
+  // totals include it) and a sale arriving after the close fails with SHIFT_CLOSED (409).
+  let updated;
+  let zReport;
+  let totals;
+  let counted;
+  let variance;
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const closedAt = new Date();
+      totals = await computeShiftTotals(shift, closedAt, { session });
+      counted = countedValues;
+      variance = Object.fromEntries(COUNTED.map((m) => [m, round2(counted[m] - totals.expected[m])]));
 
-  const updated = await Shift.findOneAndUpdate(
-    { _id: shift._id, pharmacyId: req.pharmacyId, status: 'open' },
-    {
-      $set: {
-        status: 'closed',
-        closedAt,
-        closedBy: req.user._id,
-        expected: totals.expected,
-        counted,
-        variance,
-        notes: cleanNotes(req.body?.notes),
-        zReport,
-      },
-    },
-    { returnDocument: 'after' }
-  )
-    .populate('userId', 'name email')
-    .populate('closedBy', 'name email');
-  if (!updated) throw new AppError('Shift is already closed', 400);
+      const snapshot = { ...shift.toObject(), userId: shift.userId, status: 'closed', closedAt };
+      zReport = buildZReport(snapshot, totals, { generatedAt: closedAt });
+      zReport.counted = counted;
+      zReport.variance = variance;
+      zReport.closedBy = { _id: req.user._id, name: req.user.name };
+
+      updated = await Shift.findOneAndUpdate(
+        { _id: shift._id, pharmacyId: req.pharmacyId, status: 'open' },
+        {
+          $set: {
+            status: 'closed',
+            closedAt,
+            closedBy: req.user._id,
+            expected: totals.expected,
+            counted,
+            variance,
+            notes,
+            zReport,
+          },
+        },
+        { returnDocument: 'after', session }
+      );
+      if (!updated) throw new AppError('Shift is already closed', 400);
+    });
+  } finally {
+    await session.endSession();
+  }
+  updated = await Shift.findById(updated._id).populate('userId', 'name email').populate('closedBy', 'name email');
 
   await audit(req, {
     action: 'shift.close',
@@ -313,7 +340,7 @@ const closeShift = async (req, res) => {
     meta: { shiftNumber: shift.shiftNumber, expected: totals.expected, counted, variance },
   });
 
-  return res.status(200).json({ success: true, message: 'Shift closed', shift: updated, zReport });
+  return res.status(200).json({ success: true, message: 'Shift closed', shift: updated, zReport: withLateSales(zReport, updated) });
 };
 
 // @route GET /api/shifts?status=&userId=&from=&to=&page=&limit=
@@ -364,7 +391,7 @@ const getShift = async (req, res) => {
 const getZReport = async (req, res) => {
   const shift = await loadShift(req, req.params.id);
   if (shift.status === 'closed' && shift.zReport) {
-    return res.status(200).json({ success: true, live: false, zReport: shift.zReport });
+    return res.status(200).json({ success: true, live: false, zReport: withLateSales(shift.zReport, shift) });
   }
   const totals = await computeShiftTotals(shift, shift.closedAt || new Date());
   return res.status(200).json({ success: true, live: shift.status === 'open', zReport: buildZReport(shift, totals) });

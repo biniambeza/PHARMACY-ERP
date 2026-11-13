@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { getSchemes, lookupMembers, previewInsurance } from '../../api/insuranceApi';
 import { formatMoney } from '../../utils/format';
 import { inputCls, errMsg } from './posUtils';
+import { insuranceLinesKey } from './posCheckout';
 
 /**
  * Insurance payment row: scheme + member lookup and the coverage preview (insurer pays X,
@@ -67,7 +68,7 @@ const InsurancePaymentFields = ({ row, lines, onPatch }) => {
   }, [query, row.schemeId, row.member]);
 
   // Coverage preview whenever the scheme, member or cart changes
-  const linesKey = JSON.stringify(lines);
+  const linesKey = insuranceLinesKey(lines);
   const memberId = row.member?._id || '';
   useEffect(() => {
     if (!row.schemeId || !memberId || lines.length === 0) return undefined;
@@ -76,7 +77,8 @@ const InsurancePaymentFields = ({ row, lines, onPatch }) => {
       setPreviewing(true);
       try {
         const res = await previewInsurance({ schemeId: row.schemeId, memberId, lines });
-        if (!cancelled) patchRef.current({ preview: res, amount: String(res.insurerAmount), error: '' });
+        // previewKey: the cart the preview was made for; checkout is blocked when it no longer matches
+        if (!cancelled) patchRef.current({ preview: res, previewKey: linesKey, amount: String(res.insurerAmount), error: '' });
       } catch (err) {
         if (!cancelled) patchRef.current({ preview: null, amount: '', error: errMsg(err, t('insurance.previewFailed')) });
       } finally {
@@ -98,7 +100,9 @@ const InsurancePaymentFields = ({ row, lines, onPatch }) => {
     onPatch({ member: m, preview: null, amount: '', error: '' });
   };
 
-  const preview = row.preview;
+  // A preview for an earlier cart is not shown (a new one is on its way)
+  const preview = row.preview && row.previewKey === linesKey ? row.preview : null;
+  const stale = Boolean(row.preview) && !preview;
   const excluded = preview ? preview.lines.filter((l) => !l.covered) : [];
 
   return (
@@ -166,7 +170,7 @@ const InsurancePaymentFields = ({ row, lines, onPatch }) => {
         </div>
       )}
 
-      {previewing && (
+      {(previewing || (stale && !row.error)) && (
         <p className="inline-flex items-center gap-1 text-[11px] text-slate-500"><Loader2 className="w-3 h-3 animate-spin" /> {t('insurance.calculating')}</p>
       )}
       {preview && !previewing && (

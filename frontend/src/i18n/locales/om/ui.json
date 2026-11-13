@@ -69,5 +69,24 @@
     "draft": "Wixinee",
     "depleted": "Dhumate",
     "status": "Haala"
+  },
+  "layout": {
+    "portalSubtitle": "Poortaalii Faarmaasii",
+    "minimizeSidebar": "Sarara cinaa xiqqeessi",
+    "expandSidebar": "Sarara cinaa bal'isi",
+    "minimizeSidebarLower": "Sarara cinaa xiqqeessi",
+    "expandSidebarLower": "Sarara cinaa bal'isi",
+    "darkMode": "Haala dukkanaa",
+    "lightMode": "Haala ifaa",
+    "toggle": "Jijjiiri",
+    "switchToLight": "Gara haala ifaatti jijjiiri",
+    "switchToDark": "Gara haala dukkanaatti jijjiiri",
+    "signOut": "Ba'i",
+    "quickActions": "Gochaalee Ariifachiisoo",
+    "searchPlaceholder": "Qorichoota, lakkoofsa nagahee, dhukkubsattoota ykn baachii barbaadi...",
+    "openMenu": "Baafata bani",
+    "closeMenu": "Baafata cufi",
+    "defaultUser": "Faarmaasistii",
+    "staffRole": "Hojjetaa"
   }
 }

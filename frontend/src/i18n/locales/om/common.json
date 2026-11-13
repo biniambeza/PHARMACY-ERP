@@ -85,5 +85,14 @@
     "label": "Fuulota",
     "pageOf": "Fuula {{page}} kan {{pages}} keessaa",
     "showing": "{{total}} keessaa {{shown}} agarsiifamaa jira"
-  }
+  },
+  "pdfExport": {
+    "report": "Gabaasa",
+    "period": "Yeroo: {{value}}",
+    "generated": "Kan qophaa'e: {{date}}",
+    "generatedBy": "Kan qophaa'e: {{date}}, {{name}}n",
+    "page": "Fuula {{n}}",
+    "noData": "Filannoo kanaaf odeeffannoon hin jiru."
+  },
+  "loadError": "Odeeffannoo kana fe'uun hin danda'amne. Walqunnamtii keessan mirkaneessaatii irra deebi'aa yaalaa."
 }

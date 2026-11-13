@@ -14,7 +14,8 @@
     "title": "የዳሽቦርድ ማጠቃለያ",
     "subtitle": "ቁልፍ አሃዞች እና የቅርብ ጊዜ ሽያጮች",
     "metric": "መለኪያ",
-    "value": "እሴት"
+    "value": "እሴት",
+    "salesFailed": "የሽያጭ መረጃውን ወደ ውጭ መላክ አልተሳካም። እባክዎ እንደገና ይሞክሩ።"
   },
   "summary": {
     "revenue": "ገቢ ({{range}})",
@@ -50,13 +51,10 @@
     "profitable": "አትራፊ",
     "loss": "ኪሳራ",
     "activeBatches": "ንቁ የክምችት ባችዎች",
-    "lots": "{{count}} ሎቶች",
     "lots_one": "{{count}} ሎት",
     "lots_other": "{{count}} ሎቶች",
-    "unitsInInventory": "በክምችት ውስጥ {{count}} ፍሬዎች",
     "unitsInInventory_one": "በክምችት ውስጥ {{count}} ፍሬ",
     "unitsInInventory_other": "በክምችት ውስጥ {{count}} ፍሬዎች",
-    "skus": "{{count}} የምርት ዓይነቶች",
     "skus_one": "{{count}} የምርት ዓይነት",
     "skus_other": "{{count}} የምርት ዓይነቶች"
   },
@@ -98,7 +96,6 @@
     "title": "ከፍተኛ አቅራቢዎች ደረጃ",
     "directory": "ማውጫ →",
     "empty": "እስካሁን ምንም አቅራቢ አልተመዘገበም።",
-    "ordersFulfilled": "{{count}} ትዕዛዞች ተፈጽመዋል",
     "ordersFulfilled_one": "{{count}} ትዕዛዝ ተፈጽሟል",
     "ordersFulfilled_other": "{{count}} ትዕዛዞች ተፈጽመዋል",
     "rating": "{{rating}} ደረጃ",

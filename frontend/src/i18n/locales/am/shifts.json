@@ -69,6 +69,7 @@
     "discounts": "ቅናሾች",
     "tax": "ግብር",
     "netSales": "የተጣራ ሽያጭ",
+    "lateSales": "ከተዘጋ በኋላ የተመሳሰሉ ሽያጮች ({{count}}፣ ከላይ ባለው ድምር ውስጥ የሉም)",
     "voids": "የተሰረዙ ({{count}})",
     "returns": "ተመላሾች ({{count}})",
     "payments": "ክፍያዎች",

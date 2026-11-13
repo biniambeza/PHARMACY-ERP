@@ -13,7 +13,8 @@
     "db:clone": "node scripts/cloneDatabase.js",
     "seed:demo": "node utils/seedPharmacyData.js",
     "e2e:server": "node tests/e2e/server.js",
-    "db:sync-indexes": "node scripts/syncIndexes.js"
+    "db:sync-indexes": "node scripts/syncIndexes.js",
+    "db:fix-expired-status": "node scripts/fixExpiredStatus.js"
   },
   "keywords": [],
   "author": "",

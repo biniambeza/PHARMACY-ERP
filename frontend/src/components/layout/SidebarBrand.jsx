@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Pharmacy sidebar header: logo, pharmacy name and collapse/close buttons.
 const SidebarBrand = ({ pharmacy, collapsed, onToggleCollapse, onCloseMobile }) => {
+  const { t } = useTranslation('ui');
   return (
     <div
       className={`h-20 ${
@@ -20,7 +22,7 @@ const SidebarBrand = ({ pharmacy, collapsed, onToggleCollapse, onCloseMobile }) 
                 {pharmacy ? pharmacy.name : 'Pharmacy ERP'}
               </h1>
               <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
-                Dispensary Portal
+                {t('layout.portalSubtitle')}
               </p>
             </div>
           </Link>
@@ -28,7 +30,8 @@ const SidebarBrand = ({ pharmacy, collapsed, onToggleCollapse, onCloseMobile }) 
             {/* Desktop Collapse Toggle */}
             <button
               onClick={onToggleCollapse}
-              title="Minimize Sidebar"
+              title={t('layout.minimizeSidebar')}
+              aria-label={t('layout.minimizeSidebar')}
               className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition cursor-pointer"
             >
               <ChevronLeft className="w-4.5 h-4.5" />
@@ -36,6 +39,7 @@ const SidebarBrand = ({ pharmacy, collapsed, onToggleCollapse, onCloseMobile }) 
             {/* Mobile Close Button */}
             <button
               onClick={onCloseMobile}
+              aria-label={t('layout.closeMenu')}
               className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -52,7 +56,8 @@ const SidebarBrand = ({ pharmacy, collapsed, onToggleCollapse, onCloseMobile }) 
           {/* Expand Toggle floating button on border */}
           <button
             onClick={onToggleCollapse}
-            title="Expand Sidebar"
+            title={t('layout.expandSidebar')}
+            aria-label={t('layout.expandSidebar')}
             className="hidden lg:flex absolute -right-6 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-[#161c26] border border-slate-200 dark:border-slate-700 shadow-md items-center justify-center text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer z-50 hover:scale-110"
           >
             <ChevronRight className="w-3.5 h-3.5" />

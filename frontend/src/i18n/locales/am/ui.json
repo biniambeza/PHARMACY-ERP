@@ -69,5 +69,24 @@
     "draft": "ረቂቅ",
     "depleted": "ተሟጧል",
     "status": "ሁኔታ"
+  },
+  "layout": {
+    "portalSubtitle": "የመድኃኒት ቤት መግቢያ",
+    "minimizeSidebar": "የጎን አሞሌን አሳንስ",
+    "expandSidebar": "የጎን አሞሌን አስፋ",
+    "minimizeSidebarLower": "የጎን አሞሌን አሳንስ",
+    "expandSidebarLower": "የጎን አሞሌን አስፋ",
+    "darkMode": "ጨለማ ገጽታ",
+    "lightMode": "ብሩህ ገጽታ",
+    "toggle": "ቀያይር",
+    "switchToLight": "ወደ ብሩህ ገጽታ ቀይር",
+    "switchToDark": "ወደ ጨለማ ገጽታ ቀይር",
+    "signOut": "ውጣ",
+    "quickActions": "ፈጣን እርምጃዎች",
+    "searchPlaceholder": "መድኃኒቶችን፣ የደረሰኝ ቁጥሮችን፣ ታካሚዎችን ወይም ባቾችን ይፈልጉ...",
+    "openMenu": "ምናሌ ክፈት",
+    "closeMenu": "ምናሌ ዝጋ",
+    "defaultUser": "ፋርማሲስት",
+    "staffRole": "ሠራተኛ"
   }
 }

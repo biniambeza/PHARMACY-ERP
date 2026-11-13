@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { getClaims, getSchemes } from '../../api/insuranceApi';
@@ -7,6 +7,7 @@ import BuildClaimModal from './BuildClaimModal';
 import ClaimDetailModal from './ClaimDetailModal';
 import { cardCls, inputCls, btnPrimary, CLAIM_STATUSES, claimStatusCls, pillCls, thCls, tdCls } from './insuranceUi';
 import { logApiError } from '../../api/logApiError';
+import { ErrorBox } from '../reports/ReportUi';
 
 const ClaimsTab = () => {
   const { t } = useTranslation('insurance');
@@ -29,17 +30,25 @@ const ClaimsTab = () => {
     };
   }, []);
 
+  const [loadError, setLoadError] = useState(false);
+  // Only the latest request may update the list (an older, slower response must not win).
+  const requestId = useRef(0);
+
   const load = useCallback(async () => {
+    const id = ++requestId.current;
     try {
       const params = {};
       if (filters.schemeId) params.schemeId = filters.schemeId;
       if (filters.status) params.status = filters.status;
       const res = await getClaims(params);
+      if (id !== requestId.current) return;
+      setLoadError(false);
       setClaims(res.claims || []);
     } catch (err) {
       logApiError('Failed to load claims', err);
+      if (id === requestId.current) setLoadError(true);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [filters]);
 
@@ -82,6 +91,8 @@ const ClaimsTab = () => {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading ? (
               <tr><td colSpan={8} className={`${tdCls} text-center py-8`}>{t('loading')}</td></tr>
+            ) : loadError ? (
+              <tr><td colSpan={8} className="p-4"><ErrorBox message={t('common:loadError')} onRetry={load} /></td></tr>
             ) : claims.length === 0 ? (
               <tr><td colSpan={8} className={`${tdCls} text-center py-8 text-slate-400`}>{t('claims.empty')}</td></tr>
             ) : (

@@ -33,7 +33,8 @@
     "fulfilled": "Guutameera",
     "procurementSpend": "Baasii Bittaa",
     "procurementSpendSub": "Kaappitaala guutuu hojii irra jiru",
-    "capital": "Kaappitaala"
+    "capital": "Kaappitaala",
+    "onThisPage": "Fuula kana irratti"
   },
   "empty": {
     "noMatchTitle": "Ajajni bittaa walsimu hin jiru",

@@ -4,6 +4,7 @@ const PaymentIntent = require('../models/PaymentIntent');
 const AppError = require('../utils/AppError');
 const { audit } = require('../utils/audit');
 const { getProvider, listProviders, defaultProviderName, verifyWebhookSecret } = require('../services/payments');
+const { findSaleUsingReference } = require('../services/sales');
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
 
@@ -36,14 +37,18 @@ const createIntent = async (req, res) => {
   const phone = typeof req.body?.phone === 'string' ? req.body.phone.trim().slice(0, 30) : '';
   const reference = typeof req.body?.reference === 'string' ? req.body.reference.trim() : '';
 
+  // A typed (manual) reference already backing a non-voided sale cannot be used again. Unused
+  // confirmed intents with the same reference are allowed (the cashier retried); the sale itself
+  // re-checks the reference and locks the intent atomically (services/sales.js).
   if (provider.name === 'manual' && reference) {
-    const dup = await PaymentIntent.findOne({
-      pharmacyId: req.pharmacyId,
-      provider: 'manual',
-      reference,
-      status: 'confirmed',
-    }).select('_id saleId');
-    if (dup && dup.saleId) throw new AppError('This transaction reference was already used for another sale', 400);
+    const used = await findSaleUsingReference({ pharmacyId: req.pharmacyId, provider: 'manual', reference });
+    if (used) {
+      return res.status(409).json({
+        success: false,
+        code: 'PAYMENT_REFERENCE_USED',
+        message: `This transaction reference was already used for sale ${used.invoiceNumber}`,
+      });
+    }
   }
 
   const result = await provider.initiate({

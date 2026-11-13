@@ -1,24 +1,28 @@
 import { Pill, ShieldAlert, ShieldCheck, DollarSign } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import MetricCard from '../common/MetricCard';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatNumber } from '../../utils/format';
 
-// KPI summary row for the medicine catalog page.
-const MedicineKpiCards = ({ medicines, categoryCount }) => {
+// KPI summary row for the medicine catalog page. `total` is the server-side count of all
+// matching medicines; the other figures come from the loaded page, so when the list spans
+// several pages (`paged`) they're labelled "on this page".
+const MedicineKpiCards = ({ medicines, categoryCount, total, paged = false }) => {
   const { t } = useTranslation('medicines');
 
-  const totalProducts = medicines.length;
+  const pageCount = medicines.length;
+  const totalProducts = typeof total === 'number' ? total : pageCount;
   const rxCount = medicines.filter((m) => m.requiresPrescription).length;
-  const otcCount = totalProducts - rxCount;
-  const avgPrice = totalProducts > 0
-    ? medicines.reduce((sum, m) => sum + (Number(m.price) || 0), 0) / totalProducts
+  const otcCount = pageCount - rxCount;
+  const avgPrice = pageCount > 0
+    ? medicines.reduce((sum, m) => sum + (Number(m.price) || 0), 0) / pageCount
     : 0;
+  const rxPercent = pageCount > 0 ? Math.round((rxCount / pageCount) * 100) : 0;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
       <MetricCard
         title={t('kpi.totalTitle')}
-        value={totalProducts.toString()}
+        value={formatNumber(totalProducts)}
         subValue={t('kpi.totalSub')}
         badgeText={t('kpi.totalBadge')}
         badgeVariant="emerald"
@@ -30,9 +34,9 @@ const MedicineKpiCards = ({ medicines, categoryCount }) => {
 
       <MetricCard
         title={t('kpi.rxTitle')}
-        value={rxCount.toString()}
-        subValue={t('kpi.rxSub', { percent: totalProducts > 0 ? Math.round((rxCount / totalProducts) * 100) : 0 })}
-        badgeText={t('kpi.rxBadge')}
+        value={formatNumber(rxCount)}
+        subValue={paged ? t('kpi.rxSubPage', { percent: rxPercent }) : t('kpi.rxSub', { percent: rxPercent })}
+        badgeText={paged ? t('kpi.onThisPage') : t('kpi.rxBadge')}
         badgeVariant="amber"
         icon={<ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
         sparklineData={[8, 12, 10, 15, 14, 18, 17, rxCount]}
@@ -42,9 +46,9 @@ const MedicineKpiCards = ({ medicines, categoryCount }) => {
 
       <MetricCard
         title={t('kpi.otcTitle')}
-        value={otcCount.toString()}
+        value={formatNumber(otcCount)}
         subValue={t('kpi.otcSub')}
-        badgeText={t('kpi.otcBadge')}
+        badgeText={paged ? t('kpi.onThisPage') : t('kpi.otcBadge')}
         badgeVariant="emerald"
         icon={<ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
         sparklineData={[10, 14, 16, 18, 22, 21, 24, otcCount]}
@@ -56,7 +60,7 @@ const MedicineKpiCards = ({ medicines, categoryCount }) => {
         title={t('kpi.avgTitle')}
         value={formatMoney(avgPrice)}
         subValue={t('kpi.avgSub', { count: categoryCount })}
-        badgeText={t('kpi.avgBadge')}
+        badgeText={paged ? t('kpi.onThisPage') : t('kpi.avgBadge')}
         badgeVariant="indigo"
         icon={<DollarSign className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
         sparklineData={[20, 24, 21, 27, 26, 31, 29, avgPrice]}

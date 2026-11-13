@@ -16,7 +16,8 @@ import {
 import { useTranslation, Trans } from 'react-i18next';
 import { getExpiryOverview } from '../../api/notificationApi';
 import useAsync from '../../hooks/useAsync';
-import { formatMoney, formatDate } from '../../utils/format';
+import { formatMoney, formatDate, formatNumber, getCalendar, getDefaultLocale } from '../../utils/format';
+import { gregorianToEthiopian, ethiopianMonthName } from '../../utils/ethiopianCalendar';
 
 const BUCKETS = [
   { key: 'expired', icon: AlertOctagon, accent: 'text-rose-600 dark:text-rose-400', ring: 'ring-rose-500', chip: 'bg-rose-50 dark:bg-rose-950/40' },
@@ -28,9 +29,15 @@ const BUCKETS = [
 const card =
   'bg-white dark:bg-[#161c26] border border-slate-100/90 dark:border-slate-800/80 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)]';
 
+// Expiry months are Gregorian 'YYYY-MM' keys. In the Ethiopian calendar a Gregorian month spans
+// two Ethiopian months; label it with the one covering most of it (the one containing the 15th).
 const monthLabel = (key) => {
   const [y, m] = key.split('-').map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+  if (getCalendar() === 'ethiopian') {
+    const et = gregorianToEthiopian(y, m, 15);
+    return `${ethiopianMonthName(et.month, getDefaultLocale())} ${String(et.year).slice(-2)}`;
+  }
+  return formatDate(new Date(y, m - 1, 1), { month: 'short', year: '2-digit' });
 };
 
 const daysLabel = (t, item) => {
@@ -118,7 +125,7 @@ const Expiry = () => {
                   </div>
                   <p className={`text-2xl font-bold mt-2 ${b.accent}`}>{info.count}</p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {t('bucketSummary', { count: info.count, units: info.quantity.toLocaleString() })}
+                    {t('bucketSummary', { count: info.count, units: formatNumber(info.quantity) })}
                   </p>
                   <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2 text-[11px]">
                     <div>
@@ -202,7 +209,7 @@ const Expiry = () => {
               <div className="mt-5 space-y-2">
                 {writeOffs.map((w) => (
                   <div key={w.month} className="flex items-center gap-3 text-[11px]">
-                    <span className="w-14 shrink-0 text-slate-500 dark:text-slate-400">{monthLabel(w.month)}</span>
+                    <span className="w-20 shrink-0 text-slate-500 dark:text-slate-400">{monthLabel(w.month)}</span>
                     <div className="flex-1 h-4 bg-slate-100 dark:bg-slate-800/70 rounded-md overflow-hidden">
                       <div
                         className="h-full bg-rose-400/80 dark:bg-rose-500/70 rounded-md"

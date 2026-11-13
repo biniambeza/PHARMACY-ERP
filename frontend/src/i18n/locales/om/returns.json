@@ -70,6 +70,10 @@
     "restockNote": "Meeshaaleen kuusaatti deebi'an baachii wal fakkaatutti deebi'u. Baachiiwwan yeroon itti darbe fi meeshaaleen gataman kuusaatti hin deebi'an.",
     "creditSaleNote": "Gurgurtaa liqii kanaaf, maallaqni deebi'u jalqaba liqii maamilli qabu hir'isa; kan hafe qofa mala deebisuutiin kaffalama.",
     "estimatedRefund": "Maallaqa deebi'u tilmaamame:",
+    "insuranceNote": "Gurgurtaa inshuraansii: qoodni dhiyeessaa inshuraansii meeshaalee deebi'anii dhukkubsataaf hin deebi'u; gaaffii kaffaltii inshuraansii irraa hir'ifama.",
+    "estimateCredit": "Kana keessaa {{amount}} liqii maamilaa hir'isa",
+    "estimateInsurer": "Qooda dhiyeessaa inshuraansii hin deebine: {{amount}}",
+    "estimateHint": "Tilmaama: maallaqni deebi'u sirriin yeroo deebiin galmaa'u herregama.",
     "submit": "Deebii raawwadhu",
     "errors": {
       "loadPrevious": "Deebii duraanii gurgurtaa kanaa fe'uun hin danda'amne",

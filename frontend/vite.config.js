@@ -79,26 +79,30 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,ico,png,woff2}'],
+        // Fonts are self-hosted (@fontsource, see main.jsx). The subsets the app always needs
+        // are precached so the offline POS has them from the first visit: Latin Inter and
+        // JetBrains Mono, and Ethiopic Noto Sans Ethiopic (Amharic). The other unicode-range
+        // subsets (cyrillic, greek, vietnamese, latin-ext, ...) and the woff fallbacks are
+        // cached at runtime the first time a page needs them.
+        globPatterns: [
+          '**/*.{js,css,html,svg,ico,png}',
+          'assets/inter-latin-[0-9]*.woff2',
+          'assets/jetbrains-mono-latin-[0-9]*.woff2',
+          'assets/noto-sans-ethiopic-ethiopic-*.woff2',
+        ],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
         cleanupOutdatedCaches: true,
         // /api requests are never cached: they always go to the network.
-        // Google Fonts (Inter, JetBrains Mono, Noto Sans Ethiopic) are cached so the offline
-        // POS keeps its fonts (Amharic included).
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com',
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'google-fonts-stylesheets' },
-          },
-          {
-            urlPattern: ({ url }) => url.origin === 'https://fonts.gstatic.com',
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /^\/assets\/.+\.woff2?$/.test(url.pathname),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'google-fonts-webfonts',
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheName: 'app-fonts',
+              // File names are content-hashed, so a cached font never goes stale.
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [200] },
             },
           },
         ],

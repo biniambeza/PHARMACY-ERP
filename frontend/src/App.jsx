@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -43,9 +44,11 @@ const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 
 // Suspense fallback shown while a page chunk downloads.
-const PageFallback = () => (
+const PageFallback = () => {
+  const { t } = useTranslation();
+  return (
   <div className="p-6 space-y-6" role="status" aria-busy="true" aria-live="polite">
-    <span className="sr-only">Loading...</span>
+    <span className="sr-only">{t('labels.loading')}</span>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
         <MetricCardSkeleton key={i} />
@@ -53,7 +56,8 @@ const PageFallback = () => (
     </div>
     <TableSkeleton rows={6} cols={5} />
   </div>
-);
+  );
+};
 
 const lazyPage = (element) => <Suspense fallback={<PageFallback />}>{element}</Suspense>;
 
@@ -74,7 +78,7 @@ const pharmacyPages = [
   { path: '/pharmacy/notifications', element: <Notifications />, perm: 'notifications:view' },
   { path: '/pharmacy/customers', element: <Customers />, perm: 'customer:view' },
   { path: '/pharmacy/payables', element: <Payables />, perm: 'supplier:pay' },
-  { path: '/pharmacy/reorder', element: <Reorder />, perm: 'po:manage' },
+  { path: '/pharmacy/reorder', element: <Reorder />, perm: 'po:view' }, // backend: suggestions need po:view, creating POs po:manage (gated in-page)
   { path: '/pharmacy/stock-take', element: <StockTake />, perm: 'stock:take' },
   { path: '/pharmacy/movements', element: <Movements />, perm: 'stock:view' },
   { path: '/pharmacy/import', element: <Import />, perm: 'data:import' },

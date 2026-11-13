@@ -8,6 +8,8 @@ const AdminSidebarFooter = ({ collapsed, onOpenSecurity, onOpenPassword }) => {
   const { t } = useTranslation('admin');
   const { user, logout } = useAuth();
   const { toggleTheme, isDark } = useTheme();
+  // The admin portal is only for super admins; never show the raw role key.
+  const roleLabel = t('layout.superAdmin');
   return (
     <div className={`p-3 border-t border-slate-200/80 dark:border-[#262e3f] bg-white dark:bg-[#161c26] shrink-0 space-y-2 ${collapsed ? 'flex flex-col items-center' : ''}`}>
       {/* Light / Dark Mode Toggle Pill */}
@@ -58,7 +60,7 @@ const AdminSidebarFooter = ({ collapsed, onOpenSecurity, onOpenPassword }) => {
                 {user?.name || t('layout.administrator')}
               </p>
               <p className="text-[10px] text-emerald-600 dark:text-emerald-400 capitalize truncate font-semibold">
-                {user?.role || t('layout.superAdmin')}
+                {roleLabel}
               </p>
             </div>
           </div>
@@ -89,7 +91,7 @@ const AdminSidebarFooter = ({ collapsed, onOpenSecurity, onOpenPassword }) => {
       ) : (
         <div className="flex flex-col items-center gap-2 pt-1">
           <div
-            title={`${user?.name || t('layout.administrator')} (${user?.role || t('layout.superAdmin')})`}
+            title={`${user?.name || t('layout.administrator')} (${roleLabel})`}
             className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 text-white font-bold text-xs flex items-center justify-center shadow-xs cursor-default"
           >
             {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}

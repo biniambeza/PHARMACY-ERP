@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Wallet, Plus, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,7 @@ import InvoicesTable from '../../components/payables/InvoicesTable';
 import BalancesTable from '../../components/payables/BalancesTable';
 import PaymentsTable from '../../components/payables/PaymentsTable';
 import { logApiError } from '../../api/logApiError';
+import { ErrorBox } from '../../components/reports/ReportUi';
 
 const Payables = () => {
   const { t } = useTranslation('payables');
@@ -37,8 +38,12 @@ const Payables = () => {
   const [loading, setLoading] = useState(true);
   const [showInvoice, setShowInvoice] = useState(false);
   const [payTarget, setPayTarget] = useState(null);
+  const [loadError, setLoadError] = useState(false);
+  const requestId = useRef(0);
 
   const load = useCallback(async () => {
+    const id = ++requestId.current;
+    setLoadError(false);
     try {
       const invParams = {};
       if (statusFilter === 'overdue') invParams.overdue = 'true';
@@ -52,6 +57,7 @@ const Payables = () => {
         getPayablesAging(),
         getSuppliers(),
       ]);
+      if (id !== requestId.current) return;
       setInvoices(inv.invoices || []);
       setPayments(pay.payments || []);
       setBalances(bal);
@@ -59,8 +65,9 @@ const Payables = () => {
       setSuppliers(sup.suppliers || []);
     } catch (err) {
       logApiError('Failed to load payables', err);
+      if (id === requestId.current) setLoadError(true);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [statusFilter, supplierFilter]);
 
@@ -113,6 +120,8 @@ const Payables = () => {
           </button>
         </Can>
       </div>
+
+      {loadError && <ErrorBox message={t('common:loadError')} onRetry={load} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
         <div className={`${cardCls} p-5`}>
@@ -186,6 +195,8 @@ const Payables = () => {
             <div className="p-8">
               <CardSkeleton height="h-64" />
             </div>
+          ) : loadError ? (
+            <p className="p-8 text-center text-xs text-slate-500 dark:text-slate-400">{t('common:loadError')}</p>
           ) : tab === 'invoices' ? (
             <InvoicesTable
               invoices={invoices}

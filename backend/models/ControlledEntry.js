@@ -17,7 +17,12 @@ const controlledEntrySchema = new mongoose.Schema(
     quantityIn: { type: Number, min: 0, default: 0 },
     balanceAfter: { type: Number, required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    entryType: { type: String, enum: ['dispense', 'receive', 'return', 'adjust'], required: true },
+    // transfer_out / transfer_in: stock sent to / received from another branch
+    entryType: {
+      type: String,
+      enum: ['dispense', 'receive', 'return', 'adjust', 'transfer_out', 'transfer_in'],
+      required: true,
+    },
     // Source document (PO, return, stock adjustment...) when not a sale
     refId: { type: mongoose.Schema.Types.ObjectId, default: null },
     notes: { type: String, trim: true, default: '' },

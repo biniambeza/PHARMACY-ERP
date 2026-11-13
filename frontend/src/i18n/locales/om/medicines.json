@@ -25,7 +25,9 @@
     "avgTitle": "Giddugala Gatii Yuunitii",
     "avgSub_one": "Ramaddii {{count}} keessatti",
     "avgSub_other": "Ramaddiiwwan {{count}} keessatti",
-    "avgBadge": "Gatii"
+    "avgBadge": "Gatii",
+    "onThisPage": "Fuula kana irratti",
+    "rxSubPage": "Qorichoota fuula kana irra jiran keessaa {{percent}}%"
   },
   "filters": {
     "searchPlaceholder": "Maqaa daldalaa ykn maqaa kemikaalaa jeneerikiin barbaadi...",
@@ -87,7 +89,7 @@
     "sku": "SKU / Koodii Meeshaa",
     "skuPlaceholder": "Koodii keessoo filannoo",
     "pricingTitle": "Gatii ({{unit}} tokkoof)",
-    "pricesLocked": "Gatii jijjiiruu hin dandeessu (price:manage)",
+    "pricesLocked": "Gatii jijjiiruu hin dandeessu",
     "costPrice": "Gatii Bittaa",
     "retailPrice": "Gatii Gurgurtaa",
     "minMargin": "Bu'aa Xiqqaa %",

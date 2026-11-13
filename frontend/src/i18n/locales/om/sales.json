@@ -8,7 +8,8 @@
   "retryLoading": "Irra Deebi'ii Fe'i",
   "errors": {
     "loadSales": "Daldala gurgurtaa fe'uun hin milkoofne",
-    "loadLedger": "Galmee faarmaasii fe'uun hin danda'amne. Maaloo walqunnamtii neetworkii keessanii mirkaneessaa."
+    "loadLedger": "Galmee faarmaasii fe'uun hin danda'amne. Maaloo walqunnamtii neetworkii keessanii mirkaneessaa.",
+    "loadSummary": "Cuunfaa gurgurtaa fe'uun hin danda'amne."
   },
   "metrics": {
     "todayRevenue": "Galii Har'aa",

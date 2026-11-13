@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import StatusBadge from '../common/StatusBadge';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatDate } from '../../utils/format';
 import { panelCls } from './panel';
 
 const SaleStatus = ({ sale }) => {
@@ -66,10 +66,7 @@ const RecentSalesCard = ({ recentSales, onOpenReceipt }) => {
                     <td className="py-3 text-slate-600 dark:text-slate-300">
                       <span className="block truncate max-w-[120px]">{sale.customer?.name || t('recentSales.walkInPatient')}</span>
                       <span className="text-[10px] text-slate-400">
-                        {new Date(sale.createdAt).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
+                        {formatDate(sale.createdAt, { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </td>
                     <td className="py-3 font-bold text-slate-900 dark:text-white">{formatMoney(sale.grandTotal)}</td>

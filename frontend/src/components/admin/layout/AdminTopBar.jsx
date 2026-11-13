@@ -29,6 +29,7 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
         {/* Mobile menu trigger */}
         <button
           onClick={onOpenMobile}
+          aria-label={t('ui:layout.openMenu')}
           className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,6 +74,7 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
         {/* Notification Bell */}
         <button
           title={t('layout.notifications')}
+          aria-label={t('layout.notifications')}
           className="relative p-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition cursor-pointer"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -109,7 +111,7 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
               <span className="text-slate-400 text-[10px]">▼</span>
             </div>
             <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block leading-tight capitalize">
-              {user?.role || t('layout.superAdmin')}
+              {t('layout.superAdmin')}
             </span>
           </div>
         </div>

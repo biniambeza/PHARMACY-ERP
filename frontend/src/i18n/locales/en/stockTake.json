@@ -47,7 +47,9 @@
     "expiredSuffix": "(expired)",
     "countedAria": "Counted quantity for {{name}} batch {{batch}}",
     "noLines": "No lines match.",
-    "footnote": "On approval each variance (counted - system qty at start) is applied to the batch's current quantity, so sales made during the count are kept. Uncounted lines are left unchanged."
+    "footnote": "On approval each variance (counted - system qty at start) is applied to the batch's current quantity, so sales made during the count are kept. Uncounted lines are left unchanged.",
+    "confirmLeave_one": "You have {{count}} unsaved count. Leave without saving?",
+    "confirmLeave_other": "You have {{count}} unsaved counts. Leave without saving?"
   },
   "summary": {
     "counted": "Counted",

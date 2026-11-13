@@ -5,24 +5,81 @@ const AppError = require('../../utils/AppError');
 const escapeRegex = require('../../utils/escapeRegex');
 const { recordMovement } = require('../../utils/stockMovement');
 const { audit } = require('../../utils/audit');
-const { isId, sameDay, runTransaction } = require('./helpers');
+const { isId, sameDay, runTransaction, recordTransferRegister } = require('./helpers');
+const { weightedAverageCost } = require('../purchaseOrders/helpers');
 
-// Finds the destination medicine by name (case-insensitive) or creates a copy
-// of the source medicine in the destination catalog.
-const destinationMedicine = async ({ line, toPharmacyId, session, cache }) => {
+const norm = (v) => String(v || '').trim().toLowerCase().replace(/\s+/g, ' ');
+const describe = (m) =>
+  [m.name, m.strength, m.dosageForm].filter(Boolean).join(' ') + ` (base unit "${m.baseUnit || 'unit'}")`;
+
+// Stock moves in base units, so the destination medicine must count in the same base unit and
+// any pack unit both catalogs define must hold the same number of base units. A mismatch is
+// refused (409) rather than silently converted.
+const assertCompatible = (src, dest) => {
+  const problems = [];
+  if (norm(src.baseUnit || 'unit') !== norm(dest.baseUnit || 'unit')) {
+    problems.push(`base unit "${dest.baseUnit || 'unit'}" here vs "${src.baseUnit || 'unit'}" at the sending branch`);
+  }
+  const destPacks = new Map((dest.packUnits || []).map((p) => [norm(p.name), p.factor]));
+  for (const p of src.packUnits || []) {
+    const f = destPacks.get(norm(p.name));
+    if (f !== undefined && Number(f) !== Number(p.factor)) {
+      problems.push(`pack "${p.name}" holds ${f} here vs ${p.factor} at the sending branch`);
+    }
+  }
+  if (problems.length) {
+    throw new AppError(
+      `Cannot receive "${src.name}": this branch's medicine ${describe(dest)} does not match the sent medicine (${problems.join('; ')}). Align the units of "${dest.name}" in this branch's catalog, then receive again.`,
+      409
+    );
+  }
+};
+
+// Finds the destination medicine for a transfer line, or creates a copy of the source medicine
+// in the destination catalog. Matching order:
+//   1. barcode, then SKU, of the source medicine (when it has one)
+//   2. name (case-insensitive) + strength + dosage form; a same-name medicine with another
+//      strength / form is a conflict (409), never a match
+// The matched medicine must use the same base unit / pack factors (409 otherwise).
+const destinationMedicine = async ({ line, fromPharmacyId, toPharmacyId, session, cache }) => {
   const key = String(line.medicineId);
   if (cache.has(key)) return cache.get(key);
 
   const name = (line.medicineName || '').trim();
-  let med = await Medicine.findOne({
-    pharmacyId: toPharmacyId,
-    name: { $regex: `^${escapeRegex(name)}$`, $options: 'i' },
-  }).session(session);
+  const srcDoc = await Medicine.findOne({ _id: line.medicineId, pharmacyId: fromPharmacyId }).session(session);
+  const src = srcDoc
+    ? srcDoc.toObject()
+    : { name, category: 'General', price: line.unitCost || 0, baseUnit: 'unit', packUnits: [] };
 
+  let med = null;
+  if (src.barcode) {
+    med = await Medicine.findOne({ pharmacyId: toPharmacyId, barcode: src.barcode }).session(session);
+  }
+  if (!med && src.sku && String(src.sku).trim()) {
+    med = await Medicine.findOne({ pharmacyId: toPharmacyId, sku: String(src.sku).trim() }).session(session);
+  }
   if (!med) {
-    const src = await Medicine.findById(line.medicineId).session(session);
-    const base = src ? src.toObject() : { name, category: 'General', price: line.unitCost || 0 };
-    let barcode = base.barcode;
+    const byName = await Medicine.findOne({
+      pharmacyId: toPharmacyId,
+      name: { $regex: `^${escapeRegex(src.name || name)}$`, $options: 'i' },
+    }).session(session);
+    if (byName && srcDoc) {
+      const strengthDiffers = norm(byName.strength) !== norm(src.strength);
+      const formDiffers = norm(byName.dosageForm) !== norm(src.dosageForm);
+      if (strengthDiffers || formDiffers) {
+        throw new AppError(
+          `Cannot receive "${src.name}": this branch already has ${describe(byName)} but the sent medicine is ${describe(src)}. Give them matching barcodes or fix the strength / form, then receive again.`,
+          409
+        );
+      }
+    }
+    med = byName;
+  }
+
+  if (med) {
+    if (srcDoc) assertCompatible(src, med);
+  } else {
+    let barcode = src.barcode;
     if (barcode && (await Medicine.exists({ pharmacyId: toPharmacyId, barcode }).session(session))) {
       barcode = undefined;
     }
@@ -30,24 +87,24 @@ const destinationMedicine = async ({ line, toPharmacyId, session, cache }) => {
       [
         {
           pharmacyId: toPharmacyId,
-          name: base.name || name,
-          genericName: base.genericName || '',
-          category: base.category || 'General',
-          dosageForm: base.dosageForm,
-          strength: base.strength || '',
-          price: base.price || 0,
-          costPrice: base.costPrice || line.unitCost || 0,
-          minStockLevel: base.minStockLevel,
-          requiresPrescription: Boolean(base.requiresPrescription),
+          name: src.name || name,
+          genericName: src.genericName || '',
+          category: src.category || 'General',
+          dosageForm: src.dosageForm,
+          strength: src.strength || '',
+          price: src.price || 0,
+          costPrice: src.costPrice || line.unitCost || 0,
+          minStockLevel: src.minStockLevel,
+          requiresPrescription: Boolean(src.requiresPrescription),
           barcode,
-          sku: base.sku || '',
-          baseUnit: base.baseUnit || 'unit',
+          sku: src.sku || '',
+          baseUnit: src.baseUnit || 'unit',
           // Pack barcodes are dropped: they may clash with the destination catalog
-          packUnits: (base.packUnits || []).map((p) => ({ name: p.name, factor: p.factor, price: p.price })),
-          taxExempt: Boolean(base.taxExempt),
-          isControlled: Boolean(base.isControlled),
-          controlledSchedule: base.controlledSchedule || '',
-          minMarginPercent: base.minMarginPercent ?? null,
+          packUnits: (src.packUnits || []).map((p) => ({ name: p.name, factor: p.factor, price: p.price })),
+          taxExempt: Boolean(src.taxExempt),
+          isControlled: Boolean(src.isControlled),
+          controlledSchedule: src.controlledSchedule || '',
+          minMarginPercent: src.minMarginPercent ?? null,
         },
       ],
       { session }
@@ -68,11 +125,18 @@ const addToDestinationBatch = async ({ line, medicine, toPharmacyId, transferNum
   }).session(session);
 
   if (existing && sameDay(existing.expiryDate, line.expiryDate)) {
+    // Weighted average cost over the units on hand and the units received
+    const purchasePrice = weightedAverageCost({
+      onHandQty: existing.quantity,
+      onHandCost: existing.purchasePrice || 0,
+      paidQty: line.quantity,
+      paidCost: line.unitCost || 0,
+    });
     const updated = await StockBatch.findOneAndUpdate(
       { _id: existing._id },
       {
         $inc: { quantity: line.quantity },
-        $set: { status: existing.status === 'depleted' ? 'active' : existing.status },
+        $set: { status: existing.status === 'depleted' ? 'active' : existing.status, purchasePrice },
       },
       { returnDocument: 'after', session }
     );
@@ -119,7 +183,13 @@ const receiveTransfer = async (req, res) => {
 
     const cache = new Map();
     for (const line of doc.lines) {
-      const medicine = await destinationMedicine({ line, toPharmacyId, session, cache });
+      const medicine = await destinationMedicine({
+        line,
+        fromPharmacyId: doc.fromPharmacyId,
+        toPharmacyId,
+        session,
+        cache,
+      });
       const batch = await addToDestinationBatch({
         line,
         medicine,
@@ -141,6 +211,19 @@ const receiveTransfer = async (req, res) => {
           userId: req.user._id,
           refId: doc._id,
           refModel: 'Transfer',
+        },
+        { session }
+      );
+      await recordTransferRegister(
+        {
+          direction: 'in',
+          pharmacyId: toPharmacyId,
+          medicineId: medicine._id,
+          batchId: batch._id,
+          quantity: line.quantity,
+          userId: req.user._id,
+          transfer: doc,
+          notes: `Transfer ${doc.number} received (in)`,
         },
         { session }
       );

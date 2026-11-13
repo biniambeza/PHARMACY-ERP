@@ -1,7 +1,47 @@
+import { useState } from 'react';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatMoney } from '../../utils/format';
 import { unitsOf } from './posUtils';
+
+// Quantity input: valid values apply as they are typed (capped at the stock); an empty / invalid
+// value is kept as a local draft so the field can be cleared to retype, and becomes 1 on blur / Enter.
+const QtyInput = ({ line, max, onQty, onSelect, registerQtyInput }) => {
+  const [draft, setDraft] = useState(null);
+  const commit = () => {
+    if (draft === null) return;
+    const qty = parseInt(draft, 10);
+    onQty(line.key, Number.isNaN(qty) || qty < 1 ? 1 : qty);
+    setDraft(null);
+  };
+  return (
+    <input
+      ref={(el) => registerQtyInput(line.key, el)}
+      type="number"
+      min={1}
+      max={max}
+      value={draft ?? line.quantity}
+      onFocus={(e) => {
+        onSelect(line.key);
+        e.target.select();
+      }}
+      onChange={(e) => {
+        const qty = parseInt(e.target.value, 10);
+        if (!Number.isNaN(qty) && qty > 0) {
+          setDraft(null);
+          onQty(line.key, qty);
+        } else {
+          setDraft(e.target.value);
+        }
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+      }}
+      className="w-12 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg py-0.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
+    />
+  );
+};
 
 /**
  * Cart lines with a unit selector (pack units, #13) and quantity stepper.
@@ -75,21 +115,12 @@ const CartLines = ({ cart, selectedKey, onSelect, onQty, onUnit, onRemove, maxQt
               >
                 <Minus className="w-3 h-3" />
               </button>
-              <input
-                ref={(el) => registerQtyInput(line.key, el)}
-                type="number"
-                min={1}
+              <QtyInput
+                line={line}
                 max={max}
-                value={line.quantity}
-                onFocus={(e) => {
-                  onSelect(line.key);
-                  e.target.select();
-                }}
-                onChange={(e) => onQty(line.key, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') e.currentTarget.blur();
-                }}
-                className="w-12 text-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg py-0.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500"
+                onQty={onQty}
+                onSelect={onSelect}
+                registerQtyInput={registerQtyInput}
               />
               <button
                 type="button"

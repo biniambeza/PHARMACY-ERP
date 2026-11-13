@@ -185,8 +185,34 @@ const getVarianceReport = async (req, res) => {
   });
 };
 
+// Conditional status transition: applies `update` only while the stock take is still in one of
+// `expected` statuses (and `extraFilter` holds). Returns the updated document, or throws
+// 404 / 409 when it is missing or its status changed meanwhile (e.g. a cancel racing an approve).
+const transition = async (req, expected, update, { session, extraFilter = {}, conflictMessage } = {}) => {
+  if (!mongoose.isValidObjectId(req.params.id)) throw new AppError('Stock take not found', 404);
+  const statuses = Array.isArray(expected) ? expected : [expected];
+  const updated = await StockTake.findOneAndUpdate(
+    { _id: req.params.id, pharmacyId: req.pharmacyId, status: { $in: statuses }, ...extraFilter },
+    update,
+    { returnDocument: 'after', session: session || undefined }
+  );
+  if (updated) return updated;
+  const current = await StockTake.findOne({ _id: req.params.id, pharmacyId: req.pharmacyId })
+    .select('status')
+    .session(session || null)
+    .lean();
+  if (!current) throw new AppError('Stock take not found', 404);
+  if (!statuses.includes(current.status)) {
+    throw new AppError(conflictMessage || `This stock take is now ${current.status}; reload it and try again`, 409);
+  }
+  return null; // status still matches: the extra filter failed (caller decides the error)
+};
+
 // @route PATCH /api/stock-takes/:id/counts  body: { counts: [{ lineId | batchId, countedQty|null }] }
 // Partial saves are allowed while the stock take is 'counting'.
+// Each counted line is written with a per-line $set conditional on status 'counting', so
+// two people counting different lines don't overwrite each other and a count can never
+// land on a submitted / approved / cancelled stock take.
 const saveCounts = async (req, res) => {
   const counts = req.body?.counts;
   if (!Array.isArray(counts) || !counts.length) throw new AppError('Please provide counts', 400);
@@ -195,42 +221,51 @@ const saveCounts = async (req, res) => {
   const st = await findStockTake(req);
   if (st.status !== 'counting') throw new AppError('Counts can only be entered while counting', 409);
 
-  const byLine = new Map(st.lines.map((l) => [String(l._id), l]));
-  const byBatch = new Map(st.lines.map((l) => [String(l.batchId), l]));
+  const indexByLine = new Map(st.lines.map((l, i) => [String(l._id), i]));
+  const indexByBatch = new Map(st.lines.map((l, i) => [String(l.batchId), i]));
+  const set = {};
   let updated = 0;
   counts.forEach((c, i) => {
-    const line = (c.lineId && byLine.get(String(c.lineId))) || (c.batchId && byBatch.get(String(c.batchId)));
-    if (!line) throw new AppError(`Count #${i + 1}: line not found in this stock take`, 400);
-    if (c.countedQty === null || c.countedQty === '' || c.countedQty === undefined) {
-      line.countedQty = null;
-      line.variance = null;
-      line.varianceValue = null;
-    } else {
+    let idx = c.lineId ? indexByLine.get(String(c.lineId)) : undefined;
+    if (idx === undefined && c.batchId) idx = indexByBatch.get(String(c.batchId));
+    if (idx === undefined) throw new AppError(`Count #${i + 1}: line not found in this stock take`, 400);
+    const line = st.lines[idx];
+    let countedQty = null;
+    let variance = null;
+    let varianceValue = null;
+    if (!(c.countedQty === null || c.countedQty === '' || c.countedQty === undefined)) {
       const q = Number(c.countedQty);
       if (!Number.isInteger(q) || q < 0) {
         throw new AppError(`Count for batch ${line.batchNo} must be a whole number of 0 or more`, 400);
       }
-      line.countedQty = q;
-      line.variance = q - line.systemQty;
-      line.varianceValue = round2(line.variance * (line.unitCost || 0));
+      countedQty = q;
+      variance = q - line.systemQty;
+      varianceValue = round2(variance * (line.unitCost || 0));
     }
+    set[`lines.${idx}.countedQty`] = countedQty;
+    set[`lines.${idx}.variance`] = variance;
+    set[`lines.${idx}.varianceValue`] = varianceValue;
     updated += 1;
   });
-  await st.save();
-  return res.status(200).json({ success: true, updated, stockTake: serialize(st) });
+
+  const saved = await transition(req, 'counting', { $set: set }, {
+    conflictMessage: 'Counts can only be entered while counting',
+  });
+  return res.status(200).json({ success: true, updated, stockTake: serialize(saved) });
 };
 
 // @route POST /api/stock-takes/:id/submit   (stock:take)
 const submitStockTake = async (req, res) => {
-  const st = await findStockTake(req);
-  if (st.status !== 'counting') throw new AppError('Only a stock take in counting can be submitted', 409);
-  if (!st.lines.some((l) => l.countedQty !== null && l.countedQty !== undefined)) {
-    throw new AppError('Enter at least one count before submitting', 400);
-  }
-  st.status = 'submitted';
-  st.submittedBy = req.user?._id;
-  st.submittedAt = new Date();
-  await st.save();
+  const st = await transition(
+    req,
+    'counting',
+    { $set: { status: 'submitted', submittedBy: req.user?._id, submittedAt: new Date() } },
+    {
+      extraFilter: { lines: { $elemMatch: { countedQty: { $ne: null } } } },
+      conflictMessage: 'Only a stock take in counting can be submitted',
+    }
+  );
+  if (!st) throw new AppError('Enter at least one count before submitting', 400);
   await audit(req, {
     action: 'stock_take.submit',
     entity: 'StockTake',
@@ -242,10 +277,9 @@ const submitStockTake = async (req, res) => {
 
 // @route POST /api/stock-takes/:id/reopen   (stock:take) submitted -> counting
 const reopenStockTake = async (req, res) => {
-  const st = await findStockTake(req);
-  if (st.status !== 'submitted') throw new AppError('Only a submitted stock take can be reopened', 409);
-  st.status = 'counting';
-  await st.save();
+  const st = await transition(req, 'submitted', { $set: { status: 'counting' } }, {
+    conflictMessage: 'Only a submitted stock take can be reopened',
+  });
   return res.status(200).json({ success: true, stockTake: serialize(st) });
 };
 
@@ -427,10 +461,22 @@ const approveStockTake = async (req, res) => {
 
       await applyStockTakeVariances(req, st, session);
 
-      st.status = 'approved';
-      st.approvedBy = req.user?._id;
-      st.approvedAt = new Date();
-      await st.save({ session });
+      // Conditional claim: a cancel / reopen that committed after our read makes this fail (409)
+      // instead of being overwritten; one racing it afterwards fails its own status filter.
+      const approved = await transition(
+        req,
+        'submitted',
+        {
+          $set: {
+            status: 'approved',
+            approvedBy: req.user?._id,
+            approvedAt: new Date(),
+            lines: st.toObject().lines,
+          },
+        },
+        { session, conflictMessage: 'This stock take is no longer submitted; reload it and try again' }
+      );
+      st = approved;
       await audit(
         req,
         {
@@ -450,14 +496,12 @@ const approveStockTake = async (req, res) => {
 
 // @route POST /api/stock-takes/:id/cancel   (stock:take)
 const cancelStockTake = async (req, res) => {
-  const st = await findStockTake(req);
-  if (!['draft', 'counting', 'submitted'].includes(st.status)) {
-    throw new AppError('This stock take can no longer be cancelled', 409);
-  }
-  st.status = 'cancelled';
-  st.cancelledBy = req.user?._id;
-  st.cancelledAt = new Date();
-  await st.save();
+  const st = await transition(
+    req,
+    ['draft', 'counting', 'submitted'],
+    { $set: { status: 'cancelled', cancelledBy: req.user?._id, cancelledAt: new Date() } },
+    { conflictMessage: 'This stock take can no longer be cancelled' }
+  );
   await audit(req, { action: 'stock_take.cancel', entity: 'StockTake', entityId: st._id, meta: { number: st.number } });
   return res.status(200).json({ success: true, stockTake: serialize(st, { includeLines: false }) });
 };

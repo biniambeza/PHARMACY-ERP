@@ -315,7 +315,7 @@ const recordControlledMovement = async (
   },
   { session } = {}
 ) => {
-  if (!['receive', 'return', 'adjust', 'dispense'].includes(entryType)) {
+  if (!['receive', 'return', 'adjust', 'dispense', 'transfer_out', 'transfer_in'].includes(entryType)) {
     throw new AppError('Invalid controlled register entry type', 400);
   }
   const medicine = await Medicine.findOne({ _id: medicineId, pharmacyId, isControlled: true })

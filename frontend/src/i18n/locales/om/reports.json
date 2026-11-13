@@ -183,7 +183,7 @@
     "notWrittenOffSub": "Meeshaa {{units}} baachii {{batches}} keessa",
     "period": "Yeroo",
     "byMonth": "Kasaaraa yeroo darbe ji'aan",
-    "byMonthSub": "Kuusaa yeroon darbee haqame (sochii gosa expire / adjust expired)",
+    "byMonthSub": "Kuusaa yeroon darbee haqame (sochii yeroo darbeef haqamanii fi sirreeffaman)",
     "noneWrittenOff": "Yeroo kana keessatti kuusaan yeroon darbe hin haqamne.",
     "biggest": "Kasaaraa guguddoo",
     "biggestSub": "Qorichaan",

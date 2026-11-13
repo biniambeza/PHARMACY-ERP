@@ -5,11 +5,14 @@ const notFound = (req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 };
 
-// Maps an error to { status, message } that is safe to send to the client.
+// Maps an error to { status, message, code? } that is safe to send to the client.
+// `code` is a machine-readable string (e.g. 'SHIFT_CLOSED') set on operational errors.
 const toHttpError = (err) => {
   // Operational errors thrown on purpose (utils/AppError)
   if (err.isOperational) {
-    return { status: err.status || 400, message: err.message };
+    const out = { status: err.status || 400, message: err.message };
+    if (typeof err.code === 'string' && /^[A-Z][A-Z0-9_]{2,63}$/.test(err.code)) out.code = err.code;
+    return out;
   }
 
   // CORS rejection (see app.js)
@@ -60,13 +63,13 @@ const toHttpError = (err) => {
 const errorHandler = (err, req, res, next) => {
   if (res.headersSent) return next(err);
 
-  const { status, message } = toHttpError(err);
+  const { status, message, code } = toHttpError(err);
 
   if (status >= 500 && process.env.NODE_ENV !== 'test') {
     console.error(`[${req.method} ${req.originalUrl}]`, err);
   }
 
-  return res.status(status).json({ success: false, message });
+  return res.status(status).json(code ? { success: false, message, code } : { success: false, message });
 };
 
 module.exports = { errorHandler, notFound, toHttpError };

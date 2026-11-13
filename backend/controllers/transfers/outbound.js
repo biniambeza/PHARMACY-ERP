@@ -5,7 +5,14 @@ const AppError = require('../../utils/AppError');
 const { recordMovement } = require('../../utils/stockMovement');
 const { nextSequence, formatSequence } = require('../../utils/sequence');
 const { audit } = require('../../utils/audit');
-const { isId, parseLines, resolveDestination, allocateAndDeduct, runTransaction } = require('./helpers');
+const {
+  isId,
+  parseLines,
+  resolveDestination,
+  allocateAndDeduct,
+  runTransaction,
+  recordTransferRegister,
+} = require('./helpers');
 
 // @desc    Create a transfer from the current branch. Sent immediately unless
 //          `draft: true` (stock is deducted only when sent).
@@ -194,6 +201,19 @@ const cancelTransfer = async (req, res) => {
             userId: req.user._id,
             refId: doc._id,
             refModel: 'Transfer',
+          },
+          { session }
+        );
+        await recordTransferRegister(
+          {
+            direction: 'in',
+            pharmacyId: doc.fromPharmacyId,
+            medicineId: line.medicineId,
+            batchId: batch._id,
+            quantity: line.quantity,
+            userId: req.user._id,
+            transfer: doc,
+            notes: `Transfer ${doc.number} cancelled, stock returned`,
           },
           { session }
         );

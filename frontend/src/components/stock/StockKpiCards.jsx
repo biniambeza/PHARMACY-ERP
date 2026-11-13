@@ -1,7 +1,7 @@
 import { Boxes, AlertTriangle, DollarSign, Layers } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import MetricCard from '../common/MetricCard';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatNumber } from '../../utils/format';
 import { getDaysUntilExpiry } from './stockUtils';
 
 // KPI metric cards for the Stock page: from the server summary (whole inventory), falling back
@@ -25,7 +25,7 @@ const StockKpiCards = ({ batches, summary }) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
       <MetricCard
         title={t('kpi.activeLots')}
-        value={totalActiveBatches.toString()}
+        value={formatNumber(totalActiveBatches)}
         subValue={t('kpi.activeLotsSub')}
         badgeText={t('common:status.active')}
         badgeVariant="emerald"
@@ -37,7 +37,7 @@ const StockKpiCards = ({ batches, summary }) => {
 
       <MetricCard
         title={t('kpi.totalUnits')}
-        value={totalStockUnits.toLocaleString()}
+        value={formatNumber(totalStockUnits)}
         subValue={t('kpi.totalUnitsSub')}
         badgeText={t('kpi.volume')}
         badgeVariant="emerald"
@@ -61,7 +61,7 @@ const StockKpiCards = ({ batches, summary }) => {
 
       <MetricCard
         title={t('kpi.expiryRisk')}
-        value={expiringSoonCount.toString()}
+        value={formatNumber(expiringSoonCount)}
         subValue={expiringSoonCount > 0 ? t('kpi.expiryRiskSub') : t('kpi.expiryRiskNone')}
         badgeText={expiringSoonCount > 0 ? t('kpi.actionNeeded') : t('kpi.compliant')}
         badgeVariant={expiringSoonCount > 0 ? 'rose' : 'emerald'}

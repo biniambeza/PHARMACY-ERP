@@ -1,16 +1,19 @@
 import { ShoppingCart, Truck, DollarSign, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import MetricCard from '../common/MetricCard';
-import { formatMoney } from '../../utils/format';
+import { formatMoney, formatNumber } from '../../utils/format';
 
-// KPI cards at the top of the Purchase Orders page.
-const POMetrics = ({ totalOrders, pendingOrders, receivedOrders, totalProcurementSpend }) => {
+// KPI cards at the top of the Purchase Orders page. `totalOrders` is the server-side count of
+// all matching orders; the other figures come from the loaded page, so when the list spans
+// several pages (`paged`) they're labelled "on this page".
+const POMetrics = ({ totalOrders, pendingOrders, receivedOrders, totalProcurementSpend, paged = false }) => {
   const { t } = useTranslation('procurement');
+  const pageBadge = (badge) => (paged ? t('metrics.onThisPage') : badge);
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
       <MetricCard
         title={t('metrics.totalRequisitions')}
-        value={totalOrders.toString()}
+        value={formatNumber(totalOrders)}
         subValue={t('metrics.totalRequisitionsSub')}
         badgeText={t('metrics.totalPOs')}
         badgeVariant="emerald"
@@ -22,9 +25,9 @@ const POMetrics = ({ totalOrders, pendingOrders, receivedOrders, totalProcuremen
 
       <MetricCard
         title={t('metrics.pendingDeliveries')}
-        value={pendingOrders.toString()}
+        value={formatNumber(pendingOrders)}
         subValue={t('metrics.pendingDeliveriesSub')}
-        badgeText={pendingOrders > 0 ? t('metrics.inTransit') : t('metrics.clear')}
+        badgeText={pageBadge(pendingOrders > 0 ? t('metrics.inTransit') : t('metrics.clear'))}
         badgeVariant="amber"
         icon={<Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />}
         sparklineData={[4, 6, 5, 8, 7, 9, 6, pendingOrders]}
@@ -34,9 +37,9 @@ const POMetrics = ({ totalOrders, pendingOrders, receivedOrders, totalProcuremen
 
       <MetricCard
         title={t('metrics.receivedDeliveries')}
-        value={receivedOrders.toString()}
+        value={formatNumber(receivedOrders)}
         subValue={t('metrics.receivedDeliveriesSub')}
-        badgeText={t('metrics.fulfilled')}
+        badgeText={pageBadge(t('metrics.fulfilled'))}
         badgeVariant="emerald"
         icon={<Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
         sparklineData={[6, 9, 8, 12, 14, 16, 18, receivedOrders]}
@@ -48,7 +51,7 @@ const POMetrics = ({ totalOrders, pendingOrders, receivedOrders, totalProcuremen
         title={t('metrics.procurementSpend')}
         value={formatMoney(totalProcurementSpend)}
         subValue={t('metrics.procurementSpendSub')}
-        badgeText={t('metrics.capital')}
+        badgeText={pageBadge(t('metrics.capital'))}
         badgeVariant="indigo"
         icon={<DollarSign className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />}
         sparklineData={[800, 1200, 1100, 1600, 1900, 2400, totalProcurementSpend]}

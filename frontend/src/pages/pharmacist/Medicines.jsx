@@ -13,17 +13,17 @@ import MedicineFilters from '../../components/inventory/MedicineFilters';
 import MedicineTable from '../../components/inventory/MedicineTable';
 import { logApiError } from '../../api/logApiError';
 import Pager from '../../components/common/Pager';
+import { ErrorBox } from '../../components/reports/ReportUi';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 
 // Medicines per page (the server caps unpaged lists, so the page always pages).
 const PAGE_SIZE = 200;
 
 const Medicines = () => {
   const { t } = useTranslation('medicines');
-  const [medicines, setMedicines] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [rxFilter, setRxFilter] = useState('all'); // 'all' | 'rx' | 'otc'
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMedicine, setSelectedMedicine] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -33,23 +33,23 @@ const Medicines = () => {
   const [historyFor, setHistoryFor] = useState(null);
   const [marginOnly, setMarginOnly] = useState(false);
   const [page, setPage] = useState(1);
-  const [pageInfo, setPageInfo] = useState({ pages: 1, total: 0 });
+  const debouncedSearch = useDebouncedValue(search.trim(), 250);
 
-  const loadMedicines = useCallback(async () => {
-    try {
-      const params = { page, limit: PAGE_SIZE };
-      if (search) params.search = search;
-      if (selectedCategory) params.category = selectedCategory;
+  // useAsync drops responses from outdated queries (fast typing can't show an older result).
+  const fetchMedicines = useCallback(() => {
+    const params = { page, limit: PAGE_SIZE };
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (selectedCategory) params.category = selectedCategory;
+    return getMedicines(params);
+  }, [debouncedSearch, selectedCategory, page]);
+  const { data: medData, error: medError, loading: medLoading, reload: loadMedicines } = useAsync(fetchMedicines);
+  const medicines = useMemo(() => medData?.medicines || [], [medData]);
+  const pageInfo = { pages: medData?.pages || 1, total: medData?.total ?? medicines.length };
+  const loading = medLoading && !medData;
 
-      const data = await getMedicines(params);
-      setMedicines(data.medicines || []);
-      setPageInfo({ pages: data.pages || 1, total: data.total ?? (data.medicines || []).length });
-    } catch (err) {
-      logApiError('Failed to load medicines', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, selectedCategory, page]);
+  useEffect(() => {
+    if (medError) logApiError('Failed to load medicines', medError);
+  }, [medError]);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -61,13 +61,6 @@ const Medicines = () => {
     }
   }, []);
   const { data: categories, reload: loadCategories } = useAsync(fetchCategories, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadMedicines();
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [loadMedicines]);
 
   const handleEdit = (medicine) => {
     setSelectedMedicine(medicine);
@@ -83,8 +76,8 @@ const Medicines = () => {
     try {
       const res = await deleteMedicine(id);
       if (res?.archived) alert(res.message);
-      await loadMedicines();
-      await loadCategories();
+      loadMedicines();
+      loadCategories();
     } catch (err) {
       alert(err.response?.data?.message || t('page.deleteFailed'));
     } finally {
@@ -177,7 +170,7 @@ const Medicines = () => {
       </div>
 
       {/* KPI Metric Cards */}
-      <MedicineKpiCards medicines={medicines} categoryCount={categories.length} />
+      <MedicineKpiCards medicines={medicines} categoryCount={categories.length} total={pageInfo.total} paged={pageInfo.pages > 1} />
 
       {/* Filter and Controls Toolbar */}
       <MedicineFilters
@@ -193,7 +186,10 @@ const Medicines = () => {
         setMarginOnly={setMarginOnly}
       />
 
+      {medError && <ErrorBox message={t('common:loadError')} onRetry={loadMedicines} />}
+
       {/* Main Table Container */}
+      {!medError && (
       <MedicineTable
         loading={loading}
         medicines={medicines}
@@ -209,8 +205,9 @@ const Medicines = () => {
         onHistory={setHistoryFor}
         deletingId={deletingId}
       />
+      )}
 
-      <Pager page={page} pages={pageInfo.pages} total={pageInfo.total} shown={medicines.length} onChange={setPage} disabled={loading} />
+      <Pager page={page} pages={pageInfo.pages} total={pageInfo.total} shown={medicines.length} onChange={setPage} disabled={medLoading} />
 
       {/* Modal */}
       <MedicineModal

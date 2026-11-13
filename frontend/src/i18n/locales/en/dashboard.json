@@ -14,7 +14,8 @@
     "title": "Dashboard Summary",
     "subtitle": "Key figures and most recent sales",
     "metric": "Metric",
-    "value": "Value"
+    "value": "Value",
+    "salesFailed": "Sales export failed. Please try again."
   },
   "summary": {
     "revenue": "Revenue ({{range}})",

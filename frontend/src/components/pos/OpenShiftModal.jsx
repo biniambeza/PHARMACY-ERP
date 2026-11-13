@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Clock, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { openShift } from '../../api/shiftApi';
@@ -12,14 +12,18 @@ const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // Enter in the form while a request is in flight must not open a second shift
+  const inFlight = useRef(false);
 
   const submit = async (e) => {
     e?.preventDefault();
+    if (inFlight.current) return;
     const value = Number(openingFloat || 0);
     if (!Number.isFinite(value) || value < 0) {
       setError(t('shift.floatInvalid'));
       return;
     }
+    inFlight.current = true;
     setSaving(true);
     setError('');
     try {
@@ -30,6 +34,7 @@ const OpenShiftModal = ({ open, onClose, onOpened, required = false }) => {
     } catch (err) {
       setError(errMsg(err, t('shift.openFailed')));
     } finally {
+      inFlight.current = false;
       setSaving(false);
     }
   };

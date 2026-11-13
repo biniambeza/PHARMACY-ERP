@@ -85,5 +85,14 @@
     "label": "ገጾች",
     "pageOf": "ገጽ {{page}} ከ {{pages}}",
     "showing": "ከ {{total}} ውስጥ {{shown}} ይታያሉ"
-  }
+  },
+  "pdfExport": {
+    "report": "ሪፖርት",
+    "period": "ጊዜ፦ {{value}}",
+    "generated": "የተዘጋጀው፦ {{date}}",
+    "generatedBy": "የተዘጋጀው፦ {{date}} በ{{name}}",
+    "page": "ገጽ {{n}}",
+    "noData": "ለዚህ ምርጫ ምንም መረጃ የለም።"
+  },
+  "loadError": "መረጃውን መጫን አልተቻለም። ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።"
 }

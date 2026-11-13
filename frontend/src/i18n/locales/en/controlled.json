@@ -3,7 +3,7 @@
   "title": "Controlled Substances Register",
   "subtitle": "Every dispense and receipt of controlled medicines with running balances",
   "printRegister": "Print Register",
-  "entryTypes": { "dispense": "Dispensed", "receive": "Received", "return": "Returned", "adjust": "Adjustment" },
+  "entryTypes": { "dispense": "Dispensed", "receive": "Received", "return": "Returned", "adjust": "Adjustment", "transfer_out": "Transferred out", "transfer_in": "Transferred in" },
   "filters": {
     "medicine": "Medicine",
     "all": "All controlled medicines",

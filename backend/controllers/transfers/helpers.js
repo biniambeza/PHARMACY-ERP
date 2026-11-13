@@ -5,12 +5,45 @@ const StockBatch = require('../../models/StockBatch');
 const AppError = require('../../utils/AppError');
 const { recordMovement } = require('../../utils/stockMovement');
 const { sameId } = require('../../utils/membership');
+const { recordControlledMovement } = require('../../services/clinical');
 
 const MAX_LINES = 200;
 const isId = (v) => typeof v === 'string' && /^[a-f0-9]{24}$/i.test(v);
 const sameDay = (a, b) => a && b && new Date(a).toISOString().slice(0, 10) === new Date(b).toISOString().slice(0, 10);
 
 // ----- helpers ---------------------------------------------------------------
+
+// Controlled-substance register entry for a transfer leg (no-op for non-controlled medicines).
+// Uses the 'transfer_out' / 'transfer_in' entry types when services/clinical accepts them;
+// until then it falls back to 'adjust' (out) / 'receive' (in), with the transfer in the notes.
+// Call AFTER the batch quantity has changed, inside the same transaction.
+let transferEntryTypesSupported = true;
+const recordTransferRegister = async (
+  { direction, pharmacyId, medicineId, batchId, quantity, userId, transfer, notes },
+  { session }
+) => {
+  const out = direction === 'out';
+  const entry = {
+    pharmacyId,
+    medicineId,
+    batchId,
+    quantityOut: out ? quantity : 0,
+    quantityIn: out ? 0 : quantity,
+    userId,
+    refId: transfer._id,
+    notes,
+  };
+  if (transferEntryTypesSupported) {
+    try {
+      return await recordControlledMovement({ ...entry, entryType: out ? 'transfer_out' : 'transfer_in' }, { session });
+    } catch (err) {
+      // Rejected before any read/write, so the transaction is unaffected.
+      if (!(err instanceof AppError) || !/entry type/i.test(err.message)) throw err;
+      transferEntryTypesSupported = false;
+    }
+  }
+  return recordControlledMovement({ ...entry, entryType: out ? 'adjust' : 'receive' }, { session });
+};
 
 // Validates and normalizes request lines: [{ medicineId, batchId?, quantity }]
 const parseLines = (lines) => {
@@ -105,6 +138,19 @@ const allocateAndDeduct = async ({ transfer, requested, pharmacyId, userId, sess
         },
         { session }
       );
+      await recordTransferRegister(
+        {
+          direction: 'out',
+          pharmacyId,
+          medicineId: medicine._id,
+          batchId: batch._id,
+          quantity: qty,
+          userId,
+          transfer,
+          notes: `Transfer ${transfer.number} sent (out)`,
+        },
+        { session }
+      );
     };
 
     if (line.batchId) {
@@ -184,4 +230,5 @@ module.exports = {
   allocateAndDeduct,
   runTransaction,
   populateTransfer,
+  recordTransferRegister,
 };

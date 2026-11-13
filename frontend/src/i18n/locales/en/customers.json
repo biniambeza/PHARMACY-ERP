@@ -5,6 +5,7 @@
   "newCustomer": "New Customer",
   "searchPlaceholder": "Search by name, phone or email...",
   "saving": "Saving...",
+  "confirmRemoveWithCredit": "Remove anyway? The store credit will be lost. Only owners can do this.",
   "confirmRemove": "Remove customer \"{{name}}\"?",
   "removeFailed": "Failed to remove customer",
   "filters": {

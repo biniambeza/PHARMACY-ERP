@@ -10,6 +10,9 @@ import CustomersTable from '../../components/customers/CustomersTable';
 import { ReceivablesSummary, AgingByCustomer } from '../../components/customers/ReceivablesSummary';
 import { inputCls, cardCls, btnPrimary, errMsg } from '../../components/customers/customerUi';
 import { logApiError } from '../../api/logApiError';
+import { ErrorBox } from '../../components/reports/ReportUi';
+import useAsync from '../../hooks/useAsync';
+import useDebouncedValue from '../../hooks/useDebouncedValue';
 
 const FILTERS = [
   ['', 'filters.all'],
@@ -21,43 +24,55 @@ const FILTERS = [
 // ---------- Page ----------
 const Customers = () => {
   const { t } = useTranslation('customers');
-  const [customers, setCustomers] = useState([]);
-  const [summary, setSummary] = useState({ receivable: 0, withBalance: 0, active: 0 });
-  const [aging, setAging] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('');
-  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(undefined); // undefined = closed, null = new
   const [paying, setPaying] = useState(null);
   const [statementFor, setStatementFor] = useState(null);
+  const debouncedSearch = useDebouncedValue(search.trim(), 250);
 
-  const load = useCallback(async () => {
-    try {
-      const params = {};
-      if (search) params.search = search;
-      if (filter === 'balance') params.hasBalance = 'true';
-      if (filter === 'inactive') params.active = 'false';
-      if (filter === 'active') params.active = 'true';
-      const [list, ag] = await Promise.all([getCustomers(params), getReceivablesAging()]);
-      setCustomers(list.customers || []);
-      setSummary(list.summary || { receivable: 0, withBalance: 0, active: 0 });
-      setAging(ag);
-    } catch (err) {
-      logApiError('Failed to load customers', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [search, filter]);
+  // useAsync ignores responses from outdated queries, so a slow earlier search can't overwrite a newer one.
+  const fetchList = useCallback(() => {
+    const params = {};
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (filter === 'balance') params.hasBalance = 'true';
+    if (filter === 'inactive') params.active = 'false';
+    if (filter === 'active') params.active = 'true';
+    return getCustomers(params);
+  }, [debouncedSearch, filter]);
+  // Aging doesn't depend on the search/filter — only refetched on mount and after a change.
+  const fetchAging = useCallback(() => getReceivablesAging(), []);
+
+  const { data: list, error: listError, loading: listLoading, reload: reloadList } = useAsync(fetchList);
+  const { data: aging, error: agingError, reload: reloadAging } = useAsync(fetchAging);
+  const customers = list?.customers || [];
+  const summary = list?.summary || { receivable: 0, withBalance: 0, active: 0 };
+  const loadError = listError || agingError;
 
   useEffect(() => {
-    const timer = setTimeout(load, 250);
-    return () => clearTimeout(timer);
-  }, [load]);
+    if (listError) logApiError('Failed to load customers', listError);
+  }, [listError]);
+  useEffect(() => {
+    if (agingError) logApiError('Failed to load receivables aging', agingError);
+  }, [agingError]);
+
+  const load = useCallback(() => {
+    reloadList();
+    reloadAging();
+  }, [reloadList, reloadAging]);
 
   const handleDelete = async (c) => {
     if (!window.confirm(t('confirmRemove', { name: c.name }))) return;
     try {
-      const res = await deleteCustomer(c._id);
+      let res;
+      try {
+        res = await deleteCustomer(c._id);
+      } catch (err) {
+        // The customer still holds store credit: owners may remove anyway (audited server-side).
+        if (err.response?.data?.code !== 'CUSTOMER_HAS_STORE_CREDIT') throw err;
+        if (!window.confirm(`${errMsg(err, '')}\n\n${t('confirmRemoveWithCredit')}`)) return;
+        res = await deleteCustomer(c._id, { force: true });
+      }
       if (res?.archived) alert(res.message);
       load();
     } catch (err) {
@@ -113,16 +128,20 @@ const Customers = () => {
         </div>
       </div>
 
+      {loadError && <ErrorBox message={t('common:loadError')} onRetry={load} />}
+
       {/* Table */}
+      {!listError && (
       <CustomersTable
         customers={customers}
-        loading={loading}
+        loading={listLoading && !list}
         filtered={Boolean(search || filter)}
         onPay={setPaying}
         onStatement={setStatementFor}
         onEdit={setEditing}
         onDelete={handleDelete}
       />
+      )}
 
       {/* Aging by customer */}
       <AgingByCustomer aging={aging} />

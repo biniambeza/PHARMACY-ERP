@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ShoppingCart, Plus, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -46,19 +46,23 @@ const PurchaseOrders = () => {
   const [busyId, setBusyId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
+  // Only the latest request may update the list (an older, slower search must not win).
+  const requestId = useRef(0);
   const loadOrders = useCallback(async () => {
+    const id = ++requestId.current;
     try {
       const params = { page, limit: PAGE_SIZE };
       if (statusFilter) params.status = statusFilter;
       if (search) params.search = search;
 
       const data = await getPurchaseOrders(params);
+      if (id !== requestId.current) return;
       setOrders(data.orders || []);
       setPageInfo({ pages: data.pages || 1, total: data.total ?? (data.orders || []).length });
     } catch (err) {
       logApiError('Failed to load purchase orders', err);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [statusFilter, search, page]);
 
@@ -117,7 +121,7 @@ const PurchaseOrders = () => {
   };
 
   // Metrics
-  const totalOrders = orders.length;
+  const totalOrders = pageInfo.total;
   const pendingOrders = orders.filter((o) => o.status === 'ordered' || o.status === 'partially_received').length;
   const receivedOrders = orders.filter((o) => o.status === 'received' || o.status === 'closed').length;
   const totalProcurementSpend = orders
@@ -159,6 +163,7 @@ const PurchaseOrders = () => {
         pendingOrders={pendingOrders}
         receivedOrders={receivedOrders}
         totalProcurementSpend={totalProcurementSpend}
+        paged={pageInfo.pages > 1}
       />
 
       {/* Filter and Search Bar */}

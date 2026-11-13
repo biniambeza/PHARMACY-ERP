@@ -9,7 +9,7 @@
   "receipt": "ደረሰኝ",
   "tel": "ስልክ: {{value}}",
   "license": "ፈቃድ: {{value}}",
-  "tinVatNo": "TIN/VAT ቁጥር: {{value}}",
+  "tinVatNo": "TIN/ተ.እ.ታ ቁጥር: {{value}}",
   "tinVat": "TIN/ተ.እ.ታ: {{value}}",
   "taxInvoiceHeading": "የግብር ደረሰኝ / ደረሰኝ",
   "receiptHeading": "ደረሰኝ",

@@ -8,7 +8,7 @@ import { formatDate, formatDateTime } from '../../utils/format';
 import EthiopianDateHint from '../../components/common/EthiopianDateHint';
 
 // Labels are i18n keys in the `controlled` namespace (entryTypes.<type>).
-const ENTRY_TYPES = ['dispense', 'receive', 'return', 'adjust'];
+const ENTRY_TYPES = ['dispense', 'receive', 'return', 'adjust', 'transfer_out', 'transfer_in'];
 const entryLabel = (t, type) => (ENTRY_TYPES.includes(type) ? t(`entryTypes.${type}`) : type);
 
 const firstOfMonth = () => {

@@ -38,6 +38,7 @@ const AdminSidebarBrand = ({ collapsed, onToggleCollapse, onCloseMobile }) => {
             {/* Mobile Close Button */}
             <button
               onClick={onCloseMobile}
+              aria-label={t('ui:layout.closeMenu')}
               className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
             >
               <X className="w-5 h-5" />

@@ -27,6 +27,19 @@ const shiftSchema = new mongoose.Schema(
     notes: { type: String, default: '', trim: true },
     // Z-report snapshot taken when the shift is closed
     zReport: { type: mongoose.Schema.Types.Mixed, default: null },
+    // Sales attached while the shift was open. Every sale increments it with a write that is
+    // conditional on status 'open' (services/sales.js), so a sale and the close (which sets
+    // status 'closed' in a transaction, controllers/shiftController.js) always conflict: a
+    // sale can never land in a shift whose Z-report was already frozen.
+    salesCount: { type: Number, default: 0 },
+    // Offline sales synced AFTER the shift was closed but made (client time) while it was
+    // open. They are attached to the shift but are not in the frozen Z-report totals; the
+    // Z-report shows them as a separate "late sync" line (count / total / last sync time).
+    lateSales: {
+      count: { type: Number, default: 0 },
+      total: { type: Number, default: 0 },
+      lastAt: { type: Date, default: null },
+    },
   },
   { timestamps: true }
 );

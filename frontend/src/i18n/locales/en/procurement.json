@@ -33,7 +33,8 @@
     "fulfilled": "Fulfilled",
     "procurementSpend": "Procurement Spend",
     "procurementSpendSub": "Active replenishment capital",
-    "capital": "Capital"
+    "capital": "Capital",
+    "onThisPage": "On this page"
   },
   "empty": {
     "noMatchTitle": "No matching purchase orders",

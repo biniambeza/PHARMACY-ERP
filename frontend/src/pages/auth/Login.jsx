@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, Navigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
 import TwoFactorLoginStep from '../../components/auth/TwoFactorLoginStep';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, Pill, Info, CheckCircle2 } from 'lucide-react';
@@ -20,6 +20,15 @@ const DEMO_ACCOUNTS = import.meta.env.DEV
     ].filter((d) => d.account)
   : [];
 
+// The page the user was sent away from (ProtectedRoute passes it as location.state.from).
+// Only same-app paths are accepted: must start with '/' but not '//' or '/' (protocol-relative URLs).
+const safeReturnPath = (from) => {
+  const path = typeof from === 'string' ? from : from ? `${from.pathname || ''}${from.search || ''}${from.hash || ''}` : '';
+  if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/\\')) return null;
+  if (path === '/' || path.startsWith('/login')) return null;
+  return path;
+};
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,11 +38,15 @@ const Login = () => {
   const { login, loading, isAuthenticated, user, twoFactorPending } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  // ProtectedRoute passes state.from; the session-expired redirect (api/axios.js) passes ?from=
+  const returnTo = safeReturnPath(location.state?.from) || safeReturnPath(searchParams.get('from'));
+  const homeFor = (u) => returnTo || (u?.role === 'admin' ? '/admin' : '/pharmacy');
   const sessionExpired = searchParams.get('session') === 'expired';
   const passwordReset = searchParams.get('reset') === 'success';
 
   if (isAuthenticated) {
-    return <Navigate to={user?.role === 'admin' ? '/admin' : '/pharmacy'} replace />;
+    return <Navigate to={homeFor(user)} replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -48,7 +61,7 @@ const Login = () => {
       // Second step (authenticator code) is rendered below
       setPassword('');
     } else if (res.success) {
-      navigate(res.user.role === 'admin' ? '/admin' : '/pharmacy');
+      navigate(homeFor(res.user), { replace: true });
     } else {
       setError(res.message);
     }
@@ -88,7 +101,7 @@ const Login = () => {
 
         {twoFactorPending ? (
           <TwoFactorLoginStep
-            onSuccess={(signedIn) => navigate(signedIn?.role === 'admin' ? '/admin' : '/pharmacy')}
+            onSuccess={(signedIn) => navigate(homeFor(signedIn), { replace: true })}
             onExpired={setError}
           />
         ) : (

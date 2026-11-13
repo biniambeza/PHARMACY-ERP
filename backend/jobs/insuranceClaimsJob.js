@@ -2,8 +2,12 @@
 //
 // For every pharmacy with insurance schemes, builds one DRAFT claim per scheme (autoClaim !== false,
 // claimCycle !== 'on_demand'; month edges in INSURANCE_CLAIM_TZ / JOBS_TZ, default Africa/Addis_Ababa)
-// from the unclaimed insurance sales of the previous calendar month. Claims are never submitted
-// automatically: staff review, refresh and submit them from the Claims tab.
+// from the unclaimed insurance sales up to the end of the previous calendar month. Sales of earlier
+// months that are still unclaimed (job down, late offline syncs, sales released by a rejected claim)
+// are included too: the period starts at the month of the earliest unclaimed sale, capped at
+// MAX_AUTO_CLAIM_MONTHS (12) months back (services/insurance.js autoClaimRange). Older sales are
+// only claimed manually. Claims are never submitted automatically: staff review, refresh and
+// submit them from the Claims tab.
 //
 // Idempotent: only sales with insurance.claimId = null are picked up (services/insurance.js
 // buildClaimForPeriod), so running the job twice for the same month creates nothing the second time.
@@ -15,7 +19,7 @@ const Pharmacy = require('../models/Pharmacy');
 const InsuranceScheme = require('../models/InsuranceScheme');
 const svc = require('../services/insurance');
 const { audit } = require('../utils/audit');
-const { jobsTimeZone, validTimeZone } = require('./lock');
+const { insuranceTimeZone, validTimeZone } = require('../utils/timezone');
 
 const DEFAULT_INSURANCE_CLAIM_CRON = '0 2 1 * *';
 
@@ -26,13 +30,11 @@ const logError = (...args) => {
 
 // Time zone for the month edges: INSURANCE_CLAIM_TZ, else JOBS_TZ, else Africa/Addis_Ababa
 // (the same default as the schedules in jobs/index.js).
+// Same zone as services/insurance.js (member validity, manual claim periods): utils/timezone.js.
 const claimTimeZone = () => {
   const tz = (process.env.INSURANCE_CLAIM_TZ || '').trim();
-  if (tz) {
-    if (validTimeZone(tz)) return tz;
-    logError(`invalid INSURANCE_CLAIM_TZ "${tz}", using JOBS_TZ / default`);
-  }
-  return jobsTimeZone();
+  if (tz && !validTimeZone(tz)) logError(`invalid INSURANCE_CLAIM_TZ "${tz}", using JOBS_TZ / default`);
+  return insuranceTimeZone();
 };
 
 // Schemes billed "on demand" are only claimed manually.
@@ -41,7 +43,7 @@ const AUTO_FILTER = { autoClaim: { $ne: false }, claimCycle: { $ne: 'on_demand' 
 // Builds the draft claims of one pharmacy. Returns one result row per auto-claim scheme:
 //   { schemeId, schemeName, status: 'created' | 'nothing' | 'error', claimId?, claimNumber?, totalAmount?, sales?, error? }
 const runPharmacyInsuranceClaims = async (pharmacyId, { now = new Date() } = {}) => {
-  const { periodFrom, periodTo, label } = svc.previousMonthRange(now, claimTimeZone());
+  const timeZone = claimTimeZone();
   const schemes = await InsuranceScheme.find({ pharmacyId, ...AUTO_FILTER }).sort({ name: 1 });
   const results = [];
   for (const scheme of schemes) {
@@ -50,6 +52,10 @@ const runPharmacyInsuranceClaims = async (pharmacyId, { now = new Date() } = {})
     try {
       let claim = null;
       await session.withTransaction(async () => {
+        const { periodFrom, periodTo, label } = await svc.autoClaimRange(
+          { pharmacyId, schemeId: scheme._id, now, timeZone },
+          { session }
+        );
         claim = await svc.buildClaimForPeriod(
           {
             pharmacyId,

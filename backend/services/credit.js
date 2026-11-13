@@ -4,7 +4,14 @@
 //   assertCreditAllowed({ pharmacyId, customerId, amount }, { session })
 //   applyCreditSale({ pharmacyId, customerId, saleId, amount }, { session })
 //   reverseCredit({ pharmacyId, customerId, amount, refId, saleId? }, { session })
-//   issueStoreCredit({ pharmacyId, customerId, amount, refId, saleId?, note? }, { session })
+//   issueStoreCredit({ pharmacyId, customerId, amount, refId, saleId?, note?, refModel? }, { session })
+//   restoreStoreCredit({ pharmacyId, customerId, saleId, amount, refId, note?, refModel? }, { session })
+//   storeCreditUsedBySale(pharmacyId, sale, { session })
+//
+// Store credit used by a sale is tracked on the sale (Sale.storeCreditUsed: every time store
+// credit pays down a sale's balanceDue, at the sale or when issued store credit settles open
+// sales). Returns / voids of such a sale give that part back as store credit (restoreStoreCredit,
+// tracked in Sale.storeCreditRestored) instead of paying it out in cash.
 //
 // Store credit is a negative balance (the pharmacy owes the customer). Issuing it first
 // settles the customer's open credit sales (oldest first, so per-sale balanceDue stays in
@@ -135,9 +142,10 @@ const settleSaleDue = async (pid, sid, amount, session) => {
   const take = round2(Math.min(amount, Math.max(0, sale.balanceDue || 0)));
   if (take <= 0) return 0;
   const newDue = round2(Math.max(0, (sale.balanceDue || 0) - take));
+  // Only store credit pays a sale down through here (applyCreditSale / issueStoreCredit)
   await Sale.updateOne(
     { _id: sale._id, pharmacyId: pid },
-    { $set: { balanceDue: newDue, paymentStatus: newDue <= EPS ? 'paid' : 'partial' } },
+    { $set: { balanceDue: newDue, paymentStatus: newDue <= EPS ? 'paid' : 'partial' }, $inc: { storeCreditUsed: take } },
     sessionOpt(session)
   );
   return take;
@@ -238,7 +246,7 @@ const reverseCredit = async ({ pharmacyId, customerId, amount, refId, saleId }, 
 // Credits `amount` to the customer's account (returns refunded as 'store_credit').
 // Open credit sales are settled first (oldest first); the rest leaves a negative balance.
 // Returns { customer, credited, settled: [{ saleId, amount }] }.
-const issueStoreCredit = async ({ pharmacyId, customerId, amount, refId, saleId, note }, { session } = {}) => {
+const issueStoreCredit = async ({ pharmacyId, customerId, amount, refId, saleId, note, refModel = 'Return' }, { session } = {}) => {
   const pid = toId(pharmacyId, 'pharmacy id');
   const cid = toId(customerId, 'customer id');
   const amt = toAmount(amount);
@@ -287,7 +295,7 @@ const issueStoreCredit = async ({ pharmacyId, customerId, amount, refId, saleId,
         balanceAfter: round2(customer.balance),
         saleId: sid,
         refId: ref,
-        refModel: ref ? 'Return' : '',
+        refModel: ref ? refModel : '',
         note: typeof note === 'string' && note.trim() ? note.trim().slice(0, 200) : 'Store credit',
       },
     ],
@@ -297,4 +305,69 @@ const issueStoreCredit = async ({ pharmacyId, customerId, amount, refId, saleId,
   return { customer, credited: amt, settled };
 };
 
-module.exports = { assertCreditAllowed, applyCreditSale, reverseCredit, issueStoreCredit, round2, EPS };
+// Store credit that paid part of `sale` (a Sale doc with _id, customerId, storeCreditUsed).
+// Older sales without the field: derived from the sale's ledger entry (the part of the credit
+// line that only brought a negative balance back towards zero).
+const storeCreditUsedBySale = async (pharmacyId, sale, { session } = {}) => {
+  if (!sale) return 0;
+  if (sale.storeCreditUsed !== undefined && sale.storeCreditUsed !== null) return round2(sale.storeCreditUsed);
+  if (!sale.customerId) return 0;
+  const q = CustomerLedger.findOne({ pharmacyId: toId(pharmacyId, 'pharmacy id'), saleId: sale._id, type: 'sale' })
+    .select('amount balanceAfter')
+    .lean();
+  if (session) q.session(session);
+  const entry = await q;
+  if (!entry) return 0;
+  const amt = round2(entry.amount);
+  const before = round2(entry.balanceAfter - amt);
+  return round2(Math.min(amt, Math.max(0, -before)));
+};
+
+// Gives back, as store credit, up to `amount` of the store credit that paid `saleId`
+// (minus what earlier returns / voids already gave back). Returns { restored, customer }.
+const restoreStoreCredit = async (
+  { pharmacyId, customerId, saleId, amount, refId, note, refModel = 'Return' },
+  { session } = {}
+) => {
+  const pid = toId(pharmacyId, 'pharmacy id');
+  const cid = toId(customerId, 'customer id');
+  const sid = toId(saleId, 'sale id');
+  const want = round2(amount);
+  if (!(want > 0)) return { restored: 0, customer: null };
+
+  const q = Sale.findOne({ _id: sid, pharmacyId: pid }).select('customerId storeCreditUsed storeCreditRestored');
+  if (session) q.session(session);
+  const sale = await q;
+  if (!sale || !sale.customerId || String(sale.customerId) !== String(cid)) return { restored: 0, customer: null };
+
+  const used = await storeCreditUsedBySale(pid, sale, { session });
+  const restorable = round2(used - (Number(sale.storeCreditRestored) || 0));
+  const give = round2(Math.min(want, restorable));
+  if (give <= 0) return { restored: 0, customer: null };
+
+  await Sale.updateOne(
+    { _id: sid, pharmacyId: pid },
+    {
+      $inc: { storeCreditRestored: give },
+      // Older sale: store the derived amount first (issueStoreCredit may $inc it below)
+      ...(sale.storeCreditUsed === undefined || sale.storeCreditUsed === null ? { $set: { storeCreditUsed: used } } : {}),
+    },
+    sessionOpt(session)
+  );
+  const { customer } = await issueStoreCredit(
+    { pharmacyId: pid, customerId: cid, amount: give, refId, saleId: sid, note: note || 'Store credit returned', refModel },
+    { session }
+  );
+  return { restored: give, customer };
+};
+
+module.exports = {
+  assertCreditAllowed,
+  applyCreditSale,
+  reverseCredit,
+  issueStoreCredit,
+  restoreStoreCredit,
+  storeCreditUsedBySale,
+  round2,
+  EPS,
+};
