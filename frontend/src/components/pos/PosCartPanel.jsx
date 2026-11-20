@@ -17,7 +17,7 @@ const PosCartPanel = ({
   const { cart } = sale;
 
   return (
-    <div className={`lg:col-span-5 ${cardCls} p-4 space-y-3`}>
+    <div id="pos-cart" className={`lg:col-span-5 ${cardCls} p-4 space-y-3 scroll-mt-4`}>
       <CartHeader count={cart.length} onHold={onHold} onClear={onClear} />
 
       <div className="max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">

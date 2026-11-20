@@ -55,6 +55,7 @@ on SIGINT/SIGTERM.
 | `procurement.spec.js` | Receive an ordered PO; stock goes up; PO marked received |
 | `insurance.spec.js` | Insurance sale: scheme + member, insurer share, patient pays the copay in cash |
 | `two-factor.spec.js` | Enable 2FA in Settings (TOTP computed in the test), sign out, sign in with a code |
+| `mobile.spec.js` | Phone (375px): menu button and slide-out menu work, no sideways scrolling, POS floating cart bar |
 
 ## Writing tests
 

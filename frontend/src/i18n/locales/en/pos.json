@@ -25,6 +25,7 @@
     "title": "Current sale",
     "lines_one": "{{count}} line",
     "lines_other": "{{count}} lines",
+    "goToCheckout": "Checkout",
     "hold": "Hold",
     "clear": "Clear",
     "confirmClear": "Clear the current sale?",

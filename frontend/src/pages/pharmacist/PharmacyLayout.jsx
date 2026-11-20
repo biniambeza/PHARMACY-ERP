@@ -10,6 +10,8 @@ import SidebarBrand from '../../components/layout/SidebarBrand';
 import SidebarNav from '../../components/layout/SidebarNav';
 import SidebarFooter from '../../components/layout/SidebarFooter';
 import PharmacyTopBar from '../../components/layout/PharmacyTopBar';
+import BranchSwitcher from '../../components/layout/BranchSwitcher';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import AnnouncementBanner from '../../components/announcements/AnnouncementBanner';
 import TwoFactorNudge from '../../components/settings/TwoFactorNudge';
 import LocaleSync from '../../i18n/LocaleSync';
@@ -85,6 +87,12 @@ const PharmacyLayoutContent = () => {
           onCloseMobile={() => setMobileOpen(false)}
         />
 
+        {/* Phones: branch / language / calendar pickers live here (no room in the top bar) */}
+        <div className="sm:hidden px-3 pt-3 flex flex-wrap items-center gap-2">
+          <BranchSwitcher menuClassName="left-0" />
+          <LanguageSwitcher className="flex-wrap" />
+        </div>
+
         {/* Unified Navigation List */}
         <SidebarNav
           visibleGroups={visibleGroups}
@@ -110,6 +118,7 @@ const PharmacyLayoutContent = () => {
         <PharmacyTopBar
           user={user}
           roleLabel={roleLabel}
+          title={pharmacy?.name}
           collapsed={sidebarCollapsed}
           onToggleCollapse={toggleSidebarCollapse}
           onOpenMobile={() => setMobileOpen(true)}
@@ -120,7 +129,7 @@ const PharmacyLayoutContent = () => {
         />
 
         {/* Scrollable Page Body with Cool Gray Canvas */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
+        <main className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8">
           <LocaleSync />
           <AnnouncementBanner />
           <TwoFactorNudge to="/pharmacy/settings" />

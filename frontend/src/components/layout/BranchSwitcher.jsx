@@ -7,7 +7,7 @@ import { useOfflineSyncContext } from '../../offline/offlineSyncContext';
 
 // Lets a user who works in several branches pick the active one.
 // Hidden when the user has a single branch.
-const BranchSwitcher = () => {
+const BranchSwitcher = ({ menuClassName = 'right-0' }) => {
   const { t } = useTranslation(['ui', 'staff', 'common']);
   const { pharmacies, activePharmacyId, switchPharmacy } = useAuth();
   const offlineSync = useOfflineSyncContext();
@@ -52,7 +52,7 @@ const BranchSwitcher = () => {
       {open && (
         <ul
           role="listbox"
-          className="absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto bg-white dark:bg-[#161c26] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 py-1"
+          className={`absolute ${menuClassName} mt-2 w-64 max-w-[calc(100vw-2rem)] max-h-80 overflow-y-auto bg-white dark:bg-[#161c26] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 py-1`}
         >
           {pharmacies.map((m) => {
             const isActive = String(m.pharmacyId) === String(active?.pharmacyId);

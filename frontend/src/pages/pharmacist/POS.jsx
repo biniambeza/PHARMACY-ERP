@@ -13,6 +13,7 @@ import OfflinePanel from '../../components/pos/OfflinePanel';
 import PosHeader from '../../components/pos/PosHeader';
 import PosNotice from '../../components/pos/PosNotice';
 import PosCartPanel from '../../components/pos/PosCartPanel';
+import MobileCartBar from '../../components/pos/MobileCartBar';
 import { usePosData } from '../../components/pos/usePosData';
 import { useHeldSales } from '../../components/pos/useHeldSales';
 import { usePosDerived } from '../../components/pos/usePosDerived';
@@ -21,7 +22,7 @@ import { usePosCheckout } from '../../components/pos/usePosCheckout';
 import { useBarcodeScanner, usePosShortcuts } from '../../components/pos/usePosKeyboard';
 import { findUnit, matchCode, cacheShift, errMsg } from '../../components/pos/posUtils';
 import { SEVERE, computeBlockers, insuranceLinesKey } from '../../components/pos/posCheckout';
-import { formatDate } from '../../utils/format';
+import { formatDate, formatMoney } from '../../utils/format';
 
 const TIME_ONLY = { hour: '2-digit', minute: '2-digit' };
 
@@ -229,7 +230,7 @@ const POS = () => {
       <PosNotice tone="error" message={error} onClose={() => setError('')} />
       <PosNotice tone="info" message={info} onClose={() => setInfo('')} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className={`grid grid-cols-1 lg:grid-cols-12 gap-5 ${cart.length > 0 ? 'pb-20 lg:pb-0' : ''}`}>
         {/* Left: search + quick pick */}
         <div className="lg:col-span-7 space-y-3">
           <ProductSearch
@@ -269,6 +270,8 @@ const POS = () => {
           onClear={clearWithConfirm}
         />
       </div>
+
+      <MobileCartBar count={cart.length} total={formatMoney(totals.grandTotal)} targetId="pos-cart" />
 
       <OpenShiftModal
         open={shiftModal}

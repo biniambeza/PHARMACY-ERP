@@ -25,6 +25,7 @@
     "title": "የአሁኑ ሽያጭ",
     "lines_one": "{{count}} መስመር",
     "lines_other": "{{count}} መስመሮች",
+    "goToCheckout": "ወደ ክፍያ",
     "hold": "ያዝ",
     "clear": "አጽዳ",
     "confirmClear": "የአሁኑን ሽያጭ ማጽዳት ይፈልጋሉ?",

@@ -7,13 +7,15 @@ import { formatDate } from '../../utils/format';
 import { translateRoleLabel } from './roleLabel';
 
 // Pharmacy top header: sidebar toggles, global search, branch/language switchers, date, notifications, theme and user.
-const PharmacyTopBar = ({ user, roleLabel: roleProp, collapsed, onToggleCollapse, onOpenMobile, globalSearch, onGlobalSearch, isDark, onToggleTheme }) => {
+// On phones (< sm) it shows only the menu button, the pharmacy name, notifications, theme and avatar;
+// the branch / language / calendar pickers move into the slide-out menu (PharmacyLayout).
+const PharmacyTopBar = ({ user, roleLabel: roleProp, title, collapsed, onToggleCollapse, onOpenMobile, globalSearch, onGlobalSearch, isDark, onToggleTheme }) => {
   const { t } = useTranslation('ui');
   const roleLabel = translateRoleLabel(t, roleProp);
   const sidebarLabel = collapsed ? t('layout.expandSidebarLower') : t('layout.minimizeSidebarLower');
   const themeLabel = isDark ? t('layout.switchToLight') : t('layout.switchToDark');
   return (
-    <header className="h-20 bg-white dark:bg-[#151a24] border-b border-slate-100 dark:border-slate-800 px-6 sm:px-8 flex items-center justify-between gap-4 shrink-0 z-30 shadow-xs transition-colors">
+    <header className="h-16 sm:h-20 bg-white dark:bg-[#151a24] border-b border-slate-100 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-2 sm:gap-4 shrink-0 z-30 shadow-xs transition-colors">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
         {/* Desktop Sidebar Toggle Button */}
         <button
@@ -33,15 +35,20 @@ const PharmacyTopBar = ({ user, roleLabel: roleProp, collapsed, onToggleCollapse
         <button
           onClick={onOpenMobile}
           aria-label={t('layout.openMenu')}
-          className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+          className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
 
+        {/* Pharmacy name (phones and tablets, where the sidebar and search are hidden) */}
+        {title && (
+          <span className="lg:hidden min-w-0 truncate text-sm font-bold text-slate-900 dark:text-white">{title}</span>
+        )}
+
         {/* Global Search Bar with Rounded Pill */}
-        <div className="relative max-w-md w-full hidden md:block">
+        <div className="relative max-w-md w-full hidden lg:block">
           <input
             type="text"
             value={globalSearch}
@@ -62,15 +69,18 @@ const PharmacyTopBar = ({ user, roleLabel: roleProp, collapsed, onToggleCollapse
       </div>
 
       {/* Right Header Controls */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-        {/* Branch switcher (hidden with a single branch) */}
-        <BranchSwitcher />
+      <div className="flex items-center gap-1 sm:gap-4 shrink-0">
+        {/* Branch / language / calendar switchers (in the slide-out menu on phones) */}
+        <div className="hidden sm:flex items-center gap-4">
+          {/* Branch switcher (hidden with a single branch) */}
+          <BranchSwitcher />
 
-        {/* Language switcher */}
-        <LanguageSwitcher />
+          {/* Language switcher */}
+          <LanguageSwitcher />
+        </div>
 
         {/* Date Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
+        <div className="hidden xl:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
           <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -97,11 +107,11 @@ const PharmacyTopBar = ({ user, roleLabel: roleProp, collapsed, onToggleCollapse
         </button>
 
         {/* User Profile Dropdown Pill */}
-        <div className="flex items-center gap-3 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-3 pl-2 sm:pl-3 ml-1 sm:ml-0 border-l border-slate-200 dark:border-slate-800">
           <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-slate-100 dark:ring-slate-800">
             {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
           </div>
-          <div className="hidden lg:block text-left">
+          <div className="hidden xl:block text-left">
             <div className="flex items-center gap-1">
               <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                 {user?.name || t('layout.defaultUser')}

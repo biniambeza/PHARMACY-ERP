@@ -63,7 +63,7 @@ const AdminLayout = () => {
         />
 
         {/* Scrollable Page Body with Cool Gray Canvas */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
+        <main className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8">
           <TwoFactorNudge onAction={() => setSecurityOpen(true)} className="mb-6" />
           {/* Keyed by path so a crashed page's fallback resets when the user navigates away. */}
           <ErrorBoundary key={location.pathname}>

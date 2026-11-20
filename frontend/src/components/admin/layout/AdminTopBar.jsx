@@ -11,7 +11,7 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
   const { user } = useAuth();
   const { toggleTheme, isDark } = useTheme();
   return (
-    <header className="h-20 bg-white dark:bg-[#151a24] border-b border-slate-100 dark:border-slate-800 px-6 sm:px-8 flex items-center justify-between gap-4 shrink-0 z-30 shadow-xs transition-colors">
+    <header className="h-16 sm:h-20 bg-white dark:bg-[#151a24] border-b border-slate-100 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between gap-2 sm:gap-4 shrink-0 z-30 shadow-xs transition-colors">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
         {/* Desktop Sidebar Toggle Button */}
         <button
@@ -30,7 +30,7 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
         <button
           onClick={onOpenMobile}
           aria-label={t('ui:layout.openMenu')}
-          className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+          className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -38,7 +38,7 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
         </button>
 
         {/* Global Search Bar with Rounded Pill */}
-        <div className="relative max-w-md w-full hidden md:block">
+        <div className="relative max-w-md w-full hidden lg:block">
           <input
             type="text"
             value={search}
@@ -59,12 +59,14 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
       </div>
 
       {/* Right Header Controls */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-        {/* Language + calendar switcher */}
-        <LanguageSwitcher />
+      <div className="flex items-center gap-1 sm:gap-4 shrink-0">
+        {/* Language + calendar switcher (in the slide-out menu on phones) */}
+        <div className="hidden sm:block">
+          <LanguageSwitcher />
+        </div>
 
         {/* Date Pill */}
-        <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
+        <div className="hidden xl:flex items-center gap-2 px-3.5 py-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs">
           <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
@@ -103,7 +105,7 @@ const AdminTopBar = ({ collapsed, onToggleCollapse, onOpenMobile, search, onSear
           <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-slate-100 dark:ring-slate-800">
             {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
           </div>
-          <div className="hidden lg:block text-left">
+          <div className="hidden xl:block text-left">
             <div className="flex items-center gap-1">
               <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                 {user?.name || t('layout.administrator')}

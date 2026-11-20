@@ -1,6 +1,7 @@
 import AdminSidebarBrand from './AdminSidebarBrand';
 import AdminSidebarNav from './AdminSidebarNav';
 import AdminSidebarFooter from './AdminSidebarFooter';
+import LanguageSwitcher from '../../common/LanguageSwitcher';
 
 // Admin sidebar: a static column on desktop (optionally collapsed to icons) and an
 // off-canvas drawer with a backdrop on mobile.
@@ -31,6 +32,10 @@ const AdminSidebar = ({
       }`}
     >
       <AdminSidebarBrand collapsed={collapsed} onToggleCollapse={onToggleCollapse} onCloseMobile={onCloseMobile} />
+      {/* Phones: language / calendar pickers live here (no room in the top bar) */}
+      <div className="sm:hidden px-3 pt-3">
+        <LanguageSwitcher className="flex-wrap" />
+      </div>
       <AdminSidebarNav
         collapsed={collapsed}
         onCloseMobile={onCloseMobile}
